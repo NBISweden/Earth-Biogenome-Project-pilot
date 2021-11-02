@@ -2,8 +2,8 @@
 
 nextflow.enable.dsl = 2
 
-import { BUSCO       } from "$projectDir/modules/busco"
-import { BLOBTOOLKIT } from "$projectDir/modules/blobtoolkit"
+include { BUSCO       } from "$projectDir/modules/busco"
+include { BLOBTOOLKIT } from "$projectDir/modules/blobtoolkit"
 
 workflow {
     ASSEMBLY_VALIDATION( Channel.fromPath( params.assembly ) )
