@@ -12,7 +12,7 @@ workflow {
 workflow ASSEMBLY_VALIDATION {
 
      take:
-     assembly_ch
+     assembly_ch  // input type: [ [ id: 'sample_name' ], [ file('path/to/assembly') ] ]
 
     /* Assembly validation workflow:
         - Contamination check ( BLOBTOOLKIT )
