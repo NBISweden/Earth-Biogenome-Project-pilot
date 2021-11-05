@@ -1,4 +1,4 @@
-process KAT_CNSPECTRA {
+process KAT_COMP {
 
     conda "${task.ext.enable_conda ? 'bioconda::kat==2.4.2' : '' }"
     container "${workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?

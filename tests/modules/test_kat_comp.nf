@@ -2,9 +2,9 @@
 
 nextflow.enable.dsl = 2
 
-include { KAT_CNSPECTRA } from '../../modules/kat_cnspectra'
+include { KAT_COMP } from '../../modules/kat_comp'
 
-workflow TEST_KAT_CNSPECTRA {
+workflow TEST_KAT_COMP {
 
     input = [
         [ id: 'test' ],
@@ -14,5 +14,5 @@ workflow TEST_KAT_CNSPECTRA {
         ],
         file( params.test_data['sarscov2']['genome']['genome_fasta'], checkIfExists: true )
     ]
-    KAT_CNSPECTRA( input )
+    KAT_COMP( input )
 }
