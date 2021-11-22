@@ -2,7 +2,7 @@
 
 nextflow.enable.dsl = 2
 
-include { KAT_COMP } from '../../modules/kat_comp'
+include { KAT_COMP } from '../../../../modules/kat/kat_comp/kat_comp'
 
 workflow TEST_KAT_COMP {
 
