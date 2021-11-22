@@ -28,7 +28,7 @@ process TOOL_SUBTOOL {
     """
     tool subtool \\
         $args \\
-        -o $prefix
+        -o $prefix \\
         -t $task.cpus \\
         $reads
     """
