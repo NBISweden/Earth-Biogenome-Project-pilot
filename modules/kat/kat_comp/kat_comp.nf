@@ -28,7 +28,7 @@ process KAT_COMP {
         $assembly
 
     cat <<-END_VERSIONS > versions.yml
-    ${task.process}:
+    '${task.process}':
         kat: \$( kat --version | sed 's/kat //' )
     END_VERSIONS
     """
