@@ -35,14 +35,14 @@ workflow GENOME_PROPERTIES {
     SMUDGEPLOT_CUTOFF ( KMC_HIST.out.histogram )
     KMC_DUMP ( KMC_HIST.out.count_db.join( SMUDGEPLOT_CUTOFF.out.bounds ) )
     SMUDGEPLOT_HETKMERS ( KMC_DUMP.out.histogram )
-    // SMUDGEPLOT_PLOT ( SMUDGEPLOT_HETKMERS.out.coverage_tsv )
+    SMUDGEPLOT_PLOT ( SMUDGEPLOT_HETKMERS.out.coverage_tsv )
 
     versions_ch = KMC_HIST.out.versions.first().mix(
         KMC_DUMP.out.versions.first(),
         GENOMESCOPE.out.versions.first(),
         SMUDGEPLOT_CUTOFF.out.versions.first(),
         SMUDGEPLOT_HETKMERS.out.versions.first(),
-        //SMUDGEPLOT_PLOT.out.versions.first()
+        SMUDGEPLOT_PLOT.out.versions.first()
     )
 
 }
