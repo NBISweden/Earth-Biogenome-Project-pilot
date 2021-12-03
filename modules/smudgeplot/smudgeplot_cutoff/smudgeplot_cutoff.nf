@@ -9,8 +9,8 @@ process SMUDGEPLOT_CUTOFF {
     tuple val(meta), path(histogram)
 
     output:
-    tuple val(meta), env([LOWER_BOUND, UPPER_BOUND]), emit: bounds
-    path "versions.yml"                             , emit: versions
+    tuple val(meta), env(LOWER_BOUND), env(UPPER_BOUND), emit: bounds
+    path "versions.yml"                                , emit: versions
 
     script:
     // def prefix = task.ext.prefix ?: meta.id
@@ -21,7 +21,7 @@ process SMUDGEPLOT_CUTOFF {
 
     cat <<-END_VERSIONS > versions.yml
     ${task.process}:
-        tool: \$( smudgeplot.py -v |& sed '1 !d;s/[^0-9]*\(\\([0-9]\\.\\)\\{0,4\\}[0-9]\\).*/\\1/' )
+        smudgeplot: \$( smudgeplot.py -v |& sed '1 !d;s/[^0-9]*\\(\\([0-9]\\.\\)\\{0,4\\}[0-9]\\).*/\\1/' )
     END_VERSIONS
     """
 }

@@ -6,7 +6,7 @@ process KMC_DUMP {
               'quay.io/biocontainers/kmc:3.1.2rc1--h2d02072_0' }"
 
     input:
-    tuple val(meta), path(count_db), val(interval)
+    tuple val(meta), path(count_db), val(lower_bound), val(upper_bound)
 
     output:
     tuple val(meta), path("*.hist"), emit: histogram
@@ -16,10 +16,10 @@ process KMC_DUMP {
     def prefix = task.ext.prefix ?: meta.id
     def args   = task.ext.args   ?: ''
     """
-    kmc_dump -ci${interval[0]} -cx${interval[1]} \\
+    kmc_dump -ci${lower_bound} -cx${upper_bound} \\
         $args \\
-        $count_db \\
-        $prefix.${interval[0]}-${interval[1]}.hist
+        $prefix \\
+        $prefix.${lower_bound}-${upper_bound}.hist
 
     cat <<-END_VERSIONS > versions.yml
     ${task.process}:
