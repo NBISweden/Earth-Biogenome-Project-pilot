@@ -9,7 +9,7 @@ process KMC_HIST {
     tuple val(meta), path(reads)
 
     output:
-    tuple val(meta), path("$prefix"), emit: count_db
+    tuple val(meta), path("*.kmc_{pre,suf}"), emit: count_db
     tuple val(meta), path("*.hist") , emit: histogram
     path "versions.yml"             , emit: versions
 
@@ -18,10 +18,10 @@ process KMC_HIST {
     def args = task.ext.args   ?: ''
     """
     mkdir kmc_workdir
-    printf '%s\n' $reads > kmc_read_files.txt
+    printf '%s\\n' $reads > kmc_read_files.txt
     kmc $args \\
         -t$task.cpus \\
-        -j$prefix.summary.json \\
+        -j${prefix}.summary.json \\
         @kmc_read_files.txt \\
         $prefix \\
         kmc_workdir

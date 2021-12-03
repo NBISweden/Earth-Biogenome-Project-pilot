@@ -9,17 +9,17 @@ process GENOMESCOPE {
     tuple val(meta), path(histogram)
 
     output:
-    tuple val(meta), path("*linear_plot.png")            , emit: linear_plot_png
-    tuple val(meta), path("*transformed_linear_plot.png"), emit: transformed_linear_plot_png
-    tuple val(meta), path("*log_plot.png")               , emit: log_plot_png
-    tuple val(meta), path("*transformed_log_plot.png")   , emit: transformed_log_plot_png
-    tuple val(meta), path("*model.txt")                  , emit: model
-    tuple val(meta), path("*summary.txt")                , emit: summary
-    path "versions.yml"                                  , emit: versions
+    tuple val(meta), path("$prefix/linear_plot.png")            , emit: linear_plot_png
+    tuple val(meta), path("$prefix/transformed_linear_plot.png"), emit: transformed_linear_plot_png
+    tuple val(meta), path("$prefix/log_plot.png")               , emit: log_plot_png
+    tuple val(meta), path("$prefix/transformed_log_plot.png")   , emit: transformed_log_plot_png
+    tuple val(meta), path("$prefix/model.txt")                  , emit: model
+    tuple val(meta), path("$prefix/summary.txt")                , emit: summary
+    path "versions.yml"                                         , emit: versions
 
     script:
-    def prefix = task.ext.prefix ?: meta.id
-    def args   = task.ext.args   ?: ''
+    prefix   = task.ext.prefix ?: meta.id
+    def args = task.ext.args   ?: ''
     """
     genomescope2 \\
         -i $histogram \\
