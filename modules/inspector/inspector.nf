@@ -25,9 +25,9 @@ process INSPECTOR {
     path "versions.yml"                                     , emit: versions
 
     script:
-    prefix     = task.ext.suffix ? "${meta.id}${task.ext.suffix}" : "${meta.id}"
-    def args   = task.ext.args ?: ''
-    def ref    = reference ? "--ref $reference" : ''
+    prefix   = task.ext.prefix ?: meta.id
+    def args = task.ext.args   ?: ''
+    def ref  = reference ? "--ref $reference" : ''
     """
     inspector.py \\
         $args \\
@@ -38,7 +38,7 @@ process INSPECTOR {
         $ref
 
     cat <<-END_VERSIONS > versions.yml
-    ${task.process.tokenize(':').last()}:
+    ${task.process}:
         inspector: \$( inspector.py --version |& sed 's/Inspector_v//' )
     END_VERSIONS
     """
