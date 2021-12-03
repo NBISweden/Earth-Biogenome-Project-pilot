@@ -38,7 +38,7 @@ process INSPECTOR {
         $ref
 
     cat <<-END_VERSIONS > versions.yml
-    ${task.process}:
+    '${task.process}':
         inspector: \$( inspector.py --version |& sed 's/Inspector_v//' )
     END_VERSIONS
     """

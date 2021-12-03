@@ -22,7 +22,7 @@ process KMC_DUMP {
         $prefix.${lower_bound}-${upper_bound}.hist
 
     cat <<-END_VERSIONS > versions.yml
-    ${task.process}:
+    '${task.process}':
         kmc_dump: \$( kmc_dump --version | sed '1 !d;s/[^0-9]*\\(\\([0-9]\\.\\)\\{0,4\\}[0-9][^.]\\).*/\\1/' )
     END_VERSIONS
     """
