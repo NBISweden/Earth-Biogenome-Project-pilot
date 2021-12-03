@@ -31,7 +31,7 @@ process KMC_HIST {
 
     cat <<-END_VERSIONS > versions.yml
     ${task.process}:
-        kmc: \$( kmc --version | sed '1 !d;s/[^0-9]*\(\([0-9]\.\)\{0,4\}[0-9][^.]\).*/\1/' )
+        kmc: \$( kmc --version | sed '1 !d;s/[^0-9]*\\(\\([0-9]\\.\\)\\{0,4\\}[0-9][^.]\\).*/\\1/' )
     END_VERSIONS
     """
 }

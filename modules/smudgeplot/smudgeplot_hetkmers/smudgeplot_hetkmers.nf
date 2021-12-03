@@ -21,7 +21,7 @@ process SMUDGEPLOT_HETKMERS {
 
     cat <<-END_VERSIONS > versions.yml
     ${task.process}:
-        tool: \$(smudgeplot.py -v |& sed '1 !d;s/[^0-9]*\(\([0-9]\.\)\{0,4\}[0-9]\).*/\1/' )
+        tool: \$(smudgeplot.py -v |& sed '1 !d;s/[^0-9]*\\(\\([0-9]\\.\\)\\{0,4\\}[0-9]\\).*/\\1/' )
     END_VERSIONS
     """
 }
