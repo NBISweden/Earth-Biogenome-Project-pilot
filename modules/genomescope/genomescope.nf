@@ -1,6 +1,6 @@
 process GENOMESCOPE {
 
-    conda "${task.ext.enable_conda ? 'bioconda::genomescope2==2.0' : '' }"
+    conda "${params.enable_conda ? 'bioconda::genomescope2==2.0' : '' }"
     container "${workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
               'https://depot.galaxyproject.org/singularity/genomescope2:2.0--py39r40hdfd78af_4' :
               'quay.io/biocontainers/genomescope2:2.0--py39r40hdfd78af_4' }"

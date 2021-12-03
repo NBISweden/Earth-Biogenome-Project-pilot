@@ -1,6 +1,6 @@
 process SMUDGEPLOT_PLOT {
 
-    conda "${task.ext.enable_conda ? 'bioconda::smudgeplot==0.2.4' : '' }"
+    conda "${params.enable_conda ? 'bioconda::smudgeplot==0.2.4' : '' }"
     container "${workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
               'https://depot.galaxyproject.org/singularity/smudgeplot:0.2.4--py39r40h779adbc_1' :
               'quay.io/biocontainers/smudgeplot:0.2.4--py39r40h779adbc_1' }"

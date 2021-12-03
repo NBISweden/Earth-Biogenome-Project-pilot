@@ -1,7 +1,7 @@
 process INSPECTOR {
 
     // TODO:: Update conda path to correct conda depedencies
-    // conda "${task.ext.enable_conda ? 'bioconda::tool=0.0.0' : '' }"
+    // conda "${params.enable_conda ? 'bioconda::tool=0.0.0' : '' }"
     // TODO:: Update Singularity and Docker paths to correct container paths
     container 'ghcr.io/nbisweden/earth-biogenome-project-pilot/inspector:1.0'
     // container "${workflow.containerEngine == 'singularity' &&

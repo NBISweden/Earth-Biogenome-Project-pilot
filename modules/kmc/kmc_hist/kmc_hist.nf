@@ -1,6 +1,6 @@
 process KMC_HIST {
 
-    conda "${task.ext.enable_conda ? 'bioconda::kmc==3.1.2rc1' : '' }"
+    conda "${params.enable_conda ? 'bioconda::kmc==3.1.2rc1' : '' }"
     container "${workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
               'https://depot.galaxyproject.org/singularity/kmc:3.1.2rc1--h2d02072_0' :
               'quay.io/biocontainers/kmc:3.1.2rc1--h2d02072_0' }"
