@@ -10,7 +10,10 @@ include { SMUDGEPLOT_HETKMERS } from "../../modules/smudgeplot/smudgeplot_hetkme
 include { SMUDGEPLOT_PLOT     } from "../../modules/smudgeplot/smudgeplot_plot/smudgeplot_plot"
 
 workflow {
-    GENOME_PROPERTIES ( Channel.fromPath( params.reads ) )
+    GENOME_PROPERTIES (
+        Channel.fromPath( params.reads )
+            .map{ file -> [ [ id:'test'], file ] }
+    )
 }
 
 workflow GENOME_PROPERTIES {
@@ -29,17 +32,17 @@ workflow GENOME_PROPERTIES {
     GENOMESCOPE ( KMC_HIST.out.histogram )
 
     // Generate Smudgeplot
-    SMUDGEPLOT_CUTOFF ( KMC_HIST.out.count_db )
+    SMUDGEPLOT_CUTOFF ( KMC_HIST.out.histogram )
     KMC_DUMP ( KMC_HIST.out.count_db.join( SMUDGEPLOT_CUTOFF.out.bounds ) )
     SMUDGEPLOT_HETKMERS ( KMC_DUMP.out.histogram )
-    SMUDGEPLOT_PLOT ( SMUDGEPLOT_HETKMERS.out.coverage_tsv )
+    // SMUDGEPLOT_PLOT ( SMUDGEPLOT_HETKMERS.out.coverage_tsv )
 
     versions_ch = KMC_HIST.out.versions.first().mix(
         KMC_DUMP.out.versions.first(),
         GENOMESCOPE.out.versions.first(),
         SMUDGEPLOT_CUTOFF.out.versions.first(),
         SMUDGEPLOT_HETKMERS.out.versions.first(),
-        SMUDGEPLOT_PLOT.out.versions.first()
+        //SMUDGEPLOT_PLOT.out.versions.first()
     )
 
 }
