@@ -23,7 +23,7 @@ process KMC_DUMP {
 
     cat <<-END_VERSIONS > versions.yml
     ${task.process}:
-        kmc_dump: \$( kmc_dump --version | sed '1 !d;s/[^0-9]*\(\([0-9]\.\)\{0,4\}[0-9][^.]\).*/\1/' )
+        kmc_dump: \$( kmc_dump --version | sed '1 !d;s/[^0-9]*\\(\\([0-9]\\.\\)\\{0,4\\}[0-9][^.]\\).*/\\1/' )
     END_VERSIONS
     """
 }
