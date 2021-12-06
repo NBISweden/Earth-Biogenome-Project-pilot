@@ -5,7 +5,7 @@ import org.yaml.snakeyaml.Yaml
 nextflow.enable.dsl = 2
 
 workflow {
-    PREPARE_INPUT()
+    PREPARE_INPUT( params.input )
 }
 
 /* params.input example sample sheet (samplesheet.yml)
@@ -58,7 +58,11 @@ leads to the following YAML data structure
 
 workflow PREPARE_INPUT {
 
-    Channel.fromPath( params.input )
+    take:
+    infile
+
+    main:
+    Channel.fromPath( infile )
         .map { file -> readYAML( file ) }
         .multiMap { data ->
             assembly_ch : !data.assembly ?: [ data.sample, data.assembly ]
@@ -71,6 +75,13 @@ workflow PREPARE_INPUT {
     input.assembly_ch.transpose()     // Data is [ sample, [id:'assemblerX_build1', path:'/path/to/assembly']]
         .map { sample, assembly -> [ sample, [ id: assembly.id, path: file( assembly.path, checkIfExists: true ) ] ] }
         .set { assembly_ch }
+
+    emit:
+    assembly = assembly_ch
+    hic      = input.hic_ch
+    hifi     = input.hifi_ch
+    rnaseq   = input.rnaseq_ch
+    isoseq   = input.isoseq_ch
 
 }
 
