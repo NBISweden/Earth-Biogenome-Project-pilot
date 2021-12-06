@@ -68,7 +68,9 @@ workflow PREPARE_INPUT {
             isoseq_ch   : !data.isoseq   ?: [ data.sample, data.isoseq.collect { file( it, checkIfExists: true ) } ]
         }
         .set{ input }
-    input.assembly_ch.transpose()
+    input.assembly_ch.transpose()     // Data is [ sample, [id:'assemblerX_build1', path:'/path/to/assembly']]
+        .map { sample, assembly -> [ sample, [ id: assembly.id, path: file( assembly.path, checkIfExists: true ) ] ] }
+        .set { assembly_ch }
 
 }
 
