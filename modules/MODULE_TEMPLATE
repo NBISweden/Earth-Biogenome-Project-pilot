@@ -1,35 +1,40 @@
 process TOOL_SUBTOOL {
 
     // TODO:: Update conda path to correct conda depedencies
-    conda "${task.ext.enable_conda ? 'bioconda::tool=0.0.0' : '' }"
+    conda "${params.enable_conda ? 'bioconda::tool=0.0.0' : '' }"
     // TODO:: Update Singularity and Docker paths to correct container paths
-    container "${workflow.containerEngine == 'singularity' &&
-                  !task.ext.singularity_pull_docker_container ?
+    container "${workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
               'https://depot.galaxyproject.org/singularity/tool:0.0.0--0' :
               'quay.io/biocontainers/tool:0.0.0--0' }"
 
-    // TODO:: Update inputs to allow all possible file inputs to be staged. 
-    //        When a file is optional, use [] to call the process. 
+    // TODO:: Update inputs to allow all possible file inputs to be staged.
+    //        When a file is optional, use [] to call the process.
     input:
     tuple val(meta), path(reads)
 
-    // TODO:: Update outputs for each desired output. 
+    // TODO:: Update outputs for each desired output.
     //        meta should be passed with each output to allow downstream processing
-    //        Each output channel should be named using the emit directive.  
+    //        Each output channel should be named using the emit directive.
     output:
-    tuple val(meta), path("outfile.txt"), emit: txt 
+    tuple val(meta), path("outfile.txt"), emit: txt
+    path "versions.yml"                 , emit: versions
 
-    // TODO:: Update script with command. 
+    // TODO:: Update script with command.
     //        Allow tool specific arguments to be passed using ext.args
     //        Allow tool output to be prefixed using $prefix
     script:
-    def prefix = task.ext.suffix ? "${meta.id}${task.ext.suffix}" : "${meta.id}" 
-    def args   = task.ext.args ?: ''
+    def prefix = task.ext.prefix ?: meta.id
+    def args   = task.ext.args   ?: ''
     """
     tool subtool \\
         $args \\
         -o $prefix \\
         -t $task.cpus \\
         $reads
+
+    cat <<-END_VERSIONS > versions.yml
+    '${task.process}':
+        tool: \$( tool --version | sed '1 !d;s/[^0-9]*\\(\\([0-9]\\.\\)\\{0,4\\}[0-9][^.]\\).*/\\1/' )
+    END_VERSIONS
     """
 }

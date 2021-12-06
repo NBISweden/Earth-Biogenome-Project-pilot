@@ -1,6 +1,6 @@
 process KAT_COMP {
 
-    conda "${task.ext.enable_conda ? 'bioconda::kat==2.4.2' : '' }"
+    conda "${params.enable_conda ? 'bioconda::kat==2.4.2' : '' }"
     container "${workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
               'https://depot.galaxyproject.org/singularity/kat:2.4.2--py38hfc5f9d8_2' :
               'quay.io/biocontainers/kat:2.4.2--py38hfc5f9d8_2' }"
@@ -17,8 +17,8 @@ process KAT_COMP {
     path "versions.yml"                              , emit: versions
 
     script:
-    def prefix = task.ext.suffix ? "${meta.id}${task.ext.suffix}" : "${meta.id}"
-    def args   = task.ext.args ?: ''
+    def prefix = task.ext.prefix ?: meta.id
+    def args   = task.ext.args   ?: ''
     """
     kat comp \\
         -t $task.cpus \\
@@ -28,7 +28,7 @@ process KAT_COMP {
         $assembly
 
     cat <<-END_VERSIONS > versions.yml
-    ${task.process.tokenize(':').last()}:
+    '${task.process}':
         kat: \$( kat --version | sed 's/kat //' )
     END_VERSIONS
     """
