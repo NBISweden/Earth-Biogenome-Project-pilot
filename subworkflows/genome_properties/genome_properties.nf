@@ -9,11 +9,11 @@ include { SMUDGEPLOT_CUTOFF   } from "../../modules/smudgeplot/smudgeplot_cutoff
 include { SMUDGEPLOT_HETKMERS } from "../../modules/smudgeplot/smudgeplot_hetkmers/smudgeplot_hetkmers"
 include { SMUDGEPLOT_PLOT     } from "../../modules/smudgeplot/smudgeplot_plot/smudgeplot_plot"
 
+include { PREPARE_INPUT       } from "../../subworkflows/prepare_input/prepare_input"
+
 workflow {
-    GENOME_PROPERTIES (
-        Channel.fromPath( params.reads )
-            .map{ file -> [ [ id:'test'], file ] }
-    )
+    PREPARE_INPUT ( params.input )
+    GENOME_PROPERTIES ( PREPARE_INPUT.out.hifi )
 }
 
 workflow GENOME_PROPERTIES {
