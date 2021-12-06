@@ -45,4 +45,7 @@ workflow GENOME_PROPERTIES {
         SMUDGEPLOT_PLOT.out.versions.first()
     )
 
+    emit:
+    versions = versions_ch
+
 }
