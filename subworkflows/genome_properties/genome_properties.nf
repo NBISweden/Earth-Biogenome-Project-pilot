@@ -2,12 +2,14 @@
 
 nextflow.enable.dsl = 2
 
-include { KMC_HIST            } from "../../modules/kmc/kmc_hist/kmc_hist"
-include { KMC_DUMP            } from "../../modules/kmc/kmc_dump/kmc_dump"
-include { GENOMESCOPE         } from "../../modules/genomescope/genomescope"
-include { SMUDGEPLOT_CUTOFF   } from "../../modules/smudgeplot/smudgeplot_cutoff/smudgeplot_cutoff"
-include { SMUDGEPLOT_HETKMERS } from "../../modules/smudgeplot/smudgeplot_hetkmers/smudgeplot_hetkmers"
-include { SMUDGEPLOT_PLOT     } from "../../modules/smudgeplot/smudgeplot_plot/smudgeplot_plot"
+include { SAMTOOLS_FASTQ      } from "../../modules/nf-core/modules/samtools/fastq/main"
+
+include { KMC_HIST            } from "../../modules/local/kmc/kmc_hist/kmc_hist"
+include { KMC_DUMP            } from "../../modules/local/kmc/kmc_dump/kmc_dump"
+include { GENOMESCOPE         } from "../../modules/local/genomescope/genomescope"
+include { SMUDGEPLOT_CUTOFF   } from "../../modules/local/smudgeplot/smudgeplot_cutoff/smudgeplot_cutoff"
+include { SMUDGEPLOT_HETKMERS } from "../../modules/local/smudgeplot/smudgeplot_hetkmers/smudgeplot_hetkmers"
+include { SMUDGEPLOT_PLOT     } from "../../modules/local/smudgeplot/smudgeplot_plot/smudgeplot_plot"
 
 include { PREPARE_INPUT       } from "../../subworkflows/prepare_input/prepare_input"
 
@@ -27,8 +29,19 @@ workflow GENOME_PROPERTIES {
         - Smudgeplot
     */
     main:
+    reads_ch.transpose()   // Transform to [ [ id: 'sample_name'], file('/path/to/read')  ]
+        .branch { meta, filename ->
+            bam_ch: filename.toString().endsWith(".bam")
+            fastq_ch: true // assume everything else is fastq
+        }.set { input }
+    // Convert BAMS to FASTQ
+    SAMTOOLS_FASTQ( input.bam_ch )
+
     // Generate GenomeScope Profile
-    KMC_HIST ( reads_ch )
+    KMC_HIST ( input.fastq_ch
+        .mix( SAMTOOLS_FASTQ.out.fastq )
+        .groupTuple()
+    )
     GENOMESCOPE ( KMC_HIST.out.histogram )
 
     // Generate Smudgeplot
