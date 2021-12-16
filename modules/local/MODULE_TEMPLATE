@@ -23,8 +23,8 @@ process TOOL_SUBTOOL {
     //        Allow tool specific arguments to be passed using ext.args
     //        Allow tool output to be prefixed using $prefix
     script:
-    def prefix = task.ext.prefix ?: meta.id
     def args   = task.ext.args   ?: ''
+    def prefix = task.ext.prefix ?: meta.id
     """
     tool subtool \\
         $args \\
