@@ -19,7 +19,7 @@ workflow {
 workflow GENOME_PROPERTIES {
 
     take:
-    fastx_ch  // input type: [ [ id: 'sample_name' ], [ file('path/to/fastx') ] ]
+    fastx_ch  // input type: [ [ id: 'sample_name' ], [ file('path/to/fastx'), ... ] ]
 
     /* Genome properties workflow:
         - Estimate genome depth of coverage from reads
