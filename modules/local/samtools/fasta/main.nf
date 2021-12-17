@@ -1,4 +1,4 @@
-process SAMTOOLS_FASTQ {
+process SAMTOOLS_FASTA {
     tag "$meta.id"
     label 'process_low'
 
@@ -11,23 +11,23 @@ process SAMTOOLS_FASTQ {
     tuple val(meta), path(bam)
 
     output:
-    tuple val(meta), path("*.fastq.gz"), emit: fastq
+    tuple val(meta), path("*.fasta.gz"), emit: fasta
     path  "versions.yml"               , emit: versions
 
     script:
-    def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
-    def endedness = meta.single_end ? "-0 ${prefix}.fastq.gz" : "-1 ${prefix}_1.fastq.gz -2 ${prefix}_2.fastq.gz"
-
+    def args      = task.ext.args   ?: ''
+    def prefix    = task.ext.prefix ?: "${meta.id}"
+    def endedness = meta.single_end ? "-0 ${prefix}.fasta.gz" : "-1 ${prefix}_1.fasta.gz -2 ${prefix}_2.fasta.gz"
     """
-    samtools fastq \\
+    samtools fasta \\
         $args \\
-        --threads ${task.cpus-1} \\
+        --threads $task.cpus \\
         $endedness \\
         $bam
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
+        samtools: \$( samtools --version |& sed 's/^.*samtools //; s/Using.*\$//')
     END_VERSIONS
     """
 }

@@ -2,7 +2,7 @@
 
 import org.yaml.snakeyaml.Yaml
 
-include { SAMTOOLS_FASTQ } from "../../modules/nf-core/modules/samtools/fastq/main"
+include { SAMTOOLS_FASTA } from "../../modules/local/samtools/fasta/main"
 
 nextflow.enable.dsl = 2
 
@@ -89,18 +89,18 @@ workflow PREPARE_INPUT {
         .transpose()   // Transform to [ [ id: 'sample_name'], file('/path/to/read')  ]
         .branch { meta, filename ->
             bam_ch: filename.toString().endsWith(".bam")
-            fastq_ch: true // assume everything else is fastq
+            fastx_ch: true // assume everything else is fastx
         }.set { hifi }
-    SAMTOOLS_FASTQ ( hifi.bam_ch )
-    hifi.fastq_ch.mix( SAMTOOLS_FASTQ.out.fastq )
+    SAMTOOLS_FASTA ( hifi.bam_ch )
+    hifi.fastx_ch.mix( SAMTOOLS_FASTA.out.fasta )
         .groupTuple()
-        .set { hifi_fq_ch }
+        .set { hifi_fastx_ch }
 
 
     emit:
     assembly = assembly_ch
     hic      = input.hic_ch.filter { !it.isEmpty() }
-    hifi     = hifi_fq_ch
+    hifi     = hifi_fastx_ch
     rnaseq   = input.rnaseq_ch.filter { !it.isEmpty() }
     isoseq   = input.isoseq_ch.filter { !it.isEmpty() }
 
