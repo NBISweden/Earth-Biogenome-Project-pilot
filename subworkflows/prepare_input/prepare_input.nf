@@ -2,6 +2,8 @@
 
 import org.yaml.snakeyaml.Yaml
 
+include { SAMTOOLS_FASTQ } from "../../modules/nf-core/modules/samtools/fastq/main"
+
 nextflow.enable.dsl = 2
 
 workflow {
@@ -62,6 +64,7 @@ workflow PREPARE_INPUT {
     infile
 
     main:
+    // Read in YAML
     Channel.fromPath( infile )
         .map { file -> readYAML( file ) }
         .multiMap { data ->
@@ -72,16 +75,32 @@ workflow PREPARE_INPUT {
             isoseq_ch   : data.isoseq   ? [ data.sample, data.isoseq.collect { file( it, checkIfExists: true ) } ] : []
         }
         .set{ input }
+
+    // Convert assembly filename to files for correct staging
     input.assembly_ch
         .filter { !it.isEmpty() }
         .transpose()     // Data is [ sample, [id:'assemblerX_build1', path:'/path/to/assembly']]
         .map { sample, assembly -> [ sample, [ id: assembly.id, path: file( assembly.path, checkIfExists: true ) ] ] }
         .set { assembly_ch }
 
+    // Convert HiFi BAMS to FastQ
+    input.hifi_ch
+        .filter { !it.isEmpty() }
+        .transpose()   // Transform to [ [ id: 'sample_name'], file('/path/to/read')  ]
+        .branch { meta, filename ->
+            bam_ch: filename.toString().endsWith(".bam")
+            fastq_ch: true // assume everything else is fastq
+        }.set { hifi }
+    SAMTOOLS_FASTQ ( hifi.bam_ch )
+    hifi.fastq_ch.mix( SAMTOOLS_FASTQ.out.fastq )
+        .groupTuple()
+        .set { hifi_fq_ch }
+
+
     emit:
     assembly = assembly_ch
     hic      = input.hic_ch.filter { !it.isEmpty() }
-    hifi     = input.hifi_ch.filter { !it.isEmpty() }
+    hifi     = hifi_fq_ch
     rnaseq   = input.rnaseq_ch.filter { !it.isEmpty() }
     isoseq   = input.isoseq_ch.filter { !it.isEmpty() }
 

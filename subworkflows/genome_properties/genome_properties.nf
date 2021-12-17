@@ -2,8 +2,6 @@
 
 nextflow.enable.dsl = 2
 
-include { SAMTOOLS_FASTQ      } from "../../modules/nf-core/modules/samtools/fastq/main"
-
 include { KMC_HIST            } from "../../modules/local/kmc/kmc_hist/kmc_hist"
 include { KMC_DUMP            } from "../../modules/local/kmc/kmc_dump/kmc_dump"
 include { GENOMESCOPE         } from "../../modules/local/genomescope/genomescope"
@@ -21,7 +19,7 @@ workflow {
 workflow GENOME_PROPERTIES {
 
     take:
-    reads_ch  // input type: [ [ id: 'sample_name' ], [ file('path/to/reads') ] ]
+    fastx_ch  // input type: [ [ id: 'sample_name' ], [ file('path/to/fastx') ] ]
 
     /* Genome properties workflow:
         - Estimate genome depth of coverage from reads
@@ -29,19 +27,8 @@ workflow GENOME_PROPERTIES {
         - Smudgeplot
     */
     main:
-    reads_ch.transpose()   // Transform to [ [ id: 'sample_name'], file('/path/to/read')  ]
-        .branch { meta, filename ->
-            bam_ch: filename.toString().endsWith(".bam")
-            fastq_ch: true // assume everything else is fastq
-        }.set { input }
-    // Convert BAMS to FASTQ
-    SAMTOOLS_FASTQ( input.bam_ch )
-
     // Generate GenomeScope Profile
-    KMC_HIST ( input.fastq_ch
-        .mix( SAMTOOLS_FASTQ.out.fastq )
-        .groupTuple()
-    )
+    KMC_HIST ( fastx_ch )
     GENOMESCOPE ( KMC_HIST.out.histogram )
 
     // Generate Smudgeplot
