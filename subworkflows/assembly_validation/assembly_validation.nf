@@ -8,7 +8,7 @@ include { PREPARE_INPUT  } from "$projectDir/subworkflows/prepare_input/prepare_
 // include { BUSCO       } from "$projectDir/modules/busco"
 // include { BLOBTOOLKIT } from "$projectDir/modules/blobtoolkit"
 include { QUAST          } from "$projectDir/modules/nf-core/modules/quast/main"
-include { INSPECTOR      } from "$projectDir/modules/inspector/inspector"
+include { INSPECTOR      } from "$projectDir/modules/local/inspector/inspector"
 
 workflow {
 
