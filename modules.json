@@ -1,0 +1,11 @@
+{
+    "name": "Earth Biogenome Project Assembly and Annotation workflow",
+    "homePage": "https://github.com/NBISweden/Earth-Biogenome-Project-pilot",
+    "repos": {
+        "nf-core/modules": {
+            "quast": {
+                "git_sha": "d473a247d2e0c619b0df877ea19d9a5a98c8e3c8"
+            }
+        }
+    }
+}
