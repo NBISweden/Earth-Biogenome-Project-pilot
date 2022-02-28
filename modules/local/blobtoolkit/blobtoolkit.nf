@@ -5,8 +5,8 @@ process BLOBTOOLKIT {
 
     input:
     tuple val(meta), path(reads, stageAs: 'data/*'), path(assembly, stageAs: 'data/*')
-    val  busco_lineages
-    path blobtoolkit_config
+    val busco_lineages
+    // path blobtoolkit_config
     path busco_lineage_path, stageAs: 'databases/busco'
     path uniprot_db        , stageAs: 'databases/uniprot_db'
     path ncbi_nt_db        , stageAs: 'databases/ncbi_db'
@@ -19,7 +19,6 @@ process BLOBTOOLKIT {
     def args   = task.ext.args   ?: ''
     def prefix = task.ext.prefix ?: ''
     """
-    # sed ' stuff ' $blobtoolkit_config > ${prefix}.yaml
     cat << EOF > ${prefix}.yaml
     assembly:
       accession: draft
@@ -62,9 +61,6 @@ process BLOBTOOLKIT {
           tool: diamond
           type: prot
       taxrule: bestsumorder
-    taxon:
-      taxid: 7291
-      name: Drosophila albomicans
     keep_intermediates: true
     EOF
     snakemake -p \\
