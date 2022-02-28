@@ -38,14 +38,13 @@ workflow ASSEMBLY_VALIDATION {
     // BUSCO( assembly )
     // BLOBTOOLKIT( assembly )
     QUAST (
-        assembly_ch
-            .map { sample, assembly -> assembly.path }
+        assembly_ch.map { sample, assembly -> assembly.path }
             .collect(),
         reference_ch,
         [], // gff
         reference_ch, // true / false to use reference_ch
         []
     )
-    INSPECTOR ( reads_ch.join(assembly_ch), reference_ch )
+    INSPECTOR ( reads_ch.join( assembly_ch ), reference_ch )
 
 }
