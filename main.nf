@@ -22,3 +22,11 @@ workflow VALIDATE_ASSEMBLIES {
     )
 
 }
+
+workflow.onComplete {
+    log.info("""\
+    Thank you for using our workflow.
+
+    Results are located in the folder: $params.outdir
+    """)
+}
