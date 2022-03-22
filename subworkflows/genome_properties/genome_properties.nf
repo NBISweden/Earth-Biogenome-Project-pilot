@@ -47,5 +47,4 @@ workflow GENOME_PROPERTIES {
 
     emit:
     versions = versions_ch
-
 }

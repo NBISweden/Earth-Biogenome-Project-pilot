@@ -96,14 +96,12 @@ workflow PREPARE_INPUT {
         .groupTuple()
         .set { hifi_fastx_ch }
 
-
     emit:
     assemblies = assembly_ch
     hic        = input.hic_ch.filter { !it.isEmpty() }
     hifi       = hifi_fastx_ch
     rnaseq     = input.rnaseq_ch.filter { !it.isEmpty() }
     isoseq     = input.isoseq_ch.filter { !it.isEmpty() }
-
 }
 
 def readYAML( yamlfile ) {
