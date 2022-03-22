@@ -1,11 +1,15 @@
-# Earth Biogenome Project Pilot Workflow
+# Earth Biogenome Project - Pilot Workflow
 
 The primary workflow for the Earth Biogenome Project Pilot at NBIS.
 
 ## Usage
 
 ```bash
-nextflow run -params-file <params.yml> [ -c <custom.config> ] [ -profile <profile> ] <nextflow script>
+nextflow run -params-file <params.yml> \
+    [ -c <custom.config> ] \
+    [ -profile <profile> ] \
+    -entry <workflow_module> \
+    NBISweden/Earth-Biogenome-Project-pilot
 ```
 
 where:
@@ -14,7 +18,7 @@ where:
     A [params.yml template](params.yml.TEMPLATE) is provided to copy
     for convenience.
     Alternatively parameters can be provided on the
-    command-line using the `--parameter` notation (e.g., `--samples <path>` ).
+    command-line using the `--parameter` notation (e.g., `--input <path>` ).
 - `<custom.config>` is a nextflow configuration file which provides
     additional configuration (see the [custom.config template](custom.config.TEMPLATE)).
 - `<profile>` is one of the preconfigured execution profiles
@@ -22,6 +26,9 @@ where:
     you can provide a custom configuration to configure this workflow
     to your execution environment. See [Nextflow Configuration](https://www.nextflow.io/docs/latest/config.html#scope-executor)
     for more details.
+- `<workflow_module>` is a specific workflow to run. Choose from:
+  - `INSPECT_DATA`: Runs a data inspection workflow to check the data is sound.
+  - `VALIDATE_ASSEMBLIES`: Runs an assembly validation workflow to check how well assemblies are assembled.
 
 Tool specific (module) parameters are supplied in the [modules file](configs/modules.config).
 These can be overridden in the `nextflow.config` in the analysis directory,
@@ -40,11 +47,11 @@ process {
 
 Mandatory:
 
-- `samples`: A samplesheet containing sample information to analyse.
+- `input`: A YAML formatted input file.
 
 Optional:
 
-- `results`: The publishing path for results (default: `results`).
+- `outdir`: The publishing path for results (default: `results`).
 - `publish_mode`: (values: `'symlink'` (default), `'copy'`) The file
 publishing method from the intermediate results folders
 (see [Table of publish modes](https://www.nextflow.io/docs/latest/process.html#publishdir)).
@@ -59,7 +66,6 @@ publishing method from the intermediate results folders
 
     Uppmax cluster specific:
     - `project`: SNIC Compute allocation number.
-    - `clusterOptions`: Additional Uppmax cluster options (e.g., `-M snowy`).
 
 ### Workflow outputs
 
