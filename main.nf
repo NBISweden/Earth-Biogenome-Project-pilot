@@ -12,7 +12,20 @@ workflow {
 
 }
 
+workflow INSPECT_DATA {
+
+    log.info("""
+    Running NBIS Earth Biogenome Project Data Inspection workflow.
+    """)
+
+    PREPARE_INPUT ( params.input )
+}
+
 workflow VALIDATE_ASSEMBLIES {
+
+    log.info("""
+    Running NBIS Earth Biogenome Project Assembly validation workflow.
+    """)
 
     PREPARE_INPUT ( params.input )
     ASSEMBLY_VALIDATION(
@@ -24,7 +37,7 @@ workflow VALIDATE_ASSEMBLIES {
 }
 
 workflow.onComplete {
-    log.info("""\
+    log.info("""
     Thank you for using our workflow.
 
     Results are located in the folder: $params.outdir
