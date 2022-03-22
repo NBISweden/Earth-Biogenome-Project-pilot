@@ -1,24 +1,9 @@
 #! /usr/bin/env nextflow
 
-nextflow.enable.dsl = 2
-
-// include { VALIDATE_INPUT } from "$projectDir/subworkflows/local/validate_input"
-include { PREPARE_INPUT  } from "$projectDir/subworkflows/prepare_input/prepare_input"
-
 // include { BUSCO       } from "$projectDir/modules/busco"
 // include { BLOBTOOLKIT } from "$projectDir/modules/blobtoolkit"
 include { QUAST          } from "$projectDir/modules/nf-core/modules/quast/main"
 include { INSPECTOR      } from "$projectDir/modules/local/inspector/inspector"
-
-workflow {
-
-    PREPARE_INPUT ( params.input )
-    ASSEMBLY_VALIDATION(
-        PREPARE_INPUT.out.assemblies,
-        PREPARE_INPUT.out.hifi,
-        params.reference ? file( params.reference, checkIfExists:true ) : []
-    )
-}
 
 workflow ASSEMBLY_VALIDATION {
 
