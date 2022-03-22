@@ -12,7 +12,7 @@ workflow {
 
 }
 
-workflow ASSEMBLY_VALIDATION {
+workflow VALIDATE_ASSEMBLIES {
 
     PREPARE_INPUT ( params.input )
     ASSEMBLY_VALIDATION(
