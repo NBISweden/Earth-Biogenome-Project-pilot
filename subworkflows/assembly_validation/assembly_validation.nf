@@ -30,6 +30,10 @@ workflow ASSEMBLY_VALIDATION {
         reference_ch, // true / false to use reference_ch
         []
     )
-    INSPECTOR ( reads_ch.join( assembly_ch ), reference_ch )
+    INSPECTOR (
+        reads_ch.groupTuple()
+            .join( assembly_ch.map { sample, assembly -> [ sample, assembly.path ] } ),
+        reference_ch
+    )
 
 }
