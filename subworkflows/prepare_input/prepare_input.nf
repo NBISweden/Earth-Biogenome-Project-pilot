@@ -98,11 +98,11 @@ workflow PREPARE_INPUT {
 
 
     emit:
-    assembly = assembly_ch
-    hic      = input.hic_ch.filter { !it.isEmpty() }
-    hifi     = hifi_fastx_ch
-    rnaseq   = input.rnaseq_ch.filter { !it.isEmpty() }
-    isoseq   = input.isoseq_ch.filter { !it.isEmpty() }
+    assemblies = assembly_ch
+    hic        = input.hic_ch.filter { !it.isEmpty() }
+    hifi       = hifi_fastx_ch
+    rnaseq     = input.rnaseq_ch.filter { !it.isEmpty() }
+    isoseq     = input.isoseq_ch.filter { !it.isEmpty() }
 
 }
 
