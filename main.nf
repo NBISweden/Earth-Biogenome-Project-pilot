@@ -37,9 +37,19 @@ workflow VALIDATE_ASSEMBLIES {
 }
 
 workflow.onComplete {
-    log.info("""
-    Thank you for using our workflow.
+    if( workflow.success ){
+        log.info("""
+        Thank you for using our workflow.
 
-    Results are located in the folder: $params.outdir
-    """)
+        Results are located in the folder: $params.outdir
+        """)
+    } else {
+        log.info("""
+        The workflow completed unsuccessfully.
+
+        Please read over the error message. If you are unable to solve it, please
+        post an issue at https://github.com/NBISweden/Earth-Biogenome-Project-pilot/issues
+        where we will do our best to help.
+        """)
+    }
 }
