@@ -31,7 +31,7 @@ workflow ASSEMBLY_VALIDATION {
         []
     )
     INSPECTOR (
-        reads_ch.join( assembly_ch.map { sample, assembly -> [ sample, assembly.path ] } ),
+        reads_ch.combine( assembly_ch.map { sample, assembly -> [ sample, assembly.path ] }, by: 0 ),
         reference_ch
     )
 
