@@ -87,6 +87,7 @@ workflow PREPARE_INPUT {
     input.hifi_ch
         .filter { !it.isEmpty() }
         .transpose()   // Transform to [ [ id: 'sample_name'], file('/path/to/read')  ]
+        .map { meta, filename -> meta.single_end = true; [ meta, filename ] } // Necessary for correct nf-core module use
         .branch { meta, filename ->
             bam_ch: filename.toString().endsWith(".bam")
             fastx_ch: true // assume everything else is fastx
