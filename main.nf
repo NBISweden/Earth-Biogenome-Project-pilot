@@ -33,10 +33,10 @@ workflow VALIDATE_ASSEMBLIES {
         PREPARE_INPUT.out.hifi,
         params.reference ? file( params.reference, checkIfExists: true ) : [],
         params.busco_lineages,
-        params.busco_lineage_path,
-        params.uniprot_db,
-        params.ncbi_nt_db,
-        params.ncbi_taxonomy,
+        file( params.busco_lineage_path, checkIfExists: true ),
+        file( params.uniprot_db, checkIfExists: true ),
+        file( params.ncbi_nt_db, checkIfExists: true ),
+        file( params.ncbi_taxonomy, checkIfExists: true )
     )
 
 }

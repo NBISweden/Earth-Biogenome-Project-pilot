@@ -36,12 +36,16 @@ workflow ASSEMBLY_VALIDATION {
         reference_ch, // true / false to use reference_ch
         []
     )
+
+    // Construct input channel = [ [id: 'name'], [ file(read1), file(read2) ], file(assembly) ]
+    id_reads_asm_ch = reads_ch.combine( assembly_ch.map { sample, assembly -> [ sample, assembly.path ] }, by: 0 )
+    
     INSPECTOR (
-        reads_ch.combine( assembly_ch.map { sample, assembly -> [ sample, assembly.path ] }, by: 0 ),
+        id_reads_asm_ch,
         reference_ch
     )
     BLOBTOOLKIT( 
-        reads_ch.combine( assembly_ch.map { sample, assembly -> [ sample, assembly.path ] }, by: 0 ),
+        id_reads_asm_ch,
         busco_lineages,
         busco_lineage_path,
         uniprot_db,
