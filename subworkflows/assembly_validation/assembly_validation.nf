@@ -1,7 +1,7 @@
 #! /usr/bin/env nextflow
 
 // include { BUSCO       } from "$projectDir/modules/busco"
-include { BLOBTOOLKIT    } from "$projectDir/modules/local/blobtoolkit"
+include { BLOBTOOLKIT    } from "$projectDir/modules/local/blobtoolkit/blobtoolkit"
 include { QUAST          } from "$projectDir/modules/nf-core/modules/quast/main"
 include { INSPECTOR      } from "$projectDir/modules/local/inspector/inspector"
 
