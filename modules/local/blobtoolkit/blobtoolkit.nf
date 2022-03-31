@@ -1,5 +1,7 @@
 process BLOBTOOLKIT {
 
+    label 'process_high'
+
     conda "${params.enable_conda ? 'https://github.com/blobtoolkit/pipeline/blob/master/env.yaml' : '' }"
     container 'genomehubs/blobtoolkit:2.6.5'
 
