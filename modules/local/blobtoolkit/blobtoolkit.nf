@@ -3,7 +3,7 @@ process BLOBTOOLKIT {
     label 'process_high'
 
     conda "${params.enable_conda ? 'https://github.com/blobtoolkit/pipeline/blob/master/env.yaml' : '' }"
-    container 'genomehubs/blobtoolkit:2.6.5'
+    container 'genomehubs/blobtoolkit:3.1.3'
 
     input:
     tuple val(meta), path(reads, stageAs: 'data/*'), path(assembly, stageAs: 'data/*')
