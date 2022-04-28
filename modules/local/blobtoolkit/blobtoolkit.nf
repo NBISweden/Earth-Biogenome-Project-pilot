@@ -2,7 +2,7 @@ process BLOBTOOLKIT {
 
     label 'process_high'
 
-    conda "${params.enable_conda ? 'https://github.com/blobtoolkit/pipeline/blob/master/env.yaml' : '' }"
+    // conda "${params.enable_conda ? 'https://github.com/blobtoolkit/pipeline/blob/master/env.yaml' : '' }"
     container 'genomehubs/blobtoolkit:3.1.3'
 
     input:
@@ -19,7 +19,7 @@ process BLOBTOOLKIT {
 
     script:
     def args   = task.ext.args   ?: ''
-    def prefix = task.ext.prefix ?: ''
+    def prefix = task.ext.prefix ?: meta.id
     """
     cat << EOF > ${prefix}.yaml
     assembly:
@@ -67,12 +67,12 @@ process BLOBTOOLKIT {
     EOF
     snakemake -p \\
          --use-conda \\
+         --conda-frontend conda \\
          --conda-prefix .conda \\
          --directory data \\
          --configfile ${prefix}.yaml \\
          --stats ${prefix}.snakemake.stats \\
          -j $task.cpus \\
-         -s /blobtoolkit/insdc-pipeline/Snakefile \\
          --resources btk=1
     """
 }
