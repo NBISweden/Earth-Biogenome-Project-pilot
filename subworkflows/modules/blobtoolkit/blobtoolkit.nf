@@ -3,7 +3,6 @@ include { BLOBTOOLKIT_CREATE } from "$projectDir/modules/local/blobtoolkit/creat
 include { BLOBTOOLKIT_VIEW   } from "$projectDir/modules/local/blobtoolkit/view"
 include { BLAST_BLASTN       } from "$projectDir/modules/nf-core/modules/blast/blastn/main"
 include { DIAMOND_BLASTX     } from "$projectDir/modules/nf-core/modules/diamond/blastx/main"
-include { MINIMAP2_INDEX     } from "$projectDir/modules/nf-core/modules/minimap2/index/main"
 include { MINIMAP2_ALIGN     } from "$projectDir/modules/nf-core/modules/minimap2/align/main"
 
 workflow BLOBTOOLKIT {
