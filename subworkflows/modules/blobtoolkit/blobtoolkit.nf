@@ -19,18 +19,18 @@ workflow BLOBTOOLKIT {
     
     // Generate blob DB
     BLOBTOOLKIT_CREATE ( 
-        assembly_ch.map { sample, reads, assembly -> [ sample, assembly ] }, 
+        read_assembly_ch.map { sample, reads, assembly -> [ sample, assembly ] }, 
         [] // ignore blobtools meta file for now 
     )
     versions_ch = BLOBTOOLKIT_CREATE.out.versions
 
     // Taxonomic hits
     BLAST_BLASTN ( 
-        assembly_ch.map { sample, reads, assembly -> [ sample, assembly ] }, 
+        read_assembly_ch.map { sample, reads, assembly -> [ sample, assembly ] }, 
         ncbi_nt_db 
     )
     DIAMOND_BLASTX ( 
-        assembly_ch.map { sample, reads, assembly -> [ sample, assembly ] },
+        read_assembly_ch.map { sample, reads, assembly -> [ sample, assembly ] },
         uniprot_db 
     )
     versions_ch = versions_ch.mix( BLAST_BLASTN.out.versions, DIAMOND_BLASTX.out.versions )
