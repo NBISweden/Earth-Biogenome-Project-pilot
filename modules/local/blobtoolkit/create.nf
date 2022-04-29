@@ -12,7 +12,7 @@ process BLOBTOOLKIT_CREATE {
     path( blobtools_meta )
 
     output:
-    tuple val(meta), path("$prefix"), emit: blobdir
+    tuple val(meta), path("$prefix"), emit: blobdb
     path "versions.yml"             , emit: versions
 
     when:
