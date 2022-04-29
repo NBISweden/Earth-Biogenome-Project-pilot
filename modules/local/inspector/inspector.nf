@@ -1,6 +1,6 @@
 process INSPECTOR {
 
-    tag "$assembly.baseName"
+    tag "$meta.id"
     label 'process_high'
     // TODO:: Update conda path to correct conda depedencies
     // conda "${params.enable_conda ? 'bioconda::tool=0.0.0' : '' }"
