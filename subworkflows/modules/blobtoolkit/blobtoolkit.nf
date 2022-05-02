@@ -31,7 +31,9 @@ workflow BLOBTOOLKIT {
     )
     DIAMOND_BLASTX ( 
         read_assembly_ch.map { sample, reads, assembly -> [ sample, assembly ] },
-        uniprot_db 
+        uniprot_db,
+        "txt",
+        'qseqid staxids bitscore qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore'
     )
     versions_ch = versions_ch.mix( BLAST_BLASTN.out.versions, DIAMOND_BLASTX.out.versions )
 
