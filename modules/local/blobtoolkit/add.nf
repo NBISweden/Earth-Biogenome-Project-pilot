@@ -14,7 +14,7 @@ process BLOBTOOLKIT_ADD {
     tuple val(meta), path(blobdir)
     path (hits)
     path (coverage)
-    path (busco)
+    path (busco) 
     path (bed)
     path (beddir)
     path (bedtsv)
@@ -37,7 +37,7 @@ process BLOBTOOLKIT_ADD {
         --threads $task.cpus \\
         ${hits.collect{ "--hits $it" }.join("\\\\\n") }
         ${coverage.collect{ "--cov $it "}.join("\\\\\n") }
-        ${busco.collect{ "--busco $it" }.join("\\\\\n") }
+        ${busco.collect{ "--busco $it/full_table*.tsv" }.join("\\\\\n") }
         ${bed.collect{ "--busco $it" }.join("\\\\\n") }
         ${bedtsv.collect{ "--bedtsv $it" }.join("\\\\\n") }
         $tax_dump \\

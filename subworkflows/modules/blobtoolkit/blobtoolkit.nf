@@ -4,6 +4,7 @@ include { BLOBTOOLKIT_VIEW   } from "$projectDir/modules/local/blobtoolkit/view"
 include { BLAST_BLASTN       } from "$projectDir/modules/nf-core/modules/blast/blastn/main"
 include { DIAMOND_BLASTX     } from "$projectDir/modules/nf-core/modules/diamond/blastx/main"
 include { MINIMAP2_ALIGN     } from "$projectDir/modules/nf-core/modules/minimap2/align/main"
+include { BUSCO              } from "$projectDir/modules/nf-core/modules/busco/main"
 
 workflow BLOBTOOLKIT {
     take:
@@ -50,13 +51,19 @@ workflow BLOBTOOLKIT {
     versions_ch = versions_ch.mix( MINIMAP2_ALIGN.out.versions )
 
     // Busco
+    BUSCO (
+        read_assembly_ch.map { sample, reads, assembly -> [ sample, assembly ] },
+        busco_lineages,
+        busco_lineage_path,
+        []
+    )
 
     // Plot
     BLOBTOOLKIT_ADD (
         BLOBTOOLKIT_CREATE.out.blobdb,
         BLAST_BLASTN.out.txt.mix(DIAMOND_BLASTX.out.txt),
         MINIMAP2_ALIGN.out.bam,
-        [], // busco
+        BUSCO.out.busco_dir,
         [], // bed - ignore
         [], // beddir - ignore
         [], // bedtsv - ignore
