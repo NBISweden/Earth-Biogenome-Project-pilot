@@ -1,9 +1,12 @@
 #! /usr/bin/env nextflow
 
-// include { BUSCO       } from "$projectDir/modules/busco"
-include { BLOBTOOLKIT    } from "$projectDir/subworkflows/modules/blobtoolkit/blobtoolkit"
-include { QUAST          } from "$projectDir/modules/nf-core/modules/quast/main"
-include { INSPECTOR      } from "$projectDir/modules/local/inspector/inspector"
+include { BLOBTOOLKIT     } from "$projectDir/subworkflows/modules/blobtoolkit/blobtoolkit"
+include { QUAST           } from "$projectDir/modules/nf-core/modules/quast/main"
+include { MERYL_COUNT     } from "$projectDir/modules/nf-core/modules/meryl/count/main"
+include { MERYL_HISTOGRAM } from "$projectDir/modules/nf-core/modules/meryl/histogram/main"
+include { MERQURY         } from "$projectDir/modules/local/merqury"
+include { INSPECTOR       } from "$projectDir/modules/local/inspector/inspector"
+
 
 workflow ASSEMBLY_VALIDATION {
 
@@ -51,6 +54,13 @@ workflow ASSEMBLY_VALIDATION {
         uniprot_db,
         ncbi_nt_db,
         ncbi_taxonomy 
+    )
+    MERYL_COUNT ( reads_ch )
+    MERYL_HISTOGRAM ( MERYL_COUNT.out.meryl_db )
+    GENOMESCOPE2 ( MERYL_HISTOGRAM.out.hist )
+    MERQURY (
+        MERYL_COUNT.out.meryl_db
+            .combine( assembly_ch.map { sample, assembly -> [ sample, assembly.path ] }, by: 0 )
     )
 
 }
