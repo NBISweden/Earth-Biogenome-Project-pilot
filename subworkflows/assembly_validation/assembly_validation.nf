@@ -3,6 +3,7 @@
 include { BLOBTOOLKIT     } from "$projectDir/subworkflows/modules/blobtoolkit/blobtoolkit"
 include { QUAST           } from "$projectDir/modules/nf-core/modules/quast/main"
 include { MERYL_COUNT     } from "$projectDir/modules/nf-core/modules/meryl/count/main"
+include { MERYL_UNIONSUM  } from "$projectDir/modules/nf-core/modules/meryl/unionsum/main"
 include { MERYL_HISTOGRAM } from "$projectDir/modules/nf-core/modules/meryl/histogram/main"
 include { GENOMESCOPE2    } from "$projectDir/modules/nf-core/modules/genomescope2/main"
 include { MERQURY         } from "$projectDir/modules/local/merqury"
@@ -57,10 +58,11 @@ workflow ASSEMBLY_VALIDATION {
         ncbi_taxonomy 
     )
     MERYL_COUNT ( reads_ch )
-    MERYL_HISTOGRAM ( MERYL_COUNT.out.meryl_db )
+    MERYL_UNIONSUM ( MERYL_COUNT.out.meryl_db )
+    MERYL_HISTOGRAM ( MERYL_UNIONSUM.out.meryl_db )
     GENOMESCOPE2 ( MERYL_HISTOGRAM.out.hist )
     MERQURY (
-        MERYL_COUNT.out.meryl_db
+        MERYL_UNIONSUM.out.meryl_db
             .combine( assembly_ch.map { sample, assembly -> [ sample, assembly.path ] }, by: 0 )
     )
 
