@@ -4,6 +4,7 @@ include { BLOBTOOLKIT     } from "$projectDir/subworkflows/modules/blobtoolkit/b
 include { QUAST           } from "$projectDir/modules/nf-core/modules/quast/main"
 include { MERYL_COUNT     } from "$projectDir/modules/nf-core/modules/meryl/count/main"
 include { MERYL_HISTOGRAM } from "$projectDir/modules/nf-core/modules/meryl/histogram/main"
+include { GENOMESCOPE2    } from "$projectDir/modules/nf-core/modules/genomescope2/main"
 include { MERQURY         } from "$projectDir/modules/local/merqury"
 include { INSPECTOR       } from "$projectDir/modules/local/inspector/inspector"
 
