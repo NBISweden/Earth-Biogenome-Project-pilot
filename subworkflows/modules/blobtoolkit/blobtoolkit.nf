@@ -5,6 +5,7 @@ include { BLAST_BLASTN       } from "$projectDir/modules/nf-core/modules/blast/b
 include { DIAMOND_BLASTX     } from "$projectDir/modules/nf-core/modules/diamond/blastx/main"
 include { MINIMAP2_ALIGN     } from "$projectDir/modules/nf-core/modules/minimap2/align/main"
 include { BUSCO              } from "$projectDir/modules/nf-core/modules/busco/main"
+include { SEQKIT_SPLIT2      } from "$projectDir/modules/nf-core/modules/seqkit/split2/main"
 
 workflow BLOBTOOLKIT {
     take:
@@ -17,26 +18,34 @@ workflow BLOBTOOLKIT {
 
     main:
     // Blobtoolkit workflow : See README.md
+    input = read_assembly_ch.multiMap { sample, reads, assembly -> 
+        read_ch: [ sample, reads ] 
+        asm_ch:  [ sample, assembly ] 
+    }
+
+    // Split assembly for faster taxonomic assignment
+    SEQKIT_SPLIT2 ( input.asm_ch )
+    versions_ch = SEQKIT_SPLIT2.out.versions
     
     // Generate blob DB
     BLOBTOOLKIT_CREATE ( 
-        read_assembly_ch.map { sample, reads, assembly -> [ sample, assembly ] }, 
+        input.asm_ch, 
         [] // ignore blobtools meta file for now 
     )
-    versions_ch = BLOBTOOLKIT_CREATE.out.versions
+    versions_ch = versions_ch.mix(BLOBTOOLKIT_CREATE.out.versions)
 
     // Taxonomic hits
     BLAST_BLASTN ( 
-        read_assembly_ch.map { sample, reads, assembly -> [ sample, assembly ] }, 
+        SEQKIT_SPLIT2.out.reads.transpose(), 
         ncbi_nt_db 
     )
     DIAMOND_BLASTX ( 
-        read_assembly_ch.map { sample, reads, assembly -> [ sample, assembly ] },
+        SEQKIT_SPLIT2.out.reads.transpose(),
         uniprot_db,
         "txt",
         'qseqid staxids bitscore qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore'
     )
-    versions_ch = versions_ch.mix( BLAST_BLASTN.out.versions, DIAMOND_BLASTX.out.versions )
+    versions_ch = versions_ch.mix( BLAST_BLASTN.out.versions.first(), DIAMOND_BLASTX.out.versions.first() )
 
     // Coverage
     MINIMAP2_ALIGN ( 
@@ -52,7 +61,7 @@ workflow BLOBTOOLKIT {
 
     // Busco
     BUSCO (
-        read_assembly_ch.map { sample, reads, assembly -> [ sample, assembly ] },
+        input.asm_ch,
         busco_lineages,
         busco_lineage_path,
         []
@@ -61,7 +70,7 @@ workflow BLOBTOOLKIT {
     // Plot
     BLOBTOOLKIT_ADD (
         BLOBTOOLKIT_CREATE.out.blobdb,
-        BLAST_BLASTN.out.txt.mix(DIAMOND_BLASTX.out.txt),
+        BLAST_BLASTN.out.txt.mix(DIAMOND_BLASTX.out.txt).collect(),
         MINIMAP2_ALIGN.out.bam,
         BUSCO.out.busco_dir,
         [], // bed - ignore
