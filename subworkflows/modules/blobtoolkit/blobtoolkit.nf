@@ -5,7 +5,8 @@ include { BLAST_BLASTN       } from "$projectDir/modules/nf-core/modules/blast/b
 include { DIAMOND_BLASTX     } from "$projectDir/modules/nf-core/modules/diamond/blastx/main"
 include { MINIMAP2_ALIGN     } from "$projectDir/modules/nf-core/modules/minimap2/align/main"
 include { BUSCO              } from "$projectDir/modules/nf-core/modules/busco/main"
-include { SEQKIT_SPLIT2      } from "$projectDir/modules/nf-core/modules/seqkit/split2/main"
+include { SEQKIT_SPLIT2      } from "$projectDir/modules/local/seqkit/seqkit_split2"
+// include { SEQKIT_SPLIT2      } from "$projectDir/modules/nf-core/modules/seqkit/split2/main"
 
 workflow BLOBTOOLKIT {
     take:
