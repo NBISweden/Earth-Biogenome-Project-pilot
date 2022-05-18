@@ -8,7 +8,6 @@ The primary workflow for the Earth Biogenome Project Pilot at NBIS.
 nextflow run -params-file <params.yml> \
     [ -c <custom.config> ] \
     [ -profile <profile> ] \
-    -entry <workflow_module> \
     NBISweden/Earth-Biogenome-Project-pilot
 ```
 
@@ -26,9 +25,6 @@ where:
     you can provide a custom configuration to configure this workflow
     to your execution environment. See [Nextflow Configuration](https://www.nextflow.io/docs/latest/config.html#scope-executor)
     for more details.
-- `<workflow_module>` is a specific workflow to run. Choose from:
-  - `INSPECT_DATA`: Runs a data inspection workflow to check the data is sound.
-  - `VALIDATE_ASSEMBLIES`: Runs an assembly validation workflow to check how well assemblies are assembled.
 
 Tool specific (module) parameters are supplied in the [modules file](configs/modules.config).
 These can be overridden in the `nextflow.config` in the analysis directory,
@@ -55,6 +51,9 @@ Optional:
 - `publish_mode`: (values: `'symlink'` (default), `'copy'`) The file
 publishing method from the intermediate results folders
 (see [Table of publish modes](https://www.nextflow.io/docs/latest/process.html#publishdir)).
+- `kmer_size`: The size of k-mer to use for histogram plotting.
+- `ploidy`: The estimated ploidy.
+- `steps`: The workflow steps to execute ( default is all steps. Choose from [`data_qc`,`preprocess`,`assemble`,`validate`,`curate`] ).
 
     Software specific:
     - `multiqc_config`: Path to MultiQC configuration file (default: `configs/multiqc_conf.yaml`).
