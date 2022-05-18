@@ -2,25 +2,72 @@
 
 nextflow.enable.dsl = 2
 
-include { PREPARE_INPUT  } from "$projectDir/subworkflows/prepare_input/prepare_input"
+include { PREPARE_INPUT   } from "$projectDir/subworkflows/prepare_input/main"
+include { BUILD_DATABASES } from "$projectDir/subworkflows/build_databases/main"
 
 include { ASSEMBLY_VALIDATION } from "$projectDir/subworkflows/assembly_validation/assembly_validation"
 
 workflow {
 
+    // Define constants
+    def workflow_permitted_stages = ['data_qc','preprocess','assemble','validate','curate']
+
+    // Check input
+    def workflow_steps = params.steps.tokenize(",")
+    if ( ! workflow_steps.every { it in workflow_permitted_stages } ) {
+        error "Unrecognised workflow step in $params.steps ( $workflow_permitted_stages )"
+    }
+
     // The primary workflow for the Earth Biogenome Project Pilot
-
-}
-
-workflow INSPECT_DATA {
-
     log.info("""
-    Running NBIS Earth Biogenome Project Data Inspection workflow.
+    Running NBIS Earth Biogenome Project Assembly workflow.
     """)
 
+    // Read in data
     PREPARE_INPUT ( params.input )
+
+    // Build necessary databases
+    BUILD_DATABASES ( 
+        PREPARE_INPUT.out.hifi
+    )
+    
+    // Data inspection
+    if ( 'data_qc' in workflow_steps ) {
+        // QC Steps
+    }
+
+    // Preprocess data
+    if ( 'preprocess' in workflow_steps ) {
+        // Adapter filtering etc
+    }
+    
+    // Assemble
+    if( 'assemble' in workflow_steps ) {
+        // Run assemblers
+    }
+
+    // Curate assemblies 
+    if ( 'curate' in workflow_steps ) {
+        // Break and reassemble misassemblies, separate organelles, etc
+    }
+
+    // Assess assemblies
+    if ( 'validation' in workflow_steps ) {
+        ASSEMBLY_VALIDATION(
+            PREPARE_INPUT.out.assemblies,
+            PREPARE_INPUT.out.hifi,
+            params.reference ? file( params.reference, checkIfExists: true ) : [],
+            params.busco_lineages.tokenize(','),
+            params.busco_lineage_path ? file( params.busco_lineage_path, checkIfExists: true ) : [],
+            file( params.uniprot_db, checkIfExists: true ),
+            file( params.ncbi_nt_db, checkIfExists: true ),
+            file( params.ncbi_taxonomy, checkIfExists: true )
+        )
+    }
+
 }
 
+// Deprecated workflow - TODO: remove workflow
 workflow VALIDATE_ASSEMBLIES {
 
     log.info("""
@@ -44,7 +91,7 @@ workflow VALIDATE_ASSEMBLIES {
 workflow.onComplete {
     if( workflow.success ){
         log.info("""
-        Thank you for using our workflow.
+        Thank you for using the NBIS Earth Biogenome Project Assembly workflow.
 
         Results are located in the folder: $params.outdir
         """)
