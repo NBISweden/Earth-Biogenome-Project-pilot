@@ -3,7 +3,7 @@
 nextflow.enable.dsl = 2
 
 include { PREPARE_INPUT   } from "$projectDir/subworkflows/prepare_input/main"
-include { BUILD_DATABASES } from "$projectDir/subworkflows/build_databases/main"
+// include { BUILD_DATABASES } from "$projectDir/subworkflows/build_databases/main"
 
 include { ASSEMBLY_VALIDATION } from "$projectDir/subworkflows/assembly_validation/assembly_validation"
 
@@ -27,9 +27,9 @@ workflow {
     PREPARE_INPUT ( params.input )
 
     // Build necessary databases
-    BUILD_DATABASES ( 
-        PREPARE_INPUT.out.hifi
-    )
+    // BUILD_DATABASES ( 
+    //     PREPARE_INPUT.out.hifi
+    // )
     
     // Data inspection
     if ( 'data_qc' in workflow_steps ) {
