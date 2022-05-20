@@ -15,6 +15,9 @@
             "genomescope2": {
                 "git_sha": "d54cf467f47461e8304e6fc4a4a1192869bfd792"
             },
+            "mash/sketch": {
+                "git_sha": "e745e167c1020928ef20ea1397b6b4d230681b4d"
+            },
             "meryl/count": {
                 "git_sha": "a43bc940d6aaeaa755b34484cffeb5b41bce92eb"
             },
