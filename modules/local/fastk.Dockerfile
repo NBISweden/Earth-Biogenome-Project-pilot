@@ -3,7 +3,7 @@ FROM ubuntu:20.04 AS builder
 ARG commit_id=f18a4e6d2207539f7b84461daebc54530a9559b0
 RUN apt-get update && apt-get -y install \
     build-essential \
-    git \
+    git=1:2.35.1-1 \
     libz-dev \
     libbz2-dev \
     liblzma-dev \
@@ -19,10 +19,10 @@ FROM ubuntu:20.04
 
 ARG commit_id=f18a4e6d2207539f7b84461daebc54530a9559b0
 LABEL description="A fast K-mer counter for high-fidelity shotgun datasets" \
-      container_author="Mahesh Binzer-Panchal" \
-      version="${commit_id}" \
-      author="Gene Myers" \
-      repo="https://github.com/thegenemyers/FASTK"
+    container_author="Mahesh Binzer-Panchal" \
+    version="${commit_id}" \
+    author="Gene Myers" \
+    repo="https://github.com/thegenemyers/FASTK"
 
 COPY --from=builder /opt/fastk/FastK \
     /opt/fastk/Fastcp \ 
