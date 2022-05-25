@@ -52,7 +52,7 @@ workflow {
     }
 
     // Assess assemblies
-    if ( 'validation' in workflow_steps ) {
+    if ( 'validate' in workflow_steps ) {
         ASSEMBLY_VALIDATION(
             PREPARE_INPUT.out.assemblies,
             PREPARE_INPUT.out.hifi,
