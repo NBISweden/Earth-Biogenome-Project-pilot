@@ -13,8 +13,8 @@ workflow BLOBTOOLKIT {
     read_assembly_ch   // input type: [ [id: 'name'], [ file(read1), file(read2) ], file(assembly) ]
     busco_lineages     // Busco lineages to check against
     busco_lineage_path // Path to Busco lineage files
-    uniprot_db         // Path to Uniprot database
-    ncbi_nt_db         // Path the ncbi nt database
+    diamond_db         // Path to Uniprot database
+    blast_db         // Path the ncbi nt database
     ncbi_taxonomy      // Path to ncbi taxonomy database
 
     main:
@@ -37,12 +37,22 @@ workflow BLOBTOOLKIT {
 
     // Taxonomic hits
     BLAST_BLASTN ( 
-        SEQKIT_SPLIT2.out.reads.transpose(), 
-        ncbi_nt_db 
+        SEQKIT_SPLIT2.out.reads
+            .transpose()
+            .combine(blast_db)
+            .multiMap { meta, reads, database ->
+                queries: [ meta, reads ]
+                db: database
+            }
     )
     DIAMOND_BLASTX ( 
-        SEQKIT_SPLIT2.out.reads.transpose(),
-        uniprot_db,
+        SEQKIT_SPLIT2.out.reads
+            .transpose()
+            .combine(diamond_db)
+            .multiMap { meta, reads, database ->
+                queries: [ meta, reads ]
+                db: database
+            },
         "txt",
         'qseqid staxids bitscore qseqid sseqid pident length mismatch gapopen qstart qend sstart send evalue bitscore'
     )

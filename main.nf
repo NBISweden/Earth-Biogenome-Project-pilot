@@ -59,8 +59,8 @@ workflow {
             params.reference ? file( params.reference, checkIfExists: true ) : [],
             params.busco_lineages.tokenize(','),
             params.busco_lineage_path ? file( params.busco_lineage_path, checkIfExists: true ) : [],
-            file( params.uniprot_db, checkIfExists: true ),
-            file( params.ncbi_nt_db, checkIfExists: true ),
+            Channel.fromPath( params.diamond_db, checkIfExists: true ),
+            Channel.fromPath( params.blast_db, checkIfExists: true ),
             file( params.ncbi_taxonomy, checkIfExists: true )
         )
     }
@@ -68,25 +68,25 @@ workflow {
 }
 
 // Deprecated workflow - TODO: remove workflow
-workflow VALIDATE_ASSEMBLIES {
+// workflow VALIDATE_ASSEMBLIES {
 
-    log.info("""
-    Running NBIS Earth Biogenome Project Assembly validation workflow.
-    """)
+//     log.info("""
+//     Running NBIS Earth Biogenome Project Assembly validation workflow.
+//     """)
 
-    PREPARE_INPUT ( params.input )
-    ASSEMBLY_VALIDATION(
-        PREPARE_INPUT.out.assemblies,
-        PREPARE_INPUT.out.hifi,
-        params.reference ? file( params.reference, checkIfExists: true ) : [],
-        params.busco_lineages.tokenize(','),
-        params.busco_lineage_path ? file( params.busco_lineage_path, checkIfExists: true ) : [],
-        file( params.uniprot_db, checkIfExists: true ),
-        file( params.ncbi_nt_db, checkIfExists: true ),
-        file( params.ncbi_taxonomy, checkIfExists: true )
-    )
+//     PREPARE_INPUT ( params.input )
+//     ASSEMBLY_VALIDATION(
+//         PREPARE_INPUT.out.assemblies,
+//         PREPARE_INPUT.out.hifi,
+//         params.reference ? file( params.reference, checkIfExists: true ) : [],
+//         params.busco_lineages.tokenize(','),
+//         params.busco_lineage_path ? file( params.busco_lineage_path, checkIfExists: true ) : [],
+//         file( params.uniprot_db, checkIfExists: true ),
+//         file( params.ncbi_nt_db, checkIfExists: true ),
+//         file( params.ncbi_taxonomy, checkIfExists: true )
+//     )
 
-}
+// }
 
 workflow.onComplete {
     if( workflow.success ){
