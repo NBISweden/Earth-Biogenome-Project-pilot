@@ -3,7 +3,7 @@ FROM ubuntu:20.04 AS builder
 ARG commit_id=f18a4e6d2207539f7b84461daebc54530a9559b0
 RUN apt-get update && apt-get -y install \
     build-essential \
-    git=1:2.35.1-1 \
+    git \
     libz-dev \
     libbz2-dev \
     liblzma-dev \

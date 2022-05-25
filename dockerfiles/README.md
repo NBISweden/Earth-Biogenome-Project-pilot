@@ -9,7 +9,8 @@ container platforms such as Docker, Singularity/Apptainer, Podman, Shifter, Char
 ## Building a container
 
 Containers are built locally and then pushed to `ghcr.io` (the GitHub Container Registry) where they're hosted 
-and linked to this repository. Docker needs to be installed locally to build and push.
+and linked to this repository. Docker needs to be installed locally to build and push. If you do not have
+docker locally, then building on Gitpod is another alternative.
 
 > **Note**
 > To push to the GitHub Container Registry, you need to first provide Docker with credentials from GitHub.
@@ -22,7 +23,7 @@ as necessary, followed by selecting “Generate token”. Copy the token.
 > Then in your terminal:
 > 
 > ```bash
-> export GHCR_TOKEN=<your_token>
+> GHCR_TOKEN=<your_token>
 > echo "$GHCR_TOKEN" | docker login ghcr.io -u <GitHub username> --password-stdin
 > ```
 
@@ -30,12 +31,18 @@ Check the Dockerfile for any build options (`ARG`) which need to be provided. Th
 build the image in the root of this project with:
 
 ```bash
-docker build --platform=linux/arm64,linux/amd64 -t <image>:<tag> -f </path/to/Dockerfile> .
+docker build --platform=linux/amd64 -t ghcr.io/nbisweden/<image>:<tag> -f </path/to/Dockerfile> .
 ```
 
 where:
-- `--platform=linux/arm64,linux/amd64` means the image will be built to run on both Intel chips (amd64), and Mac M1 chips (arm64).
+- `--platform=linux/amd64` means the image will be built to run on Intel chips (amd64).
 - `<image>` is the name of the software.
 - `<tag>` is the either the software version number if building from a versioned release, or a commit id if building from a version
 controlled source without release versions.
-- `</path/to/Dockerfile>` is the path to the Dockerfile, e.g. `./dockerfiles/fastk.Dockerfile`. 
+- `</path/to/Dockerfile>` is the path to the Dockerfile, e.g. `./dockerfiles/fastk.Dockerfile`.
+
+Once the image has been built (and you've authenticated to ghcr via docker), you can push the image to `ghcr.io`.
+
+```bash
+docker push ghcr.io/nbisweden/<image>:<tag>
+```
