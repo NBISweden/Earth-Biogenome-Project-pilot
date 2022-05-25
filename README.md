@@ -2,6 +2,20 @@
 
 The primary workflow for the Earth Biogenome Project Pilot at NBIS.
 
+## Workflow overview
+
+```mermaid
+flowchart LR
+    hifi[/ HiFi reads /] --> data_inspection
+    ont[/ ONT reads /] -->  data_inspection
+    hic[/ Hi-C reads /] --> data_inspection
+    data_inspection[[ Data inspection ]] --> preprocessing
+    preprocessing[[ Preprocessing ]] --> assemble
+    assemble[[ Assemble ]] --> validation
+    validation[[ Assembly validation ]] --> curation
+    curation[[ Assembly curation ]] --> validation
+```
+
 ## Usage
 
 ```bash
