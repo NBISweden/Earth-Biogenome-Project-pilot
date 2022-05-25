@@ -5,8 +5,8 @@ SHELL ["/bin/bash", "-c"]
 
 # Add metadata to the container using labels.
 LABEL description="Temporary Inspector container" \
-      author="Mahesh Binzer-Panchal" \
-      version="1.0.0"
+    author="Mahesh Binzer-Panchal" \
+    version="1.0.0"
 
 # Change user to root to install things (set to micromamba in base image)
 USER root
