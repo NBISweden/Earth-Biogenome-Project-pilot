@@ -1,4 +1,4 @@
-FROM ubuntu:20.04 AS builder
+FROM ghcr.io/nbisweden/fastk:f18a4e6d2207539f7b84461daebc54530a9559b0 AS builder
 
 ARG commit_id=8f3ab706e4cf4d7b7d1dfe5739859e3ebd26c494
 RUN apt-get update && apt-get -y install \
@@ -15,7 +15,7 @@ RUN git clone https://github.com/thegenemyers/MERQURY.FK.git merquryfk && \
     git reset --hard ${commit_id} && \
     make all
 
-FROM ubuntu:20.04
+FROM ghcr.io/nbisweden/fastk:f18a4e6d2207539f7b84461daebc54530a9559b0
 
 ARG commit_id=8f3ab706e4cf4d7b7d1dfe5739859e3ebd26c494
 LABEL description="FastK based version of Merqury " \
