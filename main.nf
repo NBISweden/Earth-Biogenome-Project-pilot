@@ -2,8 +2,12 @@
 
 nextflow.enable.dsl = 2
 
-include { PREPARE_INPUT   } from "$projectDir/subworkflows/prepare_input/main"
-// include { BUILD_DATABASES } from "$projectDir/subworkflows/build_databases/main"
+include { PREPARE_INPUT } from "$projectDir/subworkflows/prepare_input/main"
+
+include { BUILD_DATABASES as BUILD_HIFI_DATABASES } from "$projectDir/subworkflows/build_databases/main"
+include { BUILD_DATABASES as BUILD_HIC_DATABASES  } from "$projectDir/subworkflows/build_databases/main"
+
+include { GENOME_PROPERTIES } from "$projectDir/subworkflows/genome_properties/genome_properties"
 
 include { ASSEMBLY_VALIDATION } from "$projectDir/subworkflows/assembly_validation/assembly_validation"
 
@@ -27,13 +31,16 @@ workflow {
     PREPARE_INPUT ( params.input )
 
     // Build necessary databases
-    // BUILD_DATABASES ( 
-    //     PREPARE_INPUT.out.hifi
-    // )
+    BUILD_HIFI_DATABASES ( PREPARE_INPUT.out.hifi )
+    BUILD_HIC_DATABASES ( PREPARE_INPUT.out.hic )
     
     // Data inspection
     if ( 'data_qc' in workflow_steps ) {
         // QC Steps
+        GENOME_PROPERTIES( 
+            BUILD_HIFI_DATABASES.out.fastk_histex,
+            BUILD_HIFI_DATABASES.out.meryl_histogram
+        )
     }
 
     // Preprocess data
@@ -56,6 +63,8 @@ workflow {
         ASSEMBLY_VALIDATION(
             PREPARE_INPUT.out.assemblies,
             PREPARE_INPUT.out.hifi,
+            BUILD_HIFI_DATABASES.out.fastk_histogram.join( BUILD_HIFI_DATABASES.out.fastk_ktab ),
+            BUILD_HIFI_DATABASES.out.meryl_uniondb,
             params.reference ? file( params.reference, checkIfExists: true ) : [],
             params.busco_lineages.tokenize(','),
             params.busco_lineage_path ? file( params.busco_lineage_path, checkIfExists: true ) : [],

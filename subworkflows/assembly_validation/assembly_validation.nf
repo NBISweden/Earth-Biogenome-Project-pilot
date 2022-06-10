@@ -2,11 +2,12 @@
 
 include { BLOBTOOLKIT     } from "$projectDir/subworkflows/modules/blobtoolkit/blobtoolkit"
 include { QUAST           } from "$projectDir/modules/nf-core/modules/quast/main"
-include { MERYL_COUNT     } from "$projectDir/modules/nf-core/modules/meryl/count/main"
-include { MERYL_UNIONSUM  } from "$projectDir/modules/nf-core/modules/meryl/unionsum/main"
-include { MERYL_HISTOGRAM } from "$projectDir/modules/nf-core/modules/meryl/histogram/main"
-include { GENOMESCOPE2    } from "$projectDir/modules/nf-core/modules/genomescope2/main"
+// include { MERYL_COUNT     } from "$projectDir/modules/nf-core/modules/meryl/count/main"
+// include { MERYL_UNIONSUM  } from "$projectDir/modules/nf-core/modules/meryl/unionsum/main"
+// include { MERYL_HISTOGRAM } from "$projectDir/modules/nf-core/modules/meryl/histogram/main"
+// include { GENOMESCOPE2    } from "$projectDir/modules/nf-core/modules/genomescope2/main"
 include { MERQURY         } from "$projectDir/modules/local/merqury"
+include { MERQURYFK       } from "$projectDir/modules/local/merquryfk/merquryfk"
 include { INSPECTOR       } from "$projectDir/modules/local/inspector/inspector"
 
 
@@ -15,6 +16,8 @@ workflow ASSEMBLY_VALIDATION {
     take:
     assembly_ch        // input type: [ [ id: 'sample_name' ], [ id:'assemblerX_build1', path:'/path/to/assembly' ] ]
     reads_ch           // input type: [ [ id: 'sample_name' ], [ file('path/to/reads') ] ]
+    fastk_db           // input type: [ [ id: 'sample_name' ], [ file('path/to/reads.hist') ], [ file('/path/to/reads.ktab') ] ]
+    meryl_db           // input type: [ [ id: 'sample_name' ], [ file('path/to/meryl_db') ] ]
     reference_ch       // optional: file( reference_genome ) for comparison
     busco_lineages     // Busco lineages to check against
     busco_lineage_path // Path to Busco lineage files
@@ -40,6 +43,7 @@ workflow ASSEMBLY_VALIDATION {
         reference_ch, // true / false to use reference_ch
         []
     )
+    versions_ch = QUAST.out.versions
 
     // Construct input channel = [ [id: 'name'], [ file(read1), file(read2) ], file(assembly) ]
     id_reads_asm_ch = reads_ch.combine( assembly_ch.map { sample, assembly -> [ sample, assembly.path ] }, by: 0 )
@@ -56,13 +60,24 @@ workflow ASSEMBLY_VALIDATION {
         blast_db,
         ncbi_taxonomy 
     )
-    MERYL_COUNT ( reads_ch )
-    MERYL_UNIONSUM ( MERYL_COUNT.out.meryl_db )
-    MERYL_HISTOGRAM ( MERYL_UNIONSUM.out.meryl_db )
-    GENOMESCOPE2 ( MERYL_HISTOGRAM.out.hist )
+    // MERYL_COUNT ( reads_ch )
+    // MERYL_UNIONSUM ( MERYL_COUNT.out.meryl_db )
+    // MERYL_HISTOGRAM ( MERYL_UNIONSUM.out.meryl_db )
+    // GENOMESCOPE2 ( MERYL_HISTOGRAM.out.hist )
     MERQURY (
-        MERYL_UNIONSUM.out.meryl_db
-            .combine( assembly_ch.map { sample, assembly -> [ sample, assembly.path ] }, by: 0 )
+        meryl_db.combine( assembly_ch.map { sample, assembly -> [ sample, assembly.path ] }, by: 0 )
     )
+    MERQURYFK (
+        fastk_db.combine( assembly_ch.map { sample, assembly -> [ sample, assembly.path ] }, by: 0 )
+    )
+    versions_ch = versions_ch.mix ( 
+        INSPECTOR.out.versions.first(),
+        BLOBTOOLKIT.out.versions.first(),
+        MERQURY.out.versions.first(),
+        MERQURYFK.out.versions.first()
+    )
+
+    emit:
+    versions = versions_ch
 
 }
