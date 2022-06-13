@@ -1,0 +1,17 @@
+# Data set from Galaxy VGP Training material: https://training.galaxyproject.org/training-material//topics/assembly/tutorials/vgp_genome_assembly/tutorial.html
+sample:
+  id: 'Synthetic_S299C_Yeast'
+assembly:
+  - id: 'ref_build'
+    path: 'https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/146/045/GCF_000146045.2_R64/GCF_000146045.2_R64_genomic.fna.gz'
+hic:
+   - 'https://zenodo.org/record/5550653/files/SRR7126301_1.fastq.gz'
+   - 'https://zenodo.org/record/5550653/files/SRR7126301_2.fastq.gz'
+hifi:
+  - 'https://zenodo.org/record/6098306/files/HiFi_synthetic_50x_01.fasta'
+  - 'https://zenodo.org/record/6098306/files/HiFi_synthetic_50x_02.fasta'
+  - 'https://zenodo.org/record/6098306/files/HiFi_synthetic_50x_03.fasta'
+# rnaseq:
+#   - /path/to/reads
+# isoseq:
+#   - /path/to/reads
