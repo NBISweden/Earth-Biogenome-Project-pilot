@@ -6,9 +6,9 @@ include { QUAST           } from "$projectDir/modules/nf-core/modules/quast/main
 // include { MERYL_UNIONSUM  } from "$projectDir/modules/nf-core/modules/meryl/unionsum/main"
 // include { MERYL_HISTOGRAM } from "$projectDir/modules/nf-core/modules/meryl/histogram/main"
 // include { GENOMESCOPE2    } from "$projectDir/modules/nf-core/modules/genomescope2/main"
-include { MERQURY         } from "$projectDir/modules/local/merqury"
-include { MERQURYFK       } from "$projectDir/modules/local/merquryfk/merquryfk"
-include { INSPECTOR       } from "$projectDir/modules/local/inspector/inspector"
+include { MERQURY             } from "$projectDir/modules/local/merqury"
+include { MERQURYFK_MERQURYFK } from "$projectDir/modules/local/merquryfk/merquryfk"
+include { INSPECTOR           } from "$projectDir/modules/local/inspector/inspector"
 
 
 workflow ASSEMBLY_VALIDATION {
@@ -67,14 +67,14 @@ workflow ASSEMBLY_VALIDATION {
     MERQURY (
         meryl_db.combine( assembly_ch.map { sample, assembly -> [ sample, assembly.path ] }, by: 0 )
     )
-    MERQURYFK (
+    MERQURYFK_MERQURYFK (
         fastk_db.combine( assembly_ch.map { sample, assembly -> [ sample, assembly.path ] }, by: 0 )
     )
     versions_ch = versions_ch.mix ( 
         INSPECTOR.out.versions.first(),
         BLOBTOOLKIT.out.versions.first(),
         MERQURY.out.versions.first(),
-        MERQURYFK.out.versions.first()
+        MERQURYFK_MERQURYFK.out.versions.first()
     )
 
     emit:
