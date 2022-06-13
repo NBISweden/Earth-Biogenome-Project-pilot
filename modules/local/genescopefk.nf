@@ -38,7 +38,7 @@ process GENESCOPEFK {
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         genescopefk: $GENESCOPEFK_VERSION
-        r: $( R --version | sed '1!d; s/.*version //; s/ .*//' )
+        r: \$( R --version | sed '1!d; s/.*version //; s/ .*//' )
     END_VERSIONS
     """
 }

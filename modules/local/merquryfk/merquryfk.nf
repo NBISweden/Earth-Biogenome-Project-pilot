@@ -51,7 +51,7 @@ process MERQURYFK_MERQURYFK {
     "${task.process}":
         fastk: $FASTK_VERSION
         merquryfk: $MERQURY_VERSION
-        r: $( R --version | sed '1!d; s/.*version //; s/ .*//' )
+        r: \$( R --version | sed '1!d; s/.*version //; s/ .*//' )
     END_VERSIONS
     """
 }
