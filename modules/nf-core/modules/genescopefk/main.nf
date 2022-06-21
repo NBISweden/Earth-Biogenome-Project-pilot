@@ -2,12 +2,10 @@ process GENESCOPEFK {
     tag "$meta.id"
     label 'process_low'
 
-    // if (params.enable_conda) {
-    //     error "Conda environments cannot be used when using the GeneScopeFK tool. Please use docker or singularity containers."
-    // }
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'ghcr.io/nbisweden/fastk_genescopefk_merquryfk:1.0':
-        'ghcr.io/nbisweden/fastk_genescopefk_merquryfk:1.0' }"
+    if (params.enable_conda) {
+        error "Conda environments cannot be used when using the GeneScope tool. Please use docker or singularity containers."
+    }
+    container 'ghcr.io/nbisweden/fastk_genescopefk_merquryfk:1.0'
 
     input:
     tuple val(meta), path(fastk_histex_histogram)
@@ -27,7 +25,7 @@ process GENESCOPEFK {
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    def GENESCOPEFK_VERSION = '380815c420f50171f9234a0fd1ff426b39829b91' // Git commit id is used instead of GeneScopeFK.R -v as software is not release versioned.
+    def GENESCOPE_VERSION = '380815c420f50171f9234a0fd1ff426b39829b91' // Git commit id is used instead of GeneScopeFK.R -v as software is not release versioned.
     """
     GeneScopeFK.R \\
         $args \\
@@ -37,7 +35,7 @@ process GENESCOPEFK {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        genescopefk: $GENESCOPEFK_VERSION
+        genescope: $GENESCOPE_VERSION
         r: \$( R --version | sed '1!d; s/.*version //; s/ .*//' )
     END_VERSIONS
     """

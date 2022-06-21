@@ -2,12 +2,10 @@ process FASTK_HISTEX {
     tag "$meta.id"
     label 'process_low'
 
-    // if (params.enable_conda) {
-    //     error "Conda environments cannot be used when using the FastK tool. Please use docker or singularity containers."
-    // }
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'ghcr.io/nbisweden/fastk_genescopefk_merquryfk:1.0':
-        'ghcr.io/nbisweden/fastk_genescopefk_merquryfk:1.0' }"
+    if (params.enable_conda) {
+        error "Conda environments cannot be used when using the FastK tool. Please use docker or singularity containers."
+    }
+    container 'ghcr.io/nbisweden/fastk_genescopefk_merquryfk:1.0'
 
     input:
     tuple val(meta), path(histogram)

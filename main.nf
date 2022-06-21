@@ -8,6 +8,7 @@ include { BUILD_DATABASES as BUILD_HIFI_DATABASES } from "$projectDir/subworkflo
 include { BUILD_DATABASES as BUILD_HIC_DATABASES  } from "$projectDir/subworkflows/build_databases/main"
 
 include { GENOME_PROPERTIES } from "$projectDir/subworkflows/genome_properties/genome_properties"
+include { COMPARE_LIBRARIES } from "$projectDir/subworkflows/compare_libraries/compare_libraries"
 
 include { ASSEMBLY_VALIDATION } from "$projectDir/subworkflows/assembly_validation/assembly_validation"
 
@@ -37,9 +38,13 @@ workflow {
     // Data inspection
     if ( 'data_qc' in workflow_steps ) {
         // QC Steps
-        GENOME_PROPERTIES( 
-            BUILD_HIFI_DATABASES.out.fastk_histex,
+        GENOME_PROPERTIES ( 
+            BUILD_HIFI_DATABASES.out.fastk_histogram.join( BUILD_HIFI_DATABASES.out.fastk_ktab ),
             BUILD_HIFI_DATABASES.out.meryl_histogram
+        )
+        COMPARE_LIBRARIES (
+            BUILD_HIFI_DATABASES.out.fastk_histogram.join( BUILD_HIFI_DATABASES.out.fastk_ktab ).join(
+            BUILD_HIC_DATABASES.out.fastk_histogram.join( BUILD_HIC_DATABASES.out.fastk_ktab ) )
         )
     }
 

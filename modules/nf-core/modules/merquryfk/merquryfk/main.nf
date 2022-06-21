@@ -1,13 +1,11 @@
 process MERQURYFK_MERQURYFK {
     tag "$meta.id"
-    label 'process_low'
+    label 'process_medium'
 
-    // if (params.enable_conda) {
-    //     error "Conda environments cannot be used when using the FastK tool. Please use docker or singularity containers."
-    // }
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'ghcr.io/nbisweden/fastk_genescopefk_merquryfk:1.0':
-        'ghcr.io/nbisweden/fastk_genescopefk_merquryfk:1.0' }"
+    if (params.enable_conda) {
+        error "Conda environments cannot be used when using the FastK tool. Please use docker or singularity containers."
+    }
+    container 'ghcr.io/nbisweden/fastk_genescopefk_merquryfk:1.0'
 
     input:
     tuple val(meta), path(fastk_hist), path(fastk_ktab), path(assembly)
@@ -15,7 +13,7 @@ process MERQURYFK_MERQURYFK {
     output:
     tuple val(meta), path("${prefix}.completeness.stats") , emit: stats
     tuple val(meta), path("${prefix}.*_only.bed")         , emit: bed
-    tuple val(meta), path("${prefix}.*.qv")               , emit: genome_qv
+    tuple val(meta), path("${prefix}.*.qv")               , emit: assembly_qv
     tuple val(meta), path("${prefix}.*.spectra-cn.fl.png"), emit: spectra_cn_fl_png,  optional: true
     tuple val(meta), path("${prefix}.*.spectra-cn.fl.pdf"), emit: spectra_cn_fl_pdf,  optional: true
     tuple val(meta), path("${prefix}.*.spectra-cn.ln.png"), emit: spectra_cn_ln_png,  optional: true
