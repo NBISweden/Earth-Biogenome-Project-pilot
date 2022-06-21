@@ -12,6 +12,15 @@
             "diamond/blastx": {
                 "git_sha": "bd3bfe0817246082525ab93707976676b1fe208b"
             },
+            "fastk/fastk": {
+                "git_sha": "4e308c131e29bc2cca3d46ba8f7e59e9d3785198"
+            },
+            "fastk/histex": {
+                "git_sha": "fd5aea0b76c1e5b908191f212382a55a57cee316"
+            },
+            "genescopefk": {
+                "git_sha": "e91e99db30c143ed913313301b53b5454df8720d"
+            },
             "genomescope2": {
                 "git_sha": "d54cf467f47461e8304e6fc4a4a1192869bfd792"
             },
@@ -20,6 +29,15 @@
             },
             "mash/sketch": {
                 "git_sha": "e745e167c1020928ef20ea1397b6b4d230681b4d"
+            },
+            "merquryfk/katcomp": {
+                "git_sha": "280eec531785bdba28faf01bd6dd6b41fabccb8e"
+            },
+            "merquryfk/merquryfk": {
+                "git_sha": "8ded6d441abe1a111c20482fa50ad3837b1747bf"
+            },
+            "merquryfk/ploidyplot": {
+                "git_sha": "0af6adef555e54c2dcf0343646325864cacb5176"
             },
             "meryl/count": {
                 "git_sha": "a43bc940d6aaeaa755b34484cffeb5b41bce92eb"

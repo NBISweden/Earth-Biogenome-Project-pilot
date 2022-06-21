@@ -8,8 +8,11 @@ include { BUILD_DATABASES as BUILD_HIFI_DATABASES } from "$projectDir/subworkflo
 include { BUILD_DATABASES as BUILD_HIC_DATABASES  } from "$projectDir/subworkflows/build_databases/main"
 
 include { GENOME_PROPERTIES } from "$projectDir/subworkflows/genome_properties/genome_properties"
+include { COMPARE_LIBRARIES } from "$projectDir/subworkflows/compare_libraries/compare_libraries"
 
-include { ASSEMBLY_VALIDATION } from "$projectDir/subworkflows/assembly_validation/assembly_validation"
+include { COMPARE_ASSEMBLIES } from "$projectDir/subworkflows/compare_assemblies/compare_assemblies"
+include { EVALUATE_ASSEMBLY  } from "$projectDir/subworkflows/evaluate_assembly/evaluate_assembly"
+// include { ASSEMBLY_VALIDATION } from "$projectDir/subworkflows/assembly_validation/assembly_validation"
 
 workflow {
 
@@ -37,9 +40,13 @@ workflow {
     // Data inspection
     if ( 'data_qc' in workflow_steps ) {
         // QC Steps
-        GENOME_PROPERTIES( 
-            BUILD_HIFI_DATABASES.out.fastk_histex,
+        GENOME_PROPERTIES ( 
+            BUILD_HIFI_DATABASES.out.fastk_histogram.join( BUILD_HIFI_DATABASES.out.fastk_ktab ),
             BUILD_HIFI_DATABASES.out.meryl_histogram
+        )
+        COMPARE_LIBRARIES (
+            BUILD_HIFI_DATABASES.out.fastk_histogram.join( BUILD_HIFI_DATABASES.out.fastk_ktab ).join(
+            BUILD_HIC_DATABASES.out.fastk_histogram.join( BUILD_HIC_DATABASES.out.fastk_ktab ) )
         )
     }
 
@@ -60,42 +67,34 @@ workflow {
 
     // Assess assemblies
     if ( 'validate' in workflow_steps ) {
-        ASSEMBLY_VALIDATION(
+        COMPARE_ASSEMBLIES (
+            PREPARE_INPUT.out.assemblies,
+            params.reference ? file( params.reference, checkIfExists: true ) : []
+        )
+
+        EVALUATE_ASSEMBLY (
             PREPARE_INPUT.out.assemblies,
             PREPARE_INPUT.out.hifi,
             BUILD_HIFI_DATABASES.out.fastk_histogram.join( BUILD_HIFI_DATABASES.out.fastk_ktab ),
-            BUILD_HIFI_DATABASES.out.meryl_uniondb,
             params.reference ? file( params.reference, checkIfExists: true ) : [],
             params.busco_lineages.tokenize(','),
-            params.busco_lineage_path ? file( params.busco_lineage_path, checkIfExists: true ) : [],
-            Channel.fromPath( params.diamond_db, checkIfExists: true ),
-            Channel.fromPath( params.blast_db, checkIfExists: true ),
-            file( params.ncbi_taxonomy, checkIfExists: true )
+            params.busco_lineage_path ? file( params.busco_lineage_path, checkIfExists: true ) : []
         )
+        // ASSEMBLY_VALIDATION(
+        //     PREPARE_INPUT.out.assemblies,
+        //     PREPARE_INPUT.out.hifi,
+        //     BUILD_HIFI_DATABASES.out.fastk_histogram.join( BUILD_HIFI_DATABASES.out.fastk_ktab ),
+        //     BUILD_HIFI_DATABASES.out.meryl_uniondb,
+        //     params.reference ? file( params.reference, checkIfExists: true ) : [],
+        //     params.busco_lineages.tokenize(','),
+        //     params.busco_lineage_path ? file( params.busco_lineage_path, checkIfExists: true ) : [],
+        //     Channel.fromPath( params.diamond_db, checkIfExists: true ),
+        //     Channel.fromPath( params.blast_db, checkIfExists: true ),
+        //     file( params.ncbi_taxonomy, checkIfExists: true )
+        // )
     }
 
 }
-
-// Deprecated workflow - TODO: remove workflow
-// workflow VALIDATE_ASSEMBLIES {
-
-//     log.info("""
-//     Running NBIS Earth Biogenome Project Assembly validation workflow.
-//     """)
-
-//     PREPARE_INPUT ( params.input )
-//     ASSEMBLY_VALIDATION(
-//         PREPARE_INPUT.out.assemblies,
-//         PREPARE_INPUT.out.hifi,
-//         params.reference ? file( params.reference, checkIfExists: true ) : [],
-//         params.busco_lineages.tokenize(','),
-//         params.busco_lineage_path ? file( params.busco_lineage_path, checkIfExists: true ) : [],
-//         file( params.uniprot_db, checkIfExists: true ),
-//         file( params.ncbi_nt_db, checkIfExists: true ),
-//         file( params.ncbi_taxonomy, checkIfExists: true )
-//     )
-
-// }
 
 workflow.onComplete {
     if( workflow.success ){

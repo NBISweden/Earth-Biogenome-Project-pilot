@@ -1,12 +1,7 @@
 #! /usr/bin/env nextflow
 
-include { BLOBTOOLKIT     } from "$projectDir/subworkflows/modules/blobtoolkit/blobtoolkit"
-include { QUAST           } from "$projectDir/modules/nf-core/modules/quast/main"
-// include { MERYL_COUNT     } from "$projectDir/modules/nf-core/modules/meryl/count/main"
-// include { MERYL_UNIONSUM  } from "$projectDir/modules/nf-core/modules/meryl/unionsum/main"
-// include { MERYL_HISTOGRAM } from "$projectDir/modules/nf-core/modules/meryl/histogram/main"
-// include { GENOMESCOPE2    } from "$projectDir/modules/nf-core/modules/genomescope2/main"
-include { MERQURY             } from "$projectDir/modules/local/merqury"
+// include { BLOBTOOLKIT     } from "$projectDir/subworkflows/modules/blobtoolkit/blobtoolkit"
+
 include { MERQURYFK_MERQURYFK } from "$projectDir/modules/local/merquryfk/merquryfk"
 include { INSPECTOR           } from "$projectDir/modules/local/inspector/inspector"
 
@@ -22,7 +17,7 @@ workflow ASSEMBLY_VALIDATION {
     busco_lineages     // Busco lineages to check against
     busco_lineage_path // Path to Busco lineage files
     diamond_db         // Paths to Diamond databases
-    blast_db         // Paths to Blast databases
+    blast_db           // Paths to Blast databases
     ncbi_taxonomy      // Path to ncbi taxonomy database
 
 
@@ -52,24 +47,18 @@ workflow ASSEMBLY_VALIDATION {
         id_reads_asm_ch,
         reference_ch
     )
-    BLOBTOOLKIT( 
-        id_reads_asm_ch,
-        busco_lineages,
-        busco_lineage_path,
-        diamond_db,
-        blast_db,
-        ncbi_taxonomy 
-    )
-    // MERYL_COUNT ( reads_ch )
-    // MERYL_UNIONSUM ( MERYL_COUNT.out.meryl_db )
-    // MERYL_HISTOGRAM ( MERYL_UNIONSUM.out.meryl_db )
-    // GENOMESCOPE2 ( MERYL_HISTOGRAM.out.hist )
-    MERQURY (
-        meryl_db.combine( assembly_ch.map { sample, assembly -> [ sample, assembly.path ] }, by: 0 )
-    )
+    // BLOBTOOLKIT( 
+    //     id_reads_asm_ch,
+    //     busco_lineages,
+    //     busco_lineage_path,
+    //     diamond_db,
+    //     blast_db,
+    //     ncbi_taxonomy 
+    // )
     MERQURYFK_MERQURYFK (
         fastk_db.combine( assembly_ch.map { sample, assembly -> [ sample, assembly.path ] }, by: 0 )
     )
+    
     versions_ch = versions_ch.mix ( 
         INSPECTOR.out.versions.first(),
         BLOBTOOLKIT.out.versions.first(),
