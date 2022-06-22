@@ -26,6 +26,9 @@ process INSPECTOR {
     // tuple val(meta), path("$prefix/read_to_contig.{bam,bai}"), emit: read_to_contigs // Omitting for time being
     path "versions.yml"                                     , emit: versions
 
+    when:
+    task.ext.when == null || task.ext.when
+
     script:
     prefix   = task.ext.prefix ?: meta.id
     def args = task.ext.args   ?: ''

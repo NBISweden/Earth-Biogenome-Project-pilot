@@ -14,6 +14,9 @@ process SAMTOOLS_FASTA {
     tuple val(meta), path("*.fasta.gz"), emit: fasta
     path  "versions.yml"               , emit: versions
 
+    when:
+    task.ext.when == null || task.ext.when
+
     script:
     def args      = task.ext.args   ?: ''
     def prefix    = task.ext.prefix ?: "${meta.id}"
