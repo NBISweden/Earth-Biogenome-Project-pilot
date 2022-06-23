@@ -92,6 +92,11 @@ workflow {
         //     Channel.fromPath( params.blast_db, checkIfExists: true ),
         //     file( params.ncbi_taxonomy, checkIfExists: true )
         // )
+        ASSEMBLY_CONTAMINATION_SCREEN (
+            PREPARE_INPUT.out.assemblies,
+            Channel.fromPath( params.blast_db, checkIfExists: true ),
+            Channel.fromPath( params.diamond_db, checkIfExists: true )
+        )
     }
 
 }
