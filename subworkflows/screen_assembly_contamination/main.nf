@@ -21,7 +21,7 @@ workflow ASSEMBLY_CONTAMINATION_SCREEN {
         assembly_ch
             .combine( blast_db )
             .multiMap { meta, assembly, database ->
-                queries: [ meta, assembly ]
+                queries: [ meta, assembly.primary_asm_path ]
                 db: database
             }
     )
@@ -31,7 +31,7 @@ workflow ASSEMBLY_CONTAMINATION_SCREEN {
         assembly_ch
             .combine( diamond_db )
             .multiMap { meta, assembly, database ->
-                queries: [ meta, assembly ]
+                queries: [ meta, assembly.primary_asm_path ]
                 db: database
             },
         "txt",
