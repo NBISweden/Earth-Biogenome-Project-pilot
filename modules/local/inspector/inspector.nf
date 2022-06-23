@@ -1,5 +1,7 @@
 process INSPECTOR {
 
+    tag "$meta.id"
+    label 'process_high'
     // TODO:: Update conda path to correct conda depedencies
     // conda "${params.enable_conda ? 'bioconda::tool=0.0.0' : '' }"
     // TODO:: Update Singularity and Docker paths to correct container paths
@@ -23,6 +25,9 @@ process INSPECTOR {
     tuple val(meta), path("$prefix/structural_error.bed")   , emit: struct_error_bed
     // tuple val(meta), path("$prefix/read_to_contig.{bam,bai}"), emit: read_to_contigs // Omitting for time being
     path "versions.yml"                                     , emit: versions
+
+    when:
+    task.ext.when == null || task.ext.when
 
     script:
     prefix   = task.ext.prefix ?: meta.id

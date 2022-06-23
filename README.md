@@ -1,11 +1,49 @@
-# Earth Biogenome Project Pilot Workflow
+# Earth Biogenome Project - Pilot Workflow
 
 The primary workflow for the Earth Biogenome Project Pilot at NBIS.
+
+## Workflow overview
+
+General aim:
+
+```mermaid
+flowchart LR
+    hifi[/ HiFi reads /] --> data_inspection
+    ont[/ ONT reads /] -->  data_inspection
+    hic[/ Hi-C reads /] --> data_inspection
+    data_inspection[[ Data inspection ]] --> preprocessing
+    preprocessing[[ Preprocessing ]] --> assemble
+    assemble[[ Assemble ]] --> validation
+    validation[[ Assembly validation ]] --> curation
+    curation[[ Assembly curation ]] --> validation
+```
+
+Current implementation:
+
+```mermaid
+flowchart TD
+    hifi[/ HiFi reads /] --> fastk_hifi[[ FastK - HiFi ]]
+    hic[/ Hi-C reads /] --> fastk_hic[[ FastK - HiC ]]
+    assembly[/ Assembly /] --> quast[[ Quast ]]
+    fastk_hifi --> histex[[ Histex ]]
+    histex --> genescopefk[[ GeneScopeFK ]]
+    fastk_hifi --> ploidyplot[[ PloidyPlot ]]
+    fastk_hifi --> merquryfk[[ MerquryFK ]]
+    assembly --> merquryfk
+    fastk_hifi --> katcomp[[ KatComp ]]
+    fastk_hic --> katcomp
+    assembly --> busco[[ Busco ]]
+    assembly --> inspector[[ Inspector ]]
+    hifi --> inspector
+```
 
 ## Usage
 
 ```bash
-nextflow run -params-file <params.yml> [ -c <custom.config> ] [ -profile <profile> ] <nextflow script>
+nextflow run -params-file <params.yml> \
+    [ -c <custom.config> ] \
+    [ -profile <profile> ] \
+    NBISweden/Earth-Biogenome-Project-pilot
 ```
 
 where:
@@ -14,7 +52,7 @@ where:
     A [params.yml template](params.yml.TEMPLATE) is provided to copy
     for convenience.
     Alternatively parameters can be provided on the
-    command-line using the `--parameter` notation (e.g., `--samples <path>` ).
+    command-line using the `--parameter` notation (e.g., `--input <path>` ).
 - `<custom.config>` is a nextflow configuration file which provides
     additional configuration (see the [custom.config template](custom.config.TEMPLATE)).
 - `<profile>` is one of the preconfigured execution profiles
@@ -40,14 +78,17 @@ process {
 
 Mandatory:
 
-- `samples`: A samplesheet containing sample information to analyse.
+- `input`: A YAML formatted input file.
 
 Optional:
 
-- `results`: The publishing path for results (default: `results`).
+- `outdir`: The publishing path for results (default: `results`).
 - `publish_mode`: (values: `'symlink'` (default), `'copy'`) The file
 publishing method from the intermediate results folders
 (see [Table of publish modes](https://www.nextflow.io/docs/latest/process.html#publishdir)).
+- `kmer_size`: The size of k-mer to use for histogram plotting.
+- `ploidy`: The estimated ploidy.
+- `steps`: The workflow steps to execute ( default is all steps. Choose from [`data_qc`,`preprocess`,`assemble`,`validate`,`curate`] ).
 
     Software specific:
     - `multiqc_config`: Path to MultiQC configuration file (default: `configs/multiqc_conf.yaml`).
@@ -59,7 +100,6 @@ publishing method from the intermediate results folders
 
     Uppmax cluster specific:
     - `project`: SNIC Compute allocation number.
-    - `clusterOptions`: Additional Uppmax cluster options (e.g., `-M snowy`).
 
 ### Workflow outputs
 
