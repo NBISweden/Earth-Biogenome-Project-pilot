@@ -13,12 +13,14 @@ workflow {
 /* params.input example sample sheet (samplesheet.yml)
 ```yaml
 sample:
-  id: ERGA_Artic_Fox
+  id: ERGA_Awesome_Species
 assembly:
   - id: assemblerX_build1
-    path: /path/to/assembly
+    primary_asm_path: /path/to/primary_asm
+    alternate_asm_path: /path/to/alternate_asm
   - id: assemblerY_build1
-    path: /path/to/assembly
+    primary_asm_path: /path/to/primary_asm
+    alternate_asm_path: /path/to/alternate_asm
 hic:
   - /path/to/reads
 hifi:
@@ -31,16 +33,18 @@ isoseq:
 leads to the following YAML data structure
 [
     sample:[
-        id:ERGA_Artic_Fox
+        id: ERGA_Awesome_Species
     ],
     assembly:[
         [
             id:assemblerX_build1,
-            path:/path/to/assembly
+            primary_asm_path: /path/to/primary_asm,
+            alternate_asm_path: /path/to/alternate_asm
         ],
         [
             id:assemblerY_build1,
-            path:/path/to/assembly
+            primary_asm_path: /path/to/primary_asm,
+            alternate_asm_path: /path/to/alternate_asm
         ]
     ],
     hic:[
@@ -79,8 +83,17 @@ workflow PREPARE_INPUT {
     // Convert assembly filename to files for correct staging
     input.assembly_ch
         .filter { !it.isEmpty() }
-        .transpose()     // Data is [ sample, [id:'assemblerX_build1', path:'/path/to/assembly']]
-        .map { sample, assembly -> [ sample, [ id: assembly.id, path: file( assembly.path, checkIfExists: true ) ] ] }
+        .transpose()     // Data is [ sample, [ id:'assemblerX_build1', primary_asm_path: '/path/to/primary_asm', alternate_asm_path: '/path/to/alternate_asm' ]]
+        .map { sample, assembly -> 
+            [
+                sample,
+                [
+                    id: assembly.id,
+                    primary_asm_path: file( assembly.primary_asm_path, checkIfExists: true ),
+                    alternate_asm_path: ( assembly.alternate_asm_path ? file( assembly.alternate_asm_path, checkIfExists: true ) : null )
+                ]
+            ]
+        }
         .set { assembly_ch }
 
     // Convert HiFi BAMS to FastQ

@@ -5,7 +5,7 @@ include { INSPECTOR           } from "$projectDir/modules/local/inspector/inspec
 workflow EVALUATE_ASSEMBLY {
 
     take:
-    assembly_ch        // input type: [ [ id: 'sample_name' ], [ id:'assemblerX_build1', path:'/path/to/assembly' ] ]
+    assembly_ch        // input type: [ [ id: 'sample_name' ], [ id:'assemblerX_build1', primary_asm_path: '/path/to/primary_asm', alternate_asm_path: '/path/to/alternate_asm' ] ]
     reads_ch           // input type: [ [ id: 'sample_name' ], [ file('path/to/reads') ] ]
     fastk_db           // input type: [ [ id: 'sample_name' ], [ file('path/to/reads.hist') ], [ file('/path/to/reads.ktab') ] ]
     reference_ch       // optional: file( reference_genome ) for comparison
@@ -16,18 +16,23 @@ workflow EVALUATE_ASSEMBLY {
 
     // Kmer consistency check
     MERQURYFK_MERQURYFK (
-        fastk_db.combine( assembly_ch.map { sample, assembly -> [ sample, assembly.path ] }, by: 0 )
+        fastk_db.combine( assembly_ch.map { sample, assembly ->
+            [
+                sample, 
+                ( assembly.alternate_asm_path ? [ assembly.primary_asm_path, assembly.alternate_asm_path ] : assembly.primary_asm_path )
+            ] 
+        }, by: 0 )
     )
 
     // Read consistency check
     INSPECTOR (
-        reads_ch.combine( assembly_ch.map { sample, assembly -> [ sample, assembly.path ] }, by: 0 ),
+        reads_ch.combine( assembly_ch.map { sample, assembly -> [ sample, assembly.primary_asm_path ] }, by: 0 ),
         reference_ch
     )
 
     // Evaluate core gene space coverage
     BUSCO (
-        assembly_ch.map { sample, assembly -> [ sample, assembly.path ] },
+        assembly_ch.map { sample, assembly -> [ sample, assembly.primary_asm_path ] },
         busco_lineages,
         busco_lineage_path,
         []
