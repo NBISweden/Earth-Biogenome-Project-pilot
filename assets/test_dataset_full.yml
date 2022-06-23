@@ -4,7 +4,7 @@ sample:
 assembly:
   - id: 'ref_build'
     primary_asm_path: 'http://ftp.ensemblgenomes.org/pub/fungi/release-53/fasta/saccharomyces_cerevisiae/dna/Saccharomyces_cerevisiae.R64-1-1.dna.toplevel.fa.gz'
-    alternate_asm_path: 'http://ftp.ensemblgenomes.org/pub/fungi/release-53/fasta/saccharomyces_cerevisiae/dna/Saccharomyces_cerevisiae.R64-1-1.dna.toplevel.fa.gz'
+    alternate_asm_path: 'http://ftp.ensemblgenomes.org/pub/fungi/release-53/fasta/saccharomyces_cerevisiae/dna/Saccharomyces_cerevisiae.R64-1-1.dna.chromosome.I.fa.gz'
 hic:
    - 'https://zenodo.org/record/5550653/files/SRR7126301_1.fastq.gz'
    - 'https://zenodo.org/record/5550653/files/SRR7126301_2.fastq.gz'
