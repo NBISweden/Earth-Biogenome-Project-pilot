@@ -4,6 +4,8 @@ The primary workflow for the Earth Biogenome Project Pilot at NBIS.
 
 ## Workflow overview
 
+General aim:
+
 ```mermaid
 flowchart LR
     hifi[/ HiFi reads /] --> data_inspection
@@ -14,6 +16,25 @@ flowchart LR
     assemble[[ Assemble ]] --> validation
     validation[[ Assembly validation ]] --> curation
     curation[[ Assembly curation ]] --> validation
+```
+
+Current implementation:
+
+```mermaid
+flowchart TD
+    hifi[/ HiFi reads /] --> fastk_hifi[[ FastK - HiFi ]]
+    hic[/ Hi-C reads /] --> fastk_hic[[ FastK - HiC ]]
+    assembly[/ Assembly /] --> quast[[ Quast ]]
+    fastk_hifi --> histex[[ Histex ]]
+    histex --> genescopefk[[ GeneScopeFK ]]
+    fastk_hifi --> ploidyplot[[ PloidyPlot ]]
+    fastk_hifi --> merquryfk[[ MerquryFK ]]
+    assembly --> merquryfk
+    fastk_hifi --> katcomp[[ KatComp ]]
+    fastk_hic --> katcomp
+    assembly --> busco[[ Busco ]]
+    assembly --> inspector[[ Inspector ]]
+    hifi --> inspector
 ```
 
 ## Usage
