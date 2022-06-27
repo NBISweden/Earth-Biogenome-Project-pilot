@@ -19,20 +19,33 @@ workflow EVALUATE_ASSEMBLY {
         fastk_db.combine( assembly_ch.map { sample, assembly ->
             [
                 sample, 
-                ( assembly.alternate_asm_path ? [ assembly.primary_asm_path, assembly.alternate_asm_path ] : assembly.primary_asm_path )
+                ( assembly.alternate_asm_path ? [ assembly.primary_asm_path, assembly.alternate_asm_path ] : assembly.primary_asm_path ),
+                assembly.id
             ] 
-        }, by: 0 )
+        }, by: 0 ).map {
+            sample, asm_files, build_name -> 
+                [ 
+                    [ id: sample.id , build: build_name ],
+                    asm_files
+                ]
+        }
     )
 
     // Read consistency check
     INSPECTOR (
-        reads_ch.combine( assembly_ch.map { sample, assembly -> [ sample, assembly.primary_asm_path ] }, by: 0 ),
+        reads_ch.combine( assembly_ch.map { sample, assembly -> [ sample, assembly.primary_asm_path, assembly.id ] }, by: 0 )
+            .map { sample, asm_files, build_name -> 
+                [
+                    [ id: sample.id , build: build_name ],
+                    asm_files
+                ]
+            },
         reference_ch
     )
 
     // Evaluate core gene space coverage
     BUSCO (
-        assembly_ch.map { sample, assembly -> [ sample, assembly.primary_asm_path ] },
+        assembly_ch.map { sample, assembly -> [ [ id: sample.id, build: assembly.id ] , assembly.primary_asm_path ] },
         busco_lineages,
         busco_lineage_path,
         []
