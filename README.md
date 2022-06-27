@@ -28,6 +28,7 @@ flowchart TD
     fastk_hifi --> histex[[ Histex ]]
     histex --> genescopefk[[ GeneScopeFK ]]
     fastk_hifi --> ploidyplot[[ PloidyPlot ]]
+    fastk_hifi --> katgc[[ KatGC ]]
     fastk_hifi --> merquryfk[[ MerquryFK ]]
     assembly --> merquryfk
     fastk_hifi --> katcomp[[ KatComp ]]

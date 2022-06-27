@@ -33,6 +33,9 @@
             "merquryfk/katcomp": {
                 "git_sha": "280eec531785bdba28faf01bd6dd6b41fabccb8e"
             },
+            "merquryfk/katgc": {
+                "git_sha": "233fa70811a03a4cecb2ece483b5c8396e2cee1d"
+            },
             "merquryfk/merquryfk": {
                 "git_sha": "8ded6d441abe1a111c20482fa50ad3837b1747bf"
             },
