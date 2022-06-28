@@ -23,9 +23,11 @@ workflow EVALUATE_ASSEMBLY {
                 assembly.id
             ] 
         }, by: 0 ).map {
-            sample, asm_files, build_name -> 
+            sample, fastk_hist, fastk_ktab, asm_files, build_name -> 
                 [ 
                     [ id: sample.id , build: build_name ],
+                    fastk_hist,
+                    fastk_ktab,
                     asm_files
                 ]
         }
@@ -34,9 +36,10 @@ workflow EVALUATE_ASSEMBLY {
     // Read consistency check
     INSPECTOR (
         reads_ch.combine( assembly_ch.map { sample, assembly -> [ sample, assembly.primary_asm_path, assembly.id ] }, by: 0 )
-            .map { sample, asm_files, build_name -> 
+            .map { sample, reads, asm_files, build_name -> 
                 [
                     [ id: sample.id , build: build_name ],
+                    reads,
                     asm_files
                 ]
             },
