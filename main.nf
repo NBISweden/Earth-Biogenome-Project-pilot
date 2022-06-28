@@ -9,6 +9,7 @@ include { BUILD_DATABASES as BUILD_HIC_DATABASES  } from "$projectDir/subworkflo
 
 include { GENOME_PROPERTIES } from "$projectDir/subworkflows/genome_properties/genome_properties"
 include { COMPARE_LIBRARIES } from "$projectDir/subworkflows/compare_libraries/compare_libraries"
+include { SCREEN_READS      } from "$projectDir/subworkflows/screen_read_contamination/main"
 
 include { COMPARE_ASSEMBLIES } from "$projectDir/subworkflows/compare_assemblies/compare_assemblies"
 include { EVALUATE_ASSEMBLY  } from "$projectDir/subworkflows/evaluate_assembly/evaluate_assembly"
@@ -47,6 +48,10 @@ workflow {
         COMPARE_LIBRARIES (
             BUILD_HIFI_DATABASES.out.fastk_histogram.join( BUILD_HIFI_DATABASES.out.fastk_ktab ).join(
             BUILD_HIC_DATABASES.out.fastk_histogram.join( BUILD_HIC_DATABASES.out.fastk_ktab ) )
+        )
+        SCREEN_READS ( 
+            PREPARE_INPUT.out.hifi,
+            file( params.mash_screen_db, checkIfExists: true )
         )
     }
 
