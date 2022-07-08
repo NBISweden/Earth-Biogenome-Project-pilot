@@ -16,11 +16,13 @@ sample:
   id: ERGA_Awesome_Species
 assembly:
   - id: assemblerX_build1
-    primary_asm_path: /path/to/primary_asm
-    alternate_asm_path: /path/to/alternate_asm
+    pri_fasta: /path/to/primary_asm.fasta
+    alt_fasta: /path/to/alternate_asm.fasta
+    pri_gfa: /path/to/primary_asm.gfa
+    alt_gfa: /path/to/alternate_asm.gfa
   - id: assemblerY_build1
-    primary_asm_path: /path/to/primary_asm
-    alternate_asm_path: /path/to/alternate_asm
+    pri_fasta: /path/to/primary_asm.fasta
+    alt_fasta: /path/to/alternate_asm.fasta
 hic:
   - /path/to/reads
 hifi:
@@ -38,13 +40,15 @@ leads to the following YAML data structure
     assembly:[
         [
             id:assemblerX_build1,
-            primary_asm_path: /path/to/primary_asm,
-            alternate_asm_path: /path/to/alternate_asm
+            pri_fasta: /path/to/primary_asm.fasta,
+            alt_fasta: /path/to/alternate_asm.fasta,
+            pri_gfa  : /path/to/primary_asm.gfa,
+            alt_gfa  : /path/to/alternate_asm.gfa
         ],
         [
             id:assemblerY_build1,
-            primary_asm_path: /path/to/primary_asm,
-            alternate_asm_path: /path/to/alternate_asm
+            pri_fasta: /path/to/primary_asm.fasta,
+            alt_fasta: /path/to/alternate_asm.fasta
         ]
     ],
     hic:[
@@ -83,18 +87,20 @@ workflow PREPARE_INPUT {
     // Convert assembly filename to files for correct staging
     input.assembly_ch
         .filter { !it.isEmpty() }
-        .transpose()     // Data is [ sample, [ id:'assemblerX_build1', primary_asm_path: '/path/to/primary_asm', alternate_asm_path: '/path/to/alternate_asm' ]]
+        .transpose()     // Data is [ sample, [ id:'assemblerX_build1', pri_fasta: '/path/to/primary_asm.fasta', alt_fasta: '/path/to/alternate_asm.fasta', pri_gfa: '/path/to/primary_asm.gfa', alt_gfa: '/path/to/alternate_asm.gfa' ]]
         .map { sample, assembly -> 
             [
                 sample,
                 [
                     id: assembly.id,
-                    primary_asm_path: file( assembly.primary_asm_path, checkIfExists: true ),
-                    alternate_asm_path: ( assembly.alternate_asm_path ? file( assembly.alternate_asm_path, checkIfExists: true ) : null )
+                    pri_fasta: file( assembly.pri_fasta, checkIfExists: true ),
+                    alt_fasta: ( assembly.alt_fasta ? file( assembly.alt_fasta, checkIfExists: true ) : null )
+                    pri_gfa  : ( assembly.pri_gfa ? file( assembly.pri_gfa, checkIfExists: true ) : null )
+                    alt_gfa  : ( assembly.alt_gfa ? file( assembly.alt_gfa, checkIfExists: true ) : null )
                 ]
             ]
         }
-        .set { assembly_ch }
+        .set { assembly }
 
     // Convert HiFi BAMS to FastQ
     input.hifi_ch
