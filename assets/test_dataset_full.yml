@@ -6,12 +6,12 @@ assembly:
     pri_fasta: 'http://ftp.ensemblgenomes.org/pub/fungi/release-53/fasta/saccharomyces_cerevisiae/dna/Saccharomyces_cerevisiae.R64-1-1.dna.toplevel.fa.gz'
     alt_fasta: 'http://ftp.ensemblgenomes.org/pub/fungi/release-53/fasta/saccharomyces_cerevisiae/dna/Saccharomyces_cerevisiae.R64-1-1.dna.chromosome.I.fa.gz'
 hic:
-   - 'https://zenodo.org/record/5550653/files/SRR7126301_1.fastq.gz'
-   - 'https://zenodo.org/record/5550653/files/SRR7126301_2.fastq.gz'
+  - read1: 'https://zenodo.org/record/5550653/files/SRR7126301_1.fastq.gz'
+    read2: 'https://zenodo.org/record/5550653/files/SRR7126301_2.fastq.gz'
 hifi:
-  - 'https://zenodo.org/record/6098306/files/HiFi_synthetic_50x_01.fasta'
-  - 'https://zenodo.org/record/6098306/files/HiFi_synthetic_50x_02.fasta'
-  - 'https://zenodo.org/record/6098306/files/HiFi_synthetic_50x_03.fasta'
+  - reads: 'https://zenodo.org/record/6098306/files/HiFi_synthetic_50x_01.fasta'
+  - reads: 'https://zenodo.org/record/6098306/files/HiFi_synthetic_50x_02.fasta'
+  - reads: 'https://zenodo.org/record/6098306/files/HiFi_synthetic_50x_03.fasta'
 # rnaseq:
 #   - /path/to/reads
 # isoseq:

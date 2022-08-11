@@ -24,13 +24,14 @@ assembly:
     pri_fasta: /path/to/primary_asm.fasta
     alt_fasta: /path/to/alternate_asm.fasta
 hic:
-  - /path/to/reads
+  - read1: /path/to/read1.fastq.gz
+    read2: /path/to/read2.fastq.gz
 hifi:
-  - /path/to/reads
+  - reads: /path/to/reads
 rnaseq:
-  - /path/to/reads
+  - reads: /path/to/reads
 isoseq:
-  - /path/to/reads
+  - reads: /path/to/reads
 ```
 leads to the following YAML data structure
 [
@@ -52,16 +53,17 @@ leads to the following YAML data structure
         ]
     ],
     hic:[
-        /path/to/reads
+        read1: /path/to/read1.fastq.gz,
+        read2: /path/to/read2.fastq.gz
     ],
     hifi:[
-        /path/to/reads
+        reads: /path/to/reads
     ],
     rnaseq:[
-        /path/to/reads
+        reads: /path/to/reads
     ],
     isoseq:[
-        /path/to/reads
+        reads: /path/to/reads
     ]
 ]
 */
@@ -76,11 +78,11 @@ workflow PREPARE_INPUT {
     Channel.fromPath( infile )
         .map { file -> readYAML( file ) }
         .multiMap { data ->
-            assembly_ch : data.assembly ? [ data.sample, data.assembly ] : []
-            hic_ch      : data.hic      ? [ data.sample, data.hic.collect { file( it, checkIfExists: true ) } ] : []
-            hifi_ch     : data.hifi     ? [ data.sample, data.hifi.collect { file( it, checkIfExists: true ) } ] : []
-            rnaseq_ch   : data.rnaseq   ? [ data.sample, data.rnaseq.collect { file( it, checkIfExists: true ) } ] : []
-            isoseq_ch   : data.isoseq   ? [ data.sample, data.isoseq.collect { file( it, checkIfExists: true ) } ] : []
+            assembly_ch : ( data.assembly ? [ [ id: data.id ], data.assembly ] : [] )
+            hic_ch      : ( data.hic      ? [ [ id: data.id, single_end: false ], data.hic.collect { [ file( it.read1, checkIfExists: true ), file( it.read2, checkIfExists: true ) ] } ] : [] )
+            hifi_ch     : ( data.hifi     ? [ [ id: data.id, single_end: true ], data.hifi.collect { file( it.reads, checkIfExists: true ) } ] : [] )
+            rnaseq_ch   : ( data.rnaseq   ? [ [ id: data.id ], data.rnaseq.collect { it.reads ? file( it.reads, checkIfExists: true ) : [ file( it.read1, checkIfExists: true ), file( it.read2, checkIfExists: true ) ] } ] : [] )
+            isoseq_ch   : ( data.isoseq   ? [ [ id: data.id, single_end: true ], data.isoseq.collect { file( it.reads, checkIfExists: true ) } ] : [] )
         }
         .set{ input }
 
@@ -102,26 +104,41 @@ workflow PREPARE_INPUT {
         }
         .set { assembly_ch }
 
+    // Combine Hi-C channels
+    yml_input.hic_ch.filter { !it.isEmpty() }
+        .transpose()
+        .set { hic_fastx_ch }
+
+    // Prepare PacBio HiFi channel
     // Convert HiFi BAMS to FastQ
     input.hifi_ch
         .filter { !it.isEmpty() }
         .transpose()   // Transform to [ [ id: 'sample_name'], file('/path/to/read')  ]
-        .map { meta, filename -> meta.single_end = true; [ meta, filename ] } // Necessary for correct nf-core module use
         .branch { meta, filename ->
             bam_ch: filename.toString().endsWith(".bam")
             fastx_ch: true // assume everything else is fastx
         }.set { hifi }
     SAMTOOLS_FASTA ( hifi.bam_ch )
     hifi.fastx_ch.mix( SAMTOOLS_FASTA.out.fasta )
-        .groupTuple()
         .set { hifi_fastx_ch }
 
+    // Prepare RNAseq channel
+    input.rnaseq_ch.filter { !it.isEmpty() }
+        .transpose()
+        .map { meta, reads -> [ [id: meta.id, single_end: reads instanceof Path ], reads ] }
+        .set { rnaseq_fastx_ch }
+
+    // Prepare Isoseq channel
+    input.isoseq_ch.filter { !it.isEmpty() }
+        .transpose()
+        .set { isoseq_fastx_ch }
+
     emit:
-    assemblies = assembly_ch
-    hic        = input.hic_ch.filter { !it.isEmpty() }
-    hifi       = hifi_fastx_ch
-    rnaseq     = input.rnaseq_ch.filter { !it.isEmpty() }
-    isoseq     = input.isoseq_ch.filter { !it.isEmpty() }
+    assemblies = assembly_ch.dump( tag: 'Input: Assemblies' )
+    hic        = hic_fastx_ch.dump( tag: 'Input: Hi-C' )
+    hifi       = hifi_fastx_ch.dump( tag: 'Input: PacBio HiFi' )
+    rnaseq     = rnaseq_fastx_ch.dump( tag: 'Input: Illumina RnaSeq' )
+    isoseq     = isoseq_fastx_ch.dump( tag: 'Input: PacBio IsoSeq' )
 }
 
 def readYAML( yamlfile ) {
