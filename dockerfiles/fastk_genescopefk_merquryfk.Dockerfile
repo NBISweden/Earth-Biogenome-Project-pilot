@@ -1,7 +1,8 @@
 FROM rocker/r-base:4.2.0 AS builder
 
 ARG fastk_commit_id=f18a4e6d2207539f7b84461daebc54530a9559b0
-ARG merquryfk_commit_id=8f3ab706e4cf4d7b7d1dfe5739859e3ebd26c494
+# ARG merquryfk_commit_id=8f3ab706e4cf4d7b7d1dfe5739859e3ebd26c494
+ARG merquryfk_commit_id=8ae344092df5dcaf83cfb7f90f662597a9b1fc61
 ARG genescope_commit_id=380815c420f50171f9234a0fd1ff426b39829b91
 
 RUN apt-get update && apt-get -y install \
@@ -17,7 +18,8 @@ RUN git clone https://github.com/thegenemyers/FASTK.git fastk && \
     cd fastk && \
     git reset --hard ${fastk_commit_id} && \
     make all
-RUN git clone https://github.com/thegenemyers/MERQURY.FK.git merquryfk && \
+# RUN git clone https://github.com/thegenemyers/MERQURY.FK.git merquryfk && \
+RUN git clone https://github.com/mahesh-panchal/MERQURY.FK.git merquryfk && \
     cd merquryfk && \
     git reset --hard ${merquryfk_commit_id} && \
     make all
@@ -30,7 +32,7 @@ ARG genescope_commit_id=380815c420f50171f9234a0fd1ff426b39829b91
 
 LABEL description="A container with FastK, GeneScopeFK, and MerquryFK" \
     container_author="Mahesh Binzer-Panchal" \
-    version="1.0" \
+    version="1.1" \
     fastk_commit_id="${fastk_commit_id}" \
     merquryfk_commit_id="${merquryfk_commit_id}" \
     genescope_commit_id="${genescope_commit_id}" \
