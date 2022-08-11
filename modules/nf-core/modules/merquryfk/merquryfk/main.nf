@@ -5,7 +5,7 @@ process MERQURYFK_MERQURYFK {
     if (params.enable_conda) {
         error "Conda environments cannot be used when using the FastK tool. Please use docker or singularity containers."
     }
-    container 'ghcr.io/nbisweden/fastk_genescopefk_merquryfk:1.0'
+    container 'ghcr.io/nbisweden/fastk_genescopefk_merquryfk:1.1'
 
     input:
     tuple val(meta), path(fastk_hist), path(fastk_ktab), path(assembly)
@@ -44,6 +44,8 @@ process MERQURYFK_MERQURYFK {
         ${fastk_ktab.find{ it.toString().endsWith(".ktab") }} \\
         $assembly \\
         $prefix
+
+    mv .cni ${prefix}.cni
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
