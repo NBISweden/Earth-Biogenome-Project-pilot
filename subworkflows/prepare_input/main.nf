@@ -94,13 +94,13 @@ workflow PREPARE_INPUT {
                 [
                     id: assembly.id,
                     pri_fasta: file( assembly.pri_fasta, checkIfExists: true ),
-                    alt_fasta: ( assembly.alt_fasta ? file( assembly.alt_fasta, checkIfExists: true ) : null )
-                    pri_gfa  : ( assembly.pri_gfa ? file( assembly.pri_gfa, checkIfExists: true ) : null )
+                    alt_fasta: ( assembly.alt_fasta ? file( assembly.alt_fasta, checkIfExists: true ) : null ),
+                    pri_gfa  : ( assembly.pri_gfa ? file( assembly.pri_gfa, checkIfExists: true ) : null ),
                     alt_gfa  : ( assembly.alt_gfa ? file( assembly.alt_gfa, checkIfExists: true ) : null )
                 ]
             ]
         }
-        .set { assembly }
+        .set { assembly_ch }
 
     // Convert HiFi BAMS to FastQ
     input.hifi_ch
