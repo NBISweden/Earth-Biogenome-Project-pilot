@@ -1,0 +1,17 @@
+# Test data from nf-core
+sample:
+    id: 'HSapiens_test'
+  assembly:
+    - id: 'HS_diploid'
+      pri_fasta: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/illumina/fasta/scaffolds.fasta'
+      alt_fasta: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/illumina/fasta/scaffolds.fasta'
+  hic:
+    - read1: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/illumina/fastq/test_1.fastq.gz'
+      read2: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/illumina/fastq/test_1.fastq.gz'
+  hifi:
+    - reads: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/illumina/bam/test.single_end.bam'
+  rnaseq:
+    - read1: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/illumina/fastq/test_1.fastq.gz'
+      read2: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/illumina/fastq/test_1.fastq.gz'
+  isoseq:
+    - reads: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/sarscov2/illumina/bam/test.single_end.bam'
