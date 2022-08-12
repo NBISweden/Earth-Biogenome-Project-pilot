@@ -15,7 +15,7 @@ workflow BUILD_DATABASES {
     fkdb_ch = FASTK_FASTK.out.hist.groupTuple()
         .join( FASTK_FASTK.out.ktab.groupTuple(), remainder: true )
         .join( FASTK_FASTK.out.prof.groupTuple(), remainder: true )
-        .map { meta, hist, ktab, prof -> [meta, hist, ktab ? ktab.flatten() : [] , prof ? prof.flatten() : [] ] }
+        .map { meta, hist, ktab, prof -> [meta.findAll { it.key != 'single_end' } , hist, ktab ? ktab.flatten() : [] , prof ? prof.flatten() : [] ] }
         .branch { meta, hist, ktab, prof ->
             single_hist: hist.size() == 1
             multi_hist : hist.size() > 1

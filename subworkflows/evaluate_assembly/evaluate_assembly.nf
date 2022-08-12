@@ -34,17 +34,18 @@ workflow EVALUATE_ASSEMBLY {
     )
 
     // Read consistency check
-    INSPECTOR (
-        reads_ch.combine( assembly_ch.map { sample, assembly -> [ sample, assembly.pri_fasta, assembly.id ] }, by: 0 )
-            .map { sample, reads, asm_files, build_name -> 
-                [
-                    sample + [ build: build_name ],
-                    reads,
-                    asm_files
-                ]
-            },
-        reference_ch
-    )
+    // INSPECTOR (
+    //     reads_ch.map { meta, files -> [ meta.findAll { it.key != 'single_end' }, files ] } // strip read pairing info from meta map
+    //         .combine( assembly_ch.map { sample, assembly -> [ sample, assembly.pri_fasta, assembly.id ] }, by: 0 )
+    //         .map { sample, reads, asm_files, build_name -> 
+    //             [
+    //                 sample + [ build: build_name ],
+    //                 reads,
+    //                 asm_files
+    //             ]
+    //         },
+    //     reference_ch
+    // )
 
     // Evaluate core gene space coverage
     BUSCO (
