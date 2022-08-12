@@ -11,7 +11,7 @@ workflow BUILD_DATABASES {
 
     main:
     // Build Meryl or Fastk databases (Containers -> FastK, Conda -> Meryl)
-    FASTK_FASTK ( fastx_data.transpose() )
+    FASTK_FASTK ( fastx_data )
     fkdb_ch = FASTK_FASTK.out.hist.groupTuple()
         .join( FASTK_FASTK.out.ktab.groupTuple(), remainder: true )
         .join( FASTK_FASTK.out.prof.groupTuple(), remainder: true )
@@ -26,7 +26,7 @@ workflow BUILD_DATABASES {
         ktab: [ meta, ktab ]
         prof: [ meta, prof ]
     }
-    versions_ch = FASTK_FASTK.out.versions.first().mix(FASTK_MERGE.out.versions.first())
+    versions_ch = FASTK_FASTK.out.versions.first().mix( FASTK_MERGE.out.versions.first() )
         
     MERYL_COUNT ( fastx_data )
     MERYL_UNIONSUM ( MERYL_COUNT.out.meryl_db )

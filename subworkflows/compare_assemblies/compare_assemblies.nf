@@ -8,7 +8,7 @@ workflow COMPARE_ASSEMBLIES {
 
     main:
     QUAST (
-        assembly_ch.map { sample, assembly -> assembly.primary_asm_path }
+        assembly_ch.map { sample, assembly -> assembly.pri_fasta }
             .collect(),
         reference_ch,
         [], // gff

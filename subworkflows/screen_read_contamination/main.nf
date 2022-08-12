@@ -8,7 +8,7 @@ workflow SCREEN_READS {
     mash_screen_db_sketch
 
     main:
-    MASH_SCREEN ( reads_ch.transpose(), mash_screen_db_sketch )
+    MASH_SCREEN ( reads_ch, mash_screen_db_sketch )
     MASH_FILTER ( MASH_SCREEN.out.screen.groupTuple() )
 
     // TODO: Visualise results

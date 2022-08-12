@@ -109,7 +109,7 @@ workflow PREPARE_INPUT {
         .set { assembly_ch }
 
     // Combine Hi-C channels
-    yml_input.hic_ch.filter { !it.isEmpty() }
+    input.hic_ch.filter { !it.isEmpty() }
         .transpose()
         .set { hic_fastx_ch }
 
