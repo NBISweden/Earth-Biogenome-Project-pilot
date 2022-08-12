@@ -13,7 +13,9 @@ workflow {
 /* params.input example sample sheet (samplesheet.yml)
 ```yaml
 sample:
-  id: ERGA_Awesome_Species
+  id: Awesome_Species
+  kmer_size: 31
+  ploidy: 2
 assembly:
   - id: assemblerX_build1
     pri_fasta: /path/to/primary_asm.fasta
@@ -36,7 +38,9 @@ isoseq:
 leads to the following YAML data structure
 [
     sample:[
-        id: ERGA_Awesome_Species
+        id: Awesome_Species
+        kmer_size: 31
+        ploidy: 2
     ],
     assembly:[
         [
@@ -78,11 +82,11 @@ workflow PREPARE_INPUT {
     Channel.fromPath( infile )
         .map { file -> readYAML( file ) }
         .multiMap { data ->
-            assembly_ch : ( data.assembly ? [ [ id: data.id ], data.assembly ] : [] )
-            hic_ch      : ( data.hic      ? [ [ id: data.id, single_end: false ], data.hic.collect { [ file( it.read1, checkIfExists: true ), file( it.read2, checkIfExists: true ) ] } ] : [] )
-            hifi_ch     : ( data.hifi     ? [ [ id: data.id, single_end: true ], data.hifi.collect { file( it.reads, checkIfExists: true ) } ] : [] )
-            rnaseq_ch   : ( data.rnaseq   ? [ [ id: data.id ], data.rnaseq.collect { it.reads ? file( it.reads, checkIfExists: true ) : [ file( it.read1, checkIfExists: true ), file( it.read2, checkIfExists: true ) ] } ] : [] )
-            isoseq_ch   : ( data.isoseq   ? [ [ id: data.id, single_end: true ], data.isoseq.collect { file( it.reads, checkIfExists: true ) } ] : [] )
+            assembly_ch : ( data.assembly ? [ data.sample, data.assembly ] : [] )
+            hic_ch      : ( data.hic      ? [ data.sample + [ single_end: false ], data.hic.collect { [ file( it.read1, checkIfExists: true ), file( it.read2, checkIfExists: true ) ] } ] : [] )
+            hifi_ch     : ( data.hifi     ? [ data.sample + [ single_end: true ], data.hifi.collect { file( it.reads, checkIfExists: true ) } ] : [] )
+            rnaseq_ch   : ( data.rnaseq   ? [ data.sample, data.rnaseq.collect { it.reads ? file( it.reads, checkIfExists: true ) : [ file( it.read1, checkIfExists: true ), file( it.read2, checkIfExists: true ) ] } ] : [] )
+            isoseq_ch   : ( data.isoseq   ? [ data.sample + [ single_end: true ], data.isoseq.collect { file( it.reads, checkIfExists: true ) } ] : [] )
         }
         .set{ input }
 
@@ -125,7 +129,7 @@ workflow PREPARE_INPUT {
     // Prepare RNAseq channel
     input.rnaseq_ch.filter { !it.isEmpty() }
         .transpose()
-        .map { meta, reads -> [ [id: meta.id, single_end: reads instanceof Path ], reads ] }
+        .map { meta, reads -> [ meta + [ single_end: reads instanceof Path ], reads ] }
         .set { rnaseq_fastx_ch }
 
     // Prepare Isoseq channel
