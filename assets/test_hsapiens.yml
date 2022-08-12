@@ -1,7 +1,7 @@
 # Test data from nf-core
 sample:
     id: 'HSapiens_test'
-    kmer: 31
+    kmer_size: 31
     ploidy: 2
   assembly:
     - id: 'HS_phased_diploid'
