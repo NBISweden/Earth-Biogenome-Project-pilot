@@ -27,7 +27,8 @@ process MERQURYFK_MERQURYFK {
     tuple val(meta), path("${prefix}.spectra-asm.ln.pdf")    , emit: spectra_asm_ln_pdf, optional: true
     tuple val(meta), path("${prefix}.spectra-asm.st.png")    , emit: spectra_asm_st_png, optional: true
     tuple val(meta), path("${prefix}.spectra-asm.st.pdf")    , emit: spectra_asm_st_pdf, optional: true
-    tuple val(meta), path("${prefix}.false_duplications.tsv"), emit: false_duplications
+    tuple val(meta), path("${prefix}*.false_duplications.tsv"), emit: false_duplications
+    tuple val(meta), path("${prefix}.cni"), emit: temp_copy_count
     path "versions.yml"                                      , emit: versions
 
     when:
@@ -47,8 +48,8 @@ process MERQURYFK_MERQURYFK {
         $prefix
 
     mv .cni ${prefix}.cni
-    # adapted from https://github.com/marbl/merqury/blob/master/eval/false_duplications.sh
-    awk -f $projectDir/bin/false_duplications.awk ${prefix}.cni > ${prefix}.false_duplications.tsv
+    awk -f $projectDir/bin/false_duplications.awk ${prefix}.cni > ${prefix}.awk.false_duplications.tsv
+    bash $projectDir/bin/false_duplications.sh ${prefix}.cni > ${prefix}.bash.false_duplications.tsv
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

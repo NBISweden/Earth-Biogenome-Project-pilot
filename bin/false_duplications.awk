@@ -1,3 +1,4 @@
+# Code adapted from https://github.com/marbl/merqury/blob/master/eval/false_duplications.sh
 $1==1 && max < $3 {
     max  = $3
     cutoff = sprintf("%.0f",$2 * 1.5)
