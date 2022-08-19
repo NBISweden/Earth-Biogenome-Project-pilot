@@ -19,6 +19,5 @@ END {
     }
     OFS="\t"
     print "hist", "cutoff", "1", "2", "3", "4", ">4", "dup(>1)", "all", "dups%"
-    print FILENAME, cutoff, cp_sum[1], cp_sum[2], cp_sum[3], cp_sum[4], cp_sum[5], dup, dup+cp_sum[1], (100*dup
-)/(dup+cp_sum[1])
+    print FILENAME, cutoff, cp_sum[1], cp_sum[2], cp_sum[3], cp_sum[4], cp_sum[5], dup, dup+cp_sum[1], (100*dup)/(dup+cp_sum[1])
 }
