@@ -28,6 +28,7 @@ process MERQURYFK_MERQURYFK {
     tuple val(meta), path("${prefix}.spectra-asm.st.png")    , emit: spectra_asm_st_png, optional: true
     tuple val(meta), path("${prefix}.spectra-asm.st.pdf")    , emit: spectra_asm_st_pdf, optional: true
     tuple val(meta), path("${prefix}.false_duplications.tsv"), emit: false_duplications
+    tuple val(meta), path("${prefix}.cni.gz")                , emit: cn_histogram
     path "versions.yml"                                      , emit: versions
 
     when:
@@ -48,6 +49,7 @@ process MERQURYFK_MERQURYFK {
 
     mv .cni ${prefix}.cni
     awk -f $projectDir/bin/false_duplications.awk ${prefix}.cni > ${prefix}.false_duplications.tsv
+    gzip ${prefix}.cni
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
