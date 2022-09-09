@@ -48,7 +48,9 @@ process MERQURYFK_MERQURYFK {
         $prefix
 
     mv .cni ${prefix}.cni
-    awk -f $projectDir/bin/false_duplications.awk ${prefix}.cni > ${prefix}.false_duplications.tsv
+    awk -v asm_ploidy=${assembly instanceof List ? assembly.size() : 1} \\
+        -f $projectDir/bin/false_duplications.awk ${prefix}.cni \\
+        > ${prefix}.false_duplications.tsv
     gzip ${prefix}.cni
 
     cat <<-END_VERSIONS > versions.yml
