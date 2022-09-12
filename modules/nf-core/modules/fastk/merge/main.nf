@@ -30,6 +30,7 @@ process FASTK_MERGE {
         -T$task.cpus \\
         ${prefix} \\
         $hist
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         fastk: $FASTK_VERSION
