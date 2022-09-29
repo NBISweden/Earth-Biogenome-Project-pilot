@@ -72,7 +72,8 @@ RUN apt-get update && apt-get -y install \
     libz-dev \
     libbz2-dev \
     liblzma-dev \
-    libcurl4-openssl-dev
+    libcurl4-openssl-dev \
+    procps
 
 WORKDIR /opt
 RUN git clone https://github.com/thegenemyers/GENESCOPE.FK.git genescopefk && \
