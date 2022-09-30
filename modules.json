@@ -25,6 +25,10 @@
                     "branch": "master",
                     "git_sha": "233fa70811a03a4cecb2ece483b5c8396e2cee1d"
                 },
+                "kraken2/kraken2": {
+                    "branch": "master",
+                    "git_sha": "409a308ba46284d8ebb48c2c1befd6f6433db3f7"
+                },
                 "mash/screen": {
                     "branch": "master",
                     "git_sha": "c452f562890534ca3d0a331de7c35b744037fdae"
