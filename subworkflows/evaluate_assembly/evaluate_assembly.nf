@@ -1,6 +1,6 @@
 include { BUSCO               } from "$projectDir/modules/nf-core/modules/busco/main"
-include { MERQURYFK_MERQURYFK } from "$projectDir/modules/nf-core/modules/merquryfk/merquryfk/main"
-include { INSPECTOR           } from "$projectDir/modules/local/inspector/inspector"
+include { MERQURYFK_MERQURYFK } from "$projectDir/modules/local/merquryfk/merquryfk"
+// include { INSPECTOR           } from "$projectDir/modules/local/inspector/inspector"
 
 workflow EVALUATE_ASSEMBLY {
 
@@ -49,8 +49,14 @@ workflow EVALUATE_ASSEMBLY {
 
     // Evaluate core gene space coverage
     BUSCO (
-        assembly_ch.map { sample, assembly -> [ sample + [ build: assembly.id ] , assembly.pri_fasta ] },
-        busco_lineages,
+        assembly_ch.map { sample, assembly -> [ sample + [ build: assembly.id ] , assembly.pri_fasta ] }
+            .combine(busco_lineages.toList())
+            .flatMap { meta, asm, lines -> lines.collect{ [ meta, asm, it ] } }
+            .dump(tag: 'BUSCO')
+            .multiMap { meta, asm, line ->
+                asm_ch: [ meta, asm ]
+                lin_ch: line
+            },
         busco_lineage_path,
         []
     )

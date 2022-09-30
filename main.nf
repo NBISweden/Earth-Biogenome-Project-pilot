@@ -43,7 +43,7 @@ workflow {
         // QC Steps
         GENOME_PROPERTIES ( 
             BUILD_HIFI_DATABASES.out.fastk_histogram.join( BUILD_HIFI_DATABASES.out.fastk_ktab ),
-            BUILD_HIFI_DATABASES.out.meryl_histogram
+            // BUILD_HIFI_DATABASES.out.meryl_histogram
         )
         COMPARE_LIBRARIES (
             BUILD_HIFI_DATABASES.out.fastk_histogram.join( BUILD_HIFI_DATABASES.out.fastk_ktab ).join(
@@ -82,7 +82,7 @@ workflow {
             PREPARE_INPUT.out.hifi,
             BUILD_HIFI_DATABASES.out.fastk_histogram.join( BUILD_HIFI_DATABASES.out.fastk_ktab ),
             params.reference ? file( params.reference, checkIfExists: true ) : [],
-            params.busco_lineages.tokenize(','),
+            Channel.of( params.busco_lineages.tokenize(',') ),
             params.busco_lineage_path ? file( params.busco_lineage_path, checkIfExists: true ) : []
         )
         // ASSEMBLY_VALIDATION(
