@@ -25,7 +25,7 @@ process FINDMITOREF {
     tuple val(meta)
 
     output:
-    tuple val(meta), path("*.fasta"), emit: fasta
+    tuple val(meta), path("*.fasta"), emit: mitoref
     tuple val(meta), path("*.gb")   , emit: gb
 
     path "versions.yml"             , emit: versions
