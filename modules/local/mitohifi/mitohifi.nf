@@ -35,10 +35,10 @@ process MITOHIFI {
     tuple val(meta), path(fasta)
 
     output:
-    // TODO nf-core: Named file extensions MUST be emitted for ALL output channels
-    tuple val(meta), path("*.bam"), emit: bam
-    // TODO nf-core: List additional required output channels/values here
-    path "versions.yml"           , emit: versions
+    tuple val(meta), path("final_mitogenome.fasta"), emit: fasta
+    tuple val(meta), path("final_mitogenome.gb")   , emit: gb
+    tuple val(meta), path("contigs_stats.tsv")     , emit: tsv
+    path "versions.yml"                            , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
