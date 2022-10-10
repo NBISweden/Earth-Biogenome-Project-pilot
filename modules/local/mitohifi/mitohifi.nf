@@ -53,17 +53,16 @@ process MITOHIFI {
     // TODO nf-core: Please replace the example samtools command below with your module's command
     // TODO nf-core: Please indent the command appropriately (4 spaces!!) to help with readability ;)
     """
-    samtools \\
-        sort \\
-        $args \\
-        -@ $task.cpus \\
-        -o ${prefix}.bam \\
-        -T $prefix \\
-        $bam
+    mitohifi.py \\
+    -c ${prefix}.fasta \\
+    -f ${prefix}.fasta \\
+    -g ${prefix}.gb \\
+    -t $task.cpus \\
+    $args
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        mitohifi: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//' ))
+        mitohifi: \$( mitohifi.py --version )
     END_VERSIONS
     """
 }
