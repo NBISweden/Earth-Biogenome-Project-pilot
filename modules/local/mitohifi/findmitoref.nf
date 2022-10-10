@@ -31,13 +31,14 @@ process FINDMITOREF {
     //               https://github.com/nf-core/modules/blob/master/modules/bwa/index/main.nf
     // TODO nf-core: Where applicable please provide/convert compressed files as input/output
     //               e.g. "*.fastq.gz" and NOT "*.fastq", "*.bam" and NOT "*.sam" etc.
-    tuple val(meta), path(bam)
+    tuple val(meta)
 
     output:
     // TODO nf-core: Named file extensions MUST be emitted for ALL output channels
-    tuple val(meta), path("*.bam"), emit: bam
+    tuple val(meta), path("*.fasta"), emit: fasta
+    tuple val(meta), path("*.gb")   , emit: gb
     // TODO nf-core: List additional required output channels/values here
-    path "versions.yml"           , emit: versions
+    path "versions.yml"             , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
