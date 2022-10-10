@@ -29,9 +29,10 @@ process MITOHIFI {
     //               MUST be provided as an input via a Groovy Map called "meta".
     //               This information may not be required in some instances e.g. indexing reference genome files:
     //               https://github.com/nf-core/modules/blob/master/modules/bwa/index/main.nf
-    // TODO nf-core: Where applicable please provide/convert compressed files as input/output
-    //               e.g. "*.fastq.gz" and NOT "*.fastq", "*.bam" and NOT "*.sam" etc.
-    tuple val(meta), path(bam)
+    tuple val(meta), path(mitoref)
+    tuple val(meta), path(gb)
+    // fasta file with either raw reads (i.e. can be more than one file) or with contigs
+    tuple val(meta), path(fasta)
 
     output:
     // TODO nf-core: Named file extensions MUST be emitted for ALL output channels
