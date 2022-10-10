@@ -8,10 +8,6 @@
 //               where "task.ext" is a string.
 //               Any parameters that need to be evaluated in the context of a particular sample
 //               e.g. single-end/paired-end data MUST also be defined and evaluated appropriately.
-// TODO nf-core: Software that can be piped together SHOULD be added to separate module files
-//               unless there is a run-time, storage advantage in implementing in this way
-//               e.g. it's ok to have a single module for bwa to output BAM instead of SAM:
-//                 bwa mem | samtools view -B -T ref.fasta
 // TODO nf-core: Optional inputs are not currently supported by Nextflow. However, using an empty
 //               list (`[]`) instead of a file can be used to work around this issue.
 
@@ -31,7 +27,8 @@ process MITOHIFI {
     //               https://github.com/nf-core/modules/blob/master/modules/bwa/index/main.nf
     tuple val(meta), path(mitoref)
     tuple val(meta), path(gb)
-    // fasta file with either raw reads (i.e. can be more than one file) or with contigs
+    // TODO:         Fix input channel. Input can be fasta file with raw reads (i.e. can be more than one file) 
+    //               or fasta file with contigs (one file)
     tuple val(meta), path(fasta)
 
     output:
