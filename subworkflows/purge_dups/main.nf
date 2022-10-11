@@ -3,24 +3,29 @@
  * https://github.com/dfguan/purge_dups
  */
 
-include { MINIMAP2_ALIGN } from "$projectDir/modules/nf-core/modules/minimap2/align/main"
+include { MINIMAP2_ALIGN as MINIMAP2_ALIGN_READS    } from "$projectDir/modules/nf-core/modules/minimap2/align/main"
+include { MINIMAP2_ALIGN as MINIMAP2_ALIGN_ASSEMBLY } from "$projectDir/modules/nf-core/modules/minimap2/align/main"
+include { PURGEDUPS_CALCUTS                         } from "$projectDir/modules/local/purgedups/calcuts"
+include { PURGEDUPS_GETSEQS                         } from "$projectDir/modules/local/purgedups/getseqs"
+include { PURGEDUPS_PBCSTAT                         } from "$projectDir/modules/local/purgedups/pbcstat"
+include { PURGEDUPS_SPLITFA                         } from "$projectDir/modules/local/purgedups/splitfa"
 
-workflow PURGE_DUPS {
+workflow PURGE_DUPLICATES {
 
     take:
     reads_plus_assembly_ch     // [ meta, [reads], [assembly] ], where reads are the pacbio files, and assembly is the primary and alternate asms
 
     main:
-    MINIMAP2_ALIGN(
-        reads_plus_assembly_ch.flatMap{ meta, reads, assembly -> reads.collect{ [ meta, it, assembly.pri_asm ] } }
-            .multiMap { meta, reads, reference -> 
-                reads_ch: [meta, reads]
-                ref_ch: reference
-            }
-        false, // bam output
-        false, // cigar in paf file
-        false  // cigar in bam file
-    )
+    reads_plus_assembly_ch
+        .flatMap{ meta, reads, assembly -> reads.collect{ [ meta, it, assembly.pri_asm ] } }
+        .multiMap { meta, reads, assembly -> 
+            reads_ch: [ meta, reads ]
+            assembly_ch: assembly
+        }
+        .set { input }
+    reads_plus_assembly_ch
+        .map{ meta, reads, assembly -> [ meta, assembly.pri_asm ] }
+        .set { assembly_ch }
     /*
     # Map Pacbio CSS reads
     for i in $pb_list
@@ -40,6 +45,37 @@ workflow PURGE_DUPS {
     # purged primary and haplotig sequences from draft assembly
     bin/get_seqs -e dups.bed $pri_asm 
     */
+    // Map pacbio reads
+    MINIMAP2_ALIGN_READS(
+        input.reads_ch,
+        input.assembly_ch,
+        false, // bam output
+        false, // cigar in paf file
+        false  // cigar in bam file
+    )
+    PURGEDUPS_PBCSTAT( MINIMAP2_ALIGN_READS.out.paf.collect() )
+    PURGEDUPS_CALCUTS( PURGEDUPS_PBCSTAT.out.stat )
+
+    // Split assembly and do self alignment
+    PURGEDUPS_SPLITFA( assembly_ch )
+    MINIMAP2_ALIGN_ASSEMBLY {
+        PURGEDUPS_SPLITFA.out.fasta
+            .metaMap { meta, asm ->
+                meta_asm_ch: [ meta, asm ] 
+                assembly_ch: [ asm ]
+            }
+        false, // bam output
+        false, // cigar in paf file
+        false  // cigar in bam file
+    }
+
+    PURGEDUPS_PURGEDUPS(
+        PURGEDUPS_PBCSTAT.out.basecov
+            .join( PURGEDUPS_CALCUTS.out.cutoff )
+            .join( MINIMAP2_ALIGN_ASSEMBLY.out.paf )
+    )
+
+    PURGEDUPS_GETSEQS( assembly_ch.join( PURGEDUPS_PURGEDUPS.out.bed ) )
 
     emit:
     assembly

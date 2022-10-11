@@ -68,6 +68,11 @@ workflow {
     // Curate assemblies 
     if ( 'curate' in workflow_steps ) {
         // Break and reassemble misassemblies, separate organelles, etc
+            // MitoHiFi
+            // PurgeDups
+            // Kraken2
+            // Blobtoolkit
+            // FCS-Genome
     }
 
     // Assess assemblies
