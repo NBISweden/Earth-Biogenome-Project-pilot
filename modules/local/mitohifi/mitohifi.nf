@@ -24,6 +24,7 @@ process MITOHIFI {
     //               MUST be provided as an input via a Groovy Map called "meta".
     //               This information may not be required in some instances e.g. indexing reference genome files:
     //               https://github.com/nf-core/modules/blob/master/modules/bwa/index/main.nf
+    tuple val(meta), path() // enter the correct variable pointing to the assembled PacBio contigs that should be searched for the mitogenome
     tuple val(meta), path(mitoref)
     tuple val(meta), path(mitoref), path(gb)
     // TODO:         Fix input channel if necessary. Input can be fasta file with raw reads (i.e. can be more than one file) 
