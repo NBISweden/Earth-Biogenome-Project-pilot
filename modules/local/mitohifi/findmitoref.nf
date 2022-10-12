@@ -14,8 +14,7 @@ process FINDMITOREF {
 
     // There is no conda package available for MitoHiFi
     // Adding the Docker container from biocontainers found on DockerHub
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'docker://biocontainers/mitohifi:2.2_cv1' }"
+    container 'docker://biocontainers/mitohifi:2.2_cv1'
 
     input:
     // TODO nf-core: Where applicable all sample-specific information e.g. "id", "single_end", "read_group"
