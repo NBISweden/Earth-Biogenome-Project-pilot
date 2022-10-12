@@ -39,7 +39,7 @@ process FINDMITOREF {
     """
     findMitoReference.py \\
         $args \\
-        --outfolder /data/ \\
+        --outfolder ${prefix} \\
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
