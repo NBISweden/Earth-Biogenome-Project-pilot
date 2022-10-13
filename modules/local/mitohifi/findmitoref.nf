@@ -21,7 +21,9 @@ process FINDMITOREF {
     //               MUST be provided as an input via a Groovy Map called "meta".
     //               This information may not be required in some instances e.g. indexing reference genome files:
     //               https://github.com/nf-core/modules/blob/master/modules/bwa/index/main.nf
-    tuple val(meta)
+    // TODO:         Define channels for input arguments for findMitoReference.py (`--species "species" --email name@email.se --min_length 16000 --outfolder ${prefix}`)
+    //               Not sure if `--outfolder` should be a channel (currently provided as argument in the command-line string below)
+    tuple val(meta), val(species), val(email), val(min_length), val(outfolder)
 
     output:
     tuple val(meta), path("*.fasta"), emit: mitoref
@@ -36,6 +38,7 @@ process FINDMITOREF {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     // TODO nf-core: It MUST be possible to pass additional parameters to the tool as a command-line string via the "task.ext.args" directive
+    // TODO        : `--outfolder ${prefix}` might be provided as channel instead (see input)
     """
     findMitoReference.py \\
         $args \\
