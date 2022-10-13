@@ -11,6 +11,8 @@ include { GENOME_PROPERTIES } from "$projectDir/subworkflows/genome_properties/g
 include { COMPARE_LIBRARIES } from "$projectDir/subworkflows/compare_libraries/compare_libraries"
 include { SCREEN_READS      } from "$projectDir/subworkflows/screen_read_contamination/main"
 
+include { PURGE_DUPLICATES } from "$projectDir/subworkflows/purge_dups/main"
+
 include { COMPARE_ASSEMBLIES } from "$projectDir/subworkflows/compare_assemblies/compare_assemblies"
 include { EVALUATE_ASSEMBLY  } from "$projectDir/subworkflows/evaluate_assembly/evaluate_assembly"
 // include { ASSEMBLY_VALIDATION } from "$projectDir/subworkflows/assembly_validation/assembly_validation"
@@ -67,6 +69,10 @@ workflow {
 
     // Curate assemblies 
     if ( 'curate' in workflow_steps ) {
+        PURGE_DUPLICATES(
+            PREPARE_INPUT.out.assemblies
+                .join( PREPARE_INPUT.out.hifi )
+        )
         // Break and reassemble misassemblies, separate organelles, etc
             // MitoHiFi
             // PurgeDups
