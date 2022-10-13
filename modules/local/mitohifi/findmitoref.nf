@@ -41,7 +41,9 @@ process FINDMITOREF {
     // TODO        : `--outfolder ${prefix}` might be provided as channel instead (see input)
     """
     findMitoReference.py \\
-        $args \\
+        --species ${species} \\
+        --email ${email} \\
+        --min_length ${min_length} \\
         --outfolder ${prefix} \\
 
     cat <<-END_VERSIONS > versions.yml
