@@ -31,10 +31,10 @@ process MITOHIFI {
     tuple val(meta), path(fasta)
 
     output:
-    tuple val(meta), path("final_mitogenome.fasta"), emit: fasta
-    tuple val(meta), path("final_mitogenome.gb")   , emit: gb
-    tuple val(meta), path("contigs_stats.tsv")     , emit: tsv
-    path "versions.yml"                            , emit: versions
+    tuple val(meta), path("${prefix}_final_mitogenome.fasta"), emit: fasta
+    tuple val(meta), path("${prefix}_final_mitogenome.gb")   , emit: gb
+    tuple val(meta), path("${prefix}_contigs_stats.tsv")     , emit: tsv
+    path "versions.yml"                                      , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -50,6 +50,10 @@ process MITOHIFI {
     -g ${prefix}.gb \\
     -t $task.cpus \\
     $args
+
+    mv final_mitogenome.fasta ${prefix}_final_mitogenome.fasta
+    mv final_mitogenome.gb ${prefix}_final_mitogenome.gb
+    mv contigs_stats.tsv ${prefix}_contigs_stats.tsv
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
