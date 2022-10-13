@@ -21,7 +21,7 @@ process PURGEDUPS_SPLITFA {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    split_fa $args $assembly > $prefix.split.fasta
+    split_fa $args $assembly > ${prefix}.split.fasta
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
