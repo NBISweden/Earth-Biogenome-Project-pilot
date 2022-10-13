@@ -11,7 +11,7 @@ process PURGEDUPS_GETSEQS {
     tuple val(meta), path(assembly), path(bed)
 
     output:
-    tuple val(meta), path("*.bam"), emit: bam
+    tuple val(meta), path("*.bam"), emit: assembly
     path "versions.yml"           , emit: versions
 
     when:

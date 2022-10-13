@@ -9,6 +9,7 @@ include { PURGEDUPS_CALCUTS                         } from "$projectDir/modules/
 include { PURGEDUPS_GETSEQS                         } from "$projectDir/modules/local/purgedups/getseqs"
 include { PURGEDUPS_PBCSTAT                         } from "$projectDir/modules/local/purgedups/pbcstat"
 include { PURGEDUPS_SPLITFA                         } from "$projectDir/modules/local/purgedups/splitfa"
+include { PURGEDUPS_PURGEDUPS                       } from "$projectDir/modules/local/purgedups/purgedups"
 
 workflow PURGE_DUPLICATES {
 
@@ -16,15 +17,15 @@ workflow PURGE_DUPLICATES {
     reads_plus_assembly_ch     // [ meta, [reads], [assembly] ], where reads are the pacbio files, and assembly is the primary and alternate asms
 
     main:
-    reads_plus_assembly_ch
-        .flatMap{ meta, reads, assembly -> reads.collect{ [ meta, it, assembly.pri_asm ] } }
+    reads_plus_assembly_ch.view()
+        .flatMap { meta, reads, assembly -> reads.collect{ [ meta, it, assembly.pri_fasta ] } }
         .multiMap { meta, reads, assembly -> 
             reads_ch: [ meta, reads ]
             assembly_ch: assembly
         }
         .set { input }
     reads_plus_assembly_ch
-        .map{ meta, reads, assembly -> [ meta, assembly.pri_asm ] }
+        .map { meta, reads, assembly -> [ meta, assembly.pri_fasta ] }
         .set { assembly_ch }
     /*
     # Map Pacbio CSS reads
@@ -58,16 +59,16 @@ workflow PURGE_DUPLICATES {
 
     // Split assembly and do self alignment
     PURGEDUPS_SPLITFA( assembly_ch )
-    MINIMAP2_ALIGN_ASSEMBLY {
-        PURGEDUPS_SPLITFA.out.fasta
-            .metaMap { meta, asm ->
+    MINIMAP2_ALIGN_ASSEMBLY (
+        PURGEDUPS_SPLITFA.out.split_fasta
+            .multiMap { meta, asm ->
                 meta_asm_ch: [ meta, asm ] 
                 assembly_ch: [ asm ]
-            }
+            },
         false, // bam output
         false, // cigar in paf file
         false  // cigar in bam file
-    }
+    )
 
     PURGEDUPS_PURGEDUPS(
         PURGEDUPS_PBCSTAT.out.basecov
@@ -78,6 +79,6 @@ workflow PURGE_DUPLICATES {
     PURGEDUPS_GETSEQS( assembly_ch.join( PURGEDUPS_PURGEDUPS.out.bed ) )
 
     emit:
-    assembly
-    coverage
+    assembly = PURGEDUPS_GETSEQS.out.assembly
+    coverage = PURGEDUPS_PBCSTAT.out.basecov
 }

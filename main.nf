@@ -70,8 +70,9 @@ workflow {
     // Curate assemblies 
     if ( 'curate' in workflow_steps ) {
         PURGE_DUPLICATES(
-            PREPARE_INPUT.out.assemblies
-                .join( PREPARE_INPUT.out.hifi )
+            PREPARE_INPUT.out.hifi
+                .map { meta, reads -> [ meta.findAll { ! (it.key in [ 'single_end' ]) }, reads ] } 
+                .join( PREPARE_INPUT.out.assemblies )
         )
         // Break and reassemble misassemblies, separate organelles, etc
             // MitoHiFi

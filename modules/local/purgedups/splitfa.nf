@@ -11,7 +11,7 @@ process PURGEDUPS_SPLITFA {
     tuple val(meta), path(assembly)
 
     output:
-    tuple val(meta), path("*.split.fasta"), emit: split_assembly
+    tuple val(meta), path("*.split.fasta"), emit: split_fasta
     path "versions.yml"                   , emit: versions
 
     when:
