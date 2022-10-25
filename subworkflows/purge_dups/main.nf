@@ -3,8 +3,8 @@
  * https://github.com/dfguan/purge_dups
  */
 
-include { MINIMAP2_ALIGN as MINIMAP2_ALIGN_READS    } from "$projectDir/modules/nf-core/modules/minimap2/align/main"
-include { MINIMAP2_ALIGN as MINIMAP2_ALIGN_ASSEMBLY } from "$projectDir/modules/nf-core/modules/minimap2/align/main"
+include { MINIMAP2_ALIGN as MINIMAP2_ALIGN_READS    } from "$projectDir/modules/nf-core/minimap2/align/main"
+include { MINIMAP2_ALIGN as MINIMAP2_ALIGN_ASSEMBLY } from "$projectDir/modules/nf-core/minimap2/align/main"
 include { PURGEDUPS_CALCUTS                         } from "$projectDir/modules/local/purgedups/calcuts"
 include { PURGEDUPS_GETSEQS                         } from "$projectDir/modules/local/purgedups/getseqs"
 include { PURGEDUPS_PBCSTAT                         } from "$projectDir/modules/local/purgedups/pbcstat"
