@@ -15,7 +15,6 @@ include { PURGE_DUPLICATES } from "$projectDir/subworkflows/purge_dups/main"
 
 include { COMPARE_ASSEMBLIES } from "$projectDir/subworkflows/compare_assemblies/compare_assemblies"
 include { EVALUATE_ASSEMBLY  } from "$projectDir/subworkflows/evaluate_assembly/evaluate_assembly"
-// include { ASSEMBLY_VALIDATION } from "$projectDir/subworkflows/assembly_validation/assembly_validation"
 
 workflow {
 
