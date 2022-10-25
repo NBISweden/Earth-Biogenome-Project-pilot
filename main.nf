@@ -7,14 +7,14 @@ include { PREPARE_INPUT } from "$projectDir/subworkflows/prepare_input/main"
 include { BUILD_DATABASES as BUILD_HIFI_DATABASES } from "$projectDir/subworkflows/build_databases/main"
 include { BUILD_DATABASES as BUILD_HIC_DATABASES  } from "$projectDir/subworkflows/build_databases/main"
 
-include { GENOME_PROPERTIES } from "$projectDir/subworkflows/genome_properties/genome_properties"
-include { COMPARE_LIBRARIES } from "$projectDir/subworkflows/compare_libraries/compare_libraries"
+include { GENOME_PROPERTIES } from "$projectDir/subworkflows/genome_properties/main"
+include { COMPARE_LIBRARIES } from "$projectDir/subworkflows/compare_libraries/main"
 include { SCREEN_READS      } from "$projectDir/subworkflows/screen_read_contamination/main"
 
 include { PURGE_DUPLICATES } from "$projectDir/subworkflows/purge_dups/main"
 
-include { COMPARE_ASSEMBLIES } from "$projectDir/subworkflows/compare_assemblies/compare_assemblies"
-include { EVALUATE_ASSEMBLY  } from "$projectDir/subworkflows/evaluate_assembly/evaluate_assembly"
+include { COMPARE_ASSEMBLIES } from "$projectDir/subworkflows/compare_assemblies/main"
+include { EVALUATE_ASSEMBLY  } from "$projectDir/subworkflows/evaluate_assembly/main"
 
 workflow {
 
