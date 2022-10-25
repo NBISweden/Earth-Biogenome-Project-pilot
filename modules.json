@@ -2,56 +2,93 @@
     "name": "Earth Biogenome Project Assembly and Annotation workflow",
     "homePage": "https://github.com/NBISweden/Earth-Biogenome-Project-pilot",
     "repos": {
-        "nf-core/modules": {
-            "git_url": "https://github.com/nf-core/modules.git",
+        "https://github.com/nf-core/modules.git": {
             "modules": {
-                "busco": {
-                    "branch": "master",
-                    "git_sha": "ebc466caacf58f81427c635bd25ed683ceaea01d"
-                },
-                "fastk/fastk": {
-                    "branch": "master",
-                    "git_sha": "b67556e29f1f155550ce9ae9c967cbb559f6f9f1"
-                },
-                "fastk/histex": {
-                    "branch": "master",
-                    "git_sha": "233fa70811a03a4cecb2ece483b5c8396e2cee1d"
-                },
-                "fastk/merge": {
-                    "branch": "master",
-                    "git_sha": "b67556e29f1f155550ce9ae9c967cbb559f6f9f1"
-                },
-                "genescopefk": {
-                    "branch": "master",
-                    "git_sha": "233fa70811a03a4cecb2ece483b5c8396e2cee1d"
-                },
-                "kraken2/kraken2": {
-                    "branch": "master",
-                    "git_sha": "409a308ba46284d8ebb48c2c1befd6f6433db3f7"
-                },
-                "mash/screen": {
-                    "branch": "master",
-                    "git_sha": "c452f562890534ca3d0a331de7c35b744037fdae"
-                },
-                "merquryfk/katcomp": {
-                    "branch": "master",
-                    "git_sha": "233fa70811a03a4cecb2ece483b5c8396e2cee1d"
-                },
-                "merquryfk/katgc": {
-                    "branch": "master",
-                    "git_sha": "233fa70811a03a4cecb2ece483b5c8396e2cee1d"
-                },
-                "merquryfk/ploidyplot": {
-                    "branch": "master",
-                    "git_sha": "233fa70811a03a4cecb2ece483b5c8396e2cee1d"
-                },
-                "minimap2/align": {
-                    "branch": "master",
-                    "git_sha": "1a5a9e7b4009dcf34e6867dd1a5a1d9a718b027b"
-                },
-                "quast": {
-                    "branch": "master",
-                    "git_sha": "682f789f93070bd047868300dd018faf3d434e7c"
+                "nf-core": {
+                    "blast/blastn": {
+                        "branch": "master",
+                        "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905"
+                    },
+                    "busco": {
+                        "branch": "master",
+                        "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905"
+                    },
+                    "diamond/blastx": {
+                        "branch": "master",
+                        "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905"
+                    },
+                    "fastk/fastk": {
+                        "branch": "master",
+                        "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905"
+                    },
+                    "fastk/histex": {
+                        "branch": "master",
+                        "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905"
+                    },
+                    "fastk/merge": {
+                        "branch": "master",
+                        "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905"
+                    },
+                    "genescopefk": {
+                        "branch": "master",
+                        "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905"
+                    },
+                    "genomescope2": {
+                        "branch": "master",
+                        "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905"
+                    },
+                    "mash/screen": {
+                        "branch": "master",
+                        "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905"
+                    },
+                    "mash/sketch": {
+                        "branch": "master",
+                        "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905"
+                    },
+                    "merquryfk/katcomp": {
+                        "branch": "master",
+                        "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905"
+                    },
+                    "merquryfk/katgc": {
+                        "branch": "master",
+                        "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905"
+                    },
+                    "merquryfk/merquryfk": {
+                        "branch": "master",
+                        "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905"
+                    },
+                    "merquryfk/ploidyplot": {
+                        "branch": "master",
+                        "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905"
+                    },
+                    "meryl/count": {
+                        "branch": "master",
+                        "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905"
+                    },
+                    "meryl/histogram": {
+                        "branch": "master",
+                        "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905"
+                    },
+                    "meryl/unionsum": {
+                        "branch": "master",
+                        "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905"
+                    },
+                    "minimap2/align": {
+                        "branch": "master",
+                        "git_sha": "5850432aab24a1924389b660adfee3809d3e60a9"
+                    },
+                    "quast": {
+                        "branch": "master",
+                        "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905"
+                    },
+                    "samtools/fastq": {
+                        "branch": "master",
+                        "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905"
+                    },
+                    "seqkit/split2": {
+                        "branch": "master",
+                        "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905"
+                    }
                 }
             }
         }
