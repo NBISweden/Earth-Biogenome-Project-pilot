@@ -1,4 +1,4 @@
-include { BUSCO               } from "$projectDir/modules/nf-core/modules/busco/main"
+include { BUSCO               } from "$projectDir/modules/nf-core/busco/main"
 include { MERQURYFK_MERQURYFK } from "$projectDir/modules/local/merquryfk/merquryfk"
 // include { INSPECTOR           } from "$projectDir/modules/local/inspector/inspector"
 
