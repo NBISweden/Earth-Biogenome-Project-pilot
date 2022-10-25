@@ -11,9 +11,9 @@ process PURGEDUPS_PBCSTAT {
     tuple val(meta), path(paf_alignment)
 
     output:
-    tuple val(meta), path("${prefix}/PB.stat"), emit: stat
+    tuple val(meta), path("${prefix}/PB.stat")    , emit: stat
     tuple val(meta), path("${prefix}/PB.base.cov"), emit: basecov
-    path "versions.yml"           , emit: versions
+    path "versions.yml"                           , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -26,6 +26,8 @@ process PURGEDUPS_PBCSTAT {
         $args \\
         -O ${prefix} \\
         $paf_alignment
+
+    ls -laR
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

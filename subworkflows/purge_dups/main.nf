@@ -17,8 +17,8 @@ workflow PURGE_DUPLICATES {
     reads_plus_assembly_ch     // [ meta, [reads], [assembly] ], where reads are the pacbio files, and assembly is the primary and alternate asms
 
     main:
-    reads_plus_assembly_ch.view()
-        .flatMap { meta, reads, assembly -> reads.collect{ [ meta, it, assembly.pri_fasta ] } }
+    reads_plus_assembly_ch
+        .flatMap { meta, reads, assembly -> reads instanceof List ? reads.collect{ [ meta + [ single_end: true ], it, assembly.pri_fasta ] } : [ [ meta + [ single_end: true ], reads, assembly.pri_fasta ] ] }
         .multiMap { meta, reads, assembly -> 
             reads_ch: [ meta, reads ]
             assembly_ch: assembly
@@ -60,11 +60,8 @@ workflow PURGE_DUPLICATES {
     // Split assembly and do self alignment
     PURGEDUPS_SPLITFA( assembly_ch )
     MINIMAP2_ALIGN_ASSEMBLY (
-        PURGEDUPS_SPLITFA.out.split_fasta
-            .multiMap { meta, asm ->
-                meta_asm_ch: [ meta, asm ] 
-                assembly_ch: [ asm ]
-            },
+        PURGEDUPS_SPLITFA.out.split_fasta,
+        [],    // Trigger read to read alignment
         false, // bam output
         false, // cigar in paf file
         false  // cigar in bam file
