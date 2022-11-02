@@ -11,23 +11,22 @@ process PURGEDUPS_PBCSTAT {
     tuple val(meta), path(paf_alignment)
 
     output:
-    tuple val(meta), path("${prefix}/PB.stat")    , emit: stat
-    tuple val(meta), path("${prefix}/PB.base.cov"), emit: basecov
-    path "versions.yml"                           , emit: versions
+    tuple val(meta), path("*.PB.stat")    , emit: stat
+    tuple val(meta), path("*.PB.base.cov"), emit: basecov
+    path "versions.yml"                   , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''
-    prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: "${meta.id}"
     """
     pbcstat \\
         $args \\
-        -O ${prefix} \\
         $paf_alignment
 
-    ls -laR
+    for PBFILE in PB.*; do mv \$PBFILE ${prefix}.\$PBFILE; done
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
