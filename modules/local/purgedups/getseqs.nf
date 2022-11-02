@@ -11,8 +11,9 @@ process PURGEDUPS_GETSEQS {
     tuple val(meta), path(assembly), path(bed)
 
     output:
-    tuple val(meta), path("*.bam"), emit: assembly
-    path "versions.yml"           , emit: versions
+    tuple val(meta), path("*.hap.fa")   , emit: haplotype
+    tuple val(meta), path("*.purged.fa"), emit: purged
+    path "versions.yml"                 , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
