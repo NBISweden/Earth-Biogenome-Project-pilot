@@ -78,6 +78,6 @@ workflow PURGE_DUPLICATES {
     PURGEDUPS_GETSEQS( assembly_ch.join( PURGEDUPS_PURGEDUPS.out.bed ) )
 
     emit:
-    assembly = PURGEDUPS_GETSEQS.out.assembly
+    assembly = PURGEDUPS_GETSEQS.out.haplotype
     coverage = PURGEDUPS_PBCSTAT.out.basecov
 }
