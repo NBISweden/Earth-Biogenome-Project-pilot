@@ -17,16 +17,22 @@ Changes in module 'nf-core/star/genomegenerate'
  
      when:
      task.ext.when == null || task.ext.when
-@@ -29,7 +29,7 @@
+@@ -25,11 +25,12 @@
+     if (args_list.contains('--genomeSAindexNbases')) {
+         """
+         mkdir star
++        ${ fasta.name.endsWith('.gz') ? "gunzip -c $fasta > $fasta.baseName" : '' }
+         STAR \\
              --runMode genomeGenerate \\
              --genomeDir star/ \\
-             --genomeFastaFiles $fasta \\
+-            --genomeFastaFiles $fasta \\
 -            --sjdbGTFfile $gtf \\
++            --genomeFastaFiles ${fasta.name.endsWith('.gz') ? fasta : fasta.baseName } \\
 +            ${ gtf ? "--sjdbGTFfile $gtf": '' } \\
              --runThreadN $task.cpus \\
              $memory \\
              $args
-@@ -51,7 +51,7 @@
+@@ -51,7 +52,7 @@
              --runMode genomeGenerate \\
              --genomeDir star/ \\
              --genomeFastaFiles $fasta \\

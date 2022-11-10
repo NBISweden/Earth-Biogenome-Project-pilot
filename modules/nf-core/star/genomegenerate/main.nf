@@ -25,10 +25,11 @@ process STAR_GENOMEGENERATE {
     if (args_list.contains('--genomeSAindexNbases')) {
         """
         mkdir star
+        ${ fasta.name.endsWith('.gz') ? "gunzip -c $fasta > $fasta.baseName" : '' }
         STAR \\
             --runMode genomeGenerate \\
             --genomeDir star/ \\
-            --genomeFastaFiles $fasta \\
+            --genomeFastaFiles ${fasta.name.endsWith('.gz') ? fasta : fasta.baseName } \\
             ${ gtf ? "--sjdbGTFfile $gtf": '' } \\
             --runThreadN $task.cpus \\
             $memory \\
