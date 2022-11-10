@@ -17,32 +17,39 @@ Changes in module 'nf-core/star/genomegenerate'
  
      when:
      task.ext.when == null || task.ext.when
-@@ -25,11 +25,12 @@
+@@ -24,12 +24,13 @@
+     def memory = task.memory ? "--limitGenomeGenerateRAM ${task.memory.toBytes() - 100000000}" : ''
      if (args_list.contains('--genomeSAindexNbases')) {
          """
++        ${ fasta.name.endsWith('.gz') ? "gzip -dc $fasta > $fasta.baseName" : '' }
          mkdir star
-+        ${ fasta.name.endsWith('.gz') ? "gunzip -c $fasta > $fasta.baseName" : '' }
          STAR \\
              --runMode genomeGenerate \\
              --genomeDir star/ \\
 -            --genomeFastaFiles $fasta \\
 -            --sjdbGTFfile $gtf \\
-+            --genomeFastaFiles ${fasta.name.endsWith('.gz') ? fasta : fasta.baseName } \\
++            --genomeFastaFiles ${fasta.name.endsWith('.gz') ? fasta.baseName : fasta } \\
 +            ${ gtf ? "--sjdbGTFfile $gtf": '' } \\
              --runThreadN $task.cpus \\
              $memory \\
              $args
-@@ -47,11 +48,12 @@
-         NUM_BASES=`gawk '{sum = sum + \$2}END{if ((log(sum)/log(2))/2 - 1 > 14) {printf "%.0f", 14} else {printf "%.0f", (log(sum)/log(2))/2 - 1}}' ${fasta}.fai`
+@@ -43,15 +44,16 @@
+         """
+     } else {
+         """
+-        samtools faidx $fasta
+-        NUM_BASES=`gawk '{sum = sum + \$2}END{if ((log(sum)/log(2))/2 - 1 > 14) {printf "%.0f", 14} else {printf "%.0f", (log(sum)/log(2))/2 - 1}}' ${fasta}.fai`
++        ${ fasta.name.endsWith('.gz') ? "gzip -dc $fasta > $fasta.baseName" : '' }
++        samtools faidx ${fasta.name.endsWith('.gz') ? fasta.baseName : fasta }
++        NUM_BASES=`gawk '{sum = sum + \$2}END{if ((log(sum)/log(2))/2 - 1 > 14) {printf "%.0f", 14} else {printf "%.0f", (log(sum)/log(2))/2 - 1}}' ${fasta.name.endsWith('.gz') ? fasta.baseName : fasta }.fai`
  
          mkdir star
-+        ${ fasta.name.endsWith('.gz') ? "gunzip -c $fasta > $fasta.baseName" : '' }
          STAR \\
              --runMode genomeGenerate \\
              --genomeDir star/ \\
 -            --genomeFastaFiles $fasta \\
 -            --sjdbGTFfile $gtf \\
-+            --genomeFastaFiles ${fasta.name.endsWith('.gz') ? fasta : fasta.baseName } \\
++            --genomeFastaFiles ${fasta.name.endsWith('.gz') ? fasta.baseName : fasta } \\
 +            ${ gtf ? "--sjdbGTFfile $gtf" : '' } \\
              --runThreadN $task.cpus \\
              --genomeSAindexNbases \$NUM_BASES \\

@@ -24,8 +24,8 @@ process STAR_GENOMEGENERATE {
     def memory = task.memory ? "--limitGenomeGenerateRAM ${task.memory.toBytes() - 100000000}" : ''
     if (args_list.contains('--genomeSAindexNbases')) {
         """
+        ${ fasta.name.endsWith('.gz') ? "gzip -dc $fasta > $fasta.baseName" : '' }
         mkdir star
-        ${ fasta.name.endsWith('.gz') ? "gunzip -c $fasta > $fasta.baseName" : '' }
         STAR \\
             --runMode genomeGenerate \\
             --genomeDir star/ \\
@@ -44,11 +44,11 @@ process STAR_GENOMEGENERATE {
         """
     } else {
         """
-        samtools faidx $fasta
-        NUM_BASES=`gawk '{sum = sum + \$2}END{if ((log(sum)/log(2))/2 - 1 > 14) {printf "%.0f", 14} else {printf "%.0f", (log(sum)/log(2))/2 - 1}}' ${fasta}.fai`
+        ${ fasta.name.endsWith('.gz') ? "gzip -dc $fasta > $fasta.baseName" : '' }
+        samtools faidx ${fasta.name.endsWith('.gz') ? fasta.baseName : fasta }
+        NUM_BASES=`gawk '{sum = sum + \$2}END{if ((log(sum)/log(2))/2 - 1 > 14) {printf "%.0f", 14} else {printf "%.0f", (log(sum)/log(2))/2 - 1}}' ${fasta.name.endsWith('.gz') ? fasta.baseName : fasta }.fai`
 
         mkdir star
-        ${ fasta.name.endsWith('.gz') ? "gunzip -c $fasta > $fasta.baseName" : '' }
         STAR \\
             --runMode genomeGenerate \\
             --genomeDir star/ \\
