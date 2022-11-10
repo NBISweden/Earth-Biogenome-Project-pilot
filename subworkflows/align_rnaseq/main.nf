@@ -17,13 +17,13 @@ workflow ALIGN_RNASEQ {
         []                   // No valid annotations for draft genome
     )
     input.reads_ch.join( STAR_GENOMEGENERATE.out.index )
-        .multiMap { meta, reads, assembly ->
-            assembly_ch: assembly
+        .multiMap { meta, reads, index ->
+            index_ch: index
             reads_ch: [ meta, reads ]
         }.set { index }
     STAR_ALIGN (
         index.reads_ch,
-        index.assembly_ch,
+        index.index_ch,
         [],           // No gtf
         true,         // Ignore gtf
         'Illumina',   // Sequencing Platform
