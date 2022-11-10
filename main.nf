@@ -118,7 +118,7 @@ workflow {
                     .groupTuple(), // Group after meta manipulation to collect single and paired end together
                 by: 0
             )
-            .map { meta, asm_id, primary_asm, reads -> [ meta + [ build: asm_id ], primary_asm, reads ] }
+            .map { meta, asm_id, primary_asm, reads -> [ meta + [ build: asm_id ], primary_asm, reads.flatten() ] }
         )
     }
 
