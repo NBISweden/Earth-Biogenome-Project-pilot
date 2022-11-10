@@ -29,7 +29,7 @@ process STAR_GENOMEGENERATE {
         STAR \\
             --runMode genomeGenerate \\
             --genomeDir star/ \\
-            --genomeFastaFiles ${fasta.name.endsWith('.gz') ? fasta : fasta.baseName } \\
+            --genomeFastaFiles ${fasta.name.endsWith('.gz') ? fasta.baseName : fasta } \\
             ${ gtf ? "--sjdbGTFfile $gtf": '' } \\
             --runThreadN $task.cpus \\
             $memory \\
@@ -52,7 +52,7 @@ process STAR_GENOMEGENERATE {
         STAR \\
             --runMode genomeGenerate \\
             --genomeDir star/ \\
-            --genomeFastaFiles ${fasta.name.endsWith('.gz') ? fasta : fasta.baseName } \\
+            --genomeFastaFiles ${fasta.name.endsWith('.gz') ? fasta.baseName : fasta } \\
             ${ gtf ? "--sjdbGTFfile $gtf" : '' } \\
             --runThreadN $task.cpus \\
             --genomeSAindexNbases \$NUM_BASES \\
