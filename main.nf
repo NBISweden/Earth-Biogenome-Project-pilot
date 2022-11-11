@@ -110,15 +110,10 @@ workflow {
         //     file( params.ncbi_taxonomy, checkIfExists: true )
         // )
 
-        ALIGN_RNASEQ ( PREPARE_INPUT.out.assemblies
-            .map { meta, assembly -> [ meta, assembly.id, assembly.pri_fasta ] }
-            .combine (
-                PREPARE_INPUT.out.rnaseq
-                    .map { meta, reads -> [ meta.findAll { ! (it.key in [ 'single_end' ]) }, reads ] }
-                    .groupTuple(), // Group after meta manipulation to collect single and paired end together
-                by: 0
-            )
-            .map { meta, asm_id, primary_asm, reads -> [ meta + [ build: asm_id ], primary_asm, reads.flatten() ] }
+        ALIGN_RNASEQ ( 
+            PREPARE_INPUT.out.rnaseq,
+            PREPARE_INPUT.out.assemblies
+                .map { meta, assembly -> [ meta + [ build: assembly.id ], assembly.pri_fasta ] }
         )
     }
 
