@@ -67,7 +67,6 @@ workflow PURGE_DUPLICATES {
         false  // cigar in bam file
     )
 
-    // TODO: Fix join
     PURGEDUPS_PURGEDUPS(
         PURGEDUPS_PBCSTAT.out.basecov
             .join( PURGEDUPS_CALCUTS.out.cutoff )
