@@ -71,7 +71,7 @@ workflow {
         PURGE_DUPLICATES(
             PREPARE_INPUT.out.hifi
                 .map { meta, reads -> [ meta.findAll { ! (it.key in [ 'single_end' ]) }, reads ] } 
-                .join( PREPARE_INPUT.out.assemblies )
+                .combine( PREPARE_INPUT.out.assemblies, by:0 )
         )
         // Break and reassemble misassemblies, separate organelles, etc
             // MitoHiFi
