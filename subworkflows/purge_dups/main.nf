@@ -18,14 +18,14 @@ workflow PURGE_DUPLICATES {
 
     main:
     reads_plus_assembly_ch
-        .flatMap { meta, reads, assembly -> reads instanceof List ? reads.collect{ [ meta + [ single_end: true ], it, assembly.pri_fasta ] } : [ [ meta + [ single_end: true ], reads, assembly.pri_fasta ] ] }
+        .flatMap { meta, reads, assembly -> reads instanceof List ? reads.collect{ [ meta + [ single_end: true, build: assembly.id ], it, assembly.pri_fasta ] } : [ [ meta + [ single_end: true, build: assembly.id ], reads, assembly.pri_fasta ] ] }
         .multiMap { meta, reads, assembly -> 
             reads_ch: [ meta, reads ]
             assembly_ch: assembly
         }
         .set { input }
     reads_plus_assembly_ch
-        .map { meta, reads, assembly -> [ meta, assembly.pri_fasta ] }
+        .map { meta, reads, assembly -> [ meta + [ build: assembly.id ], assembly.pri_fasta ] }
         .set { assembly_ch }
     /*
     # Map Pacbio CSS reads
@@ -54,7 +54,7 @@ workflow PURGE_DUPLICATES {
         false, // cigar in paf file
         false  // cigar in bam file
     )
-    PURGEDUPS_PBCSTAT( MINIMAP2_ALIGN_READS.out.paf.collect() )
+    PURGEDUPS_PBCSTAT( MINIMAP2_ALIGN_READS.out.paf.groupTuple() )
     PURGEDUPS_CALCUTS( PURGEDUPS_PBCSTAT.out.stat )
 
     // Split assembly and do self alignment
