@@ -15,6 +15,7 @@ include { PURGE_DUPLICATES } from "$projectDir/subworkflows/purge_dups/main"
 
 include { COMPARE_ASSEMBLIES } from "$projectDir/subworkflows/compare_assemblies/main"
 include { EVALUATE_ASSEMBLY  } from "$projectDir/subworkflows/evaluate_assembly/main"
+include { ALIGN_RNASEQ       } from "$projectDir/subworkflows/align_rnaseq/main"
 
 workflow {
 
@@ -68,7 +69,7 @@ workflow {
 
     // Curate assemblies 
     if ( 'curate' in workflow_steps ) {
-        PURGE_DUPLICATES(
+        PURGE_DUPLICATES (
             PREPARE_INPUT.out.hifi
                 .map { meta, reads -> [ meta.findAll { ! (it.key in [ 'single_end' ]) }, reads ] } 
                 .combine( PREPARE_INPUT.out.assemblies, by:0 )
@@ -108,6 +109,12 @@ workflow {
         //     Channel.fromPath( params.blast_db, checkIfExists: true ),
         //     file( params.ncbi_taxonomy, checkIfExists: true )
         // )
+
+        ALIGN_RNASEQ ( 
+            PREPARE_INPUT.out.rnaseq,
+            PREPARE_INPUT.out.assemblies
+                .map { meta, assembly -> [ meta + [ build: assembly.id ], assembly.pri_fasta ] }
+        )
     }
 
 }
