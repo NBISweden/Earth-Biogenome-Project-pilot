@@ -1,14 +1,8 @@
 #! /usr/bin/env nextflow
 
-nextflow.enable.dsl = 2
-
 import org.yaml.snakeyaml.Yaml
 
-include { SAMTOOLS_FASTA } from "../../modules/local/samtools/fasta/main"
-
-workflow {
-    PREPARE_INPUT( params.input )
-}
+include { SAMTOOLS_FASTA } from "$projectDir/modules/local/samtools/fasta/main"
 
 /* params.input example sample sheet (samplesheet.yml)
 ```yaml

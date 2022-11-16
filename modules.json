@@ -2,66 +2,54 @@
     "name": "Earth Biogenome Project Assembly and Annotation workflow",
     "homePage": "https://github.com/NBISweden/Earth-Biogenome-Project-pilot",
     "repos": {
-        "nf-core/modules": {
-            "blast/blastn": {
-                "git_sha": "e745e167c1020928ef20ea1397b6b4d230681b4d"
-            },
-            "busco": {
-                "git_sha": "9fa6b6c1fc930830c1d819a9273b4ec12ffacb0a"
-            },
-            "diamond/blastx": {
-                "git_sha": "bd3bfe0817246082525ab93707976676b1fe208b"
-            },
-            "fastk/fastk": {
-                "git_sha": "4e308c131e29bc2cca3d46ba8f7e59e9d3785198"
-            },
-            "fastk/histex": {
-                "git_sha": "fd5aea0b76c1e5b908191f212382a55a57cee316"
-            },
-            "genescopefk": {
-                "git_sha": "e91e99db30c143ed913313301b53b5454df8720d"
-            },
-            "genomescope2": {
-                "git_sha": "d54cf467f47461e8304e6fc4a4a1192869bfd792"
-            },
-            "mash/screen": {
-                "git_sha": "c452f562890534ca3d0a331de7c35b744037fdae"
-            },
-            "mash/sketch": {
-                "git_sha": "e745e167c1020928ef20ea1397b6b4d230681b4d"
-            },
-            "merquryfk/katcomp": {
-                "git_sha": "280eec531785bdba28faf01bd6dd6b41fabccb8e"
-            },
-            "merquryfk/katgc": {
-                "git_sha": "233fa70811a03a4cecb2ece483b5c8396e2cee1d"
-            },
-            "merquryfk/merquryfk": {
-                "git_sha": "8ded6d441abe1a111c20482fa50ad3837b1747bf"
-            },
-            "merquryfk/ploidyplot": {
-                "git_sha": "0af6adef555e54c2dcf0343646325864cacb5176"
-            },
-            "meryl/count": {
-                "git_sha": "a43bc940d6aaeaa755b34484cffeb5b41bce92eb"
-            },
-            "meryl/histogram": {
-                "git_sha": "129f57ccd9adc9016aaa3f2e2e6ab556ba8de7b6"
-            },
-            "meryl/unionsum": {
-                "git_sha": "57fee2b3d6759c36f2a3e9181ab5f309cf62b6f1"
-            },
-            "minimap2/align": {
-                "git_sha": "1a5a9e7b4009dcf34e6867dd1a5a1d9a718b027b"
-            },
-            "quast": {
-                "git_sha": "d473a247d2e0c619b0df877ea19d9a5a98c8e3c8"
-            },
-            "samtools/fastq": {
-                "git_sha": "897c33d5da084b61109500ee44c01da2d3e4e773"
-            },
-            "seqkit/split2": {
-                "git_sha": "e745e167c1020928ef20ea1397b6b4d230681b4d"
+        "https://github.com/nf-core/modules.git": {
+            "modules": {
+                "nf-core": {
+                    "busco": {
+                        "branch": "master",
+                        "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905"
+                    },
+                    "fastk/fastk": {
+                        "branch": "master",
+                        "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905"
+                    },
+                    "fastk/histex": {
+                        "branch": "master",
+                        "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905"
+                    },
+                    "fastk/merge": {
+                        "branch": "master",
+                        "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905"
+                    },
+                    "genescopefk": {
+                        "branch": "master",
+                        "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905"
+                    },
+                    "mash/screen": {
+                        "branch": "master",
+                        "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905"
+                    },
+                    "merquryfk/katcomp": {
+                        "branch": "master",
+                        "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905"
+                    },
+                    "merquryfk/katgc": {
+                        "branch": "master",
+                        "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905"
+                    },
+                    "merquryfk/ploidyplot": {
+                        "branch": "master",
+                        "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905"
+                    },
+                    "minimap2/align": {
+                        "branch": "master",
+                        "git_sha": "5850432aab24a1924389b660adfee3809d3e60a9"
+                    },
+                    "quast": {
+                        "branch": "master",
+                        "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905"
+                    }
+                }
             }
         }
     }

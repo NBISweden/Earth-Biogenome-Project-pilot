@@ -1,4 +1,4 @@
-include { MASH_SCREEN } from "$projectDir/modules/nf-core/modules/mash/screen/main"
+include { MASH_SCREEN } from "$projectDir/modules/nf-core/mash/screen/main"
 include { MASH_FILTER } from "$projectDir/modules/local/mash/filter"
 
 workflow SCREEN_READS {

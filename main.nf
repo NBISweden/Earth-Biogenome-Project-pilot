@@ -7,13 +7,14 @@ include { PREPARE_INPUT } from "$projectDir/subworkflows/prepare_input/main"
 include { BUILD_DATABASES as BUILD_HIFI_DATABASES } from "$projectDir/subworkflows/build_databases/main"
 include { BUILD_DATABASES as BUILD_HIC_DATABASES  } from "$projectDir/subworkflows/build_databases/main"
 
-include { GENOME_PROPERTIES } from "$projectDir/subworkflows/genome_properties/genome_properties"
-include { COMPARE_LIBRARIES } from "$projectDir/subworkflows/compare_libraries/compare_libraries"
+include { GENOME_PROPERTIES } from "$projectDir/subworkflows/genome_properties/main"
+include { COMPARE_LIBRARIES } from "$projectDir/subworkflows/compare_libraries/main"
 include { SCREEN_READS      } from "$projectDir/subworkflows/screen_read_contamination/main"
 
-include { COMPARE_ASSEMBLIES } from "$projectDir/subworkflows/compare_assemblies/compare_assemblies"
-include { EVALUATE_ASSEMBLY  } from "$projectDir/subworkflows/evaluate_assembly/evaluate_assembly"
-// include { ASSEMBLY_VALIDATION } from "$projectDir/subworkflows/assembly_validation/assembly_validation"
+include { PURGE_DUPLICATES } from "$projectDir/subworkflows/purge_dups/main"
+
+include { COMPARE_ASSEMBLIES } from "$projectDir/subworkflows/compare_assemblies/main"
+include { EVALUATE_ASSEMBLY  } from "$projectDir/subworkflows/evaluate_assembly/main"
 
 workflow {
 
@@ -43,7 +44,7 @@ workflow {
         // QC Steps
         GENOME_PROPERTIES ( 
             BUILD_HIFI_DATABASES.out.fastk_histogram.join( BUILD_HIFI_DATABASES.out.fastk_ktab ),
-            BUILD_HIFI_DATABASES.out.meryl_histogram
+            // BUILD_HIFI_DATABASES.out.meryl_histogram
         )
         COMPARE_LIBRARIES (
             BUILD_HIFI_DATABASES.out.fastk_histogram.join( BUILD_HIFI_DATABASES.out.fastk_ktab ).join(
@@ -67,7 +68,17 @@ workflow {
 
     // Curate assemblies 
     if ( 'curate' in workflow_steps ) {
+        PURGE_DUPLICATES(
+            PREPARE_INPUT.out.hifi
+                .map { meta, reads -> [ meta.findAll { ! (it.key in [ 'single_end' ]) }, reads ] } 
+                .combine( PREPARE_INPUT.out.assemblies, by:0 )
+        )
         // Break and reassemble misassemblies, separate organelles, etc
+            // MitoHiFi
+            // PurgeDups
+            // Kraken2
+            // Blobtoolkit
+            // FCS-Genome
     }
 
     // Assess assemblies
@@ -82,7 +93,7 @@ workflow {
             PREPARE_INPUT.out.hifi,
             BUILD_HIFI_DATABASES.out.fastk_histogram.join( BUILD_HIFI_DATABASES.out.fastk_ktab ),
             params.reference ? file( params.reference, checkIfExists: true ) : [],
-            params.busco_lineages.tokenize(','),
+            Channel.of( params.busco_lineages.tokenize(',') ),
             params.busco_lineage_path ? file( params.busco_lineage_path, checkIfExists: true ) : []
         )
         // ASSEMBLY_VALIDATION(
