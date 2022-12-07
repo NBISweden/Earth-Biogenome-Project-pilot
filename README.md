@@ -52,36 +52,71 @@ nextflow run -params-file <params.yml> \
 where:
 - `params.yml` is a YAML formatted file containing workflow parameters
     such as input paths to the data.
-    A [params.yml template](params.yml.TEMPLATE) is provided to copy
-    for convenience.
+
+    Example:
+
+    ```yml
+    input: 'assembly_spec.yml'
+    ```
+
     Alternatively parameters can be provided on the
     command-line using the `--parameter` notation (e.g., `--input <path>` ).
-- `<custom.config>` is a nextflow configuration file which provides
-    additional configuration (see the [custom.config template](custom.config.TEMPLATE)).
+- `<custom.config>` is a Nextflow configuration file which provides
+    additional configuration. This is used to customise settings other than
+    workflow parameters, such as cpus, time, and command-line options to tools.
+
+    Example:
+    ```nextflow
+    process {
+        withName: 'BUSCO' {  // Selects the process to apply settings.
+            cpus     = 6   // Overrides cpu settings defined in nextflow.config
+            time     = 4.d // Overrides time settings defined in nextflow.config to 4 days
+            // ext.args supplies command-line options to the process tool
+            // overrides settings found in configs/modules.config
+            ext.args = '--mode genome --long'  // Supplies these as command-line options to Busco  
+        }
+    }
+    ```
 - `<profile>` is one of the preconfigured execution profiles
-    (`uppmax`, `singularity_local`, `docker_local`). Alternatively,
+    (`uppmax`, `singularity_local`, `docker_local`, etc: see nextflow.config). Alternatively,
     you can provide a custom configuration to configure this workflow
     to your execution environment. See [Nextflow Configuration](https://www.nextflow.io/docs/latest/config.html#scope-executor)
     for more details.
 
-Tool specific (module) parameters are supplied in the [modules file](configs/modules.config).
-These can be overridden in the `nextflow.config` in the analysis directory,
-by using process selectors. For example:
-```
-// Module settings
-process {
-    withName: 'FASTQC' {
-        // Override ext.args to FastQC
-        ext.args = '--quiet'
-    }
-}
-```
 
 ### Workflow parameter inputs
 
 Mandatory:
 
 - `input`: A YAML formatted input file.
+    Example `assembly_spec.yml` (See also [test profile input](assets/test_hsapiens.yml)):
+
+    ```yml
+    sample:                # Required: Meta data
+    id: 'HSapiens_test'  # Required: Name of the sample. Used commonly as a prefix.
+    kmer_size: 31        # Required: K-mer size to use for k-mer analyses.
+    ploidy: 2            # Required: Estimated ploidy of organism.
+    busco_lineages:      # Optional: List of busco lineages to test against. default: 'auto'
+        - "eukaryota_odb10"
+        - "mammalia_odb10"
+    assembly:              # Optional: List of assemblies to curate and validate.
+    - id: 'HS_phased_diploid'  # Each assembly has it's own ID. Assemblies can be primary and alternate or primary only
+        pri_fasta: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/genome/genome.fasta'
+        alt_fasta: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/genome/genome2.fasta'
+    - id: 'HS_consensus'
+        pri_fasta: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/genome/genome2.fasta'
+    hic:                   # Optional: List of hi-c reads to QC and use for scaffolding 
+    - read1: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/illumina/fastq/test_1.fastq.gz'
+        read2: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/illumina/fastq/test_2.fastq.gz'
+    hifi:                  # Required: List of hifi-reads to QC and use for assembly/validation
+    - reads: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/illumina/bam/test.paired_end.sorted.bam'
+    rnaseq:                # Optional: List of Rna-seq reads to use for validation
+    - read1: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/illumina/fastq/test_1.fastq.gz'
+        read2: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/illumina/fastq/test_2.fastq.gz'
+    isoseq:                # Optional: List of Isoseq reads to use for validation
+    - reads: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/illumina/bam/test.paired_end.sorted.bam'
+    ```
+
 
 Optional:
 
@@ -89,8 +124,6 @@ Optional:
 - `publish_mode`: (values: `'symlink'` (default), `'copy'`) The file
 publishing method from the intermediate results folders
 (see [Table of publish modes](https://www.nextflow.io/docs/latest/process.html#publishdir)).
-- `kmer_size`: The size of k-mer to use for histogram plotting.
-- `ploidy`: The estimated ploidy.
 - `steps`: The workflow steps to execute ( default is all steps. Choose from [`data_qc`,`preprocess`,`assemble`,`validate`,`curate`] ).
 
     Software specific:
@@ -108,11 +141,7 @@ publishing method from the intermediate results folders
 
 All results are published to the path assigned to the workflow parameter `results`.
 
-- `01_FastQC_sequence_check/`: FastQC output
-- `02_Fastp_trimmed_sequences/`: FastP output
-- `pipeline_info/`: A folder containing workflow execution details.
-- `multiqc_report.html`: A MultiQC report summarising the results of data processing.
-
+TODO:: List folder contents in results file
 ### Customisation for Uppmax
 
 A custom profile named `uppmax` is available to run this workflow specifically
