@@ -28,8 +28,6 @@ process PURGEDUPS_GETSEQS {
         -p $prefix \\
         $assembly
 
-    ls -l
-
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         purgedups: \$( purge_dups -h |& sed '3!d; s/.*: //' )
