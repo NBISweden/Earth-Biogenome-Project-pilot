@@ -3,6 +3,7 @@
  * https://github.com/dfguan/purge_dups
  */
 
+// TODO:: purgedups are no on nf-core
 include { MINIMAP2_ALIGN as MINIMAP2_ALIGN_READS    } from "$projectDir/modules/nf-core/minimap2/align/main"
 include { MINIMAP2_ALIGN as MINIMAP2_ALIGN_ASSEMBLY } from "$projectDir/modules/nf-core/minimap2/align/main"
 include { PURGEDUPS_CALCUTS                         } from "$projectDir/modules/local/purgedups/calcuts"
@@ -27,25 +28,6 @@ workflow PURGE_DUPLICATES {
     reads_plus_assembly_ch
         .map { meta, reads, assembly -> [ meta + [ build: assembly.id ], assembly.pri_fasta ] }
         .set { assembly_ch }
-    /*
-    # Map Pacbio CSS reads
-    for i in $pb_list
-    do
-        minimap2 -xasm20 $pri_asm $i | gzip -c - > $i.paf.gz
-    done
-    bin/pbcstat *.paf.gz (produces PB.base.cov and PB.stat files)
-    bin/calcuts PB.stat > cutoffs 2>calcults.log
-
-    # Split assembly and do self alignment
-    bin/split_fa $pri_asm > $pri_asm.split
-    minimap2 -xasm5 -DP $pri_asm.split $pri_asm.split | gzip -c - > $pri_asm.split.self.paf.gz
-
-    # Purge haplotigs
-    bin/purge_dups -2 -T cutoffs -c PB.base.cov $pri_asm.split.self.paf.gz > dups.bed 2> purge_dups.log
-
-    # purged primary and haplotig sequences from draft assembly
-    bin/get_seqs -e dups.bed $pri_asm 
-    */
     // Map pacbio reads
     MINIMAP2_ALIGN_READS(
         input.reads_ch,
@@ -56,6 +38,7 @@ workflow PURGE_DUPLICATES {
     )
     PURGEDUPS_PBCSTAT( MINIMAP2_ALIGN_READS.out.paf.groupTuple() )
     PURGEDUPS_CALCUTS( PURGEDUPS_PBCSTAT.out.stat )
+    // TODO:: Cutoffs can likely be estimated from genescope model output.
 
     // Split assembly and do self alignment
     PURGEDUPS_SPLITFA( assembly_ch )
@@ -75,6 +58,8 @@ workflow PURGE_DUPLICATES {
     )
 
     PURGEDUPS_GETSEQS( assembly_ch.join( PURGEDUPS_PURGEDUPS.out.bed ) )
+
+    // TODO: Mix haplotigs back into haplotig set / Verify alternate contigs.
 
     emit:
     assembly = PURGEDUPS_GETSEQS.out.haplotype
