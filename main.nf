@@ -37,8 +37,10 @@ workflow {
     PREPARE_INPUT ( params.input )
 
     // Build necessary databases
-    BUILD_HIFI_DATABASES ( PREPARE_INPUT.out.hifi )
-    BUILD_HIC_DATABASES ( PREPARE_INPUT.out.hic )
+    if ( ['data_qc','validate'].any{ it in workflow_steps}) {
+        BUILD_HIFI_DATABASES ( PREPARE_INPUT.out.hifi )
+        BUILD_HIC_DATABASES ( PREPARE_INPUT.out.hic )
+    }
     
     // Data inspection
     if ( 'data_qc' in workflow_steps ) {
@@ -53,6 +55,7 @@ workflow {
         )
         SCREEN_READS ( 
             PREPARE_INPUT.out.hifi,
+            // TODO:: Allow custom database ala nf-core/genomeassembler.
             file( params.mash_screen_db, checkIfExists: true )
         )
     }
@@ -97,19 +100,8 @@ workflow {
             Channel.of( params.busco_lineages.tokenize(',') ),
             params.busco_lineage_path ? file( params.busco_lineage_path, checkIfExists: true ) : []
         )
-        // ASSEMBLY_VALIDATION(
-        //     PREPARE_INPUT.out.assemblies,
-        //     PREPARE_INPUT.out.hifi,
-        //     BUILD_HIFI_DATABASES.out.fastk_histogram.join( BUILD_HIFI_DATABASES.out.fastk_ktab ),
-        //     BUILD_HIFI_DATABASES.out.meryl_uniondb,
-        //     params.reference ? file( params.reference, checkIfExists: true ) : [],
-        //     params.busco_lineages.tokenize(','),
-        //     params.busco_lineage_path ? file( params.busco_lineage_path, checkIfExists: true ) : [],
-        //     Channel.fromPath( params.diamond_db, checkIfExists: true ),
-        //     Channel.fromPath( params.blast_db, checkIfExists: true ),
-        //     file( params.ncbi_taxonomy, checkIfExists: true )
-        // )
 
+        // TODO: Run only if RNAseq data
         ALIGN_RNASEQ ( 
             PREPARE_INPUT.out.rnaseq,
             PREPARE_INPUT.out.assemblies
