@@ -63,6 +63,6 @@ workflow PURGE_DUPLICATES {
     // TODO: Mix haplotigs back into haplotig set / Verify alternate contigs.
 
     emit:
-    assembly = PURGEDUPS_GETSEQS.out.haplotype
+    assembly = PURGEDUPS_GETSEQS.out.purged
     coverage = PURGEDUPS_PBCSTAT.out.basecov
 }
