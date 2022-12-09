@@ -50,12 +50,13 @@ workflow PURGE_DUPLICATES {
         false  // cigar in bam file
     )
 
+    // TODO: Check the output from here
     PURGEDUPS_PURGEDUPS(
         PURGEDUPS_PBCSTAT.out.basecov
             .join( PURGEDUPS_CALCUTS.out.cutoff )
             .map { meta, cov, cutoff -> [ meta.findAll { !(it.key in [ 'single_end' ]) }, cov, cutoff ] }
             .join( MINIMAP2_ALIGN_ASSEMBLY.out.paf )
-    )
+    ) 
 
     PURGEDUPS_GETSEQS( assembly_ch.join( PURGEDUPS_PURGEDUPS.out.bed ) )
 
