@@ -34,8 +34,6 @@ flowchart TD
     fastk_hifi --> katcomp[[ KatComp ]]
     fastk_hic --> katcomp
     assembly --> busco[[ Busco ]]
-    assembly --> inspector[[ Inspector ]]
-    hifi --> inspector
     refseq_sketch[( RefSeq sketch )] --> mash_screen[[ Mash Screen ]]
     hifi --> mash_screen
 ```
@@ -93,28 +91,28 @@ Mandatory:
 
     ```yml
     sample:                # Required: Meta data
-    id: 'HSapiens_test'  # Required: Name of the sample. Used commonly as a prefix.
-    kmer_size: 31        # Required: K-mer size to use for k-mer analyses.
-    ploidy: 2            # Required: Estimated ploidy of organism.
-    busco_lineages:      # Optional: List of busco lineages to test against. default: 'auto'
+      id: 'HSapiens_test'  # Required: Name of the sample. Used commonly as a prefix.
+      kmer_size: 31        # Required: K-mer size to use for k-mer analyses.
+      ploidy: 2            # Required: Estimated ploidy of organism.
+      busco_lineages:      # Optional: List of busco lineages to test against. default: 'auto'
         - "eukaryota_odb10"
         - "mammalia_odb10"
     assembly:              # Optional: List of assemblies to curate and validate.
-    - id: 'HS_phased_diploid'  # Each assembly has it's own ID. Assemblies can be primary and alternate or primary only
+      - id: 'HS_phased_diploid'  # Each assembly has it's own ID. Assemblies can be primary and alternate or primary only
         pri_fasta: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/genome/genome.fasta'
         alt_fasta: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/genome/genome2.fasta'
-    - id: 'HS_consensus'
+      - id: 'HS_consensus'
         pri_fasta: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/genome/genome2.fasta'
     hic:                   # Optional: List of hi-c reads to QC and use for scaffolding 
-    - read1: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/illumina/fastq/test_1.fastq.gz'
+      - read1: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/illumina/fastq/test_1.fastq.gz'
         read2: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/illumina/fastq/test_2.fastq.gz'
     hifi:                  # Required: List of hifi-reads to QC and use for assembly/validation
-    - reads: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/illumina/bam/test.paired_end.sorted.bam'
+      - reads: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/illumina/bam/test.paired_end.sorted.bam'
     rnaseq:                # Optional: List of Rna-seq reads to use for validation
-    - read1: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/illumina/fastq/test_1.fastq.gz'
+      - read1: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/illumina/fastq/test_1.fastq.gz'
         read2: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/illumina/fastq/test_2.fastq.gz'
     isoseq:                # Optional: List of Isoseq reads to use for validation
-    - reads: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/illumina/bam/test.paired_end.sorted.bam'
+      - reads: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/illumina/bam/test.paired_end.sorted.bam'
     ```
 
 
@@ -142,7 +140,7 @@ publishing method from the intermediate results folders
 All results are published to the path assigned to the workflow parameter `results`.
 
 TODO:: List folder contents in results file
-### Customisation for Uppmax
+### Customization for Uppmax
 
 A custom profile named `uppmax` is available to run this workflow specifically
 on UPPMAX clusters. The process `executor` is `slurm` so jobs are
@@ -162,21 +160,24 @@ The profile is enabled using the `-profile` parameter to nextflow:
 nextflow run -profile uppmax <nextflow_script>
 ```
 
-## Workflow organisation
+## Workflow organization
 
 The workflows in this folder manage the execution of your analyses
 from beginning to end.
 
 ```
 workflow/
+ | - .github/                        Github data such as actions to run
+ | - assets/                         Workflow assets such as test samplesheets
  | - bin/                            Custom workflow scripts
  | - configs/                        Configuration files that govern workflow execution
- | - containers/                     Custom container definition files
+ | - dockerfiles/                    Custom container definition files
  | - docs/                           Workflow usage and interpretation information
  | - modules/                        Process definitions for tools used in the workflow
  | - subworkflows/                   Custom workflows for different stages of the main analysis
+ | - tests/                          Workflow tests
  | - main.nf                         The primary analysis script
  | - nextflow.config                 General Nextflow configuration
- \ - params.config.TEMPLATE          A Template for parameter configuration
+ \ - modules.json                    nf-core file which tracks modules/subworkflows from nf-core
 ```
 
