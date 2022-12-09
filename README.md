@@ -34,8 +34,6 @@ flowchart TD
     fastk_hifi --> katcomp[[ KatComp ]]
     fastk_hic --> katcomp
     assembly --> busco[[ Busco ]]
-    assembly --> inspector[[ Inspector ]]
-    hifi --> inspector
     refseq_sketch[( RefSeq sketch )] --> mash_screen[[ Mash Screen ]]
     hifi --> mash_screen
 ```
