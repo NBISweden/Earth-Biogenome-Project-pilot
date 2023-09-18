@@ -7,57 +7,57 @@
         "nf-core": {
           "busco": {
             "branch": "master",
-            "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905",
+            "git_sha": "6d6552cb582f56b6101c452e16ee7c23073f91de",
             "installed_by": ["modules"]
           },
           "fastk/fastk": {
             "branch": "master",
-            "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905",
+            "git_sha": "29e87a37ae1887fc8289f2f56775604a71715cb9",
             "installed_by": ["modules"]
           },
           "fastk/histex": {
             "branch": "master",
-            "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905",
+            "git_sha": "ed67f2fadd6d2a155b296f728e6b1f8c92ddc1a6",
             "installed_by": ["modules"]
           },
           "fastk/merge": {
             "branch": "master",
-            "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905",
+            "git_sha": "8c4542e5d421c4690cf1fa6ec729e9304763fdaf",
             "installed_by": ["modules"]
           },
           "genescopefk": {
             "branch": "master",
-            "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905",
+            "git_sha": "6f150e1503c0826c21fedf1fa566cdbecbe98ec7",
             "installed_by": ["modules"]
           },
           "kraken2/kraken2": {
             "branch": "master",
-            "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905",
+            "git_sha": "603ecbd9f45300c9788f197d2a15a005685b4220",
             "installed_by": ["modules"]
           },
           "mash/screen": {
             "branch": "master",
-            "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905",
+            "git_sha": "911696ea0b62df80e900ef244d7867d177971f73",
             "installed_by": ["modules"]
           },
           "merquryfk/katcomp": {
             "branch": "master",
-            "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905",
+            "git_sha": "6f150e1503c0826c21fedf1fa566cdbecbe98ec7",
             "installed_by": ["modules"]
           },
           "merquryfk/katgc": {
             "branch": "master",
-            "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905",
+            "git_sha": "6f150e1503c0826c21fedf1fa566cdbecbe98ec7",
             "installed_by": ["modules"]
           },
           "merquryfk/ploidyplot": {
             "branch": "master",
-            "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905",
+            "git_sha": "ebb27711cd5f4de921244bfa81c676504072d31c",
             "installed_by": ["modules"]
           },
           "minimap2/align": {
             "branch": "master",
-            "git_sha": "5850432aab24a1924389b660adfee3809d3e60a9",
+            "git_sha": "603ecbd9f45300c9788f197d2a15a005685b4220",
             "installed_by": ["modules"]
           },
           "purgedups/calcuts": {
@@ -87,19 +87,18 @@
           },
           "quast": {
             "branch": "master",
-            "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905",
+            "git_sha": "344638191a5d6b3526556410819dfcf24e98039e",
             "installed_by": ["modules"]
           },
           "star/align": {
             "branch": "master",
-            "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905",
+            "git_sha": "cc08a888069f67cab8120259bddab8032d4c0fe3",
             "installed_by": ["modules"]
           },
           "star/genomegenerate": {
             "branch": "master",
-            "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905",
-            "installed_by": ["modules"],
-            "patch": "modules/nf-core/star/genomegenerate/star-genomegenerate.diff"
+            "git_sha": "cc08a888069f67cab8120259bddab8032d4c0fe3",
+            "installed_by": ["modules"]
           }
         }
       }

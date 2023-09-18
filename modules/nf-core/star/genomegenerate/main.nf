@@ -2,18 +2,18 @@ process STAR_GENOMEGENERATE {
     tag "$fasta"
     label 'process_high'
 
-    conda (params.enable_conda ? "bioconda::star=2.7.10a bioconda::samtools=1.15.1 conda-forge::gawk=5.1.0" : null)
+    conda "bioconda::star=2.7.10a bioconda::samtools=1.16.1 conda-forge::gawk=5.1.0"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/mulled-v2-1fa26d1ce03c295fe2fdcf85831a92fbcbd7e8c2:afaaa4c6f5b308b4b6aa2dd8e99e1466b2a6b0cd-0' :
-        'quay.io/biocontainers/mulled-v2-1fa26d1ce03c295fe2fdcf85831a92fbcbd7e8c2:afaaa4c6f5b308b4b6aa2dd8e99e1466b2a6b0cd-0' }"
+        'https://depot.galaxyproject.org/singularity/mulled-v2-1fa26d1ce03c295fe2fdcf85831a92fbcbd7e8c2:1df389393721fc66f3fd8778ad938ac711951107-0' :
+        'biocontainers/mulled-v2-1fa26d1ce03c295fe2fdcf85831a92fbcbd7e8c2:1df389393721fc66f3fd8778ad938ac711951107-0' }"
 
     input:
     tuple val(meta), path(fasta)
-    path gtf
+    tuple val(meta2), path(gtf)
 
     output:
-    tuple val(meta), path("star"), emit: index
-    path "versions.yml"          , emit: versions
+    tuple val(meta), path("star")  , emit: index
+    path "versions.yml"            , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -24,13 +24,12 @@ process STAR_GENOMEGENERATE {
     def memory = task.memory ? "--limitGenomeGenerateRAM ${task.memory.toBytes() - 100000000}" : ''
     if (args_list.contains('--genomeSAindexNbases')) {
         """
-        ${ fasta.name.endsWith('.gz') ? "gzip -dc $fasta > $fasta.baseName" : '' }
         mkdir star
         STAR \\
             --runMode genomeGenerate \\
             --genomeDir star/ \\
-            --genomeFastaFiles ${fasta.name.endsWith('.gz') ? fasta.baseName : fasta } \\
-            ${ gtf ? "--sjdbGTFfile $gtf": '' } \\
+            --genomeFastaFiles $fasta \\
+            --sjdbGTFfile $gtf \\
             --runThreadN $task.cpus \\
             $memory \\
             $args
@@ -44,16 +43,15 @@ process STAR_GENOMEGENERATE {
         """
     } else {
         """
-        ${ fasta.name.endsWith('.gz') ? "gzip -dc $fasta > $fasta.baseName" : '' }
-        samtools faidx ${fasta.name.endsWith('.gz') ? fasta.baseName : fasta }
-        NUM_BASES=`gawk '{sum = sum + \$2}END{if ((log(sum)/log(2))/2 - 1 > 14) {printf "%.0f", 14} else {printf "%.0f", (log(sum)/log(2))/2 - 1}}' ${fasta.name.endsWith('.gz') ? fasta.baseName : fasta }.fai`
+        samtools faidx $fasta
+        NUM_BASES=`gawk '{sum = sum + \$2}END{if ((log(sum)/log(2))/2 - 1 > 14) {printf "%.0f", 14} else {printf "%.0f", (log(sum)/log(2))/2 - 1}}' ${fasta}.fai`
 
         mkdir star
         STAR \\
             --runMode genomeGenerate \\
             --genomeDir star/ \\
-            --genomeFastaFiles ${fasta.name.endsWith('.gz') ? fasta.baseName : fasta } \\
-            ${ gtf ? "--sjdbGTFfile $gtf" : '' } \\
+            --genomeFastaFiles $fasta \\
+            --sjdbGTFfile $gtf \\
             --runThreadN $task.cpus \\
             --genomeSAindexNbases \$NUM_BASES \\
             $memory \\
