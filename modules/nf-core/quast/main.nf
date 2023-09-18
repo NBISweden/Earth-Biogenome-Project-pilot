@@ -9,8 +9,8 @@ process QUAST {
 
     input:
     tuple val(meta) , path(consensus)
-    tuple val(meta2), path(fasta)
-    tuple val(meta3), path(gff)
+    path(fasta)
+    path(gff)
 
     output:
     tuple val(meta), path("${prefix}")                   , emit: results
