@@ -3,14 +3,13 @@
  * https://github.com/dfguan/purge_dups
  */
 
-// TODO:: purgedups are no on nf-core
 include { MINIMAP2_ALIGN as MINIMAP2_ALIGN_READS    } from "$projectDir/modules/nf-core/minimap2/align/main"
 include { MINIMAP2_ALIGN as MINIMAP2_ALIGN_ASSEMBLY } from "$projectDir/modules/nf-core/minimap2/align/main"
-include { PURGEDUPS_CALCUTS                         } from "$projectDir/modules/local/purgedups/calcuts"
-include { PURGEDUPS_GETSEQS                         } from "$projectDir/modules/local/purgedups/getseqs"
-include { PURGEDUPS_PBCSTAT                         } from "$projectDir/modules/local/purgedups/pbcstat"
-include { PURGEDUPS_SPLITFA                         } from "$projectDir/modules/local/purgedups/splitfa"
-include { PURGEDUPS_PURGEDUPS                       } from "$projectDir/modules/local/purgedups/purgedups"
+include { PURGEDUPS_CALCUTS                         } from "$projectDir/modules/nf-core/purgedups/calcuts"
+include { PURGEDUPS_GETSEQS                         } from "$projectDir/modules/nf-core/purgedups/getseqs"
+include { PURGEDUPS_PBCSTAT                         } from "$projectDir/modules/nf-core/purgedups/pbcstat"
+include { PURGEDUPS_SPLITFA                         } from "$projectDir/modules/nf-core/purgedups/splitfa"
+include { PURGEDUPS_PURGEDUPS                       } from "$projectDir/modules/nf-core/purgedups/purgedups"
 
 workflow PURGE_DUPLICATES {
 
