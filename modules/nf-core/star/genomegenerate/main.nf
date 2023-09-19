@@ -29,7 +29,7 @@ process STAR_GENOMEGENERATE {
             --runMode genomeGenerate \\
             --genomeDir star/ \\
             --genomeFastaFiles $fasta \\
-            --sjdbGTFfile $gtf \\
+            ${ gtf ? "--sjdbGTFfile $gtf": '' } \\
             --runThreadN $task.cpus \\
             $memory \\
             $args
@@ -51,7 +51,7 @@ process STAR_GENOMEGENERATE {
             --runMode genomeGenerate \\
             --genomeDir star/ \\
             --genomeFastaFiles $fasta \\
-            --sjdbGTFfile $gtf \\
+            ${ gtf ? "--sjdbGTFfile $gtf": '' } \\
             --runThreadN $task.cpus \\
             --genomeSAindexNbases \$NUM_BASES \\
             $memory \\
