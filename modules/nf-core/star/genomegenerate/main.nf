@@ -9,7 +9,7 @@ process STAR_GENOMEGENERATE {
 
     input:
     tuple val(meta), path(fasta)
-    tuple val(meta2), path(gtf)
+    path(gtf)
 
     output:
     tuple val(meta), path("star")  , emit: index

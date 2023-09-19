@@ -99,7 +99,8 @@
           "star/genomegenerate": {
             "branch": "master",
             "git_sha": "cc08a888069f67cab8120259bddab8032d4c0fe3",
-            "installed_by": ["modules"]
+            "installed_by": ["modules"],
+            "patch": "modules/nf-core/star/genomegenerate/star-genomegenerate.diff"
           }
         }
       }
