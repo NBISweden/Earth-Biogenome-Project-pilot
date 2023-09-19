@@ -127,11 +127,6 @@ publishing method from the intermediate results folders
     Software specific:
     - `multiqc_config`: Path to MultiQC configuration file (default: `configs/multiqc_conf.yaml`).
 
-    Software package manager specific:
-    - `enable_conda`: Set to `true` to use conda as the software package manager (default: `false`).
-    - `singularity_pull_docker_container`: Set to `true` if Singularity images should be
-    built from the docker images, instead of retrieving existing Singularity images (default: `false`).
-
     Uppmax cluster specific:
     - `project`: SNIC Compute allocation number.
 
