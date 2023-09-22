@@ -33,5 +33,6 @@ workflow GENOME_PROPERTIES {
         )
 
     emit:
+    model    = GENESCOPEFK.out.model
     versions = versions_ch
 }
