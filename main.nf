@@ -36,6 +36,8 @@ workflow {
     // Read in data
     PREPARE_INPUT ( params.input )
 
+    ch_hifi_kmercov = Channel.empty()
+
     // Build necessary databases
     if ( ['data_qc','validate'].any{ it in workflow_steps}) {
         BUILD_HIFI_DATABASES ( PREPARE_INPUT.out.hifi )
@@ -46,9 +48,18 @@ workflow {
     if ( 'data_qc' in workflow_steps ) {
         // QC Steps
         GENOME_PROPERTIES ( 
-            BUILD_HIFI_DATABASES.out.fastk_histogram.join( BUILD_HIFI_DATABASES.out.fastk_ktab ),
+            BUILD_HIFI_DATABASES.out.fastk_histogram.join( BUILD_HIFI_DATABASES.out.fastk_ktab )
             // BUILD_HIFI_DATABASES.out.meryl_histogram
         )
+        ch_hifi_kmercov = GENOME_PROPERTIES.out.model
+            .map { meta, file ->
+                // Parse kmer coverage from GenomeScope model
+                def covline = file.readLines().collect { it.startsWith('kmercov') ? it : '' }
+                [ meta , [ kmercov: new BigDecimal( covline.join('').tokenize(' ')[1] ).round(2) ] ]
+            }
+            .join( PREPARE_INPUT.out.hifi )
+            .map { meta, kcov, path -> [ meta + kcov, path ] }
+            .dump( tag: 'Read QC: Genome properties: reads with kmercov' )
         COMPARE_LIBRARIES (
             BUILD_HIFI_DATABASES.out.fastk_histogram.join( BUILD_HIFI_DATABASES.out.fastk_ktab ).join(
             BUILD_HIC_DATABASES.out.fastk_histogram.join( BUILD_HIC_DATABASES.out.fastk_ktab ) )
@@ -60,22 +71,26 @@ workflow {
         )
     }
 
+    ch_hifi_reads = 'data_qc' in workflow_steps ? PREPARE_INPUT.out.hifi : ch_hifi_kmercov
+
     // Preprocess data
     if ( 'preprocess' in workflow_steps ) {
         // Adapter filtering etc
     }
     
     // Assemble
-    if( 'assemble' in workflow_steps ) {
+    if ( 'assemble' in workflow_steps ) {
         // Run assemblers
     }
 
     // Curate assemblies 
     if ( 'curate' in workflow_steps ) {
         PURGE_DUPLICATES (
-            PREPARE_INPUT.out.hifi
-                .map { meta, reads -> [ meta.findAll { ! (it.key in [ 'single_end' ]) }, reads ] } 
+            ch_hifi_reads
+                .map { meta, reads -> [ meta.findAll { ! (it.key in [ 'single_end' ]) }, meta.subMap('kmercov'),  reads ] } 
                 .combine( PREPARE_INPUT.out.assemblies, by:0 )
+                .map { meta, kmercov, reads -> [ meta + kmercov, reads ] }
+                .dump( tag: 'Purge duplicates: input')
         )
         // Break and reassemble misassemblies, separate organelles, etc
             // MitoHiFi
