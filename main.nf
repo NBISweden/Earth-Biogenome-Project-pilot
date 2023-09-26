@@ -51,15 +51,12 @@ workflow {
             BUILD_HIFI_DATABASES.out.fastk_histogram.join( BUILD_HIFI_DATABASES.out.fastk_ktab )
             // BUILD_HIFI_DATABASES.out.meryl_histogram
         )
-        ch_hifi_kmercov = GENOME_PROPERTIES.out.model
+        GENOME_PROPERTIES.out.model
             .map { meta, file ->
                 // Parse kmer coverage from GenomeScope model
                 def covline = file.readLines().collect { it.startsWith('kmercov') ? it : '' }
                 [ meta , [ kmercov: new BigDecimal( covline.join('').tokenize(' ')[1] ).round(2) ] ]
-            }
-            .join( PREPARE_INPUT.out.hifi )
-            .map { meta, kcov, path -> [ meta + kcov, path ] }
-            .dump( tag: 'Read QC: Genome properties: reads with kmercov' )
+            }.set { ch_hifi_kmercov }
         COMPARE_LIBRARIES (
             BUILD_HIFI_DATABASES.out.fastk_histogram.join( BUILD_HIFI_DATABASES.out.fastk_ktab ).join(
             BUILD_HIC_DATABASES.out.fastk_histogram.join( BUILD_HIC_DATABASES.out.fastk_ktab ) )
@@ -71,7 +68,6 @@ workflow {
         )
     }
 
-    ch_hifi_reads = 'data_qc' in workflow_steps ? PREPARE_INPUT.out.hifi : ch_hifi_kmercov
 
     // Preprocess data
     if ( 'preprocess' in workflow_steps ) {
@@ -86,10 +82,11 @@ workflow {
     // Curate assemblies 
     if ( 'curate' in workflow_steps ) {
         PURGE_DUPLICATES (
-            ch_hifi_reads
-                .map { meta, reads -> [ meta.findAll { ! (it.key in [ 'single_end' ]) }, meta.subMap('kmercov'),  reads ] } 
+            PREPARE_INPUT.out.hifi
+                .map { meta, reads -> [ meta.findAll { ! (it.key in [ 'single_end' ]) }, reads ] }
                 .combine( PREPARE_INPUT.out.assemblies, by:0 )
-                .map { meta, kmercov, reads -> [ meta + kmercov, reads ] }
+                .combine( ch_hifi_kmercov, by: 0 )
+                .map { meta, reads, assemblies, kmer_cov -> [ meta + kmer_cov, reads, assemblies ] }
                 .dump( tag: 'Purge duplicates: input')
         )
         // Break and reassemble misassemblies, separate organelles, etc
