@@ -18,7 +18,16 @@ include { ALIGN_RNASEQ       } from "$projectDir/subworkflows/local/align_rnaseq
 workflow {
 
     // Define constants
-    def workflow_permitted_stages = ['data_qc','preprocess','assemble','validate','curate']
+    def workflow_permitted_stages = [
+        'data_qc',      // 01 - Read QC
+        'preprocess',   // 02 - Read preprocessing
+        'assemble',     // 03 - Assembly
+        'purge',        // 04 - Duplicate purging
+        'polish',       // 05 - Error polishing
+        'screen',       // 06 - Contamination screening
+        'scaffold',     // 07 - Scaffolding
+        'curate'        // 08 - Rapid curation
+    ]
 
     // Check input
     def workflow_steps = params.steps.tokenize(",")
