@@ -1,7 +1,5 @@
 #! /usr/bin/env nextflow
 
-nextflow.enable.dsl = 2
-
 include { PREPARE_INPUT } from "$projectDir/subworkflows/prepare_input/main"
 
 include { BUILD_DATABASES as BUILD_HIFI_DATABASES } from "$projectDir/subworkflows/build_databases/main"
@@ -35,8 +33,6 @@ workflow {
 
     // Read in data
     PREPARE_INPUT ( params.input )
-
-    ch_hifi_kmercov = Channel.empty()
 
     // Build necessary databases
     if ( ['data_qc','validate'].any{ it in workflow_steps}) {
@@ -81,14 +77,16 @@ workflow {
 
     // Curate assemblies 
     if ( 'curate' in workflow_steps ) {
-        PURGE_DUPLICATES (
-            PREPARE_INPUT.out.hifi
+        ch_topurge = PREPARE_INPUT.out.hifi
                 .map { meta, reads -> [ meta.findAll { ! (it.key in [ 'single_end' ]) }, reads ] }
                 .combine( PREPARE_INPUT.out.assemblies, by:0 )
-                .combine( ch_hifi_kmercov, by: 0 )
+        if ( 'data_qc' in workflow_steps ) {
+            // Add kmer coverage from GenomeScope model
+            ch_topurge.combine( ch_hifi_kmercov, by: 0 )
                 .map { meta, reads, assemblies, kmer_cov -> [ meta + kmer_cov, reads, assemblies ] }
-                .dump( tag: 'Purge duplicates: input')
-        )
+                .set { ch_topurge }
+        }
+        PURGE_DUPLICATES ( ch_topurge.dump( tag: 'Purge duplicates: input' ) )
         // Break and reassemble misassemblies, separate organelles, etc
             // MitoHiFi
             // PurgeDups
