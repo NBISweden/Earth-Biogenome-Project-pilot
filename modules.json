@@ -25,6 +25,16 @@
             "git_sha": "8c4542e5d421c4690cf1fa6ec729e9304763fdaf",
             "installed_by": ["modules"]
           },
+          "fcs/fcsadaptor": {
+            "branch": "master",
+            "git_sha": "5a35af8b60d45425c4b9193e567d16b614d93dbe",
+            "installed_by": ["fasta_clean_fcs"]
+          },
+          "fcs/fcsgx": {
+            "branch": "master",
+            "git_sha": "8c4542e5d421c4690cf1fa6ec729e9304763fdaf",
+            "installed_by": ["fasta_clean_fcs"]
+          },
           "genescopefk": {
             "branch": "master",
             "git_sha": "6f150e1503c0826c21fedf1fa566cdbecbe98ec7",
@@ -112,6 +122,15 @@
             "git_sha": "cc08a888069f67cab8120259bddab8032d4c0fe3",
             "installed_by": ["modules"],
             "patch": "modules/nf-core/star/genomegenerate/star-genomegenerate.diff"
+          }
+        }
+      },
+      "subworkflows": {
+        "nf-core": {
+          "fasta_clean_fcs": {
+            "branch": "master",
+            "git_sha": "dedc0e31087f3306101c38835d051bf49789445a",
+            "installed_by": ["subworkflows"]
           }
         }
       }
