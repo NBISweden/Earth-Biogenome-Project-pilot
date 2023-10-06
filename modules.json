@@ -70,6 +70,11 @@
             "git_sha": "911696ea0b62df80e900ef244d7867d177971f73",
             "installed_by": ["modules"]
           },
+          "purgedups/histplot": {
+            "branch": "master",
+            "git_sha": "d449de9e062dd159ff8c802709d3c5ab06ce6789",
+            "installed_by": ["modules"]
+          },
           "purgedups/pbcstat": {
             "branch": "master",
             "git_sha": "911696ea0b62df80e900ef244d7867d177971f73",
