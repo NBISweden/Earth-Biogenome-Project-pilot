@@ -19,7 +19,7 @@ workflow {
 
     // Define constants
     def workflow_permitted_stages = [
-        'data_qc',      // 01 - Read QC
+        'inspect',      // 01 - Read inspection
         'preprocess',   // 02 - Read preprocessing
         'assemble',     // 03 - Assembly
         'purge',        // 04 - Duplicate purging
@@ -44,10 +44,10 @@ workflow {
     PREPARE_INPUT ( params.input )
 
     // Build necessary databases
-    if ( ['data_qc','validate'].any{ it in workflow_steps}) {
-        BUILD_HIFI_DATABASES ( PREPARE_INPUT.out.hifi )
-        BUILD_HIC_DATABASES ( PREPARE_INPUT.out.hic )
-    }
+    // if ( ['inspect','preprocess','assemble','purge','polish','screen','scaffold','curate'].any{ it in workflow_steps}) {
+    BUILD_HIFI_DATABASES ( PREPARE_INPUT.out.hifi )
+    BUILD_HIC_DATABASES ( PREPARE_INPUT.out.hic )
+    // }
     
     // Data inspection
     if ( 'data_qc' in workflow_steps ) {
