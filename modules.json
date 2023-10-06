@@ -80,6 +80,16 @@
             "git_sha": "603ecbd9f45300c9788f197d2a15a005685b4220",
             "installed_by": ["modules"]
           },
+          "mitohifi/findmitoreference": {
+            "branch": "master",
+            "git_sha": "f52220e84bfc16a8616a5bb3d6f5bc67d601bdce",
+            "installed_by": ["modules"]
+          },
+          "mitohifi/mitohifi": {
+            "branch": "master",
+            "git_sha": "02c3c39e3d57bf77183e563598bae2ec1ec11cb1",
+            "installed_by": ["modules"]
+          },
           "pilon": {
             "branch": "master",
             "git_sha": "240937a2a9c30298110753292be041188891f2cb",
