@@ -39,7 +39,7 @@ workflow PURGE_DUPLICATES {
     )
     PURGEDUPS_PBCSTAT( MINIMAP2_ALIGN_READS.out.paf.groupTuple() )
     PURGEDUPS_CALCUTS( PURGEDUPS_PBCSTAT.out.stat )
-    PURGEDUPS_HISTPLOT( PURGEDUPS_PBCSTAT.out.stat.join( PURGEDUPS_CALCUTS.out.cutoffs ) )
+    PURGEDUPS_HISTPLOT( PURGEDUPS_PBCSTAT.out.stat.join( PURGEDUPS_CALCUTS.out.cutoff ) )
 
     // Split assembly and do self alignment
     PURGEDUPS_SPLITFA( assembly_ch )
