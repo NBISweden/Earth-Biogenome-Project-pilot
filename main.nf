@@ -36,7 +36,7 @@ workflow {
         'polish',       // 05 - Error polishing
         'screen',       // 06 - Contamination screening
         'scaffold',     // 07 - Scaffolding
-        'curate'        // 08 - Rapid curation
+        'curate',       // 08 - Rapid curation
         'alignRNA'      // 09 - Align RNAseq data
     ]
 
