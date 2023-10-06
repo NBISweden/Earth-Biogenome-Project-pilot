@@ -10,6 +10,7 @@ include { PURGEDUPS_GETSEQS                         } from "$projectDir/modules/
 include { PURGEDUPS_PBCSTAT                         } from "$projectDir/modules/nf-core/purgedups/pbcstat"
 include { PURGEDUPS_SPLITFA                         } from "$projectDir/modules/nf-core/purgedups/splitfa"
 include { PURGEDUPS_PURGEDUPS                       } from "$projectDir/modules/nf-core/purgedups/purgedups"
+include { PURGEDUPS_HISTPLOT                        } from "$projectDir/modules/nf-core/purgedups/histplot"
 
 workflow PURGE_DUPLICATES {
 
@@ -17,6 +18,7 @@ workflow PURGE_DUPLICATES {
     reads_plus_assembly_ch     // [ meta, [reads], [assembly] ], where reads are the pacbio files, and assembly is the primary and alternate asms
 
     main:
+    // Need to move this outside the workflow to submit to nf-core.
     reads_plus_assembly_ch
         .flatMap { meta, reads, assembly -> reads instanceof List ? reads.collect{ [ meta + [ single_end: true, build: assembly.id ], it, assembly.pri_fasta ] } : [ [ meta + [ single_end: true, build: assembly.id ], reads, assembly.pri_fasta ] ] }
         .multiMap { meta, reads, assembly -> 
@@ -37,7 +39,7 @@ workflow PURGE_DUPLICATES {
     )
     PURGEDUPS_PBCSTAT( MINIMAP2_ALIGN_READS.out.paf.groupTuple() )
     PURGEDUPS_CALCUTS( PURGEDUPS_PBCSTAT.out.stat )
-    // TODO:: Cutoffs can likely be estimated from genescope model output.
+    PURGEDUPS_HISTPLOT( PURGEDUPS_PBCSTAT.out.stat.join( PURGEDUPS_CALCUTS.out.cutoffs ) )
 
     // Split assembly and do self alignment
     PURGEDUPS_SPLITFA( assembly_ch )
