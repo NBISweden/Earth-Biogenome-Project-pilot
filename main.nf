@@ -121,6 +121,21 @@ workflow {
         ch_assemblies = ch_assemblies.mix( ch_hifiasm_out )
         // Find mitochondria
             // Need to check options to mitohifi modules.
+    
+        // Assess assemblies
+        COMPARE_ASSEMBLIES (
+            ch_assemblies,
+            params.reference ? file( params.reference, checkIfExists: true ) : []
+        )
+
+        EVALUATE_ASSEMBLY (
+            ch_assemblies,
+            PREPARE_INPUT.out.hifi,
+            BUILD_HIFI_DATABASES.out.fastk_histogram.join( BUILD_HIFI_DATABASES.out.fastk_ktab ),
+            params.reference ? file( params.reference, checkIfExists: true ) : [],
+            Channel.of( params.busco_lineages.tokenize(',') ),
+            params.busco_lineage_path ? file( params.busco_lineage_path, checkIfExists: true ) : []
+        )
     }
 
     // Purge duplicates
@@ -135,14 +150,11 @@ workflow {
                 .set { ch_topurge }
         }
         PURGE_DUPLICATES ( ch_topurge.dump( tag: 'Purge duplicates: input' ) )
-        // Break and reassemble misassemblies, separate organelles, etc
-            // MitoHiFi
-            // PurgeDups
     }
 
     // Polish
     if ( 'polish' in workflow_steps ) {
-        // Run assemblers
+        // Run polishers
     }
 
     // Contamination screen
@@ -162,24 +174,6 @@ workflow {
         // Run assemblers
     }
 
-    // Assess assemblies
-    if ( 'validate' in workflow_steps ) {
-        COMPARE_ASSEMBLIES (
-            PREPARE_INPUT.out.assemblies,
-            params.reference ? file( params.reference, checkIfExists: true ) : []
-        )
-
-        EVALUATE_ASSEMBLY (
-            PREPARE_INPUT.out.assemblies,
-            PREPARE_INPUT.out.hifi,
-            BUILD_HIFI_DATABASES.out.fastk_histogram.join( BUILD_HIFI_DATABASES.out.fastk_ktab ),
-            params.reference ? file( params.reference, checkIfExists: true ) : [],
-            Channel.of( params.busco_lineages.tokenize(',') ),
-            params.busco_lineage_path ? file( params.busco_lineage_path, checkIfExists: true ) : []
-        )
-
-    }
-
     // Align RNAseq
     if( 'alignRNA' in workflow_steps ) {
         ALIGN_RNASEQ ( 
@@ -188,7 +182,6 @@ workflow {
                 .map { meta, assembly -> [ meta + [ build: assembly.id ], assembly.pri_fasta ] }
         )
     }
-
 }
 
 workflow.onComplete {
