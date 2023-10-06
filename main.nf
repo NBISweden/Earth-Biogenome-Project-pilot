@@ -9,6 +9,9 @@ include { GENOME_PROPERTIES } from "$projectDir/subworkflows/local/genome_proper
 include { COMPARE_LIBRARIES } from "$projectDir/subworkflows/local/compare_libraries/main"
 include { SCREEN_READS      } from "$projectDir/subworkflows/local/screen_read_contamination/main"
 
+include { HIFIASM  } from "$projectDir/modules/nf-core/hifiasm/main"
+include { GFASTATS } from "$projectDir/modules/nf-core/gfastats/main"
+
 include { PURGE_DUPLICATES } from "$projectDir/subworkflows/local/purge_dups/main"
 
 include { COMPARE_ASSEMBLIES } from "$projectDir/subworkflows/local/compare_assemblies/main"
@@ -27,6 +30,7 @@ workflow {
         'screen',       // 06 - Contamination screening
         'scaffold',     // 07 - Scaffolding
         'curate'        // 08 - Rapid curation
+        'alignRNA'      // 09 - Align RNAseq data
     ]
 
     // Check input
@@ -50,11 +54,10 @@ workflow {
     // }
     
     // Data inspection
-    if ( 'data_qc' in workflow_steps ) {
+    if ( 'inspect' in workflow_steps ) {
         // QC Steps
         GENOME_PROPERTIES ( 
             BUILD_HIFI_DATABASES.out.fastk_histogram.join( BUILD_HIFI_DATABASES.out.fastk_ktab )
-            // BUILD_HIFI_DATABASES.out.meryl_histogram
         )
         GENOME_PROPERTIES.out.model
             .map { meta, file ->
@@ -73,22 +76,57 @@ workflow {
         )
     }
 
-
     // Preprocess data
     if ( 'preprocess' in workflow_steps ) {
         // Adapter filtering etc
     }
     
+    ch_assemblies = PREPARE_INPUT.out.assemblies
     // Assemble
     if ( 'assemble' in workflow_steps ) {
         // Run assemblers
+        // Run in basic mode atm
+        // Need to include a build ID here. 
+        HIFIASM(
+            PREPARE_INPUT.out.hifi,
+            [], // paternal k-mers
+            [], // maternal k-mers
+            [], // Hi-C r1
+            []  // Hi-C r2
+        )
+        GFASTATS( 
+            HIFIASM.out.primary_contigs.mix( HIFIASM.out.alternate_contigs ),
+            "fasta", // output format
+            "",      // genome size
+            "",      // target
+            [],      // AGP file
+            [],      // include bed
+            [],      // exclude bed
+            []       // SAK instructions
+        )
+        ch_hifiasm_out = GFASTATS.out.assembly.groupTuple()
+            .join( HIFIASM.out.primary_contigs )
+            .join( HIFIASM.out.alternate_contigs )
+            .map { meta, fasta, pri_gfa, alt_gfa -> 
+                [ meta, 
+                    [ 
+                        id: 'hifiasm', 
+                        pri_fasta: fasta[0],  // These may not be grouped in primary, alternate order
+                        alt_fasta: fasta[1],
+                        pri_gfa: pri_gfa,
+                        alt_gfa: alt_gfa
+                    ] 
+                ]
+            }
+        ch_assemblies = ch_assemblies.mix( ch_hifiasm_out )
+        // Find mitochondria
     }
 
-    // Curate assemblies 
-    if ( 'curate' in workflow_steps ) {
+    // Purge duplicates
+    if ( 'purge' in workflow_steps ) {
         ch_topurge = PREPARE_INPUT.out.hifi
                 .map { meta, reads -> [ meta.findAll { ! (it.key in [ 'single_end' ]) }, reads ] }
-                .combine( PREPARE_INPUT.out.assemblies, by:0 )
+                .combine( ch_assemblies, by:0 )
         if ( 'data_qc' in workflow_steps ) {
             // Add kmer coverage from GenomeScope model
             ch_topurge.combine( ch_hifi_kmercov, by: 0 )
@@ -99,9 +137,28 @@ workflow {
         // Break and reassemble misassemblies, separate organelles, etc
             // MitoHiFi
             // PurgeDups
-            // Kraken2
-            // Blobtoolkit
-            // FCS-Genome
+    }
+
+    // Polish
+    if ( 'polish' in workflow_steps ) {
+        // Run assemblers
+    }
+
+    // Contamination screen
+    if ( 'screen' in workflow_steps ) {
+        // Kraken2
+        // Blobtoolkit
+        // FCS-Genome
+    }
+
+    // Scaffold
+    if ( 'scaffold' in workflow_steps ) {
+        // Run scaffolder
+    }
+
+    // Curate
+    if ( 'curate' in workflow_steps ) {
+        // Run assemblers
     }
 
     // Assess assemblies
@@ -120,7 +177,10 @@ workflow {
             params.busco_lineage_path ? file( params.busco_lineage_path, checkIfExists: true ) : []
         )
 
-        // TODO: Run only if RNAseq data
+    }
+
+    // Align RNAseq
+    if( 'alignRNA' in workflow_steps ) {
         ALIGN_RNASEQ ( 
             PREPARE_INPUT.out.rnaseq,
             PREPARE_INPUT.out.assemblies
