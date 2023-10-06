@@ -1,19 +1,19 @@
 #! /usr/bin/env nextflow
 
-include { PREPARE_INPUT } from "$projectDir/subworkflows/prepare_input/main"
+include { PREPARE_INPUT } from "$projectDir/subworkflows/local/prepare_input/main"
 
-include { BUILD_DATABASES as BUILD_HIFI_DATABASES } from "$projectDir/subworkflows/build_databases/main"
-include { BUILD_DATABASES as BUILD_HIC_DATABASES  } from "$projectDir/subworkflows/build_databases/main"
+include { BUILD_DATABASES as BUILD_HIFI_DATABASES } from "$projectDir/subworkflows/local/build_databases/main"
+include { BUILD_DATABASES as BUILD_HIC_DATABASES  } from "$projectDir/subworkflows/local/build_databases/main"
 
-include { GENOME_PROPERTIES } from "$projectDir/subworkflows/genome_properties/main"
-include { COMPARE_LIBRARIES } from "$projectDir/subworkflows/compare_libraries/main"
-include { SCREEN_READS      } from "$projectDir/subworkflows/screen_read_contamination/main"
+include { GENOME_PROPERTIES } from "$projectDir/subworkflows/local/genome_properties/main"
+include { COMPARE_LIBRARIES } from "$projectDir/subworkflows/local/compare_libraries/main"
+include { SCREEN_READS      } from "$projectDir/subworkflows/local/screen_read_contamination/main"
 
-include { PURGE_DUPLICATES } from "$projectDir/subworkflows/purge_dups/main"
+include { PURGE_DUPLICATES } from "$projectDir/subworkflows/local/purge_dups/main"
 
-include { COMPARE_ASSEMBLIES } from "$projectDir/subworkflows/compare_assemblies/main"
-include { EVALUATE_ASSEMBLY  } from "$projectDir/subworkflows/evaluate_assembly/main"
-include { ALIGN_RNASEQ       } from "$projectDir/subworkflows/align_rnaseq/main"
+include { COMPARE_ASSEMBLIES } from "$projectDir/subworkflows/local/compare_assemblies/main"
+include { EVALUATE_ASSEMBLY  } from "$projectDir/subworkflows/local/evaluate_assembly/main"
+include { ALIGN_RNASEQ       } from "$projectDir/subworkflows/local/align_rnaseq/main"
 
 workflow {
 
