@@ -18,6 +18,13 @@ include { COMPARE_ASSEMBLIES } from "$projectDir/subworkflows/local/compare_asse
 include { EVALUATE_ASSEMBLY  } from "$projectDir/subworkflows/local/evaluate_assembly/main"
 include { ALIGN_RNASEQ       } from "$projectDir/subworkflows/local/align_rnaseq/main"
 
+/*
+Class definitions
+Sample = [ id: id, kmer_size:2, ploidy:2, busco_lineage: auto ]
+Reads = [ Sample, [{r1,r2}/{bam}] ]
+Assembly = [ Sample, [id:id, pri_fasta:fasta, alt_fasta:fasta, pri_gfa:gfa, alt_gfa:gfa ] ]
+*/
+
 workflow {
 
     // Define constants
