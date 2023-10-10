@@ -102,7 +102,7 @@ workflow {
             []  // Hi-C r2
         )
         GFASTATS( 
-            HIFIASM.out.primary_contigs.mix( HIFIASM.out.alternate_contigs ),
+            HIFIASM.out.parental_contigs.mix( HIFIASM.out.maternal_contigs ),
             "fasta", // output format
             "",      // genome size
             "",      // target
@@ -112,8 +112,8 @@ workflow {
             []       // SAK instructions
         )
         ch_hifiasm_out = GFASTATS.out.assembly.groupTuple()
-            .join( HIFIASM.out.primary_contigs )
-            .join( HIFIASM.out.alternate_contigs )
+            .join( HIFIASM.out.parental_contigs )
+            .join( HIFIASM.out.maternal_contigs )
             .map { meta, fasta, pri_gfa, alt_gfa -> 
                 [ meta, 
                     [ 
