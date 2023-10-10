@@ -111,14 +111,14 @@ workflow {
             [],      // exclude bed
             []       // SAK instructions
         )
-        ch_hifiasm_out = GFASTATS.out.assembly.groupTuple()
+        ch_hifiasm_out = GFASTATS.out.assembly.groupTuple( sort: { it.name } )
             .join( HIFIASM.out.parental_contigs )
             .join( HIFIASM.out.maternal_contigs )
             .map { meta, fasta, pri_gfa, alt_gfa -> 
                 [ meta, 
                     [ 
                         id: 'hifiasm', 
-                        pri_fasta: fasta[0],  // These may not be grouped in primary, alternate order
+                        pri_fasta: fasta[0],
                         alt_fasta: fasta[1],
                         pri_gfa: pri_gfa,
                         alt_gfa: alt_gfa
