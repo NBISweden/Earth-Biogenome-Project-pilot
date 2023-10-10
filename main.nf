@@ -125,6 +125,7 @@ workflow {
                     ] 
                 ]
             }
+            .dump( tag: "Assemblies: Pre-purge", pretty: true )
         ch_assemblies = ch_assemblies.mix( ch_hifiasm_out )
         // Find mitochondria
             // Need to check options to mitohifi modules.
