@@ -9,8 +9,9 @@ include { GENOME_PROPERTIES } from "$projectDir/subworkflows/local/genome_proper
 include { COMPARE_LIBRARIES } from "$projectDir/subworkflows/local/compare_libraries/main"
 include { SCREEN_READS      } from "$projectDir/subworkflows/local/screen_read_contamination/main"
 
-include { HIFIASM  } from "$projectDir/modules/nf-core/hifiasm/main"
-include { GFASTATS } from "$projectDir/modules/nf-core/gfastats/main"
+include { HIFIASM         } from "$projectDir/modules/nf-core/hifiasm/main"
+include { GFATOOLS_GFA2FA } from "$projectDir/modules/local/gfatools/gfa2fa"
+include { GFASTATS        } from "$projectDir/modules/nf-core/gfastats/main"
 
 include { PURGE_DUPLICATES } from "$projectDir/subworkflows/local/purge_dups/main"
 
@@ -101,9 +102,10 @@ workflow {
             [], // Hi-C r1
             []  // Hi-C r2
         )
-        GFASTATS( 
+        GFATOOLS_GFA2FA( HIFIASM.out.paternal_contigs.mix( HIFIASM.out.maternal_contigs ) )
+        GFASTATS(
             HIFIASM.out.paternal_contigs.mix( HIFIASM.out.maternal_contigs ),
-            "fasta", // output format
+            "gfa",   // output format
             "",      // genome size
             "",      // target
             [],      // AGP file
@@ -111,7 +113,7 @@ workflow {
             [],      // exclude bed
             []       // SAK instructions
         )
-        ch_hifiasm_out = GFASTATS.out.assembly.groupTuple( sort: { it.name } )
+        ch_hifiasm_out = GFATOOLS_GFA2FA.out.fasta.groupTuple( sort: { it.name } )
             .join( HIFIASM.out.paternal_contigs )
             .join( HIFIASM.out.maternal_contigs )
             .map { meta, fasta, pri_gfa, alt_gfa -> 
