@@ -153,7 +153,7 @@ workflow {
         ch_topurge = PREPARE_INPUT.out.hifi.combine( ch_assemblies, by:0 )
         if ( 'inspect' in workflow_steps ) {
             // Add kmer coverage from GenomeScope model
-            ch_topurge.map { meta, reads -> [ meta.findAll { ! (it.key in [ 'single_end' ]) }, reads ] }
+            ch_topurge.map { meta, reads, assemblies -> [ meta.findAll { ! (it.key in [ 'single_end' ]) }, reads, assemblies ] }
                 .combine( ch_hifi_kmercov, by: 0 )
                 .map { meta, reads, assemblies, kmer_cov -> [ meta + kmer_cov, reads, assemblies ] }
                 .set { ch_topurge }
