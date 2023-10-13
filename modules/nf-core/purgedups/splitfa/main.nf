@@ -11,8 +11,9 @@ process PURGEDUPS_SPLITFA {
     tuple val(meta), path(assembly)
 
     output:
-    tuple val(meta), path("*.split.fasta.gz"), emit: split_fasta
-    path "versions.yml"                      , emit: versions
+    tuple val(meta), path("*.split.fasta.gz") , emit: split_fasta
+    tuple val(meta), path("*.merged.fasta.gz"), emit: merged_fasta
+    path "versions.yml"                       , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -20,8 +21,11 @@ process PURGEDUPS_SPLITFA {
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
+    def cat_prog = ( assembly instanceof List && assembly.every{ it.endsWith(".gz") } ) 
+        || assembly.name.endsWith(".gz") ? "zcat" : "cat"
     """
-    split_fa $args $assembly | gzip -c > ${prefix}.split.fasta.gz
+    $cat_prog $assembly | gzip -c > ${prefix}.merged.fasta.gz
+    split_fa $args ${prefix}.merged.fasta.gz | gzip -c > ${prefix}.split.fasta.gz
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
