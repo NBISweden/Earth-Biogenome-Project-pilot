@@ -2,10 +2,8 @@ process MERQURYFK_MERQURYFK {
     tag "$meta.id"
     label 'process_medium'
 
-    if (params.enable_conda) {
-        error "Conda environments cannot be used when using the FastK tool. Please use docker or singularity containers."
-    }
-    container 'ghcr.io/nbisweden/fastk_genescopefk_merquryfk:1.1'
+    // WARN: Version information not provided by tool on CLI. Please update version string below when bumping container versions.
+    container 'ghcr.io/nbisweden/fastk_genescopefk_merquryfk:1.2'
 
     input:
     tuple val(meta), path(fastk_hist), path(fastk_ktab), path(assembly)

@@ -1,69 +1,175 @@
 {
-    "name": "Earth Biogenome Project Assembly and Annotation workflow",
-    "homePage": "https://github.com/NBISweden/Earth-Biogenome-Project-pilot",
-    "repos": {
-        "https://github.com/nf-core/modules.git": {
-            "modules": {
-                "nf-core": {
-                    "busco": {
-                        "branch": "master",
-                        "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905"
-                    },
-                    "fastk/fastk": {
-                        "branch": "master",
-                        "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905"
-                    },
-                    "fastk/histex": {
-                        "branch": "master",
-                        "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905"
-                    },
-                    "fastk/merge": {
-                        "branch": "master",
-                        "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905"
-                    },
-                    "genescopefk": {
-                        "branch": "master",
-                        "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905"
-                    },
-                    "kraken2/kraken2": {
-                        "branch": "master",
-                        "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905"
-                    },
-                    "mash/screen": {
-                        "branch": "master",
-                        "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905"
-                    },
-                    "merquryfk/katcomp": {
-                        "branch": "master",
-                        "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905"
-                    },
-                    "merquryfk/katgc": {
-                        "branch": "master",
-                        "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905"
-                    },
-                    "merquryfk/ploidyplot": {
-                        "branch": "master",
-                        "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905"
-                    },
-                    "minimap2/align": {
-                        "branch": "master",
-                        "git_sha": "5850432aab24a1924389b660adfee3809d3e60a9"
-                    },
-                    "quast": {
-                        "branch": "master",
-                        "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905"
-                    },
-                    "star/align": {
-                        "branch": "master",
-                        "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905"
-                    },
-                    "star/genomegenerate": {
-                        "branch": "master",
-                        "git_sha": "5e34754d42cd2d5d248ca8673c0a53cdf5624905",
-                        "patch": "modules/nf-core/star/genomegenerate/star-genomegenerate.diff"
-                    }
-                }
-            }
+  "name": "Earth Biogenome Project Assembly and Annotation workflow",
+  "homePage": "https://github.com/NBISweden/Earth-Biogenome-Project-pilot",
+  "repos": {
+    "https://github.com/nf-core/modules.git": {
+      "modules": {
+        "nf-core": {
+          "busco": {
+            "branch": "master",
+            "git_sha": "6d6552cb582f56b6101c452e16ee7c23073f91de",
+            "installed_by": ["modules"]
+          },
+          "fastk/fastk": {
+            "branch": "master",
+            "git_sha": "29e87a37ae1887fc8289f2f56775604a71715cb9",
+            "installed_by": ["modules"]
+          },
+          "fastk/histex": {
+            "branch": "master",
+            "git_sha": "ed67f2fadd6d2a155b296f728e6b1f8c92ddc1a6",
+            "installed_by": ["modules"]
+          },
+          "fastk/merge": {
+            "branch": "master",
+            "git_sha": "8c4542e5d421c4690cf1fa6ec729e9304763fdaf",
+            "installed_by": ["modules"]
+          },
+          "fcs/fcsadaptor": {
+            "branch": "master",
+            "git_sha": "5a35af8b60d45425c4b9193e567d16b614d93dbe",
+            "installed_by": ["fasta_clean_fcs"]
+          },
+          "fcs/fcsgx": {
+            "branch": "master",
+            "git_sha": "8c4542e5d421c4690cf1fa6ec729e9304763fdaf",
+            "installed_by": ["fasta_clean_fcs"]
+          },
+          "genescopefk": {
+            "branch": "master",
+            "git_sha": "6f150e1503c0826c21fedf1fa566cdbecbe98ec7",
+            "installed_by": ["modules"]
+          },
+          "gfastats": {
+            "branch": "master",
+            "git_sha": "9e51255c4f8ec69fb6ccf68593392835f14fecb8",
+            "installed_by": ["modules"]
+          },
+          "hifiasm": {
+            "branch": "master",
+            "git_sha": "911696ea0b62df80e900ef244d7867d177971f73",
+            "installed_by": ["modules"]
+          },
+          "kraken2/kraken2": {
+            "branch": "master",
+            "git_sha": "603ecbd9f45300c9788f197d2a15a005685b4220",
+            "installed_by": ["modules"]
+          },
+          "mash/screen": {
+            "branch": "master",
+            "git_sha": "911696ea0b62df80e900ef244d7867d177971f73",
+            "installed_by": ["modules"]
+          },
+          "merquryfk/katcomp": {
+            "branch": "master",
+            "git_sha": "6f150e1503c0826c21fedf1fa566cdbecbe98ec7",
+            "installed_by": ["modules"]
+          },
+          "merquryfk/katgc": {
+            "branch": "master",
+            "git_sha": "6f150e1503c0826c21fedf1fa566cdbecbe98ec7",
+            "installed_by": ["modules"]
+          },
+          "merquryfk/ploidyplot": {
+            "branch": "master",
+            "git_sha": "ebb27711cd5f4de921244bfa81c676504072d31c",
+            "installed_by": ["modules"]
+          },
+          "minimap2/align": {
+            "branch": "master",
+            "git_sha": "603ecbd9f45300c9788f197d2a15a005685b4220",
+            "installed_by": ["modules"]
+          },
+          "mitohifi/findmitoreference": {
+            "branch": "master",
+            "git_sha": "f52220e84bfc16a8616a5bb3d6f5bc67d601bdce",
+            "installed_by": ["modules"]
+          },
+          "mitohifi/mitohifi": {
+            "branch": "master",
+            "git_sha": "02c3c39e3d57bf77183e563598bae2ec1ec11cb1",
+            "installed_by": ["modules"]
+          },
+          "pilon": {
+            "branch": "master",
+            "git_sha": "240937a2a9c30298110753292be041188891f2cb",
+            "installed_by": ["modules"]
+          },
+          "purgedups/calcuts": {
+            "branch": "master",
+            "git_sha": "911696ea0b62df80e900ef244d7867d177971f73",
+            "installed_by": ["modules"]
+          },
+          "purgedups/getseqs": {
+            "branch": "master",
+            "git_sha": "911696ea0b62df80e900ef244d7867d177971f73",
+            "installed_by": ["modules"]
+          },
+          "purgedups/histplot": {
+            "branch": "master",
+            "git_sha": "d449de9e062dd159ff8c802709d3c5ab06ce6789",
+            "installed_by": ["modules"]
+          },
+          "purgedups/pbcstat": {
+            "branch": "master",
+            "git_sha": "911696ea0b62df80e900ef244d7867d177971f73",
+            "installed_by": ["modules"]
+          },
+          "purgedups/purgedups": {
+            "branch": "master",
+            "git_sha": "911696ea0b62df80e900ef244d7867d177971f73",
+            "installed_by": ["modules"]
+          },
+          "purgedups/splitfa": {
+            "branch": "master",
+            "git_sha": "911696ea0b62df80e900ef244d7867d177971f73",
+            "installed_by": ["modules"],
+            "patch": "modules/nf-core/purgedups/splitfa/purgedups-splitfa.diff"
+          },
+          "quast": {
+            "branch": "master",
+            "git_sha": "344638191a5d6b3526556410819dfcf24e98039e",
+            "installed_by": ["modules"],
+            "patch": "modules/nf-core/quast/quast.diff"
+          },
+          "racon": {
+            "branch": "master",
+            "git_sha": "911696ea0b62df80e900ef244d7867d177971f73",
+            "installed_by": ["modules"]
+          },
+          "salsa2": {
+            "branch": "master",
+            "git_sha": "911696ea0b62df80e900ef244d7867d177971f73",
+            "installed_by": ["modules"]
+          },
+          "star/align": {
+            "branch": "master",
+            "git_sha": "cc08a888069f67cab8120259bddab8032d4c0fe3",
+            "installed_by": ["modules"],
+            "patch": "modules/nf-core/star/align/star-align.diff"
+          },
+          "star/genomegenerate": {
+            "branch": "master",
+            "git_sha": "cc08a888069f67cab8120259bddab8032d4c0fe3",
+            "installed_by": ["modules"],
+            "patch": "modules/nf-core/star/genomegenerate/star-genomegenerate.diff"
+          },
+          "yahs": {
+            "branch": "master",
+            "git_sha": "9e51255c4f8ec69fb6ccf68593392835f14fecb8",
+            "installed_by": ["modules"]
+          }
         }
+      },
+      "subworkflows": {
+        "nf-core": {
+          "fasta_clean_fcs": {
+            "branch": "master",
+            "git_sha": "dedc0e31087f3306101c38835d051bf49789445a",
+            "installed_by": ["subworkflows"]
+          }
+        }
+      }
     }
+  }
 }

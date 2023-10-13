@@ -1,56 +1,30 @@
 Changes in module 'nf-core/star/genomegenerate'
 --- modules/nf-core/star/genomegenerate/main.nf
 +++ modules/nf-core/star/genomegenerate/main.nf
-@@ -8,12 +8,12 @@
-         'quay.io/biocontainers/mulled-v2-1fa26d1ce03c295fe2fdcf85831a92fbcbd7e8c2:afaaa4c6f5b308b4b6aa2dd8e99e1466b2a6b0cd-0' }"
+@@ -9,7 +9,7 @@
  
      input:
--    path fasta
-+    tuple val(meta), path(fasta)
-     path gtf
+     tuple val(meta), path(fasta)
+-    tuple val(meta2), path(gtf)
++    path(gtf)
  
      output:
--    path "star"        , emit: index
--    path "versions.yml", emit: versions
-+    tuple val(meta), path("star"), emit: index
-+    path "versions.yml"          , emit: versions
- 
-     when:
-     task.ext.when == null || task.ext.when
-@@ -24,12 +24,13 @@
-     def memory = task.memory ? "--limitGenomeGenerateRAM ${task.memory.toBytes() - 100000000}" : ''
-     if (args_list.contains('--genomeSAindexNbases')) {
-         """
-+        ${ fasta.name.endsWith('.gz') ? "gzip -dc $fasta > $fasta.baseName" : '' }
-         mkdir star
-         STAR \\
+     tuple val(meta), path("star")  , emit: index
+@@ -29,7 +29,7 @@
              --runMode genomeGenerate \\
              --genomeDir star/ \\
--            --genomeFastaFiles $fasta \\
+             --genomeFastaFiles $fasta \\
 -            --sjdbGTFfile $gtf \\
-+            --genomeFastaFiles ${fasta.name.endsWith('.gz') ? fasta.baseName : fasta } \\
 +            ${ gtf ? "--sjdbGTFfile $gtf": '' } \\
              --runThreadN $task.cpus \\
              $memory \\
              $args
-@@ -43,15 +44,16 @@
-         """
-     } else {
-         """
--        samtools faidx $fasta
--        NUM_BASES=`gawk '{sum = sum + \$2}END{if ((log(sum)/log(2))/2 - 1 > 14) {printf "%.0f", 14} else {printf "%.0f", (log(sum)/log(2))/2 - 1}}' ${fasta}.fai`
-+        ${ fasta.name.endsWith('.gz') ? "gzip -dc $fasta > $fasta.baseName" : '' }
-+        samtools faidx ${fasta.name.endsWith('.gz') ? fasta.baseName : fasta }
-+        NUM_BASES=`gawk '{sum = sum + \$2}END{if ((log(sum)/log(2))/2 - 1 > 14) {printf "%.0f", 14} else {printf "%.0f", (log(sum)/log(2))/2 - 1}}' ${fasta.name.endsWith('.gz') ? fasta.baseName : fasta }.fai`
- 
-         mkdir star
-         STAR \\
+@@ -51,7 +51,7 @@
              --runMode genomeGenerate \\
              --genomeDir star/ \\
--            --genomeFastaFiles $fasta \\
+             --genomeFastaFiles $fasta \\
 -            --sjdbGTFfile $gtf \\
-+            --genomeFastaFiles ${fasta.name.endsWith('.gz') ? fasta.baseName : fasta } \\
-+            ${ gtf ? "--sjdbGTFfile $gtf" : '' } \\
++            ${ gtf ? "--sjdbGTFfile $gtf": '' } \\
              --runThreadN $task.cpus \\
              --genomeSAindexNbases \$NUM_BASES \\
              $memory \\

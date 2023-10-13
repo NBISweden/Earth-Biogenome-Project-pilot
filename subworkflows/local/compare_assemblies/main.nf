@@ -8,12 +8,11 @@ workflow COMPARE_ASSEMBLIES {
 
     main:
     QUAST (
-        assembly_ch.map { sample, assembly -> assembly.pri_fasta }
-            .collect(),
+        assembly_ch
+            .map { sample, assembly -> [ sample, assembly.pri_fasta ] }
+            .groupTuple(),
         reference_ch,
-        [], // gff
-        reference_ch, // true / false to use reference_ch
-        []
+        []              // No GFF
     )
     versions_ch = QUAST.out.versions
 

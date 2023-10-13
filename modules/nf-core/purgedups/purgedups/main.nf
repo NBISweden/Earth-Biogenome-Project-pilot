@@ -1,19 +1,19 @@
-process PURGEDUPS_PBCSTAT {
+process PURGEDUPS_PURGEDUPS {
     tag "$meta.id"
-    label 'process_low'
+    label 'process_single'
 
-    conda (params.enable_conda ? "bioconda::purge_dups=1.2.6" : null)
+    conda "bioconda::purge_dups=1.2.6"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/purge_dups:1.2.6--h7132678_0':
-        'quay.io/biocontainers/purge_dups:1.2.6--h7132678_0' }"
+        'biocontainers/purge_dups:1.2.6--h7132678_0' }"
 
     input:
-    tuple val(meta), path(paf_alignment)
+    tuple val(meta), path(basecov), path(cutoff), path(paf)
 
     output:
-    tuple val(meta), path("*.PB.stat")    , emit: stat
-    tuple val(meta), path("*.PB.base.cov"), emit: basecov
-    path "versions.yml"                   , emit: versions
+    tuple val(meta), path("*.dups.bed")      , emit: bed
+    tuple val(meta), path("*.purge_dups.log"), emit: log
+    path "versions.yml"                      , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -22,11 +22,11 @@ process PURGEDUPS_PBCSTAT {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    pbcstat \\
+    purge_dups \\
         $args \\
-        $paf_alignment
-
-    for PBFILE in PB.*; do mv \$PBFILE ${prefix}.\$PBFILE; done
+        -T $cutoff \\
+        -c $basecov \\
+        $paf > ${prefix}.dups.bed 2> ${prefix}.purge_dups.log
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
