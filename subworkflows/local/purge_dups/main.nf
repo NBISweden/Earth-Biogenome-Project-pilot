@@ -60,7 +60,10 @@ workflow PURGE_DUPLICATES {
             .map { meta, cov, cutoff -> [ meta.findAll { !(it.key in [ 'single_end' ]) }, cov, cutoff ] }
             .join( MINIMAP2_ALIGN_ASSEMBLY_PRIMARY.out.paf )
     ) 
-    PURGEDUPS_GETSEQS_PRIMARY( primary_assembly_ch.join( PURGEDUPS_PURGEDUPS_PRIMARY.out.bed ) )
+    PURGEDUPS_GETSEQS_PRIMARY( 
+        PURGEDUPS_SPLITFA_PRIMARY.out.merged_fasta
+            .join( PURGEDUPS_PURGEDUPS_PRIMARY.out.bed ) 
+    )
 
     // Purge alternate contigs.
     reads_plus_assembly_ch
@@ -83,7 +86,10 @@ workflow PURGE_DUPLICATES {
             .map { meta, cov, cutoff -> [ meta.findAll { !(it.key in [ 'single_end' ]) }, cov, cutoff ] }
             .join( MINIMAP2_ALIGN_ASSEMBLY_ALTERNATE.out.paf )
     ) 
-    PURGEDUPS_GETSEQS_ALTERNATE( alternate_assembly_ch.join( PURGEDUPS_PURGEDUPS_ALTERNATE.out.bed ) )
+    PURGEDUPS_GETSEQS_ALTERNATE(
+        PURGEDUPS_SPLITFA_ALTERNATE.out.merged_fasta
+            .join( PURGEDUPS_PURGEDUPS_ALTERNATE.out.bed ) 
+    )
 
     emit:
     assembly = PURGEDUPS_GETSEQS_PRIMARY.out.purged
