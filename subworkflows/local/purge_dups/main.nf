@@ -3,14 +3,18 @@
  * https://github.com/dfguan/purge_dups
  */
 
-include { MINIMAP2_ALIGN as MINIMAP2_ALIGN_READS    } from "$projectDir/modules/nf-core/minimap2/align/main"
-include { MINIMAP2_ALIGN as MINIMAP2_ALIGN_ASSEMBLY } from "$projectDir/modules/nf-core/minimap2/align/main"
-include { PURGEDUPS_CALCUTS                         } from "$projectDir/modules/nf-core/purgedups/calcuts"
-include { PURGEDUPS_GETSEQS                         } from "$projectDir/modules/nf-core/purgedups/getseqs"
-include { PURGEDUPS_PBCSTAT                         } from "$projectDir/modules/nf-core/purgedups/pbcstat"
-include { PURGEDUPS_SPLITFA                         } from "$projectDir/modules/nf-core/purgedups/splitfa"
-include { PURGEDUPS_PURGEDUPS                       } from "$projectDir/modules/nf-core/purgedups/purgedups"
-include { PURGEDUPS_HISTPLOT                        } from "$projectDir/modules/nf-core/purgedups/histplot"
+include { MINIMAP2_ALIGN as MINIMAP2_ALIGN_READS               } from "$projectDir/modules/nf-core/minimap2/align/main"
+include { MINIMAP2_ALIGN as MINIMAP2_ALIGN_ASSEMBLY_PRIMARY    } from "$projectDir/modules/nf-core/minimap2/align/main"
+include { MINIMAP2_ALIGN as MINIMAP2_ALIGN_ASSEMBLY_ALTERNATE  } from "$projectDir/modules/nf-core/minimap2/align/main"
+include { PURGEDUPS_PBCSTAT                                    } from "$projectDir/modules/nf-core/purgedups/pbcstat"
+include { PURGEDUPS_CALCUTS                                    } from "$projectDir/modules/nf-core/purgedups/calcuts"
+include { PURGEDUPS_HISTPLOT                                   } from "$projectDir/modules/nf-core/purgedups/histplot"
+include { PURGEDUPS_SPLITFA as PURGEDUPS_SPLITFA_PRIMARY       } from "$projectDir/modules/nf-core/purgedups/splitfa"
+include { PURGEDUPS_SPLITFA as PURGEDUPS_SPLITFA_ALTERNATE     } from "$projectDir/modules/nf-core/purgedups/splitfa"
+include { PURGEDUPS_PURGEDUPS as PURGEDUPS_PURGEDUPS_PRIMARY   } from "$projectDir/modules/nf-core/purgedups/purgedups"
+include { PURGEDUPS_PURGEDUPS as PURGEDUPS_PURGEDUPS_ALTERNATE } from "$projectDir/modules/nf-core/purgedups/purgedups"
+include { PURGEDUPS_GETSEQS as PURGEDUPS_GETSEQS_PRIMARY       } from "$projectDir/modules/nf-core/purgedups/getseqs"
+include { PURGEDUPS_GETSEQS as PURGEDUPS_GETSEQS_ALTERNATE     } from "$projectDir/modules/nf-core/purgedups/getseqs"
 
 workflow PURGE_DUPLICATES {
 
@@ -28,7 +32,7 @@ workflow PURGE_DUPLICATES {
         .set { input }
     reads_plus_assembly_ch
         .map { meta, reads, assembly -> [ meta + [ build: assembly.id ], assembly.pri_fasta ] }
-        .set { assembly_ch }
+        .set { primary_assembly_ch }
     // Map pacbio reads
     MINIMAP2_ALIGN_READS(
         input.reads_ch,
@@ -41,29 +45,47 @@ workflow PURGE_DUPLICATES {
     PURGEDUPS_CALCUTS( PURGEDUPS_PBCSTAT.out.stat )
     PURGEDUPS_HISTPLOT( PURGEDUPS_PBCSTAT.out.stat.join( PURGEDUPS_CALCUTS.out.cutoff ) )
 
-    // Split assembly and do self alignment
-    PURGEDUPS_SPLITFA( assembly_ch )
-    MINIMAP2_ALIGN_ASSEMBLY (
-        PURGEDUPS_SPLITFA.out.split_fasta,
+    // Purge primary assembly
+    PURGEDUPS_SPLITFA_PRIMARY( primary_assembly_ch )
+    MINIMAP2_ALIGN_ASSEMBLY_PRIMARY(
+        PURGEDUPS_SPLITFA_PRIMARY.out.split_fasta,
         [],    // Trigger read to read alignment
         false, // bam output
         false, // cigar in paf file
         false  // cigar in bam file
     )
-
-    // TODO: Check the output from here
-    PURGEDUPS_PURGEDUPS(
+    PURGEDUPS_PURGEDUPS_PRIMARY(
         PURGEDUPS_PBCSTAT.out.basecov
             .join( PURGEDUPS_CALCUTS.out.cutoff )
             .map { meta, cov, cutoff -> [ meta.findAll { !(it.key in [ 'single_end' ]) }, cov, cutoff ] }
-            .join( MINIMAP2_ALIGN_ASSEMBLY.out.paf )
+            .join( MINIMAP2_ALIGN_ASSEMBLY_PRIMARY.out.paf )
     ) 
+    PURGEDUPS_GETSEQS_PRIMARY( assembly_ch.join( PURGEDUPS_PURGEDUPS_PRIMARY.out.bed ) )
 
-    PURGEDUPS_GETSEQS( assembly_ch.join( PURGEDUPS_PURGEDUPS.out.bed ) )
-
-    // TODO: Mix haplotigs back into haplotig set / Verify alternate contigs.
+    // Purge alternate contigs.
+    reads_plus_assembly_ch
+        .filter { meta, reads, assembly -> assembly.alt_fasta != null }
+        .map { meta, reads, assembly -> [ meta + [ build: assembly.id ], assembly.alt_fasta ] }
+        .mix( PURGEDUPS_GETSEQS_PRIMARY.out.haplotigs )
+        .groupTuple()
+        .set { alternate_assembly_ch }
+    PURGEDUPS_SPLITFA_ALTERNATE( alternate_assembly_ch )
+    MINIMAP2_ALIGN_ASSEMBLY_ALTERNATE(
+        PURGEDUPS_SPLITFA_ALTERNATE.out.split_fasta,
+        [],    // Trigger read to read alignment
+        false, // bam output
+        false, // cigar in paf file
+        false  // cigar in bam file
+    )
+    PURGEDUPS_PURGEDUPS_ALTERNATE(
+        PURGEDUPS_PBCSTAT.out.basecov
+            .join( PURGEDUPS_CALCUTS.out.cutoff )
+            .map { meta, cov, cutoff -> [ meta.findAll { !(it.key in [ 'single_end' ]) }, cov, cutoff ] }
+            .join( MINIMAP2_ALIGN_ASSEMBLY_ALTERNATE.out.paf )
+    ) 
+    PURGEDUPS_GETSEQS_ALTERNATE( assembly_ch.join( PURGEDUPS_PURGEDUPS_ALTERNATE.out.bed ) )
 
     emit:
-    assembly = PURGEDUPS_GETSEQS.out.purged
+    assembly = PURGEDUPS_GETSEQS_PRIMARY.out.purged
     coverage = PURGEDUPS_PBCSTAT.out.basecov
 }
