@@ -21,8 +21,9 @@ process PURGEDUPS_SPLITFA {
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    def cat_prog = ( assembly instanceof List && assembly.every{ it.endsWith(".gz") } ) 
-        || assembly.name.endsWith(".gz") ? "zcat" : "cat"
+    def cat_prog = assembly instanceof List ? 
+        assembly.every{ it.name.endsWith(".gz") ? "zcat" : 
+        assembly.name.endsWith(".gz") ? "zcat" : "cat"
     """
     $cat_prog $assembly | gzip -c > ${prefix}.merged.fasta.gz
     split_fa $args ${prefix}.merged.fasta.gz | gzip -c > ${prefix}.split.fasta.gz
