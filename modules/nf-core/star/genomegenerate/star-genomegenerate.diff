@@ -1,0 +1,32 @@
+Changes in module 'nf-core/star/genomegenerate'
+--- modules/nf-core/star/genomegenerate/main.nf
++++ modules/nf-core/star/genomegenerate/main.nf
+@@ -9,7 +9,7 @@
+ 
+     input:
+     tuple val(meta), path(fasta)
+-    tuple val(meta2), path(gtf)
++    path(gtf)
+ 
+     output:
+     tuple val(meta), path("star")  , emit: index
+@@ -29,7 +29,7 @@
+             --runMode genomeGenerate \\
+             --genomeDir star/ \\
+             --genomeFastaFiles $fasta \\
+-            --sjdbGTFfile $gtf \\
++            ${ gtf ? "--sjdbGTFfile $gtf": '' } \\
+             --runThreadN $task.cpus \\
+             $memory \\
+             $args
+@@ -51,7 +51,7 @@
+             --runMode genomeGenerate \\
+             --genomeDir star/ \\
+             --genomeFastaFiles $fasta \\
+-            --sjdbGTFfile $gtf \\
++            ${ gtf ? "--sjdbGTFfile $gtf": '' } \\
+             --runThreadN $task.cpus \\
+             --genomeSAindexNbases \$NUM_BASES \\
+             $memory \\
+
+************************************************************
