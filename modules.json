@@ -37,7 +37,7 @@
           },
           "genescopefk": {
             "branch": "master",
-            "git_sha": "6f150e1503c0826c21fedf1fa566cdbecbe98ec7",
+            "git_sha": "3f908700a03ca2fa388f794914f89be977ce5740",
             "installed_by": ["modules"]
           },
           "gfastats": {
