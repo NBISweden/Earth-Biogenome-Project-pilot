@@ -36,6 +36,9 @@ flowchart TD
     assembly --> busco[[ Busco ]]
     refseq_sketch[( RefSeq sketch )] --> mash_screen[[ Mash Screen ]]
     hifi --> mash_screen
+    fastk_hifi --> hifiasm[[ HiFiasm ]]
+    hifiasm --> assembly
+    assembly --> purgedups[[ Purgedups ]]
 ```
 
 ## Usage
