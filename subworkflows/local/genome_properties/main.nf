@@ -33,6 +33,6 @@ workflow GENOME_PROPERTIES {
         )
 
     emit:
-    model    = GENESCOPEFK.out.model
+    kmer_cov = GENESCOPEFK.out.kmer_cov
     versions = versions_ch
 }

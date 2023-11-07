@@ -67,12 +67,6 @@ workflow {
         GENOME_PROPERTIES ( 
             BUILD_HIFI_DATABASES.out.fastk_histogram.join( BUILD_HIFI_DATABASES.out.fastk_ktab )
         )
-        GENOME_PROPERTIES.out.model
-            .map { meta, file ->
-                // Parse kmer coverage from GenomeScope model
-                def covline = file.readLines().collect { it.startsWith('kmercov') ? it : '' }
-                [ meta , [ kmercov: new BigDecimal( covline.join('').tokenize(' ')[1] ).round(2) ] ]
-            }.set { ch_hifi_kmercov }
         COMPARE_LIBRARIES (
             BUILD_HIFI_DATABASES.out.fastk_histogram.join( BUILD_HIFI_DATABASES.out.fastk_ktab ).join(
             BUILD_HIC_DATABASES.out.fastk_histogram.join( BUILD_HIC_DATABASES.out.fastk_ktab ) )
@@ -154,8 +148,8 @@ workflow {
         if ( 'inspect' in workflow_steps ) {
             // Add kmer coverage from GenomeScope model
             ch_topurge.map { meta, reads, assemblies -> [ meta.findAll { ! (it.key in [ 'single_end' ]) }, reads, assemblies ] }
-                .combine( ch_hifi_kmercov, by: 0 )
-                .map { meta, reads, assemblies, kmer_cov -> [ meta + kmer_cov, reads, assemblies ] }
+                .combine( GENOME_PROPERTIES.out.kmer_cov, by: 0 )
+                .map { meta, reads, assemblies, kmer_cov -> [ meta + [ kmercov: kmer_cov ], reads, assemblies ] }
                 .set { ch_topurge }
         }
         PURGE_DUPLICATES ( ch_topurge.dump( tag: 'Purge duplicates: input' ) )
