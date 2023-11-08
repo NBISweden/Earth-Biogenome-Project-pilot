@@ -45,6 +45,11 @@
             "git_sha": "9e51255c4f8ec69fb6ccf68593392835f14fecb8",
             "installed_by": ["modules"]
           },
+          "goat/taxonsearch": {
+            "branch": "master",
+            "git_sha": "f06ea9b058c2e4af141245ccff58ea5f65808d1a",
+            "installed_by": ["modules"]
+          },
           "hifiasm": {
             "branch": "master",
             "git_sha": "911696ea0b62df80e900ef244d7867d177971f73",
