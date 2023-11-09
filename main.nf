@@ -137,7 +137,6 @@ workflow {
             PREPARE_INPUT.out.hifi,
             BUILD_HIFI_DATABASES.out.fastk_histogram.join( BUILD_HIFI_DATABASES.out.fastk_ktab ),
             params.reference ? file( params.reference, checkIfExists: true ) : [],
-            Channel.of( params.busco_lineages.tokenize(',') ),
             params.busco_lineage_path ? file( params.busco_lineage_path, checkIfExists: true ) : []
         )
     }
