@@ -9,7 +9,6 @@ workflow EVALUATE_ASSEMBLY {
     reads_ch           // input type: [ meta, [ 'path/to/reads' ] ]
     fastk_db           // input type: [ meta, [ 'path/to/reads.hist' ], [ '/path/to/reads.ktab' ] ]
     reference_ch       // optional: file( reference_genome ) for comparison
-    busco_lineages     // Busco lineages to check against
     busco_lineage_path // Path to Busco lineage files
 
     main:
@@ -50,8 +49,7 @@ workflow EVALUATE_ASSEMBLY {
     // Evaluate core gene space coverage
     BUSCO (
         assembly_ch.map { sample, assembly -> [ sample + [ build: assembly.id ] , assembly.pri_fasta ] }
-            .combine(busco_lineages.toList())
-            .flatMap { meta, asm, lines -> lines.collect{ [ meta, asm, it ] } }
+            .flatMap { meta, asm -> meta.settings?.busco?.lineages ? meta.settings.busco.lineages.tokenize(',').collect{ [ meta, asm, it ] } : [ [ meta, asm, 'auto' ] ] }
             .dump(tag: 'BUSCO')
             .multiMap { meta, asm, line ->
                 asm_ch: [ meta, asm ]
