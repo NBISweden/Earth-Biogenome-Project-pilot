@@ -3,12 +3,12 @@
 import org.yaml.snakeyaml.Yaml
 
 include { SAMTOOLS_FASTA } from "$projectDir/modules/local/samtools/fasta/main"
+include { GOAT_TAXONSEARCH } from "$projectDir/modules/nf-core/goat/taxonsearch/main"
 
 /* params.input example sample sheet (samplesheet.yml)
 ```yaml
 sample:
-  id: Awesome_Species
-  kmer_size: 31
+  name: Species name
   ploidy: 2
 assembly:
   - id: assemblerX_build1
@@ -28,12 +28,22 @@ rnaseq:
   - reads: /path/to/reads
 isoseq:
   - reads: /path/to/reads
+settings:
+  busco:
+    lineages:
+  fastk:
+    kmer_size:
+  genescopefk:
+    kmer_size:
+  hifiasm:
+    - Opts 1
+    - Opts 2
 ```
 leads to the following YAML data structure
+```
 [
     sample:[
-        id: Awesome_Species
-        kmer_size: 31
+        name: Species name
         ploidy: 2
     ],
     assembly:[
@@ -64,6 +74,45 @@ leads to the following YAML data structure
         reads: /path/to/reads
     ]
 ]
+```
+*/
+
+/*
+Output meta map structure:
+```
+[
+    id: "Species_name", // Needed for nf-core modules functionality
+    single_end: true,   // Needed for nf-core modules functionality
+    sample: [
+        name: "Species name",
+        ploidy: 2,
+        chr_count: 13
+    ],
+    reads_hifi: [
+        single_end: true,
+        kmer_cov: 25
+    ],
+    reads_hic: [
+        single_end: false,
+        kmer_cov: 50
+    ]
+    settings: [
+        genescopefk: [
+            kmer_size: 31
+        ],
+        fastk: [
+            kmer_size: 31
+        ],
+        busco: [
+            lineages: auto
+        ],
+        hifiasm: [
+            "Opts set 1",
+            "Opts set 2"
+        ]
+    ]
+]
+```
 */
 
 workflow PREPARE_INPUT {
@@ -73,14 +122,32 @@ workflow PREPARE_INPUT {
 
     main:
     // Read in YAML
-    Channel.fromPath( infile )
+    ch_input = Channel.fromPath( infile )
         .map { file -> readYAML( file ) }
+    
+    // Update meta with GOAT before propagating
+    // TODO: Bypass if certain fields are present
+    GOAT_TAXONSEARCH( ch_input.map { data -> [ data, data.sample?.taxon, [] ] } ).taxonsearch
+        .map { meta, tsv ->
+            def lineages = tsv.splitCsv( sep:"\t", header: true ).collect { it.odb10_lineage }.join(',') ;
+            // Update meta in place since there should be no concurrent access here.
+            if( ! meta.settings ) {
+                meta = meta + [ settings: [ busco: [ lineages: lineages ] ] ]
+            } else if ( ! meta.settings.busco ) {
+                meta.settings = meta.settings + [ busco: [ lineages: lineages ] ]
+            } else if ( ! meta.settings.busco.lineages ) {
+                meta.settings.busco = meta.settings.busco + [ lineages: lineages ]
+            } else {
+                meta // Leave settings unchanged
+            }
+            meta.id = meta.sample.name.replace(" ","_")
+        }
         .multiMap { data ->
-            assembly_ch : ( data.assembly ? [ data.sample, data.assembly ] : [] )
-            hic_ch      : ( data.hic      ? [ data.sample + [ single_end: false ], data.hic.collect { [ file( it.read1, checkIfExists: true ), file( it.read2, checkIfExists: true ) ] } ] : [] )
-            hifi_ch     : ( data.hifi     ? [ data.sample + [ single_end: true ], data.hifi.collect { file( it.reads, checkIfExists: true ) } ] : [] )
-            rnaseq_ch   : ( data.rnaseq   ? [ data.sample, data.rnaseq.collect { it.reads ? file( it.reads, checkIfExists: true ) : [ file( it.read1, checkIfExists: true ), file( it.read2, checkIfExists: true ) ] } ] : [] )
-            isoseq_ch   : ( data.isoseq   ? [ data.sample + [ single_end: true ], data.isoseq.collect { file( it.reads, checkIfExists: true ) } ] : [] )
+            assembly_ch : ( data.assembly ? [ data.subMap('sample','settings') , data.assembly ] : [] )
+            hic_ch      : ( data.hic      ? [ data.subMap('sample','settings') + [ single_end: false ], data.hic.collect { [ file( it.read1, checkIfExists: true ), file( it.read2, checkIfExists: true ) ] } ] : [] )
+            hifi_ch     : ( data.hifi     ? [ data.subMap('sample','settings') + [ single_end: true ], data.hifi.collect { file( it.reads, checkIfExists: true ) } ] : [] )
+            rnaseq_ch   : ( data.rnaseq   ? [ data.subMap('sample','settings'), data.rnaseq.collect { it.reads ? file( it.reads, checkIfExists: true ) : [ file( it.read1, checkIfExists: true ), file( it.read2, checkIfExists: true ) ] } ] : [] )
+            isoseq_ch   : ( data.isoseq   ? [ data.subMap('sample','settings') + [ single_end: true ], data.isoseq.collect { file( it.reads, checkIfExists: true ) } ] : [] )
         }
         .set{ input }
 
