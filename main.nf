@@ -90,7 +90,7 @@ workflow {
         // Run in basic mode atm
         // Need to include a build ID here. 
         HIFIASM(
-            PREPARE_INPUT.out.hifi,
+            PREPARE_INPUT.out.hifi.flatMap { meta, reads -> meta.settings?.hifiasm ? meta.settings.hifiasm.collect { [ meta, reads ] } : [ [ meta, reads ] ] },
             [], // paternal k-mers
             [], // maternal k-mers
             [], // Hi-C r1
