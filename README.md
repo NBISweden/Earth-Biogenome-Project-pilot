@@ -27,7 +27,8 @@ flowchart TD
     input --> goat_taxon[[ GOAT taxon search ]]
     goat_taxon --> busco
     hifi --> samtools_fa[[ Samtools fasta ]]
-    samtools_fa --> hifi
+    samtools_fa --> fastk_hifi
+    samtools_fa --> mash_screen
     hifi[/ HiFi reads /] --> fastk_hifi[[ FastK - HiFi ]]
     hic[/ Hi-C reads /] --> fastk_hic[[ FastK - HiC ]]
     assembly[/ Assembly /] --> quast[[ Quast ]]
