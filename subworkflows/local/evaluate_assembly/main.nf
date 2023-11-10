@@ -47,14 +47,17 @@ workflow EVALUATE_ASSEMBLY {
     // )
 
     // Evaluate core gene space coverage
+    busco_input = assembly_ch.map { sample, assembly -> [ sample + [ build: assembly.id ] , assembly.pri_fasta ] }
+        .flatMap { meta, asm -> meta.settings?.busco?.lineages ? meta.settings.busco.lineages.tokenize(',').collect{ [ meta, asm, it ] } : [ [ meta, asm, 'auto' ] ] }
+        .dump(tag: 'BUSCO')
+        .multiMap { meta, asm, line ->
+            assembly_ch: [ meta, asm ]
+            lineage_ch: line
+        }
     BUSCO (
-        assembly_ch.map { sample, assembly -> [ sample + [ build: assembly.id ] , assembly.pri_fasta ] }
-            .flatMap { meta, asm -> meta.settings?.busco?.lineages ? meta.settings.busco.lineages.tokenize(',').collect{ [ meta, asm, it ] } : [ [ meta, asm, 'auto' ] ] }
-            .dump(tag: 'BUSCO')
-            .multiMap { meta, asm, line ->
-                asm_ch: [ meta, asm ]
-                lin_ch: line
-            },
+        busco_input.assembly_ch,
+        'genome',
+        busco_input.lineage_ch,
         busco_lineage_path,
         []
     )
