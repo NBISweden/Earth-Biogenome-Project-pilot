@@ -104,21 +104,21 @@ Mandatory:
       name: 'Laetiporus sulphureus'  # Required: Species name. Correct spelling is important to look up species information.
       ploidy: 2                      # Required: Estimated ploidy of organism.
     assembly:                        # Optional: List of assemblies to curate and validate.
-      - id: 'HS_phased_diploid'      # Each assembly has it's own ID. Assemblies can be primary and alternate or primary only
-        pri_fasta: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/genome/genome.fasta'
-        alt_fasta: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/genome/genome2.fasta'
-      - id: 'HS_consensus'
-        pri_fasta: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/genome/genome2.fasta'
+      - id: 'LS_phased_diploid'      # Each assembly has it's own ID. Assemblies can be primary and alternate or primary only
+        pri_fasta: '/path/to/genome/primary.fasta'
+        alt_fasta: '/path/to/genome/alternate.fasta'
+      - id: 'LS_consensus'
+        pri_fasta: 'path/to/genome/consensus.fasta'
     hic:                             # Optional: List of hi-c reads to QC and use for scaffolding 
-      - read1: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/illumina/fastq/test_1.fastq.gz'
-        read2: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/illumina/fastq/test_2.fastq.gz'
+      - read1: '/path/to/raw/data/hic/LS_HIC_R001_1.fastq.gz'
+        read2: '/path/to/raw/data/hic/LS_HIC_R001_2.fastq.gz'
     hifi:                            # Required: List of hifi-reads to QC and use for assembly/validation
-      - reads: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/illumina/bam/test.paired_end.sorted.bam'
+      - reads: '/path/to/raw/data/hifi/LS_HIFI_R001.bam'
     rnaseq:                          # Optional: List of Rna-seq reads to use for validation
-      - read1: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/illumina/fastq/test_1.fastq.gz'
-        read2: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/illumina/fastq/test_2.fastq.gz'
+      - read1: '/path/to/raw/data/rnaseq/LS_RNASEQ_R001_1.fastq.gz'
+        read2: '/path/to/raw/data/rnaseq/LS_RNASEQ_R001_2.fastq.gz'
     isoseq:                          # Optional: List of Isoseq reads to use for validation
-      - reads: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/illumina/bam/test.paired_end.sorted.bam'
+      - reads: '/path/to/raw/data/isoseq/LS_ISOSEQ_R001.bam'
     settings:                        # Optional: Settings for workflow tools
       # busco:
         # lineages: 'fungi_odb10,eukaryota_odb10' # Optional. Comma separated list. (default: Automatically retrieved using GOAT)
