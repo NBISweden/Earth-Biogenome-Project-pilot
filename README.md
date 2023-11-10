@@ -77,7 +77,7 @@ where:
     process {
         withName: 'BUSCO' {  // Selects the process to apply settings.
             cpus     = 6     // Overrides cpu settings defined in nextflow.config
-            time     = 4.d   // Overrides time settings defined in nextflow.config to 4 days
+            time     = 4.d   // Overrides time settings defined in nextflow.config to 4 days. Use .h for hours, .m for minutes.
             memory   = 20.G  // Overrides memory settings defined in nextflow.config to 20 GB.
             // ext.args supplies command-line options to the process tool
             // overrides settings found in configs/modules.config
