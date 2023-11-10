@@ -144,11 +144,11 @@ workflow PREPARE_INPUT {
             meta
         }
         .multiMap { data ->
-            assembly_ch : ( data.assembly ? [ data.subMap('sample','settings') , data.assembly ] : [] )
-            hic_ch      : ( data.hic      ? [ data.subMap('sample','settings') + [ single_end: false ], data.hic.collect { [ file( it.read1, checkIfExists: true ), file( it.read2, checkIfExists: true ) ] } ] : [] )
-            hifi_ch     : ( data.hifi     ? [ data.subMap('sample','settings') + [ single_end: true ], data.hifi.collect { file( it.reads, checkIfExists: true ) } ] : [] )
-            rnaseq_ch   : ( data.rnaseq   ? [ data.subMap('sample','settings'), data.rnaseq.collect { it.reads ? file( it.reads, checkIfExists: true ) : [ file( it.read1, checkIfExists: true ), file( it.read2, checkIfExists: true ) ] } ] : [] )
-            isoseq_ch   : ( data.isoseq   ? [ data.subMap('sample','settings') + [ single_end: true ], data.isoseq.collect { file( it.reads, checkIfExists: true ) } ] : [] )
+            assembly_ch : ( data.assembly ? [ data.subMap('id','sample','settings') , data.assembly ] : [] )
+            hic_ch      : ( data.hic      ? [ data.subMap('id','sample','settings') + [ single_end: false ], data.hic.collect { [ file( it.read1, checkIfExists: true ), file( it.read2, checkIfExists: true ) ] } ] : [] )
+            hifi_ch     : ( data.hifi     ? [ data.subMap('id','sample','settings') + [ single_end: true ], data.hifi.collect { file( it.reads, checkIfExists: true ) } ] : [] )
+            rnaseq_ch   : ( data.rnaseq   ? [ data.subMap('id','sample','settings'), data.rnaseq.collect { it.reads ? file( it.reads, checkIfExists: true ) : [ file( it.read1, checkIfExists: true ), file( it.read2, checkIfExists: true ) ] } ] : [] )
+            isoseq_ch   : ( data.isoseq   ? [ data.subMap('id','sample','settings') + [ single_end: true ], data.isoseq.collect { file( it.reads, checkIfExists: true ) } ] : [] )
         }
         .set{ input }
 
