@@ -127,7 +127,7 @@ workflow PREPARE_INPUT {
     
     // Update meta with GOAT before propagating
     // TODO: Bypass if certain fields are present
-    GOAT_TAXONSEARCH( ch_input.map { data -> [ data, data.sample?.taxon, [] ] } ).taxonsearch
+    GOAT_TAXONSEARCH( ch_input.map { data -> [ data, data.sample.name, [] ] } ).taxonsearch
         .map { meta, tsv ->
             def lineages = tsv.splitCsv( sep:"\t", header: true ).collect { it.odb10_lineage }.join(',') ;
             // Update meta in place since there should be no concurrent access here.
