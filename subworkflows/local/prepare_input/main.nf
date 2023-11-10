@@ -131,6 +131,7 @@ workflow PREPARE_INPUT {
         .map { meta, tsv ->
             def lineages = tsv.splitCsv( sep:"\t", header: true ).collect { it.odb10_lineage }.join(',') ;
             // Update meta in place since there should be no concurrent access here.
+            meta.id = meta.sample.name.replace(" ","_")
             if( ! meta.settings ) {
                 meta = meta + [ settings: [ busco: [ lineages: lineages ] ] ]
             } else if ( ! meta.settings.busco ) {
@@ -140,7 +141,7 @@ workflow PREPARE_INPUT {
             } else {
                 meta // Leave settings unchanged
             }
-            meta.id = meta.sample.name.replace(" ","_")
+            meta
         }
         .multiMap { data ->
             assembly_ch : ( data.assembly ? [ data.subMap('sample','settings') , data.assembly ] : [] )
