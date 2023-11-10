@@ -22,6 +22,12 @@ Current implementation:
 
 ```mermaid
 flowchart TD
+    input[/ Input file/] --> hifi
+    input --> hic
+    input --> goat_taxon[[ GOAT taxon search ]]
+    goat_taxon --> busco
+    hifi --> samtools_fa[[ Samtools fasta ]]
+    samtools_fa --> hifi
     hifi[/ HiFi reads /] --> fastk_hifi[[ FastK - HiFi ]]
     hic[/ Hi-C reads /] --> fastk_hic[[ FastK - HiC ]]
     assembly[/ Assembly /] --> quast[[ Quast ]]
@@ -93,29 +99,35 @@ Mandatory:
     Example `assembly_spec.yml` (See also [test profile input](assets/test_hsapiens.yml)):
 
     ```yml
-    sample:                # Required: Meta data
-      id: 'HSapiens_test'  # Required: Name of the sample. Used commonly as a prefix.
-      kmer_size: 31        # Required: K-mer size to use for k-mer analyses.
-      ploidy: 2            # Required: Estimated ploidy of organism.
-      busco_lineages:      # Optional: List of busco lineages to test against. default: 'auto'
-        - "eukaryota_odb10"
-        - "mammalia_odb10"
-    assembly:              # Optional: List of assemblies to curate and validate.
-      - id: 'HS_phased_diploid'  # Each assembly has it's own ID. Assemblies can be primary and alternate or primary only
+    sample:                          # Required: Meta data
+      name: 'Laetiporus sulphureus'  # Required: Species name. Correct spelling is important to look up species information.
+      ploidy: 2                      # Required: Estimated ploidy of organism.
+    assembly:                        # Optional: List of assemblies to curate and validate.
+      - id: 'HS_phased_diploid'      # Each assembly has it's own ID. Assemblies can be primary and alternate or primary only
         pri_fasta: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/genome/genome.fasta'
         alt_fasta: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/genome/genome2.fasta'
       - id: 'HS_consensus'
         pri_fasta: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/genome/genome2.fasta'
-    hic:                   # Optional: List of hi-c reads to QC and use for scaffolding 
+    hic:                             # Optional: List of hi-c reads to QC and use for scaffolding 
       - read1: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/illumina/fastq/test_1.fastq.gz'
         read2: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/illumina/fastq/test_2.fastq.gz'
-    hifi:                  # Required: List of hifi-reads to QC and use for assembly/validation
+    hifi:                            # Required: List of hifi-reads to QC and use for assembly/validation
       - reads: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/illumina/bam/test.paired_end.sorted.bam'
-    rnaseq:                # Optional: List of Rna-seq reads to use for validation
+    rnaseq:                          # Optional: List of Rna-seq reads to use for validation
       - read1: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/illumina/fastq/test_1.fastq.gz'
         read2: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/illumina/fastq/test_2.fastq.gz'
-    isoseq:                # Optional: List of Isoseq reads to use for validation
+    isoseq:                          # Optional: List of Isoseq reads to use for validation
       - reads: 'https://raw.githubusercontent.com/nf-core/test-datasets/modules/data/genomics/homo_sapiens/illumina/bam/test.paired_end.sorted.bam'
+    settings:                        # Optional: Settings for workflow tools
+      # busco:
+        # lineages: 'fungi_odb10,eukaryota_odb10' # Optional. Comma separated list. (default: Automatically retrieved using GOAT)
+      fastk:
+        kmer_size: 31                # Optional: Select kmer size to use for Fastk database
+      genescopefk:
+        kmer_size: 31                # Optional: Select kmer size to use for GenescopeFK
+      hifiasm:                       # Optional: List of parameter settings to use.
+        - "--optsA 1 --optsB 2"
+        - "--optsA 3 --optsB 3"
     ```
 
 
