@@ -138,13 +138,25 @@ Optional:
 - `publish_mode`: (values: `'symlink'` (default), `'copy'`) The file
 publishing method from the intermediate results folders
 (see [Table of publish modes](https://www.nextflow.io/docs/latest/process.html#publishdir)).
-- `steps`: The workflow steps to execute ( default is all steps. Choose from [`data_qc`,`preprocess`,`assemble`,`validate`,`curate`] ).
+- `steps`: The workflow steps to execute (default is all steps). Choose from:
 
-    Software specific:
-    - `multiqc_config`: Path to MultiQC configuration file (default: `configs/multiqc_conf.yaml`).
+    - `inspect`: 01 - Read inspection
+    - `preprocess`: 02 - Read preprocessing
+    - `assemble`: 03 - Assembly
+    - `purge`: 04 - Duplicate purging
+    - `polish`: 05 - Error polishing
+    - `screen`: 06 - Contamination screening
+    - `scaffold`: 07 - Scaffolding
+    - `curate`: 08 - Rapid curation
+    - `alignRNA`: 09 - Align RNAseq data
 
-    Uppmax cluster specific:
-    - `project`: SNIC Compute allocation number.
+Software specific:
+
+- `multiqc_config`: Path to MultiQC configuration file (default: `configs/multiqc_conf.yaml`).
+
+Uppmax cluster specific:
+
+- `project`: NAISS Compute allocation number.
 
 ### Workflow outputs
 
