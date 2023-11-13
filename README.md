@@ -103,7 +103,6 @@ Mandatory:
     ```yml
     sample:                          # Required: Meta data
       name: 'Laetiporus sulphureus'  # Required: Species name. Correct spelling is important to look up species information.
-      ploidy: 2                      # Required: Estimated ploidy of organism.
     assembly:                        # Optional: List of assemblies to curate and validate.
       - id: 'LS_phased_diploid'      # Each assembly has it's own ID. Assemblies can be primary and alternate or primary only
         pri_fasta: '/path/to/genome/primary.fasta'
