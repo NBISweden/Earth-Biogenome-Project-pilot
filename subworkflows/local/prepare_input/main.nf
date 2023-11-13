@@ -129,15 +129,17 @@ workflow PREPARE_INPUT {
     // TODO: Bypass if certain fields are present
     GOAT_TAXONSEARCH( ch_input.map { data -> [ data, data.sample.name, [] ] } ).taxonsearch
         .map { meta, tsv ->
-            def lineages = tsv.splitCsv( sep:"\t", header: true ).collect { it.odb10_lineage }.join(',') ;
+            def busco_lineages = tsv.splitCsv( sep:"\t", header: true ).findAll { it.odb10_lineage }.collect { it.odb10_lineage }.join(',') 
+            def species = tsv.splitCsv( sep:"\t", header: true ).find { it.scientific_name == meta.sample.name }
             // Update meta in place since there should be no concurrent access here.
             meta.id = meta.sample.name.replace(" ","_")
+            meta.sample = meta.sample + [ genome_size: species.genome_size, chromosome_number: species.chromosome_number, ploidy: species.ploidy ]
             if( ! meta.settings ) {
-                meta = meta + [ settings: [ busco: [ lineages: lineages ] ] ]
+                meta = meta + [ settings: [ busco: [ lineages: busco_lineages ] ] ]
             } else if ( ! meta.settings.busco ) {
-                meta.settings = meta.settings + [ busco: [ lineages: lineages ] ]
+                meta.settings = meta.settings + [ busco: [ lineages: busco_lineages ] ]
             } else if ( ! meta.settings.busco.lineages ) {
-                meta.settings.busco = meta.settings.busco + [ lineages: lineages ]
+                meta.settings.busco = meta.settings.busco + [ lineages: busco_lineages ]
             } else {
                 meta // Leave settings unchanged
             }
