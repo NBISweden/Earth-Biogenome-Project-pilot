@@ -142,6 +142,23 @@ publishing method from the intermediate results folders
 
 Software specific:
 
+Software specific settings are included using the `settings` parameter. In the YAML file used as input
+to `-params-file`.
+```
+input: assembly.yml
+outdir: results
+settings:
+  fastk:
+    kmer_size: 31
+  genescopefk:
+    kmer_size: 31
+  hifiasm:
+    - "--opts A"
+    - "--opts B"
+  busco:
+    lineages: 'auto'
+```
+
 - `multiqc_config`: Path to MultiQC configuration file (default: `configs/multiqc_conf.yaml`).
 
 Uppmax cluster specific:
