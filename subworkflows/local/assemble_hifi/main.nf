@@ -59,7 +59,9 @@ workflow ASSEMBLE_HIFI {
         // Find mitochondria
             // Need to check options to mitohifi modules.
 
-    versions_ch =
+    versions_ch = HIFIASM.out.versions.first()
+        .mix( GFASTATS.out.versions.first() )
+        .mix( GFATOOLS_GFA2FA.out.versions.first() )
 
     emit:
     assemblies = assemblies_ch
