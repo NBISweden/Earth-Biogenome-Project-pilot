@@ -13,6 +13,9 @@ include { ASSEMBLE_HIFI } from "$projectDir/subworkflows/local/assemble_hifi/mai
 
 include { PURGE_DUPLICATES } from "$projectDir/subworkflows/local/purge_dups/main"
 
+include { MITOHIFI_FINDMITOREFERENCE } from "$projectDir/modules/nf-core/mitohifi/findmitoreference/main"
+include { MITOHIFI_MITOHIFI          } from "$projectDir/modules/nf-core/mitohifi/mitohifi/main"
+
 include { COMPARE_ASSEMBLIES } from "$projectDir/subworkflows/local/compare_assemblies/main"
 include { EVALUATE_ASSEMBLY  } from "$projectDir/subworkflows/local/evaluate_assembly/main"
 include { ALIGN_RNASEQ       } from "$projectDir/subworkflows/local/align_rnaseq/main"
@@ -87,6 +90,25 @@ workflow {
         // Run assemblers
         ASSEMBLE_HIFI( PREPARE_INPUT.out.hifi )
         ch_assemblies = ch_assemblies.mix( ASSEMBLE_HIFI.out.assemblies )
+
+        // Find mitochondria
+        // Need to check options to mitohifi modules.
+        MITOHIFI_FINDMITOREFERENCE( ch_assemblies.map { meta, assemblies -> [ meta, meta.sample.name ] } )
+        mitohifi_ch = ch_assemblies
+            .join( MITOHIFI_FINDMITOREFERENCE.out.fasta )
+            .join( MITOHIFI_FINDMITOREFERENCE.out.gb )
+            .multiMap { meta, assembly, mitofa, mitogb ->
+                input: [ meta, assembly.pri_fasta ]
+                reference: mitofa
+                genbank: mitogb 
+            }
+        MITOHIFI_MITOHIFI(
+            mitohifi_ch.input,
+            mitohifi_ch.reference,
+            mitohifi_ch.genbank,
+            'c',
+            params.mitohifi.code
+        )
 
         // Assess assemblies
         COMPARE_ASSEMBLIES (

@@ -56,9 +56,6 @@ workflow ASSEMBLE_HIFI {
             }
             .dump( tag: "Assemblies: Pre-purge", pretty: true )
 
-        // Find mitochondria
-            // Need to check options to mitohifi modules.
-
     versions_ch = HIFIASM.out.versions.first()
         .mix( GFASTATS.out.versions.first() )
         .mix( GFATOOLS_GFA2FA.out.versions.first() )
