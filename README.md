@@ -119,16 +119,6 @@ Mandatory:
         read2: '/path/to/raw/data/rnaseq/LS_RNASEQ_R001_2.fastq.gz'
     isoseq:                          # Optional: List of Isoseq reads to use for validation
       - reads: '/path/to/raw/data/isoseq/LS_ISOSEQ_R001.bam'
-    settings:                        # Optional: Settings for workflow tools
-      # busco:
-        # lineages: 'fungi_odb10,eukaryota_odb10' # Optional. Comma separated list. (default: Automatically retrieved using GOAT)
-      fastk:
-        kmer_size: 31                # Optional: Select kmer size to use for Fastk database
-      genescopefk:
-        kmer_size: 31                # Optional: Select kmer size to use for GenescopeFK
-      hifiasm:                       # Optional: List of parameter settings to use.
-        - "--optsA 1 --optsB 2"
-        - "--optsA 3 --optsB 3"
     ```
 
 
