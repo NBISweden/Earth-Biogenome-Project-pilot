@@ -9,7 +9,6 @@ include { GOAT_TAXONSEARCH } from "$projectDir/modules/nf-core/goat/taxonsearch/
 ```yaml
 sample:
   name: Species name
-  ploidy: 2
 assembly:
   - id: assemblerX_build1
     pri_fasta: /path/to/primary_asm.fasta
@@ -28,23 +27,12 @@ rnaseq:
   - reads: /path/to/reads
 isoseq:
   - reads: /path/to/reads
-settings:
-  busco:
-    lineages:
-  fastk:
-    kmer_size:
-  genescopefk:
-    kmer_size:
-  hifiasm:
-    - Opts 1
-    - Opts 2
 ```
 leads to the following YAML data structure
 ```
 [
     sample:[
         name: Species name
-        ploidy: 2
     ],
     assembly:[
         [
@@ -85,8 +73,9 @@ Output meta map structure:
     single_end: true,   // Needed for nf-core modules functionality
     sample: [
         name: "Species name",
-        ploidy: 2,
-        chr_count: 13
+        genome_size: 1234,     // GOAT
+        ploidy: 2,             // GOAT
+        chr_count: 13          // GOAT
     ],
     reads_hifi: [
         single_end: true,
@@ -97,18 +86,8 @@ Output meta map structure:
         kmer_cov: 50
     ]
     settings: [
-        genescopefk: [
-            kmer_size: 31
-        ],
-        fastk: [
-            kmer_size: 31
-        ],
         busco: [
-            lineages: auto
-        ],
-        hifiasm: [
-            "Opts set 1",
-            "Opts set 2"
+            lineages: auto     // GOAT
         ]
     ]
 ]

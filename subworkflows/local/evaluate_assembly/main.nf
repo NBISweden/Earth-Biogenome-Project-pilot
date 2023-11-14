@@ -34,7 +34,17 @@ workflow EVALUATE_ASSEMBLY {
 
     // Evaluate core gene space coverage
     busco_input = assembly_ch.map { sample, assembly -> [ sample + [ build: assembly.id ] , assembly.pri_fasta ] }
-        .flatMap { meta, asm -> meta.settings?.busco?.lineages ? meta.settings.busco.lineages.tokenize(',').collect{ [ meta, asm, it ] } : [ [ meta, asm, 'auto' ] ] }
+        .flatMap { meta, asm -> 
+            if ( params.busco.lineages ) {
+                // User supplied list takes priority.
+                params.busco.lineages.tokenize(',').collect{ [ meta, asm, it ] }
+            } else if ( meta.settings?.busco?.lineages ) {
+                // Use lineages from GOAT.
+                meta.settings.busco.lineages.tokenize(',').collect{ [ meta, asm, it ] } 
+            } else {
+                // If GOAT is disabled, auto-detect.
+                [ [ meta, asm, 'auto' ] ]
+            }
         .dump(tag: 'BUSCO')
         .multiMap { meta, asm, line ->
             assembly_ch: [ meta, asm ]

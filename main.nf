@@ -74,7 +74,7 @@ workflow {
         SCREEN_READS ( 
             PREPARE_INPUT.out.hifi,
             // TODO:: Allow custom database ala nf-core/genomeassembler.
-            file( params.mash_screen_db, checkIfExists: true )
+            file( params.mash.screen_db, checkIfExists: true )
         )
     }
 
@@ -90,7 +90,7 @@ workflow {
         // Run in basic mode atm
         // Need to include a build ID here. 
         HIFIASM(
-            PREPARE_INPUT.out.hifi.flatMap { meta, reads -> meta.settings?.hifiasm ? meta.settings.hifiasm.collect { [ meta, reads ] } : [ [ meta, reads ] ] },
+            PREPARE_INPUT.out.hifi.flatMap { meta, reads -> params.hifiasm ? params.hifiasm.collect { [ meta, reads ] } : [ [ meta, reads ] ] },
             [], // paternal k-mers
             [], // maternal k-mers
             [], // Hi-C r1
@@ -137,7 +137,7 @@ workflow {
             PREPARE_INPUT.out.hifi,
             BUILD_HIFI_DATABASES.out.fastk_histogram.join( BUILD_HIFI_DATABASES.out.fastk_ktab ),
             params.reference ? file( params.reference, checkIfExists: true ) : [],
-            params.busco_lineage_path ? file( params.busco_lineage_path, checkIfExists: true ) : []
+            params.busco.lineages_db_path ? file( params.busco.lineages_db_path, checkIfExists: true ) : []
         )
     }
 
