@@ -87,12 +87,12 @@
           },
           "mitohifi/findmitoreference": {
             "branch": "master",
-            "git_sha": "f52220e84bfc16a8616a5bb3d6f5bc67d601bdce",
+            "git_sha": "3f5420aa22e00bd030a2556dfdffc9e164ec0ec5",
             "installed_by": ["modules"]
           },
           "mitohifi/mitohifi": {
             "branch": "master",
-            "git_sha": "02c3c39e3d57bf77183e563598bae2ec1ec11cb1",
+            "git_sha": "5bcbc0c522879ba15a224eb06cd42e6c46932545",
             "installed_by": ["modules"]
           },
           "pilon": {
