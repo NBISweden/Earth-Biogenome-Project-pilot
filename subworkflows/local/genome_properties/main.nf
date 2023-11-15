@@ -22,8 +22,8 @@ workflow GENOME_PROPERTIES {
 
     // Print warning if genome size estimate is outside predicted range.
     GENESCOPEFK.out.summary
-        .view { meta, summary ->             
-            def genome_size_estimates = it.readLines().find { it.startsWith("Genome Haploid Length") } =~ /[0-9,]+/
+        .view { meta, summary ->
+            def genome_size_estimates = summary.readLines().find { it.startsWith("Genome Haploid Length") } =~ /[0-9,]+/
             if ( genome_size_estimates.size() == 1 ) {
                 if ( meta.sample.genome_size < 0.9 * genome_size_estimates[0] ||
                     meta.sample.genome_size > 1.1 * genome_size_estimates[0] ) {
