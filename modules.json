@@ -93,7 +93,8 @@
           "mitohifi/mitohifi": {
             "branch": "master",
             "git_sha": "5bcbc0c522879ba15a224eb06cd42e6c46932545",
-            "installed_by": ["modules"]
+            "installed_by": ["modules"],
+            "patch": "modules/nf-core/mitohifi/mitohifi/mitohifi-mitohifi.diff"
           },
           "pilon": {
             "branch": "master",

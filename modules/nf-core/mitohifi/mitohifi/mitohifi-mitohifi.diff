@@ -1,0 +1,58 @@
+Changes in module 'nf-core/mitohifi/mitohifi'
+--- modules/nf-core/mitohifi/mitohifi/main.nf
++++ modules/nf-core/mitohifi/mitohifi/main.nf
+@@ -14,7 +14,7 @@
+     val mito_code
+ 
+     output:
+-    tuple val(meta), path("*fasta")                          , emit: fasta
++    tuple val(meta), path("*mitogenome.fasta")               , emit: fasta
+     tuple val(meta), path("*contigs_stats.tsv")              , emit: stats
+     tuple val(meta), path("*gb")                             , emit: gb, optional: true
+     tuple val(meta), path("*gff")                            , emit: gff, optional: true
+@@ -40,17 +40,25 @@
+     if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
+         error "MitoHiFi module does not support Conda. Please use Docker / Singularity instead."
+     }
+-
+-    def args = task.ext.args ?: ''
+     if (! ["c", "r"].contains(input_mode)) {
+         error "r for reads or c for contigs must be specified"
+     }
++    def args = task.ext.args ?: ''
++    def prefix = task.ext.prefix ?: meta.id
++    def zipped = input.name.endsWith('.gz')
++    // Mitohifi deletes the original file when renaming headers.
++    def fasta = ( zipped ? input.name - '.gz' : input )
+     """
+-    mitohifi.py -${input_mode} ${input} \\
++    ${zipped ? "gzip -dc $input >" : "cp ${input}"} ${fasta}
++    mitohifi.py -${input_mode} ${fasta} \\
+         -f ${ref_fa} \\
+         -g ${ref_gb} \\
+         -o ${mito_code} \\
+         -t $task.cpus ${args}
++    
++    # Rename files to include prefix
++    find . -maxdepth 1 -type f ! -name '.*' -exec sh -c 'for f do mv "\$f" "${prefix}.\${f#./}"; done' sh {} +
++
+     cat <<-END_VERSIONS > versions.yml
+     "${task.process}":
+         mitohifi: \$( mitohifi.py --version 2>&1 | head -n1 | sed 's/^.*MitoHiFi //; s/ .*\$//' )
+@@ -58,10 +66,11 @@
+     """
+ 
+     stub:
++    def prefix = task.ext.prefix ?: meta.id
+     """
+-    touch final_mitogenome.fasta
+-    touch final_mitogenome.fasta
+-    touch contigs_stats.tsv
++    touch ${prefix}.final_mitogenome.fasta
++    touch ${prefix}.final_mitogenome.fasta
++    touch ${prefix}.contigs_stats.tsv
+ 
+     cat <<-END_VERSIONS > versions.yml
+     "${task.process}":
+
+************************************************************
