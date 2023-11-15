@@ -93,10 +93,10 @@ workflow {
 
         // Find mitochondria
         // Need to check options to mitohifi modules.
-        MITOHIFI_FINDMITOREFERENCE( ch_assemblies.map { meta, assemblies -> [ meta, meta.sample.name ] } )
+        MITOHIFI_FINDMITOREFERENCE( ch_assemblies.map { meta, assemblies -> [ meta, meta.sample.name ] }.unique() )
         mitohifi_ch = ch_assemblies
-            .join( MITOHIFI_FINDMITOREFERENCE.out.fasta )
-            .join( MITOHIFI_FINDMITOREFERENCE.out.gb )
+            .combine( MITOHIFI_FINDMITOREFERENCE.out.fasta, by: 0 )
+            .combine( MITOHIFI_FINDMITOREFERENCE.out.gb, by: 0 )
             .multiMap { meta, assembly, mitofa, mitogb ->
                 input: [ meta, assembly.pri_fasta ]
                 reference: mitofa
