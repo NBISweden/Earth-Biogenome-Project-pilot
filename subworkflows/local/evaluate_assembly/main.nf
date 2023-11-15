@@ -45,6 +45,7 @@ workflow EVALUATE_ASSEMBLY {
                 // If GOAT is disabled, auto-detect.
                 [ [ meta, asm, 'auto' ] ]
             }
+        }
         .dump(tag: 'BUSCO')
         .multiMap { meta, asm, line ->
             assembly_ch: [ meta, asm ]
