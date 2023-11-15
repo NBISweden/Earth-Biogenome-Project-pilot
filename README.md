@@ -46,6 +46,9 @@ flowchart TD
     fastk_hifi --> hifiasm[[ HiFiasm ]]
     hifiasm --> assembly
     assembly --> purgedups[[ Purgedups ]]
+    assembly --> mitoref[[ Mitohifi - Find reference ]]
+    assembly --> mitohifi[[ Mitohifi ]]
+    mitoref --> mitohifi
 ```
 
 ## Usage
