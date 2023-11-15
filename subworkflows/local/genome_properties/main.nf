@@ -26,14 +26,14 @@ workflow GENOME_PROPERTIES {
             def genome_size_estimates = summary.readLines().find { it.startsWith("Genome Haploid Length") } =~ /[0-9,]+/
             def nf = java.text.NumberFormat.getInstance(Locale.US)
             if ( genome_size_estimates.size() == 1 ) {
-                if ( meta.sample.genome_size < 0.9 * nf.parse(genome_size_estimates[0]).intValue() ||
-                    meta.sample.genome_size > 1.1 * nf.parse(genome_size_estimates[0]).intValue() ) {
+                if ( nf.parse(meta.sample.genome_size).intValue() < 0.9 * nf.parse(genome_size_estimates[0]).intValue() ||
+                    nf.parse(meta.sample.genome_size).intValue() > 1.1 * nf.parse(genome_size_estimates[0]).intValue() ) {
                         log.warn "GeneScopeFK genome size estimate differs from GOAT estimate"
                 }
             } else {
                 // Min and Max estimate
-                if ( meta.sample.genome_size < nf.parse(genome_size_estimates[0]).intValue() ||
-                    meta.sample.genome_size > nf.parse(genome_size_estimates[1]).intValue() ) {
+                if ( nf.parse(meta.sample.genome_size).intValue() < nf.parse(genome_size_estimates[0]).intValue() ||
+                    nf.parse(meta.sample.genome_size).intValue() > nf.parse(genome_size_estimates[1]).intValue() ) {
                         log.warn "GeneScopeFK genome size estimate differs from GOAT estimate"
                 }
             }
