@@ -69,6 +69,7 @@ workflow PURGE_DUPLICATES {
     reads_plus_assembly_ch
         .filter { meta, reads, assembly -> assembly.alt_fasta != null }
         .map { meta, reads, assembly -> [ meta + [ build: assembly.id ], assembly.alt_fasta ] }
+        // Purges haplotigs only when using consensus
         .mix( PURGEDUPS_GETSEQS_PRIMARY.out.haplotigs )
         .groupTuple()
         .set { alternate_assembly_ch }
