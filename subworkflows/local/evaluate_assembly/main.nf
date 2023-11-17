@@ -16,24 +16,12 @@ workflow EVALUATE_ASSEMBLY {
     // Kmer consistency check
     MERQURYFK_MERQURYFK (
         fastk_db.combine( assembly_ch.map { sample, assembly ->
-            [
-                sample, 
-                ( assembly.alt_fasta ? [ assembly.pri_fasta, assembly.alt_fasta ] : assembly.pri_fasta ),
-                assembly.id
-            ] 
-        }, by: 0 ).map {
-            sample, fastk_hist, fastk_ktab, asm_files, build_name -> 
-                [ 
-                    sample + [ build: build_name ],
-                    fastk_hist,
-                    fastk_ktab,
-                    asm_files
-                ]
-        }
+                [ sample, ( assembly.alt_fasta ? [ assembly.pri_fasta, assembly.alt_fasta ] : assembly.pri_fasta ) ] 
+            }, by: 0 )
     )
 
     // Evaluate core gene space coverage
-    busco_input = assembly_ch.map { sample, assembly -> [ sample + [ build: assembly.id ] , assembly.pri_fasta ] }
+    busco_input = assembly_ch.map { sample, assembly -> [ sample, assembly.pri_fasta ] }
         .flatMap { meta, asm -> 
             if ( params.busco.lineages ) {
                 // User supplied list takes priority.
