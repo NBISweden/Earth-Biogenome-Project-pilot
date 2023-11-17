@@ -15,7 +15,7 @@ workflow ASSEMBLE_HIFI {
                 [ meta + [ assembly: [ assembler: 'hifiasm', stage: 'raw', id: uuid, build: "hifiasm-raw-$uuid" ] ], reads ] 
             }
         HIFIASM(
-            hifi_reads,
+            reads_ch,
             [], // paternal k-mers
             [], // maternal k-mers
             [], // Hi-C r1
