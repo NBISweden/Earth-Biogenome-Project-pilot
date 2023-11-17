@@ -67,9 +67,9 @@ workflow {
         'inspect',      // 01 - Read inspection
         'preprocess',   // 02 - Read preprocessing
         'assemble',     // 03 - Assembly
-        'purge',        // 04 - Duplicate purging
-        'polish',       // 05 - Error polishing
-        'screen',       // 06 - Contamination screening
+        'screen',       // 04 - Contamination screening
+        'purge',        // 05 - Duplicate purging
+        'polish',       // 06 - Error polishing
         'scaffold',     // 07 - Scaffolding
         'curate',       // 08 - Rapid curation
         'alignRNA'      // 09 - Align RNAseq data
@@ -159,9 +159,16 @@ workflow {
         )
     }
 
+    // Contamination screen
+    if ( 'screen' in workflow_steps ) {
+        // Kraken2
+        // Blobtoolkit
+        // FCS-Genome
+    }
+
     // Purge duplicates
     if ( 'purge' in workflow_steps ) {
-        ch_topurge = PREPARE_INPUT.out.hifi.combine( ch_assemblies, by:0 )
+        ch_topurge = PREPARE_INPUT.out.hifi.combine( ch_assemblies.filter { meta, assembly -> meta.assembly.stage in ['raw','decontaminated'] } , by:0 )
         if ( 'inspect' in workflow_steps ) {
             // Add kmer coverage from GenomeScope model
             ch_topurge.map { meta, reads, assemblies -> [ meta.findAll { ! (it.key in [ 'single_end' ]) }, reads, assemblies ] }
@@ -175,13 +182,6 @@ workflow {
     // Polish
     if ( 'polish' in workflow_steps ) {
         // Run polishers
-    }
-
-    // Contamination screen
-    if ( 'screen' in workflow_steps ) {
-        // Kraken2
-        // Blobtoolkit
-        // FCS-Genome
     }
 
     // Scaffold
