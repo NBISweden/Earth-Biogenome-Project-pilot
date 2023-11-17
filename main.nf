@@ -198,7 +198,7 @@ workflow {
         ALIGN_RNASEQ ( 
             PREPARE_INPUT.out.rnaseq,
             PREPARE_INPUT.out.assemblies
-                .map { meta, assembly -> [ meta + [ build: assembly.id ], assembly.pri_fasta ] }
+                .map { meta, assembly -> [ meta, assembly.pri_fasta ] }
         )
     }
 }

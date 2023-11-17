@@ -24,14 +24,17 @@ workflow PURGE_DUPLICATES {
     main:
     // Need to move this outside the workflow to submit to nf-core.
     reads_plus_assembly_ch
-        .flatMap { meta, reads, assembly -> reads instanceof List ? reads.collect{ [ meta + [ single_end: true, build: assembly.id ], it, assembly.pri_fasta ] } : [ [ meta + [ single_end: true, build: assembly.id ], reads, assembly.pri_fasta ] ] }
+        // Add single_end for minimap module
+        .flatMap { meta, reads, assembly -> reads instanceof List ? 
+            reads.collect{ [ meta + [ single_end: true ], it, assembly.pri_fasta ] } 
+            : [ [ meta + [ single_end: true ], reads, assembly.pri_fasta ] ] }
         .multiMap { meta, reads, assembly -> 
             reads_ch: [ meta, reads ]
             assembly_ch: assembly
         }
         .set { input }
     reads_plus_assembly_ch
-        .map { meta, reads, assembly -> [ meta + [ build: assembly.id ], assembly.pri_fasta ] }
+        .map { meta, reads, assembly -> [ meta, assembly.pri_fasta ] }
         .set { primary_assembly_ch }
     // Map pacbio reads
     MINIMAP2_ALIGN_READS(
@@ -57,7 +60,8 @@ workflow PURGE_DUPLICATES {
     PURGEDUPS_PURGEDUPS_PRIMARY(
         PURGEDUPS_PBCSTAT.out.basecov
             .join( PURGEDUPS_CALCUTS.out.cutoff )
-            .map { meta, cov, cutoff -> [ meta.findAll { !(it.key in [ 'single_end' ]) }, cov, cutoff ] }
+            // .map { meta, cov, cutoff -> [ meta.findAll { !(it.key in [ 'single_end' ]) }, cov, cutoff ] }
+            .map { meta, cov, cutoff -> [ meta.subMap( meta.keys() - ['single_end'] ), cov, cutoff ] }
             .join( MINIMAP2_ALIGN_ASSEMBLY_PRIMARY.out.paf )
     ) 
     PURGEDUPS_GETSEQS_PRIMARY( 
@@ -68,7 +72,7 @@ workflow PURGE_DUPLICATES {
     // Purge alternate contigs.
     reads_plus_assembly_ch
         .filter { meta, reads, assembly -> assembly.alt_fasta != null }
-        .map { meta, reads, assembly -> [ meta + [ build: assembly.id ], assembly.alt_fasta ] }
+        .map { meta, reads, assembly -> [ meta, assembly.alt_fasta ] }
         // Purges haplotigs only when using consensus
         .mix( PURGEDUPS_GETSEQS_PRIMARY.out.haplotigs )
         .groupTuple()
@@ -84,7 +88,8 @@ workflow PURGE_DUPLICATES {
     PURGEDUPS_PURGEDUPS_ALTERNATE(
         PURGEDUPS_PBCSTAT.out.basecov
             .join( PURGEDUPS_CALCUTS.out.cutoff )
-            .map { meta, cov, cutoff -> [ meta.findAll { !(it.key in [ 'single_end' ]) }, cov, cutoff ] }
+            // .map { meta, cov, cutoff -> [ meta.findAll { !(it.key in [ 'single_end' ]) }, cov, cutoff ] }
+            .map { meta, cov, cutoff -> [ meta.subMap( meta.keys() - ['single_end'] ), cov, cutoff ] }
             .join( MINIMAP2_ALIGN_ASSEMBLY_ALTERNATE.out.paf )
     ) 
     PURGEDUPS_GETSEQS_ALTERNATE(
