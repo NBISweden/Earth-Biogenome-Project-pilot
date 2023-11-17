@@ -52,7 +52,7 @@
           },
           "hifiasm": {
             "branch": "master",
-            "git_sha": "911696ea0b62df80e900ef244d7867d177971f73",
+            "git_sha": "d6ca9eec4b2d52568022516405853444bde201f1",
             "installed_by": ["modules"]
           },
           "kraken2/kraken2": {
