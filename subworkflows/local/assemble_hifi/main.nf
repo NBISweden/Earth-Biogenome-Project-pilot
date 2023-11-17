@@ -7,9 +7,15 @@ workflow ASSEMBLE_HIFI {
     hifi_reads
 
     main:
-        // Need to include a build ID here. 
+        // Add build ID.
+        reads_ch = hifi_reads
+            .flatMap { meta, reads -> params.hifiasm ? params.hifiasm.collect { [ meta, reads ] } : [ [ meta, reads ] ] }
+            .map { meta, reads -> 
+                def uuid = UUID.randomUUID().toString() // TODO:: Check. Does this break reentrancy?
+                [ meta + [ assembly: [ assembler: 'hifiasm', stage: 'raw', id: uuid, build: "hifiasm-raw-$uuid" ] ], reads ] 
+            }
         HIFIASM(
-            hifi_reads.flatMap { meta, reads -> params.hifiasm ? params.hifiasm.collect { [ meta, reads ] } : [ [ meta, reads ] ] },
+            hifi_reads,
             [], // paternal k-mers
             [], // maternal k-mers
             [], // Hi-C r1
@@ -36,23 +42,21 @@ workflow ASSEMBLE_HIFI {
         assemblies_ch = GFATOOLS_GFA2FA.out.fasta.groupTuple( sort: { it.name } )
             .join( gfa_ch )
             .map { meta, fasta, gfa -> 
-                [ meta, 
+                [ meta, meta.assembly + (
                     params.use_phased ? 
                     [ 
-                        id: 'hifiasm_phased', 
                         pri_fasta: fasta[0],
                         alt_fasta: fasta[1],
                         pri_gfa: gfa[0],
                         alt_gfa: gfa[1]
                     ] :
                     [
-                        id: 'hifiasm_consensus', 
                         pri_fasta: fasta[0],
                         alt_fasta: null,
                         pri_gfa: gfa,
                         alt_gfa: null
                     ]
-                ]
+                ) ]
             }
             .dump( tag: "Assemblies: Pre-purge", pretty: true )
 

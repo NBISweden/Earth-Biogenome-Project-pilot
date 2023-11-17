@@ -21,10 +21,43 @@ include { EVALUATE_ASSEMBLY  } from "$projectDir/subworkflows/local/evaluate_ass
 include { ALIGN_RNASEQ       } from "$projectDir/subworkflows/local/align_rnaseq/main"
 
 /*
-Class definitions
-Sample = [ id: id, kmer_size:2, ploidy:2, busco_lineage: auto ]
-Reads = [ Sample, [{r1,r2}/{bam}] ]
-Assembly = [ Sample, [id:id, pri_fasta:fasta, alt_fasta:fasta, pri_gfa:gfa, alt_gfa:gfa ] ]
+## Meta map key structures
+id = {sample.name/ /_}
+single_end = {*_reads.single_end}
+sample = [ 
+    name: <species name>,
+    genome_size: <GOAT>, 
+    ploidy: <GOAT>, 
+    chromosome_number: <GOAT>, 
+    busco_lineages: <GOAT> 
+]
+hifi_reads = [
+    single_end: true,
+    kmer_cov: <GENESCOPEFK>
+]
+hic_reads = [
+    single_end: false,
+    kmer_cov: <GENESCOPEFK>
+]
+rnaseq_reads = [
+    single_end: false
+]
+isoseq_reads = [
+    single_end: false
+]
+*/
+/*
+## Assembly record structure - Also merged to meta
+assembly = [
+    assembler: {hifiasm},
+    stage: {raw,decontaminated,deduplicated,polished,scaffolded,curated},
+    id: UUID
+    build: assembly.assembler-assembly.stage-assembly.id
+    pri_fasta: <ASSEMBLER>,
+    alt_fasta: null/<ASSEMBLER>,
+    pri_gfa: <ASSEMBLER>,
+    alt_gfa: null/<ASSEMBLER>
+]
 */
 
 workflow {
