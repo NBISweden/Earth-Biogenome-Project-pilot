@@ -122,7 +122,8 @@ workflow {
     if ( 'assemble' in workflow_steps ) {
         // Run assemblers
         ASSEMBLE_HIFI( PREPARE_INPUT.out.hifi )
-        ch_assemblies = ch_assemblies.mix( ASSEMBLE_HIFI.out.assemblies )
+        ch_assemblies = ch_assemblies.filter { meta, assembly -> meta.assembly.stage in ['raw'] }
+            .mix( ASSEMBLE_HIFI.out.assemblies )
 
         // Find mitochondria
         // Need to check options to mitohifi modules.

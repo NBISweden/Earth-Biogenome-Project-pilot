@@ -10,12 +10,16 @@ include { GOAT_TAXONSEARCH } from "$projectDir/modules/nf-core/goat/taxonsearch/
 sample:
   name: Species name
 assembly:
-  - id: assemblerX_build1
+  - assembler: hifiasm
+    stage: raw
+    id: uuid
     pri_fasta: /path/to/primary_asm.fasta
     alt_fasta: /path/to/alternate_asm.fasta
     pri_gfa: /path/to/primary_asm.gfa
     alt_gfa: /path/to/alternate_asm.gfa
-  - id: assemblerY_build1
+  - assembler: ipa
+    stage: raw
+    id: uuid
     pri_fasta: /path/to/primary_asm.fasta
     alt_fasta: /path/to/alternate_asm.fasta
 hic:
@@ -36,14 +40,18 @@ leads to the following YAML data structure
     ],
     assembly:[
         [
-            id:assemblerX_build1,
+            assembler: hifiasm,
+            stage: raw,
+            id: uuid,
             pri_fasta: /path/to/primary_asm.fasta,
             alt_fasta: /path/to/alternate_asm.fasta,
             pri_gfa  : /path/to/primary_asm.gfa,
             alt_gfa  : /path/to/alternate_asm.gfa
         ],
         [
-            id:assemblerY_build1,
+            assembler: ipa,
+            stage: raw,
+            id: uuid,
             pri_fasta: /path/to/primary_asm.fasta,
             alt_fasta: /path/to/alternate_asm.fasta
         ]
@@ -89,6 +97,11 @@ Output meta map structure:
         busco: [
             lineages: auto     // GOAT
         ]
+    ]
+    assembly: [
+        assembler: "hifiasm",
+        stage: "raw",
+        id: uuid
     ]
 ]
 ```
@@ -136,18 +149,19 @@ workflow PREPARE_INPUT {
     // Convert assembly filename to files for correct staging
     input.assembly_ch
         .filter { !it.isEmpty() }
-        .transpose()     // Data is [ sample, [ id:'assemblerX_build1', pri_fasta: '/path/to/primary_asm.fasta', alt_fasta: '/path/to/alternate_asm.fasta', pri_gfa: '/path/to/primary_asm.gfa', alt_gfa: '/path/to/alternate_asm.gfa' ]]
-        .map { sample, assembly -> 
-            [
-                sample,
-                [
-                    id: assembly.id,
-                    pri_fasta: file( assembly.pri_fasta, checkIfExists: true ),
-                    alt_fasta: ( assembly.alt_fasta ? file( assembly.alt_fasta, checkIfExists: true ) : null ),
-                    pri_gfa  : ( assembly.pri_gfa ? file( assembly.pri_gfa, checkIfExists: true ) : null ),
-                    alt_gfa  : ( assembly.alt_gfa ? file( assembly.alt_gfa, checkIfExists: true ) : null )
-                ]
+        .transpose()     // Data is now [ sample, [ id:'assemblerX_build1', pri_fasta: '/path/to/primary_asm.fasta', alt_fasta: '/path/to/alternate_asm.fasta', pri_gfa: '/path/to/primary_asm.gfa', alt_gfa: '/path/to/alternate_asm.gfa' ]]
+        .map { meta, assembly ->
+            def asm = [
+                assembler: assembly.assembler,
+                stage: assembly.stage,
+                id: assembly.id,
+                build: "$assembly.assembler-$assembly.stage-$assembly.id",
+                pri_fasta: file( assembly.pri_fasta, checkIfExists: true ),
+                alt_fasta: ( assembly.alt_fasta ? file( assembly.alt_fasta, checkIfExists: true ) : null ),
+                pri_gfa  : ( assembly.pri_gfa ? file( assembly.pri_gfa, checkIfExists: true ) : null ),
+                alt_gfa  : ( assembly.alt_gfa ? file( assembly.alt_gfa, checkIfExists: true ) : null )
             ]
+            [ meta + [ assembly: asm.subMap(['assembler','stage','id','build']) ], asm ]
         }
         .set { assembly_ch }
 
