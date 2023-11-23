@@ -128,7 +128,10 @@ workflow {
 
     // Contamination screen
     if ( 'screen' in workflow_steps ) {
-        ch_fcs_database = Channel.fromPath( params.fcs_database, checkIfExists: true ).collect()
+        // Change: If database, use database, otherwise download using manifest
+        // New module needed: python3 fcs.py db get --mft "$SOURCE_DB_MANIFEST" --dir "$LOCAL_DB/gxdb"
+        // Use storeDir too
+        ch_fcs_database = Channel.fromPath( params.fcs.database, checkIfExists: true ).collect()
         // Do we need a separate stage here?
         ch_to_screen = ch_assemblies.filter { meta, assembly -> meta.assembly.stage in ['raw'] }
             .flatMap { meta, assembly ->
