@@ -21,44 +21,9 @@ include { EVALUATE_ASSEMBLY  } from "$projectDir/subworkflows/local/evaluate_ass
 include { ALIGN_RNASEQ       } from "$projectDir/subworkflows/local/align_rnaseq/main"
 
 /*
-## Meta map key structures
-id = {sample.name/ /_}
-single_end = {*_reads.single_end}
-sample = [ 
-    name: <species name>,
-    genome_size: <GOAT>, 
-    ploidy: <GOAT>, 
-    chromosome_number: <GOAT>, 
-    busco_lineages: <GOAT> 
-]
-hifi_reads = [
-    single_end: true,
-    kmer_cov: <GENESCOPEFK>
-]
-hic_reads = [
-    single_end: false,
-    kmer_cov: <GENESCOPEFK>
-]
-rnaseq_reads = [
-    single_end: false
-]
-isoseq_reads = [
-    single_end: false
-]
-*/
-/*
-## Assembly record structure - Also merged to meta
-assembly = [
-    assembler: {hifiasm},
-    stage: {raw,decontaminated,deduplicated,polished,scaffolded,curated},
-    id: UUID
-    build: assembly.assembler-assembly.stage-assembly.id
-    pri_fasta: <ASSEMBLER>,
-    alt_fasta: null/<ASSEMBLER>,
-    pri_gfa: <ASSEMBLER>,
-    alt_gfa: null/<ASSEMBLER>
-]
-*/
+ * Development: See docs/development to understand the workflow programming model and
+ * how channel contents are structured.
+ */
 
 workflow {
 
@@ -94,18 +59,18 @@ workflow {
     BUILD_HIFI_DATABASES ( PREPARE_INPUT.out.hifi )
     BUILD_HIC_DATABASES ( PREPARE_INPUT.out.hic )
     // }
-    
+
     // Data inspection
     if ( 'inspect' in workflow_steps ) {
         // QC Steps
-        GENOME_PROPERTIES ( 
+        GENOME_PROPERTIES (
             BUILD_HIFI_DATABASES.out.fastk_histogram.join( BUILD_HIFI_DATABASES.out.fastk_ktab )
         )
         COMPARE_LIBRARIES (
             BUILD_HIFI_DATABASES.out.fastk_histogram.join( BUILD_HIFI_DATABASES.out.fastk_ktab ).join(
             BUILD_HIC_DATABASES.out.fastk_histogram.join( BUILD_HIC_DATABASES.out.fastk_ktab ) )
         )
-        SCREEN_READS ( 
+        SCREEN_READS (
             PREPARE_INPUT.out.hifi,
             // TODO:: Allow custom database ala nf-core/genomeassembler.
             file( params.mash.screen_db, checkIfExists: true )
@@ -116,7 +81,7 @@ workflow {
     if ( 'preprocess' in workflow_steps ) {
         // Adapter filtering etc
     }
-    
+
     ch_assemblies = PREPARE_INPUT.out.assemblies
     // Assemble
     if ( 'assemble' in workflow_steps ) {
@@ -134,7 +99,7 @@ workflow {
             .multiMap { meta, assembly, mitofa, mitogb ->
                 input: [ meta, assembly.pri_fasta ]
                 reference: mitofa
-                genbank: mitogb 
+                genbank: mitogb
             }
         MITOHIFI_MITOHIFI(
             mitohifi_ch.input,
@@ -196,7 +161,7 @@ workflow {
 
     // Align RNAseq
     if( 'alignRNA' in workflow_steps ) {
-        ALIGN_RNASEQ ( 
+        ALIGN_RNASEQ (
             PREPARE_INPUT.out.rnaseq,
             PREPARE_INPUT.out.assemblies
                 .map { meta, assembly -> [ meta, assembly.pri_fasta ] }
