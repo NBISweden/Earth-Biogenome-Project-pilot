@@ -27,13 +27,13 @@
           },
           "fcs/fcsadaptor": {
             "branch": "master",
-            "git_sha": "5a35af8b60d45425c4b9193e567d16b614d93dbe",
-            "installed_by": ["fasta_clean_fcs"]
+            "git_sha": "3f5420aa22e00bd030a2556dfdffc9e164ec0ec5",
+            "installed_by": ["modules"]
           },
           "fcs/fcsgx": {
             "branch": "master",
-            "git_sha": "8c4542e5d421c4690cf1fa6ec729e9304763fdaf",
-            "installed_by": ["fasta_clean_fcs"]
+            "git_sha": "3f5420aa22e00bd030a2556dfdffc9e164ec0ec5",
+            "installed_by": ["modules"]
           },
           "genescopefk": {
             "branch": "master",
@@ -164,15 +164,6 @@
             "branch": "master",
             "git_sha": "9e51255c4f8ec69fb6ccf68593392835f14fecb8",
             "installed_by": ["modules"]
-          }
-        }
-      },
-      "subworkflows": {
-        "nf-core": {
-          "fasta_clean_fcs": {
-            "branch": "master",
-            "git_sha": "dedc0e31087f3306101c38835d051bf49789445a",
-            "installed_by": ["subworkflows"]
           }
         }
       }
