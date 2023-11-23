@@ -11,6 +11,8 @@ include { SCREEN_READS      } from "$projectDir/subworkflows/local/screen_read_c
 
 include { ASSEMBLE_HIFI } from "$projectDir/subworkflows/local/assemble_hifi/main"
 
+include { FCS_FCSGX } from "$projectDir/modules/nf-core/fcs/fcsgx"
+
 include { PURGE_DUPLICATES } from "$projectDir/subworkflows/local/purge_dups/main"
 
 include { MITOHIFI_FINDMITOREFERENCE } from "$projectDir/modules/nf-core/mitohifi/findmitoreference/main"
@@ -126,9 +128,13 @@ workflow {
 
     // Contamination screen
     if ( 'screen' in workflow_steps ) {
-        // Kraken2
-        // Blobtoolkit
-        // FCS-Genome
+        ch_fcs_database = Channel.fromPath( params.fcs_database, checkIfExists: true ).collect()
+        // Do we need a separate stage here?
+        ch_to_screen = ch_assemblies.filter { meta, assembly -> meta.assembly.stage in ['raw'] }
+            .flatMap { meta, assembly ->
+                assembly.alt_fasta ? [ [ meta, assembly.pri_fasta ], [ meta, assembly.alt_fasta ] ] : [ [ meta, assembly.pri_fasta ] ]
+            }
+        FCS_FCSGX( ch_to_screen, ch_fcs_database )
     }
 
     // Purge duplicates
