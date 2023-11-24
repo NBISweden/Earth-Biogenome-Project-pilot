@@ -11,7 +11,8 @@ include { SCREEN_READS      } from "$projectDir/subworkflows/local/screen_read_c
 
 include { ASSEMBLE_HIFI } from "$projectDir/subworkflows/local/assemble_hifi/main"
 
-include { FCS_FCSGX } from "$projectDir/modules/nf-core/fcs/fcsgx"
+include { FCSGX_FETCHDB } from "$projectDir/modules/local/fcs/fetchdb"
+include { FCS_FCSGX     } from "$projectDir/modules/nf-core/fcs/fcsgx/main"
 
 include { PURGE_DUPLICATES } from "$projectDir/subworkflows/local/purge_dups/main"
 
@@ -131,13 +132,14 @@ workflow {
         // Change: If database, use database, otherwise download using manifest
         // New module needed: python3 fcs.py db get --mft "$SOURCE_DB_MANIFEST" --dir "$LOCAL_DB/gxdb"
         // Use storeDir too
-        ch_fcs_database = Channel.fromPath( params.fcs.database, checkIfExists: true ).collect()
+        FCSGX_FETCHDB ( params.fcs.database ? Channel.empty() : Channel.fromPath( params.fcs.manifest, checkIfExists: true ) )
+        ch_fcs_database = params.fcs.database ? Channel.fromPath( params.fcs.database, checkIfExists: true, type: 'dir' ) : FCSGX_FETCHDB.out.database
         // Do we need a separate stage here?
         ch_to_screen = ch_assemblies.filter { meta, assembly -> meta.assembly.stage in ['raw'] }
             .flatMap { meta, assembly ->
                 assembly.alt_fasta ? [ [ meta, assembly.pri_fasta ], [ meta, assembly.alt_fasta ] ] : [ [ meta, assembly.pri_fasta ] ]
             }
-        FCS_FCSGX( ch_to_screen, ch_fcs_database )
+        FCS_FCSGX( ch_to_screen, ch_fcs_database.collect() )
     }
 
     // Purge duplicates
