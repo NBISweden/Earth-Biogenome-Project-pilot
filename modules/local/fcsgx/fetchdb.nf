@@ -10,8 +10,8 @@ process FCSGX_FETCHDB {
     path manifest
 
     output:
-    path "*.bam", emit: bam
-    path "versions.yml"           , emit: versions
+    path "$prefix"      , emit: database
+    path "versions.yml" , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
