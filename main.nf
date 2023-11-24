@@ -129,9 +129,6 @@ workflow {
 
     // Contamination screen
     if ( 'screen' in workflow_steps ) {
-        // Change: If database, use database, otherwise download using manifest
-        // New module needed: python3 fcs.py db get --mft "$SOURCE_DB_MANIFEST" --dir "$LOCAL_DB/gxdb"
-        // Use storeDir too
         FCSGX_FETCHDB ( params.fcs.database ? Channel.empty() : Channel.fromPath( params.fcs.manifest, checkIfExists: true ) )
         ch_fcs_database = params.fcs.database ? Channel.fromPath( params.fcs.database, checkIfExists: true, type: 'dir' ) : FCSGX_FETCHDB.out.database
         // Do we need a separate stage here?
