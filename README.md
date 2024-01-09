@@ -62,12 +62,22 @@ nextflow run -params-file <params.yml> \
 
 where:
 - `params.yml` is a YAML formatted file containing workflow parameters
-    such as input paths to the data.
+    such as input paths to the assembly specification, and settings for tools within the workflow.
 
     Example:
 
     ```yml
     input: 'assembly_spec.yml'
+    outdir: results
+    fastk: # Optional
+      kmer_size: 31 # default 31
+    genescopefk: # Optional
+      kmer_size: 31 # default 31
+    hifiasm: # Optional, default = no extra options
+      - "--opts A"
+      - "--opts B"
+    busco: # Optional, default: retrieved from GOAT
+      lineages: 'auto' # comma separated string of lineages or auto.
     ```
 
     Alternatively parameters can be provided on the
@@ -85,7 +95,7 @@ where:
             memory   = 20.G  // Overrides memory settings defined in nextflow.config to 20 GB.
             // ext.args supplies command-line options to the process tool
             // overrides settings found in configs/modules.config
-            ext.args = '--long'  // Supplies these as command-line options to Busco  
+            ext.args = '--long'  // Supplies these as command-line options to Busco
         }
     }
     ```
@@ -101,18 +111,28 @@ where:
 Mandatory:
 
 - `input`: A YAML formatted input file.
-    Example `assembly_spec.yml` (See also [test profile input](assets/test_hsapiens.yml)):
+    Example `assembly_spec.yml` (See also [test profile input](assets/test_hsapiens.yml) TODO:: Update test profile):
 
     ```yml
     sample:                          # Required: Meta data
       name: 'Laetiporus sulphureus'  # Required: Species name. Correct spelling is important to look up species information.
+      ploidy: 2                      # Optional: Estimated ploidy (default: retrieved from GOAT)
+      genome_size: 2345              # Optional: Estimated genome size (default: retrieved from GOAT)
+      chr_count: 13                  # Optional: Estimated chromosome count (default: retrieved from GOAT)
     assembly:                        # Optional: List of assemblies to curate and validate.
-      - id: 'LS_phased_diploid'      # Each assembly has it's own ID. Assemblies can be primary and alternate or primary only
-        pri_fasta: '/path/to/genome/primary.fasta'
-        alt_fasta: '/path/to/genome/alternate.fasta'
-      - id: 'LS_consensus'
-        pri_fasta: 'path/to/genome/consensus.fasta'
-    hic:                             # Optional: List of hi-c reads to QC and use for scaffolding 
+      - assembler: hifiasm           # For each entry, the assembler,
+        stage: raw                   # stage of assembly,
+        id: uuid                     # unique id,
+        pri_fasta: /path/to/primary_asm.fasta # and paths to sequences are required.
+        alt_fasta: /path/to/alternate_asm.fasta
+        pri_gfa: /path/to/primary_asm.gfa
+        alt_gfa: /path/to/alternate_asm.gfa
+      - assembler: ipa
+        stage: raw
+        id: uuid
+        pri_fasta: /path/to/primary_asm.fasta
+        alt_fasta: /path/to/alternate_asm.fasta
+    hic:                             # Optional: List of hi-c reads to QC and use for scaffolding
       - read1: '/path/to/raw/data/hic/LS_HIC_R001_1.fastq.gz'
         read2: '/path/to/raw/data/hic/LS_HIC_R001_2.fastq.gz'
     hifi:                            # Required: List of hifi-reads to QC and use for assembly/validation
