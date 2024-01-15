@@ -9,10 +9,25 @@ workflow ASSEMBLE_HIFI {
     main:
         // Add build ID.
         reads_ch = hifi_reads
-            .flatMap { meta, reads -> params.hifiasm ? params.hifiasm.collect { [ meta, reads ] } : [ [ meta, reads ] ] }
-            .map { meta, reads -> 
-                def uuid = UUID.randomUUID().toString() // TODO:: Check. Does this break reentrancy?
-                [ meta + [ assembly: [ assembler: 'hifiasm', stage: 'raw', id: uuid, build: "hifiasm-raw-$uuid" ] ], reads ] 
+            .flatMap { meta, reads ->
+                if (params.hifiasm) {
+                    params.hifiasm.collect { key, value -> [ meta.merge(
+                        [
+                            settings: [ hifiasm: [ id: key, args: value ] ],
+                            assembly: [ assembler: 'hifiasm', stage: 'raw', id: key, build: "hifiasm-raw-$key" ]
+                        ]
+                        ), reads ]
+                    }
+                } else {
+                    def key = "default"
+                    [ [ meta.merge(
+                        [
+                            settings: [ hifiasm: [ id: key, args: "" ] ],
+                            assembly: [ assembler: 'hifiasm', stage: 'raw', id: key, build: "hifiasm-raw-$key" ]
+                        ]
+                        ), reads ]
+                    ]
+                }
             }
         HIFIASM(
             reads_ch,
@@ -34,17 +49,17 @@ workflow ASSEMBLE_HIFI {
         )
         GFATOOLS_GFA2FA( raw_assembly_ch )
 
-        gfa_ch = params.use_phased ? 
+        gfa_ch = params.use_phased ?
             HIFIASM.out.paternal_contigs
                 .join( HIFIASM.out.maternal_contigs )
-                .map { meta, pgfa, mgfa -> [ meta, [ pgfa, mgfa ] ] } : 
+                .map { meta, pgfa, mgfa -> [ meta, [ pgfa, mgfa ] ] } :
             HIFIASM.out.processed_contigs
         assemblies_ch = GFATOOLS_GFA2FA.out.fasta.groupTuple( sort: { it.name } )
             .join( gfa_ch )
-            .map { meta, fasta, gfa -> 
+            .map { meta, fasta, gfa ->
                 [ meta, meta.assembly + (
-                    params.use_phased ? 
-                    [ 
+                    params.use_phased ?
+                    [
                         pri_fasta: fasta[0],
                         alt_fasta: fasta[1],
                         pri_gfa: gfa[0],
