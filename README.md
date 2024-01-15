@@ -73,9 +73,9 @@ where:
       kmer_size: 31 # default 31
     genescopefk: # Optional
       kmer_size: 31 # default 31
-    hifiasm: # Optional, default = no extra options
-      - "--opts A"
-      - "--opts B"
+    hifiasm: # Optional, default = no extra options: Key (e.g. 'opts01') is used in assembly build name (e.g., 'hifiasm-raw-opts01').
+      opts01: "--opts A"
+      opts02: "--opts B"
     busco: # Optional, default: retrieved from GOAT
       lineages: 'auto' # comma separated string of lineages or auto.
     ```
