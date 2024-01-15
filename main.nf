@@ -194,3 +194,10 @@ workflow.onComplete {
         """)
     }
 }
+
+// Custom method for Map class called merge
+// returns a new Map with entries merged.
+Map.metaClass.merge = { Map rhs ->
+    def lhs = delegate
+    lhs.collectEntries { k, v -> rhs[k] instanceof Map ? [ (k): v.merge( rhs[k] ) ] : [ (k): v ] } + rhs.subMap(rhs.keySet()-lhs.keySet())
+}
