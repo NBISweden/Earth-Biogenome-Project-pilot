@@ -144,9 +144,9 @@ workflow {
         ch_topurge = PREPARE_INPUT.out.hifi.combine( ch_assemblies.filter { meta, assembly -> meta.assembly.stage in ['raw','decontaminated'] } , by:0 )
         if ( 'inspect' in workflow_steps ) {
             // Add kmer coverage from GenomeScope model
-            ch_topurge.map { meta, reads, assemblies -> [ meta.findAll { ! (it.key in [ 'single_end' ]) }, reads, assemblies ] }
-                .combine( GENOME_PROPERTIES.out.kmer_cov, by: 0 )
-                .map { meta, reads, assemblies, kmer_cov -> [ meta + [ kmercov: kmer_cov ], reads, assemblies ] }
+            ch_topurge.map { meta, reads, assemblies -> [ meta.subMap(['id','sample']), meta, reads, assemblies ] }
+                .combine( GENOME_PROPERTIES.out.kmer_cov.map{ meta, cov -> [ meta.subMap(['id','sample']), cov ] } , by: 0 )
+                .map { key, meta, reads, assemblies, kmer_cov -> [ meta + [ kmercov: kmer_cov ], reads, assemblies ] }
                 .set { ch_topurge }
         }
         PURGE_DUPLICATES ( ch_topurge.dump( tag: 'Purge duplicates: input' ) )
