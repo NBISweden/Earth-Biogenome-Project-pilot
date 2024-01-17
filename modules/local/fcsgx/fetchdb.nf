@@ -27,7 +27,7 @@ process FCSGX_FETCHDB {
     sync_files \\
         get \\
         --mft "$manifest" \\
-        --dir "./$prefix"
+        --dir "$prefix"
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
