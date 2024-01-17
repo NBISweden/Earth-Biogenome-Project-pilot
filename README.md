@@ -46,7 +46,7 @@ flowchart TD
     fastk_hifi --> hifiasm[[ HiFiasm ]]
     hifiasm --> assembly
     assembly --> purgedups[[ Purgedups ]]
-    assembly --> mitoref[[ Mitohifi - Find reference ]]
+    input --> mitoref[[ Mitohifi - Find reference ]]
     assembly --> mitohifi[[ Mitohifi ]]
     assembly --> fcsgx[[ FCS GX ]]
     fcs_fetchdb[( FCS fetchdb )] --> fcsgx
