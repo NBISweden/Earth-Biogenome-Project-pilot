@@ -136,19 +136,29 @@ workflow {
             .flatMap { meta, assembly ->
                 assembly.alt_fasta ? [ [ meta, assembly.pri_fasta ], [ meta, assembly.alt_fasta ] ] : [ [ meta, assembly.pri_fasta ] ]
             }
+        // TODO update meta assembly stage to decontaminated.
         FCS_FCSGX( ch_to_screen, ch_fcs_database.collect() )
     }
 
     // Purge duplicates
     if ( 'purge' in workflow_steps ) {
-        ch_topurge = PREPARE_INPUT.out.hifi.combine( ch_assemblies.filter { meta, assembly -> meta.assembly.stage in ['raw','decontaminated'] } , by:0 )
+        ch_topurge = ch_assemblies.filter { meta, assembly -> meta.assembly.stage in ['raw','decontaminated'] }
+            .map { meta, assembly -> [ meta.subMap(['id','sample']), meta, assembly ] }
+            .combine (
+                PREPARE_INPUT.out.hifi
+                    .map { meta, reads -> [ meta.subMap(['id','sample']), reads ] },
+                by: 0
+            )
         if ( 'inspect' in workflow_steps ) {
             // Add kmer coverage from GenomeScope model
-            ch_topurge.map { meta, reads, assemblies -> [ meta.subMap(['id','sample']), meta, reads, assemblies ] }
-                .combine( GENOME_PROPERTIES.out.kmer_cov.map{ meta, cov -> [ meta.subMap(['id','sample']), cov ] } , by: 0 )
-                .map { key, meta, reads, assemblies, kmer_cov -> [ meta + [ kmercov: kmer_cov ], reads, assemblies ] }
+            ch_topurge.combine( GENOME_PROPERTIES.out.kmer_cov.map{ meta, cov -> [ meta.subMap(['id','sample']), cov ] } , by: 0 )
+                .map { key, meta, assemblies, reads, kmer_cov -> [ meta + [ kmercov: kmer_cov ], reads, assemblies ] }
+                .set { ch_topurge }
+        } else {
+            ch_topurge.map { key, meta, assemblies, reads -> [ meta, reads, assemblies ] }
                 .set { ch_topurge }
         }
+        // TODO update meta assembly stage to purged
         PURGE_DUPLICATES ( ch_topurge.dump( tag: 'Purge duplicates: input' ) )
     }
 
