@@ -26,7 +26,7 @@ process FCSGX_FETCHDB {
     """
     sync_files \\
         get \\
-        --mft "$manifest" \\
+        --mft "${manifest.toUriString()}" \\
         --dir "$prefix"
 
     cat <<-END_VERSIONS > versions.yml
