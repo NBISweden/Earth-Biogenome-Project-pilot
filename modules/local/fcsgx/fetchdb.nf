@@ -7,7 +7,7 @@ process FCSGX_FETCHDB {
         'docker.io/ncbi/fcs-gx:0.4.0' }"
 
     input:
-    path manifest
+    val manifest // URL of manifest. Cannot stage locally.
 
     output:
     path "$prefix"      , emit: database
