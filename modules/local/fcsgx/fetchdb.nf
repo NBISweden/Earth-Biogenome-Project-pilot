@@ -1,5 +1,5 @@
 process FCSGX_FETCHDB {
-    tag "$manifest"
+    tag "$manifest.name"
     label 'process_single'
 
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
