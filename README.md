@@ -48,6 +48,8 @@ flowchart TD
     assembly --> purgedups[[ Purgedups ]]
     assembly --> mitoref[[ Mitohifi - Find reference ]]
     assembly --> mitohifi[[ Mitohifi ]]
+    assembly --> fcsgx[[ FCS GX ]]
+    fcs_fetchdb[( FCS fetchdb )] --> fcsgx
     mitoref --> mitohifi
 ```
 
