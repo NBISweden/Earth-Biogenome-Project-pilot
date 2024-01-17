@@ -11,7 +11,7 @@ include { SCREEN_READS      } from "$projectDir/subworkflows/local/screen_read_c
 
 include { ASSEMBLE_HIFI } from "$projectDir/subworkflows/local/assemble_hifi/main"
 
-include { FCSGX_FETCHDB } from "$projectDir/modules/local/fcs/fetchdb"
+include { FCSGX_FETCHDB } from "$projectDir/modules/local/fcsgx/fetchdb"
 include { FCS_FCSGX     } from "$projectDir/modules/nf-core/fcs/fcsgx/main"
 
 include { PURGE_DUPLICATES } from "$projectDir/subworkflows/local/purge_dups/main"
