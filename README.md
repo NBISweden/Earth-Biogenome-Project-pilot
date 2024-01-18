@@ -178,8 +178,8 @@ fastk:
 genescopefk:
   kmer_size: 31
 hifiasm:
-  - "--opts A"
-  - "--opts B"
+  opts01: "--opts A"
+  opts02: "--opts B"
 busco:
   lineages: 'auto'
 ```
