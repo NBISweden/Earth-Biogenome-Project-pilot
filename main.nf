@@ -1,7 +1,7 @@
 #! /usr/bin/env nextflow
 
 // Include Map.deepMerge() function
-evaluate(new File("lib/MapExtended.groovy"))
+evaluate(new File("$projectDir/lib/MapExtended.groovy"))
 
 include { PREPARE_INPUT } from "$projectDir/subworkflows/local/prepare_input/main"
 
