@@ -11,7 +11,7 @@ workflow ASSEMBLE_HIFI {
         reads_ch = hifi_reads
             .flatMap { meta, reads ->
                 if (params.hifiasm) {
-                    params.hifiasm.collect { key, value -> [ meta.merge(
+                    params.hifiasm.collect { key, value -> [ meta.deepMerge(
                         [
                             settings: [ hifiasm: [ id: key, args: value ] ],
                             assembly: [ assembler: 'hifiasm', stage: 'raw', id: key, build: "hifiasm-raw-$key" ]
@@ -20,7 +20,7 @@ workflow ASSEMBLE_HIFI {
                     }
                 } else {
                     def key = "default"
-                    [ [ meta.merge(
+                    [ [ meta.deepMerge(
                         [
                             settings: [ hifiasm: [ id: key, args: "" ] ],
                             assembly: [ assembler: 'hifiasm', stage: 'raw', id: key, build: "hifiasm-raw-$key" ]
