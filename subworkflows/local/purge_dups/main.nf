@@ -25,10 +25,10 @@ workflow PURGE_DUPLICATES {
     // Need to move this outside the workflow to submit to nf-core.
     reads_plus_assembly_ch
         // Add single_end for minimap module
-        .flatMap { meta, reads, assembly -> reads instanceof List ? 
-            reads.collect{ [ meta + [ single_end: true ], it, assembly.pri_fasta ] } 
+        .flatMap { meta, reads, assembly -> reads instanceof List ?
+            reads.collect{ [ meta + [ single_end: true ], it, assembly.pri_fasta ] }
             : [ [ meta + [ single_end: true ], reads, assembly.pri_fasta ] ] }
-        .multiMap { meta, reads, assembly -> 
+        .multiMap { meta, reads, assembly ->
             reads_ch: [ meta, reads ]
             assembly_ch: assembly
         }
@@ -61,12 +61,12 @@ workflow PURGE_DUPLICATES {
         PURGEDUPS_PBCSTAT.out.basecov
             .join( PURGEDUPS_CALCUTS.out.cutoff )
             // .map { meta, cov, cutoff -> [ meta.findAll { !(it.key in [ 'single_end' ]) }, cov, cutoff ] }
-            .map { meta, cov, cutoff -> [ meta.subMap( meta.keys() - ['single_end'] ), cov, cutoff ] }
+            .map { meta, cov, cutoff -> [ meta.subMap( meta.keySet() - ['single_end'] ), cov, cutoff ] }
             .join( MINIMAP2_ALIGN_ASSEMBLY_PRIMARY.out.paf )
-    ) 
-    PURGEDUPS_GETSEQS_PRIMARY( 
+    )
+    PURGEDUPS_GETSEQS_PRIMARY(
         PURGEDUPS_SPLITFA_PRIMARY.out.merged_fasta
-            .join( PURGEDUPS_PURGEDUPS_PRIMARY.out.bed ) 
+            .join( PURGEDUPS_PURGEDUPS_PRIMARY.out.bed )
     )
 
     // Purge alternate contigs.
@@ -89,12 +89,12 @@ workflow PURGE_DUPLICATES {
         PURGEDUPS_PBCSTAT.out.basecov
             .join( PURGEDUPS_CALCUTS.out.cutoff )
             // .map { meta, cov, cutoff -> [ meta.findAll { !(it.key in [ 'single_end' ]) }, cov, cutoff ] }
-            .map { meta, cov, cutoff -> [ meta.subMap( meta.keys() - ['single_end'] ), cov, cutoff ] }
+            .map { meta, cov, cutoff -> [ meta.subMap( meta.keySet() - ['single_end'] ), cov, cutoff ] }
             .join( MINIMAP2_ALIGN_ASSEMBLY_ALTERNATE.out.paf )
-    ) 
+    )
     PURGEDUPS_GETSEQS_ALTERNATE(
         PURGEDUPS_SPLITFA_ALTERNATE.out.merged_fasta
-            .join( PURGEDUPS_PURGEDUPS_ALTERNATE.out.bed ) 
+            .join( PURGEDUPS_PURGEDUPS_ALTERNATE.out.bed )
     )
 
     emit:
