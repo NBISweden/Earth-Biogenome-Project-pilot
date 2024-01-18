@@ -1,5 +1,8 @@
 #! /usr/bin/env nextflow
 
+// Include Map.deepMerge() function
+evaluate(new File("lib/MapExtended.groovy"))
+
 include { PREPARE_INPUT } from "$projectDir/subworkflows/local/prepare_input/main"
 
 include { BUILD_DATABASES as BUILD_HIFI_DATABASES } from "$projectDir/subworkflows/local/build_databases/main"
@@ -203,11 +206,4 @@ workflow.onComplete {
         where we will do our best to help.
         """)
     }
-}
-
-// Custom method for Map class called merge
-// returns a new Map with entries merged.
-Map.metaClass.merge = { Map rhs ->
-    def lhs = delegate
-    lhs.collectEntries { k, v -> rhs[k] instanceof Map ? [ (k): v.merge( rhs[k] ) ] : [ (k): v ] } + rhs.subMap(rhs.keySet()-lhs.keySet())
 }
