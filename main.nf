@@ -132,15 +132,15 @@ workflow {
 
     // Contamination screen
     if ( 'screen' in workflow_steps ) {
-        FCSGX_FETCHDB ( params.fcs.database ? Channel.empty() : Channel.fromPath( params.fcs.manifest, checkIfExists: true ) )
-        ch_fcs_database = params.fcs.database ? Channel.fromPath( params.fcs.database, checkIfExists: true, type: 'dir' ) : FCSGX_FETCHDB.out.database
-        // Do we need a separate stage here?
-        ch_to_screen = ch_assemblies.filter { meta, assembly -> meta.assembly.stage in ['raw'] }
-            .flatMap { meta, assembly ->
-                assembly.alt_fasta ? [ [ meta, assembly.pri_fasta ], [ meta, assembly.alt_fasta ] ] : [ [ meta, assembly.pri_fasta ] ]
-            }
-        // TODO update meta assembly stage to decontaminated.
-        FCS_FCSGX( ch_to_screen, ch_fcs_database.collect() )
+        // FCSGX_FETCHDB ( params.fcs.database ? Channel.empty() : Channel.fromPath( params.fcs.manifest, checkIfExists: true ) )
+        // ch_fcs_database = params.fcs.database ? Channel.fromPath( params.fcs.database, checkIfExists: true, type: 'dir' ) : FCSGX_FETCHDB.out.database
+        // // Do we need a separate stage here?
+        // ch_to_screen = ch_assemblies.filter { meta, assembly -> meta.assembly.stage in ['raw'] }
+        //     .flatMap { meta, assembly ->
+        //         assembly.alt_fasta ? [ [ meta, assembly.pri_fasta ], [ meta, assembly.alt_fasta ] ] : [ [ meta, assembly.pri_fasta ] ]
+        //     }
+        // // TODO update meta assembly stage to decontaminated.
+        // FCS_FCSGX( ch_to_screen, ch_fcs_database.collect() )
     }
 
     // Purge duplicates
