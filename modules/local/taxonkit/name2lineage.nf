@@ -35,7 +35,7 @@ process TAXONKIT_NAME2LINEAGE {
         $args2 \\
         --data-dir $taxdb
         --threads $task.cpus \\
-        --out-file $prefix.tsv
+        --out-file ${prefix}.tsv
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
