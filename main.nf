@@ -58,7 +58,10 @@ workflow {
     """)
 
     // Read in data
-    PREPARE_INPUT ( params.input )
+    PREPARE_INPUT (
+        params.input,
+        params.taxdb
+    )
 
     // Build necessary databases
     // if ( ['inspect','preprocess','assemble','purge','polish','screen','scaffold','curate'].any{ it in workflow_steps}) {
