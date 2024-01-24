@@ -16,21 +16,18 @@ workflow EVALUATE_ASSEMBLY {
     // Kmer consistency check
     MERQURYFK_MERQURYFK (
         fastk_db.combine( assembly_ch.map { sample, assembly ->
-                [ sample, ( assembly.alt_fasta ? [ assembly.pri_fasta, assembly.alt_fasta ] : assembly.pri_fasta ) ] 
+                [ sample, ( assembly.alt_fasta ? [ assembly.pri_fasta, assembly.alt_fasta ] : assembly.pri_fasta ) ]
             }, by: 0 )
     )
 
     // Evaluate core gene space coverage
     busco_input = assembly_ch.map { sample, assembly -> [ sample, assembly.pri_fasta ] }
-        .flatMap { meta, asm -> 
-            if ( params.busco.lineages ) {
-                // User supplied list takes priority.
-                params.busco.lineages.tokenize(',').collect{ [ meta, asm, it ] }
-            } else if ( meta.settings?.busco?.lineages ) {
-                // Use lineages from GOAT.
-                meta.settings.busco.lineages.tokenize(',').collect{ [ meta, asm, it ] } 
+        .flatMap { meta, asm ->
+            if ( meta.settings?.busco?.lineages ) {
+                // Use lineages from params.busco.lineages/GOAT.
+                meta.settings.busco.lineages.tokenize(',').collect{ [ meta, asm, it ] }
             } else {
-                // If GOAT is disabled, auto-detect.
+                // auto-detect.
                 [ [ meta, asm, 'auto' ] ]
             }
         }
