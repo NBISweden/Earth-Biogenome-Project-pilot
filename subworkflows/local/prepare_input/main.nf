@@ -121,7 +121,7 @@ workflow PREPARE_INPUT {
         .map { file -> readYAML( file ) }
 
     UNTAR_TAXONOMY( Channel.fromPath( taxdb, checkIfExists: true ).map{ tar -> [ [ id: 'taxdb' ], tar ] } )
-    TAXONKIT_NAME2LINEAGE( ch_input, UNTAR_TAXONOMY.out.untar.collect() ).tsv
+    TAXONKIT_NAME2LINEAGE( ch_input, UNTAR_TAXONOMY.out.untar.map{ meta, archive -> archive }.collect() ).tsv
         .branch { meta, tsv_f -> def sv = tsv_f.splitCsv( sep:"\t" )
         def new_meta = meta.deepMerge( [ id: sv[0].replace(" ","_"), sample: [ taxid: sv[1], kingdom: sv[2] ] ] )
             eukaryota: sv[2] == 'eukaryota'
