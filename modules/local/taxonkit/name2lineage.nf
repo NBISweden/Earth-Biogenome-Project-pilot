@@ -33,7 +33,7 @@ process TAXONKIT_NAME2LINEAGE {
         reformat \\
         --taxid-field 2 \\
         $args2 \\
-        --data-dir $taxdb
+        --data-dir $taxdb \\
         --threads $task.cpus \\
         --out-file ${prefix}.tsv
 
