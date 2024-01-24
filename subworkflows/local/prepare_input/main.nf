@@ -2,9 +2,10 @@
 
 import org.yaml.snakeyaml.Yaml
 
-include { SAMTOOLS_FASTA        } from "$projectDir/modules/local/samtools/fasta/main"
+include { UNTAR                 } from "$projectDir/modules/nf-core/untar/main"
 include { TAXONKIT_NAME2LINEAGE } from "$projectDir/modules/local/taxonkit/name2lineage"
 include { GOAT_TAXONSEARCH      } from "$projectDir/modules/nf-core/goat/taxonsearch/main"
+include { SAMTOOLS_FASTA        } from "$projectDir/modules/local/samtools/fasta/main"
 
 /* params.input example sample sheet (samplesheet.yml)
 ```yaml
@@ -119,8 +120,8 @@ workflow PREPARE_INPUT {
     ch_input = Channel.fromPath( infile )
         .map { file -> readYAML( file ) }
 
-    UNTAR(taxdb)
-    TAXONKIT_NAME2LINEAGE( ch_input, UNTAR.out.tar.collect() ).tsv
+    UNTAR( taxdb.map{ tar -> [ [ id: 'taxdb' ], tar ] } )
+    TAXONKIT_NAME2LINEAGE( ch_input, UNTAR.out.untar.collect() ).tsv
         .branch { meta, tsv_f -> def sv = tsv_f.splitCsv( sep:"\t" )
         def new_meta = meta.deepMerge( [ id: sv[0].replace(" ","_"), sample: [ taxid: sv[1], kingdom: sv[2] ] ] )
             eukaryota: sv[2] == 'eukaryota'
