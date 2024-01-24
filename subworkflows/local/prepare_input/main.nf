@@ -124,7 +124,7 @@ workflow PREPARE_INPUT {
     TAXONKIT_NAME2LINEAGE( ch_input, UNTAR_TAXONOMY.out.untar.map{ meta, archive -> archive }.collect() ).tsv
         .branch { meta, tsv_f -> def sv = tsv_f.splitCsv( sep:"\t" )
         def new_meta = meta.deepMerge( [ id: sv[0][0].replace(" ","_"), sample: [ taxid: sv[0][1], kingdom: sv[0][2] ] ] )
-            eukaryota: sv[2] == 'Eukaryota'
+            eukaryota: sv[0][2] == 'Eukaryota'
                 return new_meta
             other: true
                 return new_meta
