@@ -60,7 +60,7 @@ workflow {
     // Read in data
     PREPARE_INPUT (
         params.input,
-        params.taxdb
+        params.ncbi.taxdb
     )
 
     // Build necessary databases
