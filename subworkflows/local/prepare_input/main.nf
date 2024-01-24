@@ -144,6 +144,7 @@ workflow PREPARE_INPUT {
             ])
         }
         .mix( ch_input_wTaxID.other )
+        .dump( tag: 'Input: Meta', pretty: true )
         .multiMap { data ->
             assembly_ch : ( data.assembly ? [ data.subMap('id','sample','settings') , data.assembly ] : [] )
             hic_ch      : ( data.hic      ? [ data.subMap('id','sample','settings') + [ single_end: false ], data.hic.collect { [ file( it.read1, checkIfExists: true ), file( it.read2, checkIfExists: true ) ] } ] : [] )
