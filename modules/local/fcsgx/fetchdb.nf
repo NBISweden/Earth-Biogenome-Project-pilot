@@ -20,6 +20,7 @@ process FCSGX_FETCHDB {
 
     script:
     def args = task.ext.args ?: ''
+    prefix = task.ext.prefix ?: 'gxdb'
     def VERSION = '0.5.0' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
     """
     sync_files.py \\
