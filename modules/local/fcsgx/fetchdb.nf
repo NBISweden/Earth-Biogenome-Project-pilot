@@ -2,9 +2,11 @@ process FCSGX_FETCHDB {
     tag "$manifest.name"
     label 'process_single'
 
+    // WARN: Version information not provided by tool on CLI. Please update version string below when bumping container versions.
+    conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://ftp.ncbi.nlm.nih.gov/genomes/TOOLS/FCS/releases/0.4.0/fcs-gx.sif':
-        'docker.io/ncbi/fcs-gx:0.4.0' }"
+        'https://depot.galaxyproject.org/singularity/ncbi-fcs-gx:0.5.0--h4ac6f70_3':
+        'biocontainers/ncbi-fcs-gx:0.5.0--h4ac6f70_3' }"
 
     input:
     val manifest // URL of manifest. Cannot stage locally.
@@ -17,33 +19,29 @@ process FCSGX_FETCHDB {
     task.ext.when == null || task.ext.when
 
     script:
-    // Exit if running this module with -profile conda / -profile mamba
-    if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
-        error "FCS_FCSGX module does not support Conda. Please use Docker / Singularity / Podman instead."
-    }
     def args = task.ext.args ?: ''
-    prefix   = task.ext.prefix ?: 'gxdb'
+    def VERSION = '0.5.0' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
     """
-    sync_files \\
+    sync_files.py \\
         get \\
         --mft "${manifest.toUriString()}" \\
         --dir "$prefix"
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        fcsgx: \$( gx -h | sed '/^build.*/ !d; s/.*git:v//' )
+        fcs_gx: $VERSION
     END_VERSIONS
     """
 
     stub:
     def args = task.ext.args ?: ''
-    prefix   = task.ext.prefix ?: 'gxdb'
+    def VERSION = '0.5.0' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
     """
-    touch ${prefix}
+    mkdir $prefix
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        fcsgx: \$( gx -h | sed '/^build.*/ !d; s/.*git:v//' )
+        fcs_gx: $VERSION
     END_VERSIONS
     """
 }
