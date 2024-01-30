@@ -15,7 +15,7 @@ include { SCREEN_READS      } from "$projectDir/subworkflows/local/screen_read_c
 include { ASSEMBLE_HIFI } from "$projectDir/subworkflows/local/assemble_hifi/main"
 
 include { FCSGX_FETCHDB } from "$projectDir/modules/local/fcsgx/fetchdb"
-include { FCS_FCSGX     } from "$projectDir/modules/nf-core/fcs/fcsgx/main"
+include { FCSGX_RUNGX   } from "$projectDir/modules/local/fcsgx/rungx"
 
 include { PURGE_DUPLICATES } from "$projectDir/subworkflows/local/purge_dups/main"
 
@@ -142,7 +142,7 @@ workflow {
                 def updated_meta = meta.deepMerge( [ assembly: [ stage: 'decontaminated' ] ] )
                 assembly.alt_fasta ? [ [ updated_meta, updated_meta.sample.taxid, assembly.pri_fasta ], [ updated_meta, updated_meta.sample.taxid, assembly.alt_fasta ] ] : [ [ updated_meta, updated_meta.sample.taxid, assembly.pri_fasta ] ]
             }
-        FCS_FCSGX( ch_to_screen, ch_fcs_database.collect() )
+        FCSGX_RUNGX( ch_to_screen, ch_fcs_database.collect() )
     }
 
     // Purge duplicates
