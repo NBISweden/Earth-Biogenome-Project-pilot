@@ -16,6 +16,7 @@ include { ASSEMBLE_HIFI } from "$projectDir/subworkflows/local/assemble_hifi/mai
 
 include { FCSGX_FETCHDB } from "$projectDir/modules/local/fcsgx/fetchdb"
 include { FCSGX_RUNGX   } from "$projectDir/modules/local/fcsgx/rungx"
+include { FCSGX_CLEAN   } from "$projectDir/modules/local/fcsgx/clean"
 
 include { PURGE_DUPLICATES } from "$projectDir/subworkflows/local/purge_dups/main"
 
@@ -140,9 +141,19 @@ workflow {
         ch_to_screen = ch_assemblies.filter { meta, assembly -> meta.assembly.stage in ['raw'] }
             .flatMap { meta, assembly ->
                 def updated_meta = meta.deepMerge( [ assembly: [ stage: 'decontaminated' ] ] )
-                assembly.alt_fasta ? [ [ updated_meta, updated_meta.sample.taxid, assembly.pri_fasta ], [ updated_meta, updated_meta.sample.taxid, assembly.alt_fasta ] ] : [ [ updated_meta, updated_meta.sample.taxid, assembly.pri_fasta ] ]
+                assembly.alt_fasta ? [
+                    [ updated_meta + [ asm: 'primary' ], updated_meta.sample.taxid, assembly.pri_fasta ],
+                    [ updated_meta + [ asm: 'alternate' ], updated_meta.sample.taxid, assembly.alt_fasta ]
+                ] : [
+                    [ updated_meta + [ asm: 'primary' ], updated_meta.sample.taxid, assembly.pri_fasta ]
+                ]
             }
         FCSGX_RUNGX( ch_to_screen, ch_fcs_database.collect() )
+        FCSGX_CLEAN(
+            ch_to_screen.join( FCSGX_RUNGX.out.fcs_gx_report, by:0 )
+                .map { meta, taxid, asm, rpt -> [ meta, asm, rpt ] }
+        )
+        // TODO: Reform asm entry for purge dups ( use injected asm key )
     }
 
     // Purge duplicates
