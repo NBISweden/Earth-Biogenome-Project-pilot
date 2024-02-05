@@ -94,22 +94,25 @@ workflow {
         // Host contamination filter
     }
 
-    ch_assemblies = PREPARE_INPUT.out.assemblies
     // Assemble
+    ch_raw_assemblies = PREPARE_INPUT.out.assemblies.filter { meta, assembly -> meta.assembly.stage in ['raw'] }
     if ( 'assemble' in workflow_steps ) {
         // Run assemblers
 
         // TODO: Make strategy check
         ASSEMBLE_HIFI( PREPARE_INPUT.out.hifi )
-        ch_assemblies = ch_assemblies.filter { meta, assembly -> meta.assembly.stage in ['raw'] }
+        ch_raw_assemblies = ch_raw_assemblies
             .mix( ASSEMBLE_HIFI.out.assemblies )
 
         // Find mitochondria
         // TODO: Need to check options to mitohifi modules.
-        MITOHIFI_FINDMITOREFERENCE( ch_assemblies.map { meta, assemblies -> [ meta, meta.sample.name ] }.unique() )
-        mitohifi_ch = ch_assemblies
-            .combine( MITOHIFI_FINDMITOREFERENCE.out.fasta, by: 0 )
-            .combine( MITOHIFI_FINDMITOREFERENCE.out.gb, by: 0 )
+        MITOHIFI_FINDMITOREFERENCE( ch_raw_assemblies.map { meta, assemblies -> [ meta, meta.sample.name ] }.unique() )
+        mitohifi_ch = ch_raw_assemblies
+            .combine(
+                MITOHIFI_FINDMITOREFERENCE.out.fasta
+                    .join(MITOHIFI_FINDMITOREFERENCE.out.gb),
+                by: 0
+            )
             .multiMap { meta, assembly, mitofa, mitogb ->
                 input: [ meta, assembly.pri_fasta ]
                 reference: mitofa
@@ -125,12 +128,12 @@ workflow {
 
         // Assess assemblies
         COMPARE_ASSEMBLIES (
-            ch_assemblies,
+            ch_raw_assemblies,
             params.reference ? file( params.reference, checkIfExists: true ) : []
         )
 
         EVALUATE_ASSEMBLY (
-            ch_assemblies,
+            ch_raw_assemblies,
             PREPARE_INPUT.out.hifi,
             BUILD_HIFI_DATABASES.out.fastk_histogram.join( BUILD_HIFI_DATABASES.out.fastk_ktab ),
             params.reference ? file( params.reference, checkIfExists: true ) : [],
@@ -139,11 +142,11 @@ workflow {
     }
 
     // Contamination screen
+    ch_cleaned_assemblies = PREPARE_INPUT.out.assemblies.filter { meta, assembly -> meta.assembly.stage in ['decontaminated'] }
     if ( 'screen' in workflow_steps ) {
         FCSGX_FETCHDB ( params.fcs.database ? Channel.empty() : Channel.fromPath( params.fcs.manifest, checkIfExists: true ) )
         ch_fcs_database = params.fcs.database ? Channel.fromPath( params.fcs.database, checkIfExists: true, type: 'dir' ) : FCSGX_FETCHDB.out.database
-        ch_to_screen = ch_assemblies.filter { meta, assembly -> meta.assembly.stage in ['raw'] }
-            .flatMap { meta, assembly ->
+        ch_to_screen = ch_raw_assemblies.flatMap { meta, assembly ->
                 def updated_meta = meta.deepMerge( [ assembly: [ stage: 'decontaminated' ] ] )
                 assembly.alt_fasta ? [
                     [ updated_meta + [ haplotype: 0 ], updated_meta.sample.taxid, assembly.pri_fasta ],
@@ -154,10 +157,10 @@ workflow {
             }
         FCSGX_RUNGX( ch_to_screen, ch_fcs_database.collect() )
         FCSGX_CLEAN(
-            ch_to_screen.join( FCSGX_RUNGX.out.fcs_gx_report, by:0 )
+            ch_to_screen.join( FCSGX_RUNGX.out.fcs_gx_report, by: 0 )
                 .map { meta, taxid, asm, rpt -> [ meta, asm, rpt ] }
         )
-        ch_assemblies = ch_assemblies.mix(
+        ch_cleaned_assemblies = ch_cleaned_assemblies.mix(
             FCSGX_CLEAN.out.clean_fasta
                 .map { meta, asm -> [ meta.subMap(meta.keySet()-['haplotype']), asm ] }
                 .groupTuple( sort: { a, b -> a.name <=> b.name } )
@@ -169,8 +172,9 @@ workflow {
     }
 
     // Purge duplicates
+    ch_purged_assemblies = PREPARE_INPUT.out.assemblies.filter { meta, assembly -> meta.assembly.stage in ['purged'] }
     if ( 'purge' in workflow_steps ) {
-        ch_topurge = ch_assemblies.filter { meta, assembly -> meta.assembly.stage in ['raw','decontaminated'] }
+        ch_topurge = ch_cleaned_assemblies
             .map { meta, assembly -> [ meta.subMap(['id','sample']), meta, assembly ] }
             .combine (
                 PREPARE_INPUT.out.hifi
@@ -188,6 +192,13 @@ workflow {
         }
         // TODO update meta assembly stage to purged
         PURGE_DUPLICATES ( ch_topurge.dump( tag: 'Purge duplicates: input' ) )
+        EVALUATE_ASSEMBLY (
+            ch_purged_assemblies,
+            PREPARE_INPUT.out.hifi,
+            BUILD_HIFI_DATABASES.out.fastk_histogram.join( BUILD_HIFI_DATABASES.out.fastk_ktab ),
+            params.reference ? file( params.reference, checkIfExists: true ) : [],
+            params.busco.lineages_db_path ? file( params.busco.lineages_db_path, checkIfExists: true ) : []
+        )
     }
 
     // Polish
