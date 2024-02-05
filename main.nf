@@ -157,7 +157,15 @@ workflow {
             ch_to_screen.join( FCSGX_RUNGX.out.fcs_gx_report, by:0 )
                 .map { meta, taxid, asm, rpt -> [ meta, asm, rpt ] }
         )
-        // TODO: Reform asm entry for purge dups ( use injected asm key )
+        ch_assemblies = ch_assemblies.mix(
+            FCSGX_CLEAN.out.clean_fasta
+                .map { meta, asm -> [ meta.subMap(meta.keySet()-['haplotype']), asm ] }
+                .groupTuple( sort: { a, b -> a.name <=> b.name } )
+                .map { meta, fasta ->
+                    def asm_meta = meta.assembly.subMap(['assembler','stage','id','build'])
+                    [ meta, asm_meta + (fasta.size() == 1 ? [ pri_fasta: fasta[0] ] : [ pri_fasta: fasta[0], alt_fasta: fasta[1] ] ) ]
+                }
+        )
     }
 
     // Purge duplicates
