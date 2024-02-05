@@ -146,10 +146,10 @@ workflow {
             .flatMap { meta, assembly ->
                 def updated_meta = meta.deepMerge( [ assembly: [ stage: 'decontaminated' ] ] )
                 assembly.alt_fasta ? [
-                    [ updated_meta + [ asm: 'primary' ], updated_meta.sample.taxid, assembly.pri_fasta ],
-                    [ updated_meta + [ asm: 'alternate' ], updated_meta.sample.taxid, assembly.alt_fasta ]
+                    [ updated_meta + [ haplotype: 0 ], updated_meta.sample.taxid, assembly.pri_fasta ],
+                    [ updated_meta + [ haplotype: 1 ], updated_meta.sample.taxid, assembly.alt_fasta ]
                 ] : [
-                    [ updated_meta + [ asm: 'primary' ], updated_meta.sample.taxid, assembly.pri_fasta ]
+                    [ updated_meta + [ haplotype: 0 ], updated_meta.sample.taxid, assembly.pri_fasta ]
                 ]
             }
         FCSGX_RUNGX( ch_to_screen, ch_fcs_database.collect() )
