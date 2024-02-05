@@ -75,7 +75,7 @@ workflow PURGE_DUPLICATES {
         .map { meta, reads, assembly -> [ meta, assembly.alt_fasta ] }
         // Purges haplotigs only when using consensus
         .mix( PURGEDUPS_GETSEQS_PRIMARY.out.haplotigs )
-        .groupTuple()
+        .groupTuple()  // TODO Find size to prevent blocking
         .set { alternate_assembly_ch }
     PURGEDUPS_SPLITFA_ALTERNATE( alternate_assembly_ch )
     MINIMAP2_ALIGN_ASSEMBLY_ALTERNATE(

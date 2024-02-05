@@ -65,10 +65,10 @@ workflow {
     )
 
     // Build necessary databases
-    // if ( ['inspect','preprocess','assemble','purge','polish','screen','scaffold','curate'].any{ it in workflow_steps}) {
-    BUILD_HIFI_DATABASES ( PREPARE_INPUT.out.hifi )
-    BUILD_HIC_DATABASES ( PREPARE_INPUT.out.hic )
-    // }
+    if ( ['inspect','preprocess','assemble','purge','polish','screen','scaffold','curate'].any{ it in workflow_steps}) {
+        BUILD_HIFI_DATABASES ( PREPARE_INPUT.out.hifi )
+        BUILD_HIC_DATABASES ( PREPARE_INPUT.out.hic )
+    }
 
     // Data inspection
     if ( 'inspect' in workflow_steps ) {
@@ -90,18 +90,22 @@ workflow {
     // Preprocess data
     if ( 'preprocess' in workflow_steps ) {
         // Adapter filtering etc
+        // Subsampling
+        // Host contamination filter
     }
 
     ch_assemblies = PREPARE_INPUT.out.assemblies
     // Assemble
     if ( 'assemble' in workflow_steps ) {
         // Run assemblers
+
+        // TODO: Make strategy check
         ASSEMBLE_HIFI( PREPARE_INPUT.out.hifi )
         ch_assemblies = ch_assemblies.filter { meta, assembly -> meta.assembly.stage in ['raw'] }
             .mix( ASSEMBLE_HIFI.out.assemblies )
 
         // Find mitochondria
-        // Need to check options to mitohifi modules.
+        // TODO: Need to check options to mitohifi modules.
         MITOHIFI_FINDMITOREFERENCE( ch_assemblies.map { meta, assemblies -> [ meta, meta.sample.name ] }.unique() )
         mitohifi_ch = ch_assemblies
             .combine( MITOHIFI_FINDMITOREFERENCE.out.fasta, by: 0 )
