@@ -24,7 +24,10 @@ include { MITOHIFI_FINDMITOREFERENCE } from "$projectDir/modules/nf-core/mitohif
 include { MITOHIFI_MITOHIFI          } from "$projectDir/modules/nf-core/mitohifi/mitohifi/main"
 
 include { COMPARE_ASSEMBLIES } from "$projectDir/subworkflows/local/compare_assemblies/main"
-include { EVALUATE_ASSEMBLY  } from "$projectDir/subworkflows/local/evaluate_assembly/main"
+
+include { EVALUATE_ASSEMBLY as EVALUATE_RAW_ASSEMBLY    } from "$projectDir/subworkflows/local/evaluate_assembly/main"
+include { EVALUATE_ASSEMBLY as EVALUATE_PURGED_ASSEMBLY } from "$projectDir/subworkflows/local/evaluate_assembly/main"
+
 include { ALIGN_RNASEQ       } from "$projectDir/subworkflows/local/align_rnaseq/main"
 
 /*
@@ -132,7 +135,7 @@ workflow {
             params.reference ? file( params.reference, checkIfExists: true ) : []
         )
 
-        EVALUATE_ASSEMBLY (
+        EVALUATE_RAW_ASSEMBLY (
             ch_raw_assemblies,
             PREPARE_INPUT.out.hifi,
             BUILD_HIFI_DATABASES.out.fastk_histogram.join( BUILD_HIFI_DATABASES.out.fastk_ktab ),
@@ -192,7 +195,7 @@ workflow {
         }
         // TODO update meta assembly stage to purged
         PURGE_DUPLICATES ( ch_topurge.dump( tag: 'Purge duplicates: input' ) )
-        EVALUATE_ASSEMBLY (
+        EVALUATE_PURGED_ASSEMBLY (
             ch_purged_assemblies,
             PREPARE_INPUT.out.hifi,
             BUILD_HIFI_DATABASES.out.fastk_histogram.join( BUILD_HIFI_DATABASES.out.fastk_ktab ),
