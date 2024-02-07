@@ -58,7 +58,6 @@ workflow PURGE_DUPLICATES {
         false, // cigar in paf file
         false  // cigar in bam file
     )
-    // TODO: Fix join
     PURGEDUPS_PURGEDUPS_PRIMARY(
         joinByMetaKeys(
             PURGEDUPS_PBCSTAT.out.basecov.join( PURGEDUPS_CALCUTS.out.cutoff ),
@@ -66,11 +65,6 @@ workflow PURGE_DUPLICATES {
             keySet: ['sample','assembly'],
             meta: 'rhs'
         )
-        // PURGEDUPS_PBCSTAT.out.basecov
-        //     .join( PURGEDUPS_CALCUTS.out.cutoff )
-        //     // .map { meta, cov, cutoff -> [ meta.findAll { !(it.key in [ 'single_end' ]) }, cov, cutoff ] }
-        //     .map { meta, cov, cutoff -> [ meta.subMap( meta.keySet() - ['single_end'] ), cov, cutoff ] }
-        //     .join( MINIMAP2_ALIGN_ASSEMBLY_PRIMARY.out.paf )
     )
     PURGEDUPS_GETSEQS_PRIMARY(
         PURGEDUPS_SPLITFA_PRIMARY.out.merged_fasta
@@ -81,7 +75,7 @@ workflow PURGE_DUPLICATES {
     reads_plus_assembly_ch
         .filter { meta, reads, assembly -> assembly.alt_fasta != null }
         .map { meta, reads, assembly -> [ meta, assembly.alt_fasta ] }
-        // Purges haplotigs only when using consensus
+        // Purges only primary haplotigs when using consensus
         .mix( PURGEDUPS_GETSEQS_PRIMARY.out.haplotigs )
         .groupTuple()  // TODO Find size to prevent blocking
         .set { alternate_assembly_ch }
@@ -100,11 +94,6 @@ workflow PURGE_DUPLICATES {
             keySet: ['sample','assembly'],
             meta: 'rhs'
         )
-        // PURGEDUPS_PBCSTAT.out.basecov
-        //     .join( PURGEDUPS_CALCUTS.out.cutoff )
-        //     // .map { meta, cov, cutoff -> [ meta.findAll { !(it.key in [ 'single_end' ]) }, cov, cutoff ] }
-        //     .map { meta, cov, cutoff -> [ meta.subMap( meta.keySet() - ['single_end'] ), cov, cutoff ] }
-        //     .join( MINIMAP2_ALIGN_ASSEMBLY_ALTERNATE.out.paf )
     )
     PURGEDUPS_GETSEQS_ALTERNATE(
         PURGEDUPS_SPLITFA_ALTERNATE.out.merged_fasta
