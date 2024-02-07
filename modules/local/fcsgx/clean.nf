@@ -22,11 +22,12 @@ process FCSGX_CLEAN {
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
+    def infile = assembly.name.endsWith('.gz') ? "<( gzip -dc $assembly )" : assembly
     def VERSION = '0.5.0' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
     """
     gx \\
         clean-genome \\
-        --input $assembly \\
+        --input $infile \\
         --action-report $action_report \\
         --output ${prefix}.clean.fasta \\
         --contam-fasta-out ${prefix}.contaminants.fasta
