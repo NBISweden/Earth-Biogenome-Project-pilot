@@ -152,7 +152,7 @@ workflow {
         FCSGX_FETCHDB ( params.fcs.database ? Channel.empty() : Channel.fromPath( params.fcs.manifest, checkIfExists: true ) )
         ch_fcs_database = params.fcs.database ? Channel.fromPath( params.fcs.database, checkIfExists: true, type: 'dir' ) : FCSGX_FETCHDB.out.database
         ch_to_screen = ch_raw_assemblies.flatMap { meta, assembly ->
-                def updated_meta = meta.deepMerge( [ assembly: [ stage: 'decontaminated' ] ] )
+                def updated_meta = meta.deepMerge( [ assembly: [ stage: 'decontaminated', build: "${meta.assembly.assembler}-decontaminated-${meta.assembly.id}" ] ] )
                 assembly.alt_fasta ? [
                     [ updated_meta + [ haplotype: 0 ], updated_meta.sample.taxid, assembly.pri_fasta ],
                     [ updated_meta + [ haplotype: 1 ], updated_meta.sample.taxid, assembly.alt_fasta ]
@@ -181,7 +181,7 @@ workflow {
     if ( 'purge' in workflow_steps ) {
         ch_topurge = combineByMetaKeys(
             PREPARE_INPUT.out.hifi,
-            ch_cleaned_assemblies.map{ meta, assemblies -> [ meta.deepMerge([ assembly: [ stage: 'purged' ] ]), assemblies ] },
+            ch_cleaned_assemblies.map{ meta, assemblies -> [ meta.deepMerge([ assembly: [ stage: 'purged', build: "${meta.assembly.assembler}-purged-${meta.assembly.id}" ] ]), assemblies ] },
             keySet: ['id','sample'],
             meta: 'rhs'
         )

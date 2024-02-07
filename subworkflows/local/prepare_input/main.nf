@@ -163,7 +163,7 @@ workflow PREPARE_INPUT {
                 assembler: assembly.assembler,
                 stage: assembly.stage,
                 id: assembly.id,
-                build: "${->assembly.assembler}-${->assembly.stage}-${->assembly.id}",
+                build: "${assembly.assembler}-${assembly.stage}-${assembly.id}",
                 pri_fasta: file( assembly.pri_fasta, checkIfExists: true ),
                 alt_fasta: ( assembly.alt_fasta ? file( assembly.alt_fasta, checkIfExists: true ) : null ),
                 pri_gfa  : ( assembly.pri_gfa ? file( assembly.pri_gfa, checkIfExists: true ) : null ),
