@@ -249,11 +249,13 @@ workflow.onComplete {
     if( workflow.success ){
         log.info("""
         Thank you for using the NBIS Earth Biogenome Project Assembly workflow.
+        The workflow completed successfully.
 
         Results are located in the folder: $params.outdir
         """)
     } else {
         log.info("""
+        Thank you for using the NBIS Earth Biogenome Project Assembly workflow.
         The workflow completed unsuccessfully.
 
         Please read over the error message. If you are unable to solve it, please
