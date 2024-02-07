@@ -3,6 +3,7 @@
  * https://github.com/dfguan/purge_dups
  */
 
+include { joinByMetaKeys                                       } from "$projectDir/modules/local/functions"
 include { MINIMAP2_ALIGN as MINIMAP2_ALIGN_READS               } from "$projectDir/modules/nf-core/minimap2/align/main"
 include { MINIMAP2_ALIGN as MINIMAP2_ALIGN_ASSEMBLY_PRIMARY    } from "$projectDir/modules/nf-core/minimap2/align/main"
 include { MINIMAP2_ALIGN as MINIMAP2_ALIGN_ASSEMBLY_ALTERNATE  } from "$projectDir/modules/nf-core/minimap2/align/main"
@@ -57,12 +58,19 @@ workflow PURGE_DUPLICATES {
         false, // cigar in paf file
         false  // cigar in bam file
     )
+    // TODO: Fix join
     PURGEDUPS_PURGEDUPS_PRIMARY(
-        PURGEDUPS_PBCSTAT.out.basecov
-            .join( PURGEDUPS_CALCUTS.out.cutoff )
-            // .map { meta, cov, cutoff -> [ meta.findAll { !(it.key in [ 'single_end' ]) }, cov, cutoff ] }
-            .map { meta, cov, cutoff -> [ meta.subMap( meta.keySet() - ['single_end'] ), cov, cutoff ] }
-            .join( MINIMAP2_ALIGN_ASSEMBLY_PRIMARY.out.paf )
+        joinByMetaKeys(
+            PURGEDUPS_PBCSTAT.out.basecov.join( PURGEDUPS_CALCUTS.out.cutoff ),
+            MINIMAP2_ALIGN_ASSEMBLY_PRIMARY.out.paf,
+            keySet: 'sample',
+            meta: 'rhs'
+        )
+        // PURGEDUPS_PBCSTAT.out.basecov
+        //     .join( PURGEDUPS_CALCUTS.out.cutoff )
+        //     // .map { meta, cov, cutoff -> [ meta.findAll { !(it.key in [ 'single_end' ]) }, cov, cutoff ] }
+        //     .map { meta, cov, cutoff -> [ meta.subMap( meta.keySet() - ['single_end'] ), cov, cutoff ] }
+        //     .join( MINIMAP2_ALIGN_ASSEMBLY_PRIMARY.out.paf )
     )
     PURGEDUPS_GETSEQS_PRIMARY(
         PURGEDUPS_SPLITFA_PRIMARY.out.merged_fasta
@@ -86,11 +94,17 @@ workflow PURGE_DUPLICATES {
         false  // cigar in bam file
     )
     PURGEDUPS_PURGEDUPS_ALTERNATE(
-        PURGEDUPS_PBCSTAT.out.basecov
-            .join( PURGEDUPS_CALCUTS.out.cutoff )
-            // .map { meta, cov, cutoff -> [ meta.findAll { !(it.key in [ 'single_end' ]) }, cov, cutoff ] }
-            .map { meta, cov, cutoff -> [ meta.subMap( meta.keySet() - ['single_end'] ), cov, cutoff ] }
-            .join( MINIMAP2_ALIGN_ASSEMBLY_ALTERNATE.out.paf )
+        joinByMetaKeys(
+            PURGEDUPS_PBCSTAT.out.basecov.join( PURGEDUPS_CALCUTS.out.cutoff ),
+            MINIMAP2_ALIGN_ASSEMBLY_ALTERNATE.out.paf,
+            keySet: 'sample',
+            meta: 'rhs'
+        )
+        // PURGEDUPS_PBCSTAT.out.basecov
+        //     .join( PURGEDUPS_CALCUTS.out.cutoff )
+        //     // .map { meta, cov, cutoff -> [ meta.findAll { !(it.key in [ 'single_end' ]) }, cov, cutoff ] }
+        //     .map { meta, cov, cutoff -> [ meta.subMap( meta.keySet() - ['single_end'] ), cov, cutoff ] }
+        //     .join( MINIMAP2_ALIGN_ASSEMBLY_ALTERNATE.out.paf )
     )
     PURGEDUPS_GETSEQS_ALTERNATE(
         PURGEDUPS_SPLITFA_ALTERNATE.out.merged_fasta
