@@ -198,7 +198,7 @@ workflow {
                 ch_topurge,
                 GENOME_PROPERTIES.out.kmer_cov,
                 keySet: ['id','sample'],
-                meta: 'rhs'
+                meta: 'lhs'
             )
             .map { meta, reads, assemblies, kmer_cov -> [ meta + [ kmercov: kmer_cov ], reads, assemblies ] }
         }
