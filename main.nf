@@ -3,6 +3,8 @@
 // Include Map.deepMerge() function
 evaluate(new File("$projectDir/lib/MapExtended.groovy"))
 
+include { dropMeta; combineByMetaKeys } from "$projectDir/modules/local/functions"
+
 include { PREPARE_INPUT } from "$projectDir/subworkflows/local/prepare_input/main"
 
 include { BUILD_DATABASES as BUILD_HIFI_DATABASES } from "$projectDir/subworkflows/local/build_databases/main"
@@ -177,24 +179,38 @@ workflow {
     // Purge duplicates
     ch_purged_assemblies = PREPARE_INPUT.out.assemblies.filter { meta, assembly -> meta.assembly.stage in ['purged'] }
     if ( 'purge' in workflow_steps ) {
-        ch_topurge = ch_cleaned_assemblies
-            .map { meta, assembly -> [ meta.subMap(['id','sample']), meta, assembly ] }
-            .combine (
-                PREPARE_INPUT.out.hifi
-                    .map { meta, reads -> [ meta.subMap(['id','sample']), reads ] },
-                by: 0
-            )
+        ch_topurge = combineByMetaKeys(
+            PREPARE_INPUT.out.hifi,
+            ch_cleaned_assemblies.map{ meta, assemblies -> [ meta.deepMerge([ assembly: [ stage: 'purged' ] ]), assemblies ] },
+            keySet: ['id','sample'],
+            meta: 'rhs'
+        )
+        // ch_topurge = ch_cleaned_assemblies
+        //     .map { meta, assembly -> [ meta.subMap(['id','sample']), meta, assembly ] }
+        //     .combine (
+        //         PREPARE_INPUT.out.hifi
+        //             .map { meta, reads -> [ meta.subMap(['id','sample']), reads ] },
+        //         by: 0
+        //     )
         if ( 'inspect' in workflow_steps ) {
             // Add kmer coverage from GenomeScope model
-            ch_topurge.combine( GENOME_PROPERTIES.out.kmer_cov.map{ meta, cov -> [ meta.subMap(['id','sample']), cov ] } , by: 0 )
-                .map { key, meta, assemblies, reads, kmer_cov -> [ meta + [ kmercov: kmer_cov ], reads, assemblies ] }
-                .set { ch_topurge }
-        } else {
-            ch_topurge.map { key, meta, assemblies, reads -> [ meta, reads, assemblies ] }
-                .set { ch_topurge }
+            ch_topurge = combineByMetaKeys(
+                ch_topurge,
+                GENOME_PROPERTIES.out.kmer_cov,
+                keySet: ['id','sample'],
+                meta: 'rhs'
+            )
+            .map { meta, reads, assemblies, kmer_cov -> [ meta + [ kmercov: kmer_cov ], reads, assemblies ] }
         }
-        // TODO update meta assembly stage to purged
+            // ch_topurge.combine( GENOME_PROPERTIES.out.kmer_cov.map{ meta, cov -> [ meta.subMap(['id','sample']), cov ] } , by: 0 )
+            //     .map { key, meta, assemblies, reads, kmer_cov -> [ meta + [ kmercov: kmer_cov ], reads, assemblies ] }
+            //     .set { ch_topurge }
+        // } else {
+        //     ch_topurge.map { key, meta, assemblies, reads -> [ meta, reads, assemblies ] }
+        //         .set { ch_topurge }
+        // }
         PURGE_DUPLICATES ( ch_topurge.dump( tag: 'Purge duplicates: input' ) )
+        ch_purged_assemblies = ch_purged_assemblies.mix( PURGE_DUPLICATES.out.assembly )
         EVALUATE_PURGED_ASSEMBLY (
             ch_purged_assemblies,
             PREPARE_INPUT.out.hifi,
