@@ -99,8 +99,15 @@ workflow PURGE_DUPLICATES {
         PURGEDUPS_SPLITFA_ALTERNATE.out.merged_fasta
             .join( PURGEDUPS_PURGEDUPS_ALTERNATE.out.bed )
     )
+    ch_purged_assemblies = PURGEDUPS_GETSEQS_PRIMARY.out.purged
+        .mix(PURGEDUPS_GETSEQS_ALTERNATE.out.purged)
+        .groupTuple( sort: { a, b -> a.name <=> b.name } )
+        .map { meta, fasta ->
+            def asm_meta = meta.assembly.subMap(['assembler','stage','id','build'])
+            [ meta, asm_meta + (fasta.size() == 1 ? [ pri_fasta: fasta[0] ] : [ pri_fasta: fasta[0], alt_fasta: fasta[1] ] ) ]
+        }
 
     emit:
-    assembly = PURGEDUPS_GETSEQS_PRIMARY.out.purged
+    assembly = ch_purged_assemblies
     coverage = PURGEDUPS_PBCSTAT.out.basecov
 }
