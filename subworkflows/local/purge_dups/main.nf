@@ -63,7 +63,7 @@ workflow PURGE_DUPLICATES {
         joinByMetaKeys(
             PURGEDUPS_PBCSTAT.out.basecov.join( PURGEDUPS_CALCUTS.out.cutoff ),
             MINIMAP2_ALIGN_ASSEMBLY_PRIMARY.out.paf,
-            keySet: 'sample',
+            keySet: ['sample','assembly'],
             meta: 'rhs'
         )
         // PURGEDUPS_PBCSTAT.out.basecov
@@ -97,7 +97,7 @@ workflow PURGE_DUPLICATES {
         joinByMetaKeys(
             PURGEDUPS_PBCSTAT.out.basecov.join( PURGEDUPS_CALCUTS.out.cutoff ),
             MINIMAP2_ALIGN_ASSEMBLY_ALTERNATE.out.paf,
-            keySet: 'sample',
+            keySet: ['sample','assembly'],
             meta: 'rhs'
         )
         // PURGEDUPS_PBCSTAT.out.basecov
