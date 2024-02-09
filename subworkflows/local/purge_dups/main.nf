@@ -3,6 +3,7 @@
  * https://github.com/dfguan/purge_dups
  */
 
+include { joinByMetaKeys                                       } from "$projectDir/modules/local/functions"
 include { MINIMAP2_ALIGN as MINIMAP2_ALIGN_READS               } from "$projectDir/modules/nf-core/minimap2/align/main"
 include { MINIMAP2_ALIGN as MINIMAP2_ALIGN_ASSEMBLY_PRIMARY    } from "$projectDir/modules/nf-core/minimap2/align/main"
 include { MINIMAP2_ALIGN as MINIMAP2_ALIGN_ASSEMBLY_ALTERNATE  } from "$projectDir/modules/nf-core/minimap2/align/main"
@@ -58,11 +59,12 @@ workflow PURGE_DUPLICATES {
         false  // cigar in bam file
     )
     PURGEDUPS_PURGEDUPS_PRIMARY(
-        PURGEDUPS_PBCSTAT.out.basecov
-            .join( PURGEDUPS_CALCUTS.out.cutoff )
-            // .map { meta, cov, cutoff -> [ meta.findAll { !(it.key in [ 'single_end' ]) }, cov, cutoff ] }
-            .map { meta, cov, cutoff -> [ meta.subMap( meta.keySet() - ['single_end'] ), cov, cutoff ] }
-            .join( MINIMAP2_ALIGN_ASSEMBLY_PRIMARY.out.paf )
+        joinByMetaKeys(
+            PURGEDUPS_PBCSTAT.out.basecov.join( PURGEDUPS_CALCUTS.out.cutoff ),
+            MINIMAP2_ALIGN_ASSEMBLY_PRIMARY.out.paf,
+            keySet: ['sample','assembly'],
+            meta: 'rhs'
+        )
     )
     PURGEDUPS_GETSEQS_PRIMARY(
         PURGEDUPS_SPLITFA_PRIMARY.out.merged_fasta
@@ -73,9 +75,9 @@ workflow PURGE_DUPLICATES {
     reads_plus_assembly_ch
         .filter { meta, reads, assembly -> assembly.alt_fasta != null }
         .map { meta, reads, assembly -> [ meta, assembly.alt_fasta ] }
-        // Purges haplotigs only when using consensus
+        // Purges only primary haplotigs when using consensus
         .mix( PURGEDUPS_GETSEQS_PRIMARY.out.haplotigs )
-        .groupTuple()
+        .groupTuple()  // TODO Find size to prevent blocking
         .set { alternate_assembly_ch }
     PURGEDUPS_SPLITFA_ALTERNATE( alternate_assembly_ch )
     MINIMAP2_ALIGN_ASSEMBLY_ALTERNATE(
@@ -86,18 +88,26 @@ workflow PURGE_DUPLICATES {
         false  // cigar in bam file
     )
     PURGEDUPS_PURGEDUPS_ALTERNATE(
-        PURGEDUPS_PBCSTAT.out.basecov
-            .join( PURGEDUPS_CALCUTS.out.cutoff )
-            // .map { meta, cov, cutoff -> [ meta.findAll { !(it.key in [ 'single_end' ]) }, cov, cutoff ] }
-            .map { meta, cov, cutoff -> [ meta.subMap( meta.keySet() - ['single_end'] ), cov, cutoff ] }
-            .join( MINIMAP2_ALIGN_ASSEMBLY_ALTERNATE.out.paf )
+        joinByMetaKeys(
+            PURGEDUPS_PBCSTAT.out.basecov.join( PURGEDUPS_CALCUTS.out.cutoff ),
+            MINIMAP2_ALIGN_ASSEMBLY_ALTERNATE.out.paf,
+            keySet: ['sample','assembly'],
+            meta: 'rhs'
+        )
     )
     PURGEDUPS_GETSEQS_ALTERNATE(
         PURGEDUPS_SPLITFA_ALTERNATE.out.merged_fasta
             .join( PURGEDUPS_PURGEDUPS_ALTERNATE.out.bed )
     )
+    ch_purged_assemblies = PURGEDUPS_GETSEQS_PRIMARY.out.purged
+        .mix(PURGEDUPS_GETSEQS_ALTERNATE.out.purged)
+        .groupTuple( sort: { a, b -> a.name <=> b.name } )
+        .map { meta, fasta ->
+            def asm_meta = meta.assembly.subMap(['assembler','stage','id','build'])
+            [ meta, asm_meta + (fasta.size() == 1 ? [ pri_fasta: fasta[0] ] : [ pri_fasta: fasta[0], alt_fasta: fasta[1] ] ) ]
+        }
 
     emit:
-    assembly = PURGEDUPS_GETSEQS_PRIMARY.out.purged
+    assembly = ch_purged_assemblies
     coverage = PURGEDUPS_PBCSTAT.out.basecov
 }

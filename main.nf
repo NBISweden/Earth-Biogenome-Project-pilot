@@ -3,6 +3,8 @@
 // Include Map.deepMerge() function
 evaluate(new File("$projectDir/lib/MapExtended.groovy"))
 
+include { dropMeta; combineByMetaKeys } from "$projectDir/modules/local/functions"
+
 include { PREPARE_INPUT } from "$projectDir/subworkflows/local/prepare_input/main"
 
 include { BUILD_DATABASES as BUILD_HIFI_DATABASES } from "$projectDir/subworkflows/local/build_databases/main"
@@ -15,7 +17,8 @@ include { SCREEN_READS      } from "$projectDir/subworkflows/local/screen_read_c
 include { ASSEMBLE_HIFI } from "$projectDir/subworkflows/local/assemble_hifi/main"
 
 include { FCSGX_FETCHDB } from "$projectDir/modules/local/fcsgx/fetchdb"
-include { FCS_FCSGX     } from "$projectDir/modules/nf-core/fcs/fcsgx/main"
+include { FCSGX_RUNGX   } from "$projectDir/modules/local/fcsgx/rungx"
+include { FCSGX_CLEAN   } from "$projectDir/modules/local/fcsgx/clean"
 
 include { PURGE_DUPLICATES } from "$projectDir/subworkflows/local/purge_dups/main"
 
@@ -23,7 +26,10 @@ include { MITOHIFI_FINDMITOREFERENCE } from "$projectDir/modules/nf-core/mitohif
 include { MITOHIFI_MITOHIFI          } from "$projectDir/modules/nf-core/mitohifi/mitohifi/main"
 
 include { COMPARE_ASSEMBLIES } from "$projectDir/subworkflows/local/compare_assemblies/main"
-include { EVALUATE_ASSEMBLY  } from "$projectDir/subworkflows/local/evaluate_assembly/main"
+
+include { EVALUATE_ASSEMBLY as EVALUATE_RAW_ASSEMBLY    } from "$projectDir/subworkflows/local/evaluate_assembly/main"
+include { EVALUATE_ASSEMBLY as EVALUATE_PURGED_ASSEMBLY } from "$projectDir/subworkflows/local/evaluate_assembly/main"
+
 include { ALIGN_RNASEQ       } from "$projectDir/subworkflows/local/align_rnaseq/main"
 
 /*
@@ -58,13 +64,16 @@ workflow {
     """)
 
     // Read in data
-    PREPARE_INPUT ( params.input )
+    PREPARE_INPUT (
+        params.input,
+        params.ncbi.taxdb
+    )
 
     // Build necessary databases
-    // if ( ['inspect','preprocess','assemble','purge','polish','screen','scaffold','curate'].any{ it in workflow_steps}) {
-    BUILD_HIFI_DATABASES ( PREPARE_INPUT.out.hifi )
-    BUILD_HIC_DATABASES ( PREPARE_INPUT.out.hic )
-    // }
+    if ( ['inspect','preprocess','assemble','purge','polish','screen','scaffold','curate'].any{ it in workflow_steps}) {
+        BUILD_HIFI_DATABASES ( PREPARE_INPUT.out.hifi )
+        BUILD_HIC_DATABASES ( PREPARE_INPUT.out.hic )
+    }
 
     // Data inspection
     if ( 'inspect' in workflow_steps ) {
@@ -86,22 +95,29 @@ workflow {
     // Preprocess data
     if ( 'preprocess' in workflow_steps ) {
         // Adapter filtering etc
+        // Subsampling
+        // Host contamination filter
     }
 
-    ch_assemblies = PREPARE_INPUT.out.assemblies
     // Assemble
+    ch_raw_assemblies = PREPARE_INPUT.out.assemblies.filter { meta, assembly -> meta.assembly.stage in ['raw'] }
     if ( 'assemble' in workflow_steps ) {
         // Run assemblers
+
+        // TODO: Make strategy check
         ASSEMBLE_HIFI( PREPARE_INPUT.out.hifi )
-        ch_assemblies = ch_assemblies.filter { meta, assembly -> meta.assembly.stage in ['raw'] }
+        ch_raw_assemblies = ch_raw_assemblies
             .mix( ASSEMBLE_HIFI.out.assemblies )
 
         // Find mitochondria
-        // Need to check options to mitohifi modules.
-        MITOHIFI_FINDMITOREFERENCE( ch_assemblies.map { meta, assemblies -> [ meta, meta.sample.name ] }.unique() )
-        mitohifi_ch = ch_assemblies
-            .combine( MITOHIFI_FINDMITOREFERENCE.out.fasta, by: 0 )
-            .combine( MITOHIFI_FINDMITOREFERENCE.out.gb, by: 0 )
+        // TODO: Need to check options to mitohifi modules.
+        MITOHIFI_FINDMITOREFERENCE( ch_raw_assemblies.map { meta, assemblies -> [ meta, meta.sample.name ] }.unique() )
+        mitohifi_ch = ch_raw_assemblies
+            .combine(
+                MITOHIFI_FINDMITOREFERENCE.out.fasta
+                    .join(MITOHIFI_FINDMITOREFERENCE.out.gb),
+                by: 0
+            )
             .multiMap { meta, assembly, mitofa, mitogb ->
                 input: [ meta, assembly.pri_fasta ]
                 reference: mitofa
@@ -117,12 +133,12 @@ workflow {
 
         // Assess assemblies
         COMPARE_ASSEMBLIES (
-            ch_assemblies,
+            ch_raw_assemblies,
             params.reference ? file( params.reference, checkIfExists: true ) : []
         )
 
-        EVALUATE_ASSEMBLY (
-            ch_assemblies,
+        EVALUATE_RAW_ASSEMBLY (
+            ch_raw_assemblies,
             PREPARE_INPUT.out.hifi,
             BUILD_HIFI_DATABASES.out.fastk_histogram.join( BUILD_HIFI_DATABASES.out.fastk_ktab ),
             params.reference ? file( params.reference, checkIfExists: true ) : [],
@@ -131,38 +147,77 @@ workflow {
     }
 
     // Contamination screen
+    ch_cleaned_assemblies = PREPARE_INPUT.out.assemblies.filter { meta, assembly -> meta.assembly.stage in ['decontaminated'] }
     if ( 'screen' in workflow_steps ) {
-        // FCSGX_FETCHDB ( params.fcs.database ? Channel.empty() : Channel.fromPath( params.fcs.manifest, checkIfExists: true ) )
-        // ch_fcs_database = params.fcs.database ? Channel.fromPath( params.fcs.database, checkIfExists: true, type: 'dir' ) : FCSGX_FETCHDB.out.database
-        // // Do we need a separate stage here?
-        // ch_to_screen = ch_assemblies.filter { meta, assembly -> meta.assembly.stage in ['raw'] }
-        //     .flatMap { meta, assembly ->
-        //         assembly.alt_fasta ? [ [ meta, assembly.pri_fasta ], [ meta, assembly.alt_fasta ] ] : [ [ meta, assembly.pri_fasta ] ]
-        //     }
-        // // TODO update meta assembly stage to decontaminated.
-        // FCS_FCSGX( ch_to_screen, ch_fcs_database.collect() )
+        FCSGX_FETCHDB ( params.fcs.database ? Channel.empty() : Channel.fromPath( params.fcs.manifest, checkIfExists: true ) )
+        ch_fcs_database = params.fcs.database ? Channel.fromPath( params.fcs.database, checkIfExists: true, type: 'dir' ) : FCSGX_FETCHDB.out.database
+        ch_to_screen = ch_raw_assemblies.flatMap { meta, assembly ->
+                def updated_meta = meta.deepMerge( [ assembly: [ stage: 'decontaminated', build: "${meta.assembly.assembler}-decontaminated-${meta.assembly.id}" ] ] )
+                assembly.alt_fasta ? [
+                    [ updated_meta + [ haplotype: 0 ], updated_meta.sample.taxid, assembly.pri_fasta ],
+                    [ updated_meta + [ haplotype: 1 ], updated_meta.sample.taxid, assembly.alt_fasta ]
+                ] : [
+                    [ updated_meta + [ haplotype: 0 ], updated_meta.sample.taxid, assembly.pri_fasta ]
+                ]
+            }
+        FCSGX_RUNGX( ch_to_screen, ch_fcs_database.collect() )
+        FCSGX_CLEAN(
+            ch_to_screen.join( FCSGX_RUNGX.out.fcs_gx_report, by: 0 )
+                .map { meta, taxid, asm, rpt -> [ meta, asm, rpt ] }
+        )
+        ch_cleaned_assemblies = ch_cleaned_assemblies.mix(
+            FCSGX_CLEAN.out.clean_fasta
+                .map { meta, asm -> [ meta.subMap(meta.keySet()-['haplotype']), asm ] }
+                .groupTuple( sort: { a, b -> a.name <=> b.name } )
+                .map { meta, fasta ->
+                    def asm_meta = meta.assembly.subMap(['assembler','stage','id','build'])
+                    [ meta, asm_meta + (fasta.size() == 1 ? [ pri_fasta: fasta[0] ] : [ pri_fasta: fasta[0], alt_fasta: fasta[1] ] ) ]
+                }
+        )
     }
 
     // Purge duplicates
+    ch_purged_assemblies = PREPARE_INPUT.out.assemblies.filter { meta, assembly -> meta.assembly.stage in ['purged'] }
     if ( 'purge' in workflow_steps ) {
-        ch_topurge = ch_assemblies.filter { meta, assembly -> meta.assembly.stage in ['raw','decontaminated'] }
-            .map { meta, assembly -> [ meta.subMap(['id','sample']), meta, assembly ] }
-            .combine (
-                PREPARE_INPUT.out.hifi
-                    .map { meta, reads -> [ meta.subMap(['id','sample']), reads ] },
-                by: 0
-            )
+        ch_topurge = combineByMetaKeys(
+            PREPARE_INPUT.out.hifi,
+            ch_cleaned_assemblies.map{ meta, assemblies -> [ meta.deepMerge([ assembly: [ stage: 'purged', build: "${meta.assembly.assembler}-purged-${meta.assembly.id}" ] ]), assemblies ] },
+            keySet: ['id','sample'],
+            meta: 'rhs'
+        )
+        // ch_topurge = ch_cleaned_assemblies
+        //     .map { meta, assembly -> [ meta.subMap(['id','sample']), meta, assembly ] }
+        //     .combine (
+        //         PREPARE_INPUT.out.hifi
+        //             .map { meta, reads -> [ meta.subMap(['id','sample']), reads ] },
+        //         by: 0
+        //     )
         if ( 'inspect' in workflow_steps ) {
             // Add kmer coverage from GenomeScope model
-            ch_topurge.combine( GENOME_PROPERTIES.out.kmer_cov.map{ meta, cov -> [ meta.subMap(['id','sample']), cov ] } , by: 0 )
-                .map { key, meta, assemblies, reads, kmer_cov -> [ meta + [ kmercov: kmer_cov ], reads, assemblies ] }
-                .set { ch_topurge }
-        } else {
-            ch_topurge.map { key, meta, assemblies, reads -> [ meta, reads, assemblies ] }
-                .set { ch_topurge }
+            ch_topurge = combineByMetaKeys(
+                ch_topurge,
+                GENOME_PROPERTIES.out.kmer_cov,
+                keySet: ['id','sample'],
+                meta: 'lhs'
+            )
+            .map { meta, reads, assemblies, kmer_cov -> [ meta + [ kmercov: kmer_cov ], reads, assemblies ] }
         }
-        // TODO update meta assembly stage to purged
+            // ch_topurge.combine( GENOME_PROPERTIES.out.kmer_cov.map{ meta, cov -> [ meta.subMap(['id','sample']), cov ] } , by: 0 )
+            //     .map { key, meta, assemblies, reads, kmer_cov -> [ meta + [ kmercov: kmer_cov ], reads, assemblies ] }
+            //     .set { ch_topurge }
+        // } else {
+        //     ch_topurge.map { key, meta, assemblies, reads -> [ meta, reads, assemblies ] }
+        //         .set { ch_topurge }
+        // }
         PURGE_DUPLICATES ( ch_topurge.dump( tag: 'Purge duplicates: input' ) )
+        ch_purged_assemblies = ch_purged_assemblies.mix( PURGE_DUPLICATES.out.assembly )
+        EVALUATE_PURGED_ASSEMBLY (
+            ch_purged_assemblies,
+            PREPARE_INPUT.out.hifi,
+            BUILD_HIFI_DATABASES.out.fastk_histogram.join( BUILD_HIFI_DATABASES.out.fastk_ktab ),
+            params.reference ? file( params.reference, checkIfExists: true ) : [],
+            params.busco.lineages_db_path ? file( params.busco.lineages_db_path, checkIfExists: true ) : []
+        )
     }
 
     // Polish
@@ -194,11 +249,13 @@ workflow.onComplete {
     if( workflow.success ){
         log.info("""
         Thank you for using the NBIS Earth Biogenome Project Assembly workflow.
+        The workflow completed successfully.
 
         Results are located in the folder: $params.outdir
         """)
     } else {
         log.info("""
+        Thank you for using the NBIS Earth Biogenome Project Assembly workflow.
         The workflow completed unsuccessfully.
 
         Please read over the error message. If you are unable to solve it, please

@@ -2,8 +2,10 @@
 
 import org.yaml.snakeyaml.Yaml
 
-include { SAMTOOLS_FASTA } from "$projectDir/modules/local/samtools/fasta/main"
-include { GOAT_TAXONSEARCH } from "$projectDir/modules/nf-core/goat/taxonsearch/main"
+include { UNTAR as UNTAR_TAXONOMY } from "$projectDir/modules/nf-core/untar/main"
+include { TAXONKIT_NAME2LINEAGE   } from "$projectDir/modules/local/taxonkit/name2lineage"
+include { GOAT_TAXONSEARCH        } from "$projectDir/modules/nf-core/goat/taxonsearch/main"
+include { SAMTOOLS_FASTA          } from "$projectDir/modules/local/samtools/fasta/main"
 
 /* params.input example sample sheet (samplesheet.yml)
 ```yaml
@@ -111,32 +113,38 @@ workflow PREPARE_INPUT {
 
     take:
     infile
+    taxdb
 
     main:
     // Read in YAML
-    ch_input = Channel.fromPath( infile )
+    ch_input = Channel.fromPath( infile, checkIfExists: true )
         .map { file -> readYAML( file ) }
-    
-    // Update meta with GOAT before propagating
-    // TODO: Bypass if certain fields are present
-    GOAT_TAXONSEARCH( ch_input.map { data -> [ data, data.sample.name, [] ] } ).taxonsearch
+
+    UNTAR_TAXONOMY( Channel.fromPath( taxdb, checkIfExists: true ).map{ tar -> [ [ id: 'taxdb' ], tar ] } )
+    TAXONKIT_NAME2LINEAGE( ch_input, UNTAR_TAXONOMY.out.untar.map{ meta, archive -> archive }.collect() ).tsv
+        .branch { meta, tsv_f -> def sv = tsv_f.splitCsv( sep:"\t" )
+        def new_meta = meta.deepMerge( [ id: sv[0][0].replace(" ","_"), sample: [ taxid: sv[0][1], kingdom: sv[0][2] ] ] )
+            eukaryota: sv[0][2] == 'Eukaryota'
+                return new_meta
+            other: true
+                return new_meta
+        }.set { ch_input_wTaxID }
+    // Update meta with GOAT before propagating (eukaryotes only)
+    GOAT_TAXONSEARCH( ch_input_wTaxID.eukaryota.map { data -> [ data, data.sample.name, [] ] } ).taxonsearch
         .map { meta, tsv ->
-            def busco_lineages = tsv.splitCsv( sep:"\t", header: true ).findAll { it.odb10_lineage }.collect { it.odb10_lineage }.join(',') 
+            def busco_lineages = tsv.splitCsv( sep:"\t", header: true ).findAll { it.odb10_lineage }.collect { it.odb10_lineage }.join(',')
             def species = tsv.splitCsv( sep:"\t", header: true ).find { it.scientific_name == meta.sample.name }
-            // Update meta in place since there should be no concurrent access here.
-            meta.id = meta.sample.name.replace(" ","_")
-            meta.sample = meta.sample + [ genome_size: species.genome_size, chromosome_number: species.chromosome_number, ploidy: species.ploidy ]
-            if( ! meta.settings ) {
-                meta = meta + [ settings: [ busco: [ lineages: busco_lineages ] ] ]
-            } else if ( ! meta.settings.busco ) {
-                meta.settings = meta.settings + [ busco: [ lineages: busco_lineages ] ]
-            } else if ( ! meta.settings.busco.lineages ) {
-                meta.settings.busco = meta.settings.busco + [ lineages: busco_lineages ]
-            } else {
-                meta // Leave settings unchanged
-            }
-            meta
+            meta.deepMerge([
+                sample: [
+                    genome_size: meta.sample.genome_size ?: species.genome_size,
+                    chromosome_number: meta.sample.chromosome_number ?: species.chromosome_number,
+                    ploidy: meta.sample.ploidy ?: species.ploidy
+                ],
+                settings: [ busco: [ lineages: params.busco.lineages?: busco_lineages ] ]
+            ])
         }
+        .mix( ch_input_wTaxID.other )
+        .dump( tag: 'Input: Meta', pretty: true )
         .multiMap { data ->
             assembly_ch : ( data.assembly ? [ data.subMap('id','sample','settings') , data.assembly ] : [] )
             hic_ch      : ( data.hic      ? [ data.subMap('id','sample','settings') + [ single_end: false ], data.hic.collect { [ file( it.read1, checkIfExists: true ), file( it.read2, checkIfExists: true ) ] } ] : [] )
@@ -155,7 +163,7 @@ workflow PREPARE_INPUT {
                 assembler: assembly.assembler,
                 stage: assembly.stage,
                 id: assembly.id,
-                build: "$assembly.assembler-$assembly.stage-$assembly.id",
+                build: "${assembly.assembler}-${assembly.stage}-${assembly.id}",
                 pri_fasta: file( assembly.pri_fasta, checkIfExists: true ),
                 alt_fasta: ( assembly.alt_fasta ? file( assembly.alt_fasta, checkIfExists: true ) : null ),
                 pri_gfa  : ( assembly.pri_gfa ? file( assembly.pri_gfa, checkIfExists: true ) : null ),

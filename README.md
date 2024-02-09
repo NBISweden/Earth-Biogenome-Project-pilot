@@ -24,7 +24,8 @@ Current implementation:
 flowchart TD
     input[/ Input file/] --> hifi
     input --> hic
-    input --> goat_taxon[[ GOAT taxon search ]]
+    input --> taxonkit[[ TaxonKit name2taxid/reformat ]]
+    taxonkit --> goat_taxon[[ GOAT taxon search ]]
     goat_taxon --> busco
     hifi --> samtools_fa[[ Samtools fasta ]]
     samtools_fa --> fastk_hifi
@@ -120,7 +121,7 @@ Mandatory:
       name: 'Laetiporus sulphureus'  # Required: Species name. Correct spelling is important to look up species information.
       ploidy: 2                      # Optional: Estimated ploidy (default: retrieved from GOAT)
       genome_size: 2345              # Optional: Estimated genome size (default: retrieved from GOAT)
-      chr_count: 13                  # Optional: Estimated chromosome count (default: retrieved from GOAT)
+      chromosome_number: 13          # Optional: Estimated chromosome count (default: retrieved from GOAT)
     assembly:                        # Optional: List of assemblies to curate and validate.
       - assembler: hifiasm           # For each entry, the assembler,
         stage: raw                   # stage of assembly,
