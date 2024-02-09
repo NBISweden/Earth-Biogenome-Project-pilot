@@ -1,3 +1,4 @@
+include { combineByMetaKeys   } from "$projectDir/modules/local/functions"
 include { BUSCO               } from "$projectDir/modules/nf-core/busco/main"
 include { MERQURYFK_MERQURYFK } from "$projectDir/modules/local/merquryfk/merquryfk"
 // include { INSPECTOR           } from "$projectDir/modules/local/inspector/inspector"
@@ -15,9 +16,17 @@ workflow EVALUATE_ASSEMBLY {
 
     // Kmer consistency check
     MERQURYFK_MERQURYFK (
-        fastk_db.combine( assembly_ch.map { sample, assembly ->
+        combineByMetaKeys (
+            fastk_db,
+            assembly_ch.map { sample, assembly ->
                 [ sample, ( assembly.alt_fasta ? [ assembly.pri_fasta, assembly.alt_fasta ] : assembly.pri_fasta ) ]
-            }, by: 0 )
+            },
+            keySet: ['id','sample'],
+            meta: 'rhs'
+        )
+        // fastk_db.combine( assembly_ch.map { sample, assembly ->
+        //         [ sample, ( assembly.alt_fasta ? [ assembly.pri_fasta, assembly.alt_fasta ] : assembly.pri_fasta ) ]
+        //     }, by: 0 )
     )
 
     // Evaluate core gene space coverage
