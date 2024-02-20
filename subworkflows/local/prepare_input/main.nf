@@ -192,7 +192,7 @@ workflow PREPARE_INPUT {
     hifi.fastx_ch.mix( SAMTOOLS_FASTA.out.fasta )
         .set { hifi_fastx_ch }
     sample_fastx = hifi_fastx_ch.groupTuple()
-        .branch { meta, fastx
+        .branch { meta, fastx ->
             single: fastx.size() == 1
                 return [ meta, *fastx ]
             multi: true
