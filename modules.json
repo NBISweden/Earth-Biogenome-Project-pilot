@@ -10,6 +10,11 @@
             "git_sha": "5892730425a245e4830124f8429c011d18a562a5",
             "installed_by": ["modules"]
           },
+          "cat/cat": {
+            "branch": "master",
+            "git_sha": "81f27e75847087865299cc46605deb3b09b4e0a2",
+            "installed_by": ["modules"]
+          },
           "fastk/fastk": {
             "branch": "master",
             "git_sha": "29e87a37ae1887fc8289f2f56775604a71715cb9",

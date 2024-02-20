@@ -6,6 +6,7 @@ include { UNTAR as UNTAR_TAXONOMY } from "$projectDir/modules/nf-core/untar/main
 include { TAXONKIT_NAME2LINEAGE   } from "$projectDir/modules/local/taxonkit/name2lineage"
 include { GOAT_TAXONSEARCH        } from "$projectDir/modules/nf-core/goat/taxonsearch/main"
 include { SAMTOOLS_FASTA          } from "$projectDir/modules/local/samtools/fasta/main"
+include { CAT_CAT as MERGE_PACBIO } from "$projectDir/modules/nf-core/cat/cat/main"
 
 /* params.input example sample sheet (samplesheet.yml)
 ```yaml
@@ -190,6 +191,14 @@ workflow PREPARE_INPUT {
     SAMTOOLS_FASTA ( hifi.bam_ch )
     hifi.fastx_ch.mix( SAMTOOLS_FASTA.out.fasta )
         .set { hifi_fastx_ch }
+    sample_fastx = hifi_fastx_ch.groupTuple()
+        .branch { meta, fastx
+            single: fastx.size() == 1
+                return [ meta, *fastx ]
+            multi: true
+                return [ meta, fastx ]
+        }
+    MERGE_PACBIO( sample_fastx.multi )
 
     // Prepare RNAseq channel
     input.rnaseq_ch.filter { !it.isEmpty() }
@@ -203,11 +212,12 @@ workflow PREPARE_INPUT {
         .set { isoseq_fastx_ch }
 
     emit:
-    assemblies = assembly_ch.dump( tag: 'Input: Assemblies' )
-    hic        = hic_fastx_ch.dump( tag: 'Input: Hi-C' )
-    hifi       = hifi_fastx_ch.dump( tag: 'Input: PacBio HiFi' )
-    rnaseq     = rnaseq_fastx_ch.dump( tag: 'Input: Illumina RnaSeq' )
-    isoseq     = isoseq_fastx_ch.dump( tag: 'Input: PacBio IsoSeq' )
+    assemblies  = assembly_ch.dump( tag: 'Input: Assemblies' )
+    hic         = hic_fastx_ch.dump( tag: 'Input: Hi-C' )
+    hifi        = hifi_fastx_ch.dump( tag: 'Input: PacBio HiFi' )
+    hifi_merged = sample_fastx.single.mix( MERGE_PACBIO.out.file_out )
+    rnaseq      = rnaseq_fastx_ch.dump( tag: 'Input: Illumina RnaSeq' )
+    isoseq      = isoseq_fastx_ch.dump( tag: 'Input: PacBio IsoSeq' )
 }
 
 def readYAML( yamlfile ) {

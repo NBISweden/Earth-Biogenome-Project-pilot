@@ -4,7 +4,7 @@ include { GFASTATS        } from "$projectDir/modules/nf-core/gfastats/main"
 
 workflow ASSEMBLE_HIFI {
     take:
-    hifi_reads
+    hifi_reads     // [ meta, fastx ]
 
     main:
         // Add build ID.

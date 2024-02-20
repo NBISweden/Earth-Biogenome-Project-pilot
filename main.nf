@@ -105,7 +105,7 @@ workflow {
         // Run assemblers
 
         // TODO: Make strategy check
-        ASSEMBLE_HIFI( PREPARE_INPUT.out.hifi )
+        ASSEMBLE_HIFI( PREPARE_INPUT.out.hifi_merged )
         ch_raw_assemblies = ch_raw_assemblies
             .mix( ASSEMBLE_HIFI.out.assemblies )
 
