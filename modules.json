@@ -204,6 +204,99 @@
             "branch": "master",
             "git_sha": "9e51255c4f8ec69fb6ccf68593392835f14fecb8",
             "installed_by": ["modules"]
+          },
+          "bcftools/consensus": {
+            "branch": "master",
+            "git_sha": "44096c08ffdbc694f5f92ae174ea0f7ba0f37e09",
+            "installed_by": [
+                "modules"
+            ]
+          },
+          "bcftools/merge": {
+              "branch": "master",
+              "git_sha": "44096c08ffdbc694f5f92ae174ea0f7ba0f37e09",
+              "installed_by": [
+                  "modules"
+              ]
+          },
+          "bcftools/view": {
+              "branch": "master",
+              "git_sha": "1013101da4252623fd7acf19cc581bae91d4f839",
+              "installed_by": [
+                  "modules"
+              ]
+          },
+          "cat/fastq": {
+              "branch": "master",
+              "git_sha": "02fd5bd7275abad27aad32d5c852e0a9b1b98882",
+              "installed_by": [
+                  "modules"
+              ]
+          },
+          "custom/dumpsoftwareversions": {
+              "branch": "master",
+              "git_sha": "8ec825f465b9c17f9d83000022995b4f7de6fe93",
+              "installed_by": [
+                  "modules"
+              ]
+          },
+          "deepvariant": {
+              "branch": "master",
+              "git_sha": "3f5420aa22e00bd030a2556dfdffc9e164ec0ec5",
+              "installed_by": [
+                  "modules"
+              ],
+              "patch": "modules/nf-core/deepvariant/deepvariant.diff"
+          },
+          "fastqc": {
+              "branch": "master",
+              "git_sha": "c9488585ce7bd35ccd2a30faa2371454c8112fb9",
+              "installed_by": [
+                  "modules"
+              ]
+          },
+          "multiqc": {
+              "branch": "master",
+              "git_sha": "8ec825f465b9c17f9d83000022995b4f7de6fe93",
+              "installed_by": [
+                  "modules"
+              ]
+          },
+          "samtools/faidx": {
+              "branch": "master",
+              "git_sha": "a64788f5ad388f1d2ac5bd5f1f3f8fc81476148c",
+              "installed_by": [
+                  "modules"
+              ]
+          },
+          "samtools/index": {
+              "branch": "master",
+              "git_sha": "ce0b1aed7d504883061e748f492a31bf44c5777c",
+              "installed_by": [
+                  "modules"
+              ]
+          },
+          "samtools/merge": {
+              "branch": "master",
+              "git_sha": "f4596fe0bdc096cf53ec4497e83defdb3a94ff62",
+              "installed_by": [
+                  "modules"
+              ]
+          },
+          "samtools/view": {
+              "branch": "master",
+              "git_sha": "ce0b1aed7d504883061e748f492a31bf44c5777c",
+              "installed_by": [
+                  "modules"
+              ],
+              "patch": "modules/nf-core/samtools/view/samtools-view.diff"
+          },
+          "tabix/tabix": {
+              "branch": "master",
+              "git_sha": "3f5420aa22e00bd030a2556dfdffc9e164ec0ec5",
+              "installed_by": [
+                  "modules"
+              ]
           }
         }
       }
