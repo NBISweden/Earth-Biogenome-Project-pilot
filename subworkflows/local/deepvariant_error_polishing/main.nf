@@ -182,7 +182,7 @@ workflow DVPOLISH {
     )
 
     vcf_merge_ch.other
-    .map { meta, vcf, idx  -> [ meta, *vcf, *idx ] } // the spread operator (*) flattens the bam lsit
+    .map { meta, vcf, idx  -> [ meta, *vcf, *idx ] } // the spread operator (*) flattens the bam list
     .mix(BCFTOOLS_MERGE.out.merged_variants
         .join(TABIX_TABIX_MERGED.out.tbi)
     )
