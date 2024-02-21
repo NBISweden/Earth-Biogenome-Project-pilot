@@ -1,6 +1,6 @@
-process FCSGX_RUNGX {
+process FCSGX_CLEAN {
     tag "$meta.id"
-    label 'process_high'
+    label 'process_low'
 
     // WARN: Version information not provided by tool on CLI. Please update version string below when bumping container versions.
     conda "${moduleDir}/environment.yml"
@@ -9,14 +9,12 @@ process FCSGX_RUNGX {
         'biocontainers/ncbi-fcs-gx:0.5.0--h4ac6f70_3' }"
 
     input:
-    tuple val(meta), val(taxid), path(assembly)
-    path gxdb
+    tuple val(meta), path(assembly), path(action_report)
 
     output:
-    tuple val(meta), path("*.fcs_gx_report.txt"), emit: fcs_gx_report
-    tuple val(meta), path("*.taxonomy.rpt")     , emit: taxonomy_report
-    tuple val(meta), path("*.hits.tsv.gz")      , emit: hits, optional: true
-    path "versions.yml"                         , emit: versions
+    tuple val(meta), path("*.clean.fasta")       , emit: clean_fasta
+    tuple val(meta), path("*.contaminants.fasta"), emit: contaminants_fasta
+    path "versions.yml"                          , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -24,16 +22,15 @@ process FCSGX_RUNGX {
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
+    def infile = assembly.name.endsWith('.gz') ? "<( gzip -dc $assembly )" : assembly
     def VERSION = '0.5.0' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
     """
-    export GX_NUM_CORES=$task.cpus
-    run_gx.py \\
-        --fasta $assembly \\
-        --gx-db $gxdb \\
-        --tax-id $taxid \\
-        --out-basename $prefix \\
-        --out-dir . \\
-        $args
+    gx \\
+        clean-genome \\
+        --input $infile \\
+        --action-report $action_report \\
+        --output ${prefix}.clean.fasta \\
+        --contam-fasta-out ${prefix}.contaminants.fasta
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
@@ -46,8 +43,8 @@ process FCSGX_RUNGX {
     def prefix = task.ext.prefix ?: "${meta.id}"
     def VERSION = '0.5.0' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
     """
-    touch ${prefix}.fcs_gx_report.txt
-    touch ${prefix}.taxonomy.rpt
+    touch ${prefix}.clean.fasta
+    touch ${prefix}.contaminants.fasta
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
