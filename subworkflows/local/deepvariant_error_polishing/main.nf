@@ -111,7 +111,7 @@ workflow DVPOLISH {
     // MODULE: Run Deepvariant
     //
     bam_merge_ch.link
-    .map { meta, bam -> [ meta, *bam ]} // the spread operator (*) flattens the bam lsit
+    .map { meta, bam -> [ meta, *bam ]} // the spread operator (*) flattens the bam list
     .join(SAMTOOLS_INDEX_FILTER.out.bai, by:0)
     .mix(SAMTOOLS_MERGE.out.bam
         .join(SAMTOOLS_INDEX_MERGE.out.bai, by:0)
