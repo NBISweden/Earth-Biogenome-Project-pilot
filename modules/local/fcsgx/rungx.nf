@@ -11,6 +11,7 @@ process FCSGX_RUNGX {
     input:
     tuple val(meta), val(taxid), path(assembly)
     path gxdb
+    path ramdisk_path
 
     output:
     tuple val(meta), path("*.fcs_gx_report.txt"), emit: fcs_gx_report
@@ -24,12 +25,16 @@ process FCSGX_RUNGX {
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
+    def mv_database_to_ram = ramdisk_path ? "rclone copy $gxdb $ramdisk_path/$task.hash" : ''
+    def database = ramdisk_path ? "$ramdisk_path/$task.hash" : gxdb // Use task.hash to make memory location unique
     def VERSION = '0.5.0' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
     """
     export GX_NUM_CORES=$task.cpus
+    $mv_database_to_ram
+
     run_gx.py \\
         --fasta $assembly \\
-        --gx-db $gxdb \\
+        --gx-db $database \\
         --tax-id $taxid \\
         --out-basename $prefix \\
         --out-dir . \\
