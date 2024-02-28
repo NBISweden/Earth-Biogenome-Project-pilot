@@ -138,7 +138,7 @@ workflow PREPARE_INPUT {
             meta.deepMerge([
                 sample: [
                     genome_size: meta.sample.genome_size ?: species.genome_size,
-                    chromosome_number: meta.sample.chromosome_number ?: species.chromosome_number,
+                    haploid_number: meta.sample.haploid_number ?: species.haploid_number,
                     ploidy: meta.sample.ploidy ?: species.ploidy
                 ],
                 settings: [ busco: [ lineages: params.busco.lineages?: busco_lineages ] ]
@@ -218,6 +218,7 @@ workflow PREPARE_INPUT {
     hifi_merged = sample_fastx.single.mix( MERGE_PACBIO.out.file_out )
     rnaseq      = rnaseq_fastx_ch.dump( tag: 'Input: Illumina RnaSeq' )
     isoseq      = isoseq_fastx_ch.dump( tag: 'Input: PacBio IsoSeq' )
+    multiqc_files =
 }
 
 def readYAML( yamlfile ) {
