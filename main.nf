@@ -160,7 +160,7 @@ workflow {
                     [ updated_meta + [ haplotype: 0 ], updated_meta.sample.taxid, assembly.pri_fasta ]
                 ]
             }
-        FCSGX_RUNGX( ch_to_screen, ch_fcs_database.collect() )
+        FCSGX_RUNGX( ch_to_screen, ch_fcs_database.collect(), params.fcs.ramdisk_path )
         FCSGX_CLEAN(
             ch_to_screen.join( FCSGX_RUNGX.out.fcs_gx_report, by: 0 )
                 .map { meta, taxid, asm, rpt -> [ meta, asm, rpt ] }
