@@ -37,17 +37,21 @@ workflow ASSEMBLE_HIFI {
             []  // Hi-C r2
         )
         raw_assembly_ch = params.use_phased ? HIFIASM.out.paternal_contigs.mix( HIFIASM.out.maternal_contigs ) : HIFIASM.out.processed_contigs
-        GFASTATS(
-            raw_assembly_ch,
-            "gfa",   // output format
-            "",      // genome size
-            "",      // target
-            [],      // AGP file
-            [],      // include bed
-            [],      // exclude bed
-            []       // SAK instructions
-        )
         GFATOOLS_GFA2FA( raw_assembly_ch )
+        fasta_ch = GFATOOLS_GFA2FA.out.fasta.multiMap{
+            fasta: [ meta, fasta ]
+            genome_size: meta.sample.genome_size
+        }
+        GFASTATS(
+            fasta_ch.fasta,
+            "fasta",              // output format
+            fasta_ch.genome_size, // genome size
+            "",                   // target
+            [],                   // AGP file
+            [],                   // include bed
+            [],                   // exclude bed
+            []                    // SAK instructions
+        )
 
         gfa_ch = params.use_phased ?
             HIFIASM.out.paternal_contigs
