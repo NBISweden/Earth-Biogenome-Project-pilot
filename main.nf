@@ -27,6 +27,8 @@ include { EVALUATE_ASSEMBLY as EVALUATE_PURGED_ASSEMBLY } from "$projectDir/subw
 
 include { ALIGN_RNASEQ       } from "$projectDir/subworkflows/local/align_rnaseq/main"
 
+include { ASSEMBLY_REPORT } from "$projectDir/subworkflows/local/assembly_report/main"
+
 /*
  * Development: See docs/development to understand the workflow programming model and
  * how channel contents are structured.
@@ -57,6 +59,10 @@ workflow {
     log.info("""
     Running NBIS Earth Biogenome Project Assembly workflow.
     """)
+
+    // Setup sink channels
+    ch_multiqc_files = Channel.empty()
+    ch_versions      = Channel.empty()
 
     // Read in data
     PREPARE_INPUT (
@@ -200,6 +206,12 @@ workflow {
                 .map { meta, assembly -> [ meta, assembly.pri_fasta ] }
         )
     }
+
+    ASSEMBLY_REPORT(
+        PREPARE_INPUT.out.sample_meta,
+        ch_multiqc_files,
+        ch_versions
+    )
 }
 
 workflow.onComplete {
