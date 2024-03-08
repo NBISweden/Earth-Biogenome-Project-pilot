@@ -145,6 +145,7 @@ workflow PREPARE_INPUT {
             ])
         }
         .mix( ch_input_wTaxID.other )
+        .tap { sample_meta_ch }
         .dump( tag: 'Input: Meta', pretty: true )
         .multiMap { data ->
             assembly_ch : ( data.assembly ? [ data.subMap('id','sample','settings') , data.assembly ] : [] )
@@ -212,13 +213,13 @@ workflow PREPARE_INPUT {
         .set { isoseq_fastx_ch }
 
     emit:
+    sample_meta = sample_meta_ch.map { data -> data.subMap('sample') }
     assemblies  = assembly_ch.dump( tag: 'Input: Assemblies' )
     hic         = hic_fastx_ch.dump( tag: 'Input: Hi-C' )
     hifi        = hifi_fastx_ch.dump( tag: 'Input: PacBio HiFi' )
     hifi_merged = sample_fastx.single.mix( MERGE_PACBIO.out.file_out )
     rnaseq      = rnaseq_fastx_ch.dump( tag: 'Input: Illumina RnaSeq' )
     isoseq      = isoseq_fastx_ch.dump( tag: 'Input: PacBio IsoSeq' )
-    multiqc_files =
 }
 
 def readYAML( yamlfile ) {
