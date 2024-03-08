@@ -1,0 +1,31 @@
+module_order:
+  - "dtol"
+  - "traits"
+  # - "Custom insert curation notes", e.g. like methodology section
+  - "Data Profile"
+  - "Software versions - Assembly"
+  - "Software versions - Curation"
+  - "Assembly metrics"
+  - "Contact Maps"
+  - "Merqury"
+  - "Blobtools"
+
+custom_data:
+  dtol:
+    file_format: "tsv"
+    section_name: "DToL"
+    description: "Darwin Tree of Life identifier and related meta data"
+    plot_type: "table"
+  traits:
+    file_format: "tsv"
+    section_name: "Genome traits"
+    description: "Sample genome traits"
+    plot_type: "table"
+
+sp: # Search pattern
+  dtol:
+    fn: "DToL.tsv"
+  traits:
+    fn: "Genome_traits.tsv"
+
+disable_version_detection: true
