@@ -4,6 +4,7 @@
 evaluate(new File("$projectDir/lib/MapExtended.groovy"))
 
 include { combineByMetaKeys } from "$projectDir/modules/local/functions"
+include { assembliesFromStage as preassembledInput } from "$projectDir/modules/local/functions"
 
 include { PREPARE_INPUT } from "$projectDir/subworkflows/local/prepare_input/main"
 
@@ -86,7 +87,7 @@ workflow {
     }
 
     // Assemble
-    ch_raw_assemblies = PREPARE_INPUT.out.assemblies.filter { meta, assembly -> meta.assembly.stage in ['raw'] }
+    ch_raw_assemblies = preassembledInput(PREPARE_INPUT.out.assemblies,'raw')
     if ( 'assemble' in workflow_steps ) {
         // Run assemblers
         ASSEMBLE ( PREPARE_INPUT.out.hifi_merged )
@@ -111,7 +112,7 @@ workflow {
     )
 
     // Contamination screen
-    ch_cleaned_assemblies = PREPARE_INPUT.out.assemblies.filter { meta, assembly -> meta.assembly.stage in ['decontaminated'] }
+    ch_cleaned_assemblies = preassembledInput(PREPARE_INPUT.out.assemblies,'decontaminated')
     if ( 'screen' in workflow_steps ) {
         DECONTAMINATE( ch_raw_assemblies )
         ch_cleaned_assemblies = ch_cleaned_assemblies.mix( DECONTAMINATE.out.assemblies )
@@ -122,8 +123,9 @@ workflow {
     }
 
     // Purge duplicates
-    ch_purged_assemblies = PREPARE_INPUT.out.assemblies.filter { meta, assembly -> meta.assembly.stage in ['purged'] }
+    ch_purged_assemblies = preassembledInput(PREPARE_INPUT.out.assemblies,'purged')
     if ( 'purge' in workflow_steps ) {
+        // TODO: Move this inside the purge dups workflow
         ch_topurge = combineByMetaKeys(
             PREPARE_INPUT.out.hifi,
             ch_cleaned_assemblies.map{ meta, assemblies -> [ meta.deepMerge([ assembly: [ stage: 'purged', build: "${meta.assembly.assembler}-purged-${meta.assembly.id}" ] ]), assemblies ] },

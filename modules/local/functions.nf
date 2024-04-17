@@ -57,3 +57,7 @@ def joinByMetaKeys( Map args = [:], lhs, rhs ) {
             assert args.meta in ['lhs','rhs','merge','subset']
     }
 }
+
+def assembliesFromStage( assemblies, String stage ){
+    assemblies.filter { meta, assembly -> meta.assembly?.stage == stage }
+}
