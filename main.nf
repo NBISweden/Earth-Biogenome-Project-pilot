@@ -96,6 +96,7 @@ workflow {
     } else {
         // Nothing more than evaluate
     }
+    ch_raw_assemblies.dump(tag: 'Assemblies: Raw')
     // TODO: Add organelle assembly from reads
     ASSEMBLE_ORGANELLES ( raw_assemblies )
     // TODO: filter organelles from assemblies
@@ -112,7 +113,7 @@ workflow {
     ch_to_screen = setAssemblyStage (
         ch_raw_assemblies,
         'decontaminated' // Set assembly stage now for filenaming
-    )
+    ).dump(tag: 'Assemblies: to screen')
     if ( 'screen' in workflow_steps ) {
         DECONTAMINATE( ch_to_screen )
         ch_cleaned_assemblies = DECONTAMINATE.out.assemblies
@@ -121,13 +122,13 @@ workflow {
     }
     ch_cleaned_assemblies = ch_cleaned_assemblies.mix (
         preassembledInput( PREPARE_INPUT.out.assemblies, 'decontaminated' )
-    )
+    ).dump(tag: 'Assemblies: Cleaned')
 
     // Purge duplicates
     ch_to_purge = setAssemblyStage (
         ch_cleaned_assemblies,
         'purged' // Set assembly stage now for filenaming
-    )
+    ).dump(tag: 'Assemblies: to purge')
     if ( 'purge' in workflow_steps ) {
         PURGE_DUPLICATES (
             ch_to_purge,
@@ -139,7 +140,7 @@ workflow {
     }
     ch_purged_assemblies = ch_purged_assemblies.mix(
         preassembledInput( PREPARE_INPUT.out.assemblies, 'purged' )
-    )
+    ).dump(tag: 'Assemblies: Purged')
     EVALUATE_PURGED_ASSEMBLY (
         ch_purged_assemblies,
         PREPARE_INPUT.out.hifi,
@@ -150,7 +151,7 @@ workflow {
     ch_to_polish = setAssemblyStage (
         ch_purged_assemblies,
         'polished' // Set assembly stage now for filenaming
-    )
+    ).dump(tag: 'Assemblies: to polish')
     if ( 'polish' in workflow_steps ) {
         // Run polishers
         ch_polished_assemblies = ch_to_polish
@@ -159,13 +160,13 @@ workflow {
     }
     ch_polished_assemblies = ch_polished_assemblies.mix(
         preassembledInput( PREPARE_INPUT.out.assemblies, 'polished' )
-    )
+    ).dump(tag: 'Assemblies: Polished')
 
     // Scaffold
     ch_to_scaffold = setAssemblyStage (
         ch_polished_assemblies,
         'scaffolded' // Set assembly stage now for filenaming
-    )
+    ).dump(tag: 'Assemblies: to scaffold')
     if ( 'scaffold' in workflow_steps ) {
         // Run scaffolder
         ch_scaffolded_assemblies = ch_to_scaffold
@@ -174,13 +175,13 @@ workflow {
     }
     ch_scaffolded_assemblies = ch_scaffolded_assemblies.mix(
         preassembledInput( PREPARE_INPUT.out.assemblies, 'scaffolded' )
-    )
+    ).dump(tag: 'Assemblies: Scaffolded')
 
     // Curate
     ch_to_curate = setAssemblyStage (
         ch_scaffolded_assemblies,
         'curated' // Set assembly stage now for filenaming
-    )
+    ).dump(tag: 'Assemblies: to curate')
     if ( 'curate' in workflow_steps ) {
         // Run assemblers
         ch_curated_assemblies = ch_to_curate
@@ -189,7 +190,7 @@ workflow {
     }
     ch_curated_assemblies = ch_curated_assemblies.mix(
         preassembledInput( PREPARE_INPUT.out.assemblies, 'curated' )
-    )
+    ).dump(tag: 'Assemblies: Curated')
 
     // Align RNAseq
     if( 'alignRNA' in workflow_steps ) {
