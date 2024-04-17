@@ -109,8 +109,6 @@ workflow {
         ch_raw_assemblies,
         PREPARE_INPUT.out.hifi,
         BUILD_HIFI_DATABASES.out.fastk_histogram.join( BUILD_HIFI_DATABASES.out.fastk_ktab ),
-        params.reference ? file( params.reference, checkIfExists: true ) : [],
-        params.busco.lineages_db_path ? file( params.busco.lineages_db_path, checkIfExists: true ) : []
     )
 
     // Contamination screen
@@ -148,9 +146,7 @@ workflow {
     EVALUATE_PURGED_ASSEMBLY (
         ch_purged_assemblies,
         PREPARE_INPUT.out.hifi,
-        BUILD_HIFI_DATABASES.out.fastk_histogram.join( BUILD_HIFI_DATABASES.out.fastk_ktab ),
-        params.reference ? file( params.reference, checkIfExists: true ) : [], // This makes reading it harder. Move to workflow
-        params.busco.lineages_db_path ? file( params.busco.lineages_db_path, checkIfExists: true ) : []
+        BUILD_HIFI_DATABASES.out.fastk_histogram.join( BUILD_HIFI_DATABASES.out.fastk_ktab )
     )
 
     // Polish
