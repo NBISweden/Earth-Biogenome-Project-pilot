@@ -107,7 +107,6 @@ workflow {
     COMPARE_ASSEMBLIES ( ch_raw_assemblies )
     EVALUATE_RAW_ASSEMBLY (
         ch_raw_assemblies,
-        ch_hifi,
         BUILD_HIFI_DATABASES.out.fastk_hist_ktab,
     )
 
@@ -145,7 +144,6 @@ workflow {
     ).dump(tag: 'Assemblies: Purged')
     EVALUATE_PURGED_ASSEMBLY (
         ch_purged_assemblies,
-        ch_hifi,
         BUILD_HIFI_DATABASES.out.fastk_hist_ktab
     )
 

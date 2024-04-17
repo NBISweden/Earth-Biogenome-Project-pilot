@@ -7,7 +7,6 @@ workflow EVALUATE_ASSEMBLY {
 
     take:
     assembly_ch        // input type: [ meta, [ id:'assemblerX_build1', pri_fasta: '/path/to/primary_asm', alt_fasta: '/path/to/alternate_asm' ] ]
-    reads_ch           // input type: [ meta, [ 'path/to/reads' ] ]
     fastk_db           // input type: [ meta, [ 'path/to/reads.hist' ], [ '/path/to/reads.ktab' ] ]
 
     main:
