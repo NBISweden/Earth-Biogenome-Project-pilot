@@ -3,7 +3,7 @@
 // Include Map.deepMerge() function
 evaluate(new File("$projectDir/lib/MapExtended.groovy"))
 
-include { dropMeta; combineByMetaKeys } from "$projectDir/modules/local/functions"
+include { combineByMetaKeys } from "$projectDir/modules/local/functions"
 
 include { PREPARE_INPUT } from "$projectDir/subworkflows/local/prepare_input/main"
 

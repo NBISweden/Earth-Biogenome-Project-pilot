@@ -1,7 +1,3 @@
-def dropMeta( channel ){
-    channel.map{ it[1] }
-}
-
 def combineByMetaKeys( Map args = [:], lhs, rhs ){
     assert args.keySet != null
     def combine_args = [ by: 0 ]
