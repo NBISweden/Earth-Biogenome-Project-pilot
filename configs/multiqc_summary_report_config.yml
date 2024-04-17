@@ -1,3 +1,8 @@
+title: "BGE Assembly Report"
+output_fn_name: BGE_assembly_multiqc_report.html
+intro_text: |
+  An assembly report for the BGE project.
+
 module_order:
   - "dtol"
   - "traits"
