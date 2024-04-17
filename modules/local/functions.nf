@@ -65,3 +65,15 @@ def assembliesFromStage( assemblies, String stage ) {
 def setAssemblyStage( assemblies, String stage ) {
     assemblies.map{ meta, assemblies -> [ meta.deepMerge([ assembly: [ stage: stage, build: "${meta.assembly.assembler}-${stage}-${meta.assembly.id}" ] ]), assemblies ] }
 }
+
+def getPrimaryAssembly( assemblies ) {
+    assemblies.map { meta, assembly -> [ meta, assembly.pri_fasta ] }
+}
+
+def constructAssemblyRecord( assemblies ) {
+    assemblies.groupTuple( sort: { a, b -> a.name <=> b.name } )
+        .map { meta, fasta ->
+            def asm_meta = meta.assembly.subMap(['assembler','stage','id','build'])
+            [ meta, asm_meta + (fasta.size() == 1 ? [ pri_fasta: fasta[0] ] : [ pri_fasta: fasta[0], alt_fasta: fasta[1] ] ) ]
+        }
+}

@@ -101,10 +101,7 @@ workflow {
     // TODO: filter organelles from assemblies
 
     // Assess assemblies
-    COMPARE_ASSEMBLIES (
-        ch_raw_assemblies,
-        params.reference ? file( params.reference, checkIfExists: true ) : []
-    )
+    COMPARE_ASSEMBLIES ( ch_raw_assemblies )
     EVALUATE_RAW_ASSEMBLY (
         ch_raw_assemblies,
         PREPARE_INPUT.out.hifi,
