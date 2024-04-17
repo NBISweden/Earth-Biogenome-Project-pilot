@@ -24,7 +24,7 @@ workflow DVPOLISH {
     reads_plus_assembly_ch     // [ meta, [reads], [assembly] ], where reads are the pacbio files, and assembly is the primary and alternate asms
 
     main:
-    Channel.fromPath(params.fasta_file, checkIfExists: true)
+/*    Channel.fromPath(params.fasta_file, checkIfExists: true)
         .map{asm -> [ meta_map, asm ]}
         .collect()          // to make a value channel, otherwise it will only be used once in the alignmnent step and than its consumed !!!
         .set{asm_file}
@@ -32,6 +32,25 @@ workflow DVPOLISH {
     Channel.fromPath(params.reads_file, checkIfExists: true)
                 .map{reads -> [meta_map, reads ]}
         .set{reads_file}
+*/
+
+    // Need to move this outside the workflow to submit to nf-core.
+    reads_plus_assembly_ch
+        // Add single_end for minimap module
+        .flatMap { meta, reads, assembly -> reads instanceof List ?
+            reads.collect{ [ meta + [ single_end: true ], it, assembly.pri_fasta ] }
+            : [ [ meta + [ single_end: true ], reads, assembly.pri_fasta ] ] }
+        .multiMap { meta, reads, assembly ->
+            reads_ch: [ meta, reads ]
+            assembly_ch: assembly
+        }
+        .set { input }
+    reads_plus_assembly_ch
+        .map { meta, reads, assembly -> [ meta, assembly.pri_fasta ] }
+        .set { primary_assembly_ch }
+
+    asm_file = input.assembly_ch 
+    reads_file = input.reads_ch
 
     //
     // MODULE: Run SAMTOOLS_FAIDX
@@ -193,6 +212,8 @@ workflow DVPOLISH {
         bcftools_consensus_ch
     )
 
+    ch_polished_assemblies = BCFTOOLS_CONSENSUS.out.fasta
+
     emit:
-    assembly = BCFTOOLS_CONSENSUS.out.fasta
+    assembly = ch_polished_assemblies
 }
