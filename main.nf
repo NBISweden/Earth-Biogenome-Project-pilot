@@ -147,34 +147,55 @@ workflow {
     )
 
     // Polish
+    ch_to_polish = setAssemblyStage (
+        ch_purged_assemblies,
+        'polished' // Set assembly stage now for filenaming
+    )
     if ( 'polish' in workflow_steps ) {
         // Run polishers
+        ch_polished_assemblies = ch_to_polish
     } else {
-        // Skip polishing. Use purged
-        // TODO. Update meta stage
+        ch_polished_assemblies = ch_to_polish
     }
+    ch_polished_assemblies = ch_polished_assemblies.mix(
+        preassembledInput( PREPARE_INPUT.out.assemblies, 'polished' )
+    )
 
     // Scaffold
+    ch_to_scaffold = setAssemblyStage (
+        ch_polished_assemblies,
+        'scaffolded' // Set assembly stage now for filenaming
+    )
     if ( 'scaffold' in workflow_steps ) {
         // Run scaffolder
+        ch_scaffolded_assemblies = ch_to_scaffold
     } else {
-        // Skip scaffolding. Use polished
-        // TODO. Update meta stage
+        ch_scaffolded_assemblies = ch_to_scaffold
     }
+    ch_scaffolded_assemblies = ch_scaffolded_assemblies.mix(
+        preassembledInput( PREPARE_INPUT.out.assemblies, 'scaffolded' )
+    )
 
     // Curate
+    ch_to_curate = setAssemblyStage (
+        ch_scaffolded_assemblies,
+        'curated' // Set assembly stage now for filenaming
+    )
     if ( 'curate' in workflow_steps ) {
         // Run assemblers
+        ch_curated_assemblies = ch_to_curate
     } else {
-        // Skip curation. Use scaffolded
-        // TODO. Update meta stage
+        ch_curated_assemblies = ch_to_curate
     }
+    ch_curated_assemblies = ch_curated_assemblies.mix(
+        preassembledInput( PREPARE_INPUT.out.assemblies, 'curated' )
+    )
 
     // Align RNAseq
     if( 'alignRNA' in workflow_steps ) {
         ALIGN_RNASEQ (
             PREPARE_INPUT.out.rnaseq,
-            PREPARE_INPUT.out.assemblies
+            PREPARE_INPUT.out.assemblies // TODO: Select assembly stage
                 .map { meta, assembly -> [ meta, assembly.pri_fasta ] }
         )
     }
