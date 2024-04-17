@@ -71,6 +71,7 @@ workflow {
     }
 
     // Data inspection
+    ch_hifi = PREPARE_INPUT.out.hifi
     if ( 'inspect' in workflow_steps ) {
         // QC Steps
         INSPECT_DATA(
@@ -78,6 +79,7 @@ workflow {
             BUILD_HIFI_DATABASES.out.fastk_hist_ktab,
             BUILD_HIC_DATABASES.out.fastk_hist_ktab
         )
+        ch_hifi = INSPECT_DATA.out.hifi // with added kmer coverage
     }
 
     // Preprocess data
@@ -105,7 +107,7 @@ workflow {
     COMPARE_ASSEMBLIES ( ch_raw_assemblies )
     EVALUATE_RAW_ASSEMBLY (
         ch_raw_assemblies,
-        PREPARE_INPUT.out.hifi,
+        ch_hifi,
         BUILD_HIFI_DATABASES.out.fastk_hist_ktab,
     )
 
@@ -132,7 +134,7 @@ workflow {
     if ( 'purge' in workflow_steps ) {
         PURGE_DUPLICATES (
             ch_to_purge,
-            'inspect' in workflow_steps ? INSPECT_DATA.out.hifi : PREPARE_INPUT.out.hifi
+            ch_hifi
         )
         ch_purged_assemblies = PURGE_DUPLICATES.out.assemblies
     } else {
@@ -143,7 +145,7 @@ workflow {
     ).dump(tag: 'Assemblies: Purged')
     EVALUATE_PURGED_ASSEMBLY (
         ch_purged_assemblies,
-        PREPARE_INPUT.out.hifi,
+        ch_hifi,
         BUILD_HIFI_DATABASES.out.fastk_hist_ktab
     )
 
