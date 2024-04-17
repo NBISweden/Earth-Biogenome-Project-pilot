@@ -75,8 +75,8 @@ workflow {
         // QC Steps
         INSPECT_DATA(
             PREPARE_INPUT.out.hifi,
-            BUILD_HIFI_DATABASES.out.fastk_histogram.join( BUILD_HIFI_DATABASES.out.fastk_ktab ),
-            BUILD_HIC_DATABASES.out.fastk_histogram.join( BUILD_HIC_DATABASES.out.fastk_ktab )
+            BUILD_HIFI_DATABASES.out.fastk_hist_ktab,
+            BUILD_HIC_DATABASES.out.fastk_hist_ktab
         )
     }
 
@@ -105,7 +105,7 @@ workflow {
     EVALUATE_RAW_ASSEMBLY (
         ch_raw_assemblies,
         PREPARE_INPUT.out.hifi,
-        BUILD_HIFI_DATABASES.out.fastk_histogram.join( BUILD_HIFI_DATABASES.out.fastk_ktab ),
+        BUILD_HIFI_DATABASES.out.fastk_hist_ktab,
     )
 
     // Contamination screen
@@ -143,7 +143,7 @@ workflow {
     EVALUATE_PURGED_ASSEMBLY (
         ch_purged_assemblies,
         PREPARE_INPUT.out.hifi,
-        BUILD_HIFI_DATABASES.out.fastk_histogram.join( BUILD_HIFI_DATABASES.out.fastk_ktab )
+        BUILD_HIFI_DATABASES.out.fastk_hist_ktab
     )
 
     // Polish
