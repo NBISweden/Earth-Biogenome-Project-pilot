@@ -58,6 +58,10 @@ def joinByMetaKeys( Map args = [:], lhs, rhs ) {
     }
 }
 
-def assembliesFromStage( assemblies, String stage ){
+def assembliesFromStage( assemblies, String stage ) {
     assemblies.filter { meta, assembly -> meta.assembly?.stage == stage }
+}
+
+def setAssemblyStage( assemblies, String stage ) {
+    assemblies.map{ meta, assemblies -> [ meta.deepMerge([ assembly: [ stage: stage, build: "${meta.assembly.assembler}-${stage}-${meta.assembly.id}" ] ]), assemblies ] }
 }
