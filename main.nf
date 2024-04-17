@@ -3,8 +3,9 @@
 // Include Map.deepMerge() function
 evaluate(new File("$projectDir/lib/MapExtended.groovy"))
 
-include { combineByMetaKeys } from "$projectDir/modules/local/functions"
+include { combineByMetaKeys                        } from "$projectDir/modules/local/functions"
 include { assembliesFromStage as preassembledInput } from "$projectDir/modules/local/functions"
+include { setAssemblyStage                         } from "$projectDir/modules/local/functions"
 
 include { PREPARE_INPUT } from "$projectDir/subworkflows/local/prepare_input/main"
 
@@ -87,7 +88,7 @@ workflow {
     }
 
     // Assemble
-    ch_raw_assemblies = preassembledInput(PREPARE_INPUT.out.assemblies,'raw')
+    ch_raw_assemblies = preassembledInput( PREPARE_INPUT.out.assemblies, 'raw' )
     if ( 'assemble' in workflow_steps ) {
         // Run assemblers
         ASSEMBLE ( PREPARE_INPUT.out.hifi_merged )
@@ -95,6 +96,7 @@ workflow {
     } else {
         // Nothing more than evaluate
     }
+    // TODO: Add organelle assembly from reads
     ASSEMBLE_ORGANELLES ( raw_assemblies )
     // TODO: filter organelles from assemblies
 
@@ -112,45 +114,37 @@ workflow {
     )
 
     // Contamination screen
-    ch_cleaned_assemblies = preassembledInput(PREPARE_INPUT.out.assemblies,'decontaminated')
+    ch_to_screen = setAssemblyStage (
+        ch_raw_assemblies,
+        'decontaminated' // Set assembly stage now for filenaming
+    )
     if ( 'screen' in workflow_steps ) {
-        DECONTAMINATE( ch_raw_assemblies )
-        ch_cleaned_assemblies = ch_cleaned_assemblies.mix( DECONTAMINATE.out.assemblies )
+        DECONTAMINATE( ch_to_screen )
+        ch_cleaned_assemblies = DECONTAMINATE.out.assemblies
     } else {
-        // Skip decontamination. Use raw assemblies
-        // TODO. Update meta stage
-        ch_cleaned_assemblies = ch_cleaned_assemblies.mix( ch_raw_assemblies )
+        ch_cleaned_assemblies = ch_to_screen
     }
+    ch_cleaned_assemblies = ch_cleaned_assemblies.mix (
+        preassembledInput( PREPARE_INPUT.out.assemblies, 'decontaminated' )
+    )
 
     // Purge duplicates
-    ch_purged_assemblies = preassembledInput(PREPARE_INPUT.out.assemblies,'purged')
+    ch_to_purge = setAssemblyStage (
+        ch_cleaned_assemblies,
+        'purged' // Set assembly stage now for filenaming
+    )
     if ( 'purge' in workflow_steps ) {
-        // TODO: Move this inside the purge dups workflow
-        ch_topurge = combineByMetaKeys(
-            PREPARE_INPUT.out.hifi,
-            ch_cleaned_assemblies.map{ meta, assemblies -> [ meta.deepMerge([ assembly: [ stage: 'purged', build: "${meta.assembly.assembler}-purged-${meta.assembly.id}" ] ]), assemblies ] },
-            keySet: ['id','sample'],
-            meta: 'rhs'
+        PURGE_DUPLICATES (
+            ch_to_purge,
+            'inspect' in workflow_steps ? INSPECT_DATA.out.hifi : PREPARE_INPUT.out.hifi
         )
-        if ( 'inspect' in workflow_steps ) {
-            // Add kmer coverage from GenomeScope model
-            ch_topurge = combineByMetaKeys(
-                ch_topurge,
-                GENOME_PROPERTIES.out.kmer_cov,
-                keySet: ['id','sample'],
-                meta: 'lhs'
-            )
-            .map { meta, reads, assemblies, kmer_cov -> [ meta + [ kmercov: kmer_cov ], reads, assemblies ] }
-        }
-
-        PURGE_DUPLICATES ( ch_topurge.dump( tag: 'Purge duplicates: input' ) )
-        ch_purged_assemblies = ch_purged_assemblies.mix( PURGE_DUPLICATES.out.assembly )
-
+        ch_purged_assemblies = PURGE_DUPLICATES.out.assemblies
     } else {
-        // Skip purging. Use decontaminated
-        // TODO. Update meta stage
-        ch_purged_assemblies = ch_purged_assemblies.mix( ch_cleaned_assemblies )
+        ch_purged_assemblies = ch_to_purge
     }
+    ch_purged_assemblies = ch_purged_assemblies.mix(
+        preassembledInput( PREPARE_INPUT.out.assemblies, 'purged' )
+    )
     EVALUATE_PURGED_ASSEMBLY (
         ch_purged_assemblies,
         PREPARE_INPUT.out.hifi,
