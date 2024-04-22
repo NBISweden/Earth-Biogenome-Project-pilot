@@ -63,7 +63,7 @@ def assembliesFromStage( assemblies, String stage ) {
 }
 
 def setAssemblyStage( assemblies, String stage ) {
-    assemblies.map{ meta, assemblies -> [ meta.deepMerge([ assembly: [ stage: stage, build: "${meta.assembly.assembler}-${stage}-${meta.assembly.id}" ] ]), assemblies ] }
+    assemblies.map{ meta, assembly -> [ meta.deepMerge([ assembly: [ stage: stage, build: "${meta.assembly.assembler}-${stage}-${meta.assembly.id}" ] ]), assembly ] }
 }
 
 def getPrimaryAssembly( assemblies ) {

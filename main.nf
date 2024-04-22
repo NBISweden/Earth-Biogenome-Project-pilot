@@ -19,7 +19,7 @@ include { ASSEMBLE_ORGANELLES                        } from "$projectDir/subwork
 include { COMPARE_ASSEMBLIES                         } from "$projectDir/subworkflows/local/compare_assemblies/main"
 include { EVALUATE_ASSEMBLY as EVALUATE_RAW_ASSEMBLY } from "$projectDir/subworkflows/local/evaluate_assembly/main"
 
-include { DECONTAMINATE } from "$projectDir/modules/local/decontaminate/main"
+include { DECONTAMINATE } from "$projectDir/subworkflows/local/decontaminate/main"
 
 include { PURGE_DUPLICATES } from "$projectDir/subworkflows/local/purge_dups/main"
 
