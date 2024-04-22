@@ -100,7 +100,7 @@ workflow {
     }
     ch_raw_assemblies.dump(tag: 'Assemblies: Raw')
     // TODO: Add organelle assembly from reads
-    ASSEMBLE_ORGANELLES ( raw_assemblies )
+    ASSEMBLE_ORGANELLES ( ch_raw_assemblies )
     // TODO: filter organelles from assemblies
 
     // Assess assemblies

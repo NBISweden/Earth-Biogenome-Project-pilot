@@ -3,7 +3,7 @@ include { MITOHIFI_MITOHIFI          } from "$projectDir/modules/nf-core/mitohif
 
 workflow ASSEMBLE_ORGANELLES {
     take:
-    raw_assemblies
+    ch_raw_assemblies
 
     main:
     ch_versions = Channel.empty()
