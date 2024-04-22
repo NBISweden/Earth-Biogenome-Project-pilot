@@ -15,7 +15,7 @@ workflow INSPECT_DATA {
     GENOME_PROPERTIES ( hifi_histogram )
     COMPARE_LIBRARIES ( hifi_histogram.join( hic_histogram ) )
     SCREEN_READS (
-        PREPARE_INPUT.out.hifi,
+        hifi_reads,
         // TODO:: Allow custom database ala nf-core/genomeassembler.
         file( params.mash.screen_db, checkIfExists: true )
     )
