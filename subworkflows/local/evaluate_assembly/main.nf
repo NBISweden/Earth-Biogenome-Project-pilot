@@ -7,10 +7,7 @@ workflow EVALUATE_ASSEMBLY {
 
     take:
     assembly_ch        // input type: [ meta, [ id:'assemblerX_build1', pri_fasta: '/path/to/primary_asm', alt_fasta: '/path/to/alternate_asm' ] ]
-    reads_ch           // input type: [ meta, [ 'path/to/reads' ] ]
     fastk_db           // input type: [ meta, [ 'path/to/reads.hist' ], [ '/path/to/reads.ktab' ] ]
-    reference_ch       // optional: file( reference_genome ) for comparison
-    busco_lineage_path // Path to Busco lineage files
 
     main:
 
@@ -24,9 +21,6 @@ workflow EVALUATE_ASSEMBLY {
             keySet: ['id','sample'],
             meta: 'rhs'
         )
-        // fastk_db.combine( assembly_ch.map { sample, assembly ->
-        //         [ sample, ( assembly.alt_fasta ? [ assembly.pri_fasta, assembly.alt_fasta ] : assembly.pri_fasta ) ]
-        //     }, by: 0 )
     )
 
     // Evaluate core gene space coverage
@@ -49,7 +43,7 @@ workflow EVALUATE_ASSEMBLY {
         busco_input.assembly_ch,
         'genome',
         busco_input.lineage_ch,
-        busco_lineage_path,
+        params.busco.lineages_db_path ? file( params.busco.lineages_db_path, checkIfExists: true ) : [],
         []
     )
 }

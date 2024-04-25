@@ -1,7 +1,3 @@
-def dropMeta( channel ){
-    channel.map{ it[1] }
-}
-
 def combineByMetaKeys( Map args = [:], lhs, rhs ){
     assert args.keySet != null
     def combine_args = [ by: 0 ]
@@ -60,4 +56,24 @@ def joinByMetaKeys( Map args = [:], lhs, rhs ) {
         default:
             assert args.meta in ['lhs','rhs','merge','subset']
     }
+}
+
+def assembliesFromStage( assemblies, String stage ) {
+    assemblies.filter { meta, assembly -> meta.assembly?.stage == stage }
+}
+
+def setAssemblyStage( assemblies, String stage ) {
+    assemblies.map{ meta, assembly -> [ meta.deepMerge([ assembly: [ stage: stage, build: "${meta.assembly.assembler}-${stage}-${meta.assembly.id}" ] ]), assembly ] }
+}
+
+def getPrimaryAssembly( assemblies ) {
+    assemblies.map { meta, assembly -> [ meta, assembly.pri_fasta ] }
+}
+
+def constructAssemblyRecord( assemblies ) {
+    assemblies.groupTuple( sort: { a, b -> a.name <=> b.name } )
+        .map { meta, fasta ->
+            def asm_meta = meta.assembly.subMap(['assembler','stage','id','build'])
+            [ meta, asm_meta + (fasta.size() == 1 ? [ pri_fasta: fasta[0] ] : [ pri_fasta: fasta[0], alt_fasta: fasta[1] ] ) ]
+        }
 }

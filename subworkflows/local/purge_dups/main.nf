@@ -4,6 +4,7 @@
  */
 
 include { joinByMetaKeys                                       } from "$projectDir/modules/local/functions"
+include { combineByMetaKeys                                    } from "$projectDir/modules/local/functions"
 include { MINIMAP2_ALIGN as MINIMAP2_ALIGN_READS               } from "$projectDir/modules/nf-core/minimap2/align/main"
 include { MINIMAP2_ALIGN as MINIMAP2_ALIGN_ASSEMBLY_PRIMARY    } from "$projectDir/modules/nf-core/minimap2/align/main"
 include { MINIMAP2_ALIGN as MINIMAP2_ALIGN_ASSEMBLY_ALTERNATE  } from "$projectDir/modules/nf-core/minimap2/align/main"
@@ -20,10 +21,16 @@ include { PURGEDUPS_GETSEQS as PURGEDUPS_GETSEQS_ALTERNATE     } from "$projectD
 workflow PURGE_DUPLICATES {
 
     take:
-    reads_plus_assembly_ch     // [ meta, [reads], [assembly] ], where reads are the pacbio files, and assembly is the primary and alternate asms
+    ch_assemblies // [ meta, assembly ]
+    ch_hifi       // [ meta, hifi ]
 
     main:
-    // Need to move this outside the workflow to submit to nf-core.
+    reads_plus_assembly_ch = combineByMetaKeys (
+            ch_hifi,
+            ch_assemblies,
+            keySet: ['id','sample'],
+            meta: 'rhs'
+        )
     reads_plus_assembly_ch
         // Add single_end for minimap module
         .flatMap { meta, reads, assembly -> reads instanceof List ?
@@ -71,7 +78,7 @@ workflow PURGE_DUPLICATES {
             .join( PURGEDUPS_PURGEDUPS_PRIMARY.out.bed )
     )
 
-    // Purge alternate contigs.
+    // Purge alternate contigs. // TODO: Skip when using consensus
     reads_plus_assembly_ch
         .filter { meta, reads, assembly -> assembly.alt_fasta != null }
         .map { meta, reads, assembly -> [ meta, assembly.alt_fasta ] }
@@ -108,6 +115,6 @@ workflow PURGE_DUPLICATES {
         }
 
     emit:
-    assembly = ch_purged_assemblies
-    coverage = PURGEDUPS_PBCSTAT.out.basecov
+    assemblies = ch_purged_assemblies
+    coverage   = PURGEDUPS_PBCSTAT.out.basecov
 }

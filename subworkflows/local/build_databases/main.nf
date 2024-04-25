@@ -2,7 +2,7 @@ include { FASTK_FASTK     } from "$projectDir/modules/nf-core/fastk/fastk/main"
 include { FASTK_MERGE     } from "$projectDir/modules/nf-core/fastk/merge/main"
 
 workflow BUILD_DATABASES {
-    
+
     take:
     fastx_data
 
@@ -27,6 +27,7 @@ workflow BUILD_DATABASES {
     emit:
     fastk_histogram = fk_single.hist.mix(FASTK_MERGE.out.hist)
     fastk_ktab      = fk_single.ktab.mix(FASTK_MERGE.out.ktab)
+    fastk_hist_ktab = fk_single.hist.mix(FASTK_MERGE.out.hist).join(fk_single.ktab.mix(FASTK_MERGE.out.ktab))
     versions        = versions_ch
 
 }

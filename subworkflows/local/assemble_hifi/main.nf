@@ -38,7 +38,7 @@ workflow ASSEMBLE_HIFI {
         )
         raw_assembly_ch = params.use_phased ? HIFIASM.out.paternal_contigs.mix( HIFIASM.out.maternal_contigs ) : HIFIASM.out.processed_contigs
         GFATOOLS_GFA2FA( raw_assembly_ch )
-        fasta_ch = GFATOOLS_GFA2FA.out.fasta.multiMap{
+        fasta_ch = GFATOOLS_GFA2FA.out.fasta.multiMap { meta, fasta ->
             fasta: [ meta, fasta ]
             genome_size: meta.sample.genome_size
         }
