@@ -180,7 +180,11 @@ workflow {
     ).dump(tag: 'Assemblies: to polish')
     if ( 'polish' in workflow_steps ) {
         // Run polishers
-        ch_polished_assemblies = ch_to_polish
+        DVPOLISH(
+            ch_to_polish,
+            ch_hifi
+        )
+        ch_polished_assemblies = DVPOLISH.out.assembly
     } else {
         ch_polished_assemblies = ch_to_polish
     }
