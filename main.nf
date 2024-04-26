@@ -184,7 +184,7 @@ workflow {
             ch_to_polish,
             ch_hifi
         )
-        ch_polished_assemblies = DVPOLISH.out.assembly
+        ch_polished_assemblies = DVPOLISH.out.assemblies
     } else {
         ch_polished_assemblies = ch_to_polish
     }
