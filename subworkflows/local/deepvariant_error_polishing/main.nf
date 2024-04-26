@@ -3,6 +3,7 @@
  * https://git.mpi-cbg.de/assembly/programs/polishing
  */
 
+include { combineByMetaKeys                       } from "$projectDir/modules/local/functions"
 include { DVPOLISH_CHUNKFA                        } from "$projectDir/modules/local/dvpolish/chunkfa"
 include { DVPOLISH_PBMM2_INDEX                    } from "$projectDir/modules/local/dvpolish/pbmm2_index"
 include { DVPOLISH_PBMM2_ALIGN                    } from "$projectDir/modules/local/dvpolish/pbmm2_align"
@@ -21,42 +22,15 @@ include { BCFTOOLS_CONSENSUS                      } from "$projectDir/modules/nf
 workflow DVPOLISH {
 
     take:
-    reads_plus_assembly_ch     // [ meta, [reads], [assembly] ], where reads are the pacbio files, and assembly is the primary and alternate asms
+    ch_assemblies // [ meta, assembly ]
+    ch_hifi       // [ meta, hifi ]
 
     main:
-/*    Channel.fromPath(params.fasta_file, checkIfExists: true)
-        .map{asm -> [ meta_map, asm ]}
-        .collect()          // to make a value channel, otherwise it will only be used once in the alignmnent step and than its consumed !!!
-        .set{asm_file}
-
-    Channel.fromPath(params.reads_file, checkIfExists: true)
-                .map{reads -> [meta_map, reads ]}
-        .set{reads_file}
-*/
-
-    // Need to move this outside the workflow to submit to nf-core.
-    reads_plus_assembly_ch
-        // Add single_end for minimap module
-        .flatMap { meta, reads, assembly -> reads instanceof List ?
-            reads.collect{ [ meta + [ single_end: true ], it, assembly.pri_fasta ] }
-            : [ [ meta + [ single_end: true ], reads, assembly.pri_fasta ] ] }
-        .multiMap { meta, reads, assembly ->
-            reads_ch: [ meta, reads ]
-            assembly_ch: [ meta, assembly ]
-        }
-        .set { input }
-    reads_plus_assembly_ch
-        .map { meta, reads, assembly -> [ meta, assembly.pri_fasta ] }
-        .set { primary_assembly_ch }
-
-    input.reads_ch.view { "reads_ch: " + it }
-    input.assembly_ch.view { "assembly_ch: " + it }
-    primary_assembly_ch.view { "primary_assembly_ch: " + it }
     //
     // MODULE: Run SAMTOOLS_FAIDX
     //
     SAMTOOLS_FAIDX (
-        input.assembly_ch,
+        ch_assemblies,
         [[],[]]
     )
 
@@ -71,15 +45,15 @@ workflow DVPOLISH {
     // MODULE: PBMM2_INDEX
     //
     DVPOLISH_PBMM2_INDEX (
-        input.assembly_ch
+        ch_assemblies
     )
 
     //
     // MODULE: PBMM2_ALIGN
     //
     DVPOLISH_PBMM2_ALIGN (
-        input.reads_ch,
-        input.assembly_ch
+        ch_assemblies,
+        ch_hifi
     )
 
     //
@@ -219,5 +193,5 @@ workflow DVPOLISH {
     ch_polished_assemblies = BCFTOOLS_CONSENSUS.out.fasta
 
     emit:
-    assembly = ch_polished_assemblies
+    assemblies = ch_polished_assemblies
 }
