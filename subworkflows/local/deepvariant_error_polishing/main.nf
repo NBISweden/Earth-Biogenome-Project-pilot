@@ -116,7 +116,7 @@ workflow DVPOLISH {
 
     DEEPVARIANT(
         deepvariant_ch,
-        input.assembly_ch,
+        ch_assemblies,
         SAMTOOLS_FAIDX.out.fai,
         [[],[]]     // tuple val(meta4), path(gzi)
     )
@@ -165,7 +165,7 @@ workflow DVPOLISH {
 
     BCFTOOLS_MERGE(
         vcf_merge_ch.merge,
-        input.assembly_ch,
+        ch_assemblies,
         SAMTOOLS_FAIDX.out.fai,
         [] // path(bed)
     )
@@ -179,12 +179,12 @@ workflow DVPOLISH {
     .mix(BCFTOOLS_MERGE.out.merged_variants
         .join(TABIX_TABIX_MERGED.out.tbi)
     )
-    .join(input.assembly_ch)
+    .join(ch_assemblies)
     .set { bcftools_consensus_ch }
 
     vcf_merge_ch.other.view { "vcf_merge_ch.other: " + it}
     bcftools_consensus_ch.view { "bcftools_consensus_ch: " + it }
-    input.assembly_ch.view { "input.assembly_ch: " + it}    
+    ch_assemblies.view { "input.assembly_ch: " + it}    
 
     BCFTOOLS_CONSENSUS(
         bcftools_consensus_ch
