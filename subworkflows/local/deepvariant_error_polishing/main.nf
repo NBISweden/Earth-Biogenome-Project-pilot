@@ -3,6 +3,8 @@
  * https://git.mpi-cbg.de/assembly/programs/polishing
  */
 
+include { constructAssemblyRecord                 } from "$projectDir/modules/local/functions"
+include { joinByMetaKeys                          } from "$projectDir/modules/local/functions"
 include { combineByMetaKeys                       } from "$projectDir/modules/local/functions"
 include { DVPOLISH_CHUNKFA                        } from "$projectDir/modules/local/dvpolish/chunkfa"
 include { DVPOLISH_PBMM2_INDEX                    } from "$projectDir/modules/local/dvpolish/pbmm2_index"
@@ -26,39 +28,47 @@ workflow DVPOLISH {
     ch_hifi       // [ meta, hifi ]
 
     main:
-    //
-    // MODULE: Run SAMTOOLS_FAIDX
-    //
+
+    reads_plus_assembly_ch = combineByMetaKeys (
+            ch_hifi,
+            ch_assemblies,
+            keySet: ['id','sample'],
+            meta: 'rhs'
+        )
+    reads_plus_assembly_ch
+        // Add single_end for minimap module
+        .flatMap { meta, reads, assembly -> reads instanceof List ?
+            reads.collect{ [ meta + [ single_end: true ], it, assembly.pri_fasta ] }
+            : [ [ meta + [ single_end: true ], reads, assembly.pri_fasta ] ] }
+        .multiMap { meta, reads, assembly ->
+            reads_ch: [ meta, reads ]
+            assembly_ch: [meta, assembly ]
+        }
+        .set { input }
+
+    // index assembly file(s)
     SAMTOOLS_FAIDX (
-        ch_assemblies,
+        input.assembly_ch,
         [[],[]]
     )
+    
 
-    //
-    // MODULE: Run SPLIT_FA
-    //
+    // split assembly into smaller chunks, this step just creates bed files 
+    // that represent the assembly chunks, no sequence is split
     DVPOLISH_CHUNKFA (
         SAMTOOLS_FAIDX.out.fai
     )
 
-    //
-    // MODULE: PBMM2_INDEX
-    //
+    // create minimap2 index for assemblies
     DVPOLISH_PBMM2_INDEX (
-        ch_assemblies
+        input.assembly_ch
     )
 
-    //
-    // MODULE: PBMM2_ALIGN
-    //
+    // map reads with pbmm2 to complete assemblies (chunks are not used in that step)
     DVPOLISH_PBMM2_ALIGN (
-        ch_assemblies,
-        ch_hifi
+        input.assembly_ch,
+        input.reads_ch
     )
-
-    //
-    // MODULE: Run SAMTOOLS_VIEW
-    //
 
     def path_closure = {meta, files -> files.collect(){[meta, it ]}}
 
@@ -74,12 +84,10 @@ workflow DVPOLISH {
     .combine(DVPOLISH_CHUNKFA.out.bed.flatMap(path_closure), by:0)
     .map { meta, bai, bed -> bai }
     .set { bai_ch }
-
+    // split bam files according to bed file chunks 
     SAMTOOLS_VIEW (bam_bed_ch, [[],[]], bai_ch)
 
-    //
-    // MODULE: Run SAMTOOLS_INDEX
-    //
+    // index the splitted bam files 
     SAMTOOLS_INDEX_FILTER(SAMTOOLS_VIEW.out.bam)
 
     SAMTOOLS_VIEW.out.bam
@@ -90,19 +98,16 @@ workflow DVPOLISH {
     }
     .set { bam_merge_ch }
 
-    //
-    // MODULE: Run SAMTOOLS_MERGE
-    //
+    // in case multiple reads files are present, all corresping bam files 
+    // the where splitted in the previous step need to be merged. key:bed file ID
     SAMTOOLS_MERGE(
         bam_merge_ch.merge,
         [[],[]],
         [[],[]]
     )
+    // index merged bam files
     SAMTOOLS_INDEX_MERGE(SAMTOOLS_MERGE.out.bam)
 
-    //
-    // MODULE: Run Deepvariant
-    //
     bam_merge_ch.link
     .map { meta, bam -> [ meta, *bam ]} // the spread operator (*) flattens the bam list
     .join(SAMTOOLS_INDEX_FILTER.out.bai, by:0)
@@ -113,10 +118,10 @@ workflow DVPOLISH {
     .map { meta, bam, bed -> [meta, bed]}
     .unique())
     .set {deepvariant_ch}
-
+    // run deepvariant and the chunked bam files 
     DEEPVARIANT(
         deepvariant_ch,
-        ch_assemblies,
+        input.assembly_ch,
         SAMTOOLS_FAIDX.out.fai,
         [[],[]]     // tuple val(meta4), path(gzi)
     )
@@ -124,12 +129,8 @@ workflow DVPOLISH {
     DEEPVARIANT.out.vcf
     .join(DEEPVARIANT.out.vcf_tbi, by:0)
     .set { bcftools_view_ch }
-
-    bcftools_view_ch.view()
-
-    //
-    // MODULE: bcftools view [predefined filter options TODO: needs tests] 
-    //
+    // filter vcf files for PASS and homozygous varinats
+    // TODO add a minimim and maximum coverage filter ??? Needs to be tested
     BCFTOOLS_VIEW (
         bcftools_view_ch,
         [], // path(regions)
@@ -137,21 +138,19 @@ workflow DVPOLISH {
         [] // path(samples)
     )
 
-    //
-    // MODULE: tabix
-    //
+    // index vcf file 
     TABIX_TABIX(
         BCFTOOLS_VIEW.out.vcf
     )
 
     // in case of multiple vcf files, merge them prior the consenus step
     BCFTOOLS_VIEW.out.vcf
-    .map { meta, vcf -> [ meta.subMap('id', 'single_end'), vcf ] }
+    .map { meta, vcf -> [ meta - meta.subMap('mergeID'), vcf ] }
     .groupTuple(by:0)
     .set { filt_vcf_list_ch }
 
     TABIX_TABIX.out.tbi
-    .map { meta, vcf -> [ meta.subMap('id', 'single_end'), vcf ] }
+    .map { meta, tbi -> [ meta - meta.subMap('mergeID'), tbi ] }
     .groupTuple(by:0)
     .set { filt_tbi_list_ch }
 
@@ -163,34 +162,46 @@ workflow DVPOLISH {
     }
     .set { vcf_merge_ch }
 
+    // merge all vcf files 
     BCFTOOLS_MERGE(
         vcf_merge_ch.merge,
-        ch_assemblies,
+        input.assembly_ch,
         SAMTOOLS_FAIDX.out.fai,
         [] // path(bed)
     )
 
+    // index merged vcf file
     TABIX_TABIX_MERGED(
         BCFTOOLS_MERGE.out.merged_variants
     )
 
-    vcf_merge_ch.other
+    vcf_plus_index_ch = vcf_merge_ch.other
     .map { meta, vcf, idx  -> [ meta, *vcf, *idx ] } // the spread operator (*) flattens the bam list
     .mix(BCFTOOLS_MERGE.out.merged_variants
         .join(TABIX_TABIX_MERGED.out.tbi)
     )
-    .join(ch_assemblies)
-    .set { bcftools_consensus_ch }
 
-    vcf_merge_ch.other.view { "vcf_merge_ch.other: " + it}
-    bcftools_consensus_ch.view { "bcftools_consensus_ch: " + it }
-    ch_assemblies.view { "input.assembly_ch: " + it}    
-
-    BCFTOOLS_CONSENSUS(
-        bcftools_consensus_ch
+    vcf_plus_index_plus_assembly_ch = joinByMetaKeys (
+        vcf_plus_index_ch,
+        input.assembly_ch,
+        keySet: ['id','single_end'],
+        meta: 'lhs'
     )
 
+    vcf_plus_index_plus_assembly_ch.view { "vcf_plus_index_plus_assembly_ch: " + it }
+
+    // create consensus sequence 
+    BCFTOOLS_CONSENSUS(
+        vcf_plus_index_plus_assembly_ch
+    )
+
+    BCFTOOLS_CONSENSUS.out.fasta.view { " BCFTOOLS_CONSENSUS.out.fasta: " + it }
+
     ch_polished_assemblies = BCFTOOLS_CONSENSUS.out.fasta
+
+    ch_polished_assemblies = constructAssemblyRecord(
+    BCFTOOLS_CONSENSUS.out.fasta
+    )
 
     emit:
     assemblies = ch_polished_assemblies
