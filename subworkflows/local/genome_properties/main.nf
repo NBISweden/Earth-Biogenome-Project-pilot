@@ -53,7 +53,7 @@ workflow GENOME_PROPERTIES {
 
     MERQURYFK_PLOIDYPLOT.out.stacked_ploidy_plot_png
         .mix( MERQURYFK_KATGC.out.stacked_gc_plot_png )
-        .set { multiqc_files }
+        .set { logs }
 
     FASTK_HISTEX.out.versions.first().mix(
         GENESCOPEFK.out.versions.first(),
@@ -64,6 +64,6 @@ workflow GENOME_PROPERTIES {
     emit:
     kmer_cov      = GENESCOPEFK.out.kmer_cov
     quarto_files
-    multiqc_files
+    logs
     versions
 }

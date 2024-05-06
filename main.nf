@@ -62,6 +62,7 @@ workflow {
 
     // Setup sink channels
     ch_multiqc_files = Channel.empty()
+    ch_quarto_files  = Channel.empty()
     ch_versions      = Channel.empty()
 
     // Read in data
@@ -86,6 +87,9 @@ workflow {
             BUILD_HIC_DATABASES.out.fastk_hist_ktab
         )
         ch_hifi = INSPECT_DATA.out.hifi // with added kmer coverage
+        ch_multiqc_files = ch_multiqc_files.mix( INSPECT_DATA.out.logs )
+        ch_quarto_files = ch_quarto_files.mix( INSPECT_DATA.out.quarto_files )
+        ch_versions = ch_versions.mix( INSPECT_DATA.out.versions )
     }
 
     // Preprocess data
@@ -210,6 +214,7 @@ workflow {
     ASSEMBLY_REPORT(
         PREPARE_INPUT.out.sample_meta,
         ch_multiqc_files,
+        ch_quarto_files,
         ch_versions
     )
 }
