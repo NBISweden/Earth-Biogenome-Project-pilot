@@ -13,6 +13,7 @@ workflow ASSEMBLY_REPORT {
     take:
     meta
     logs
+    quarto
     versions
 
     main:
@@ -20,15 +21,15 @@ workflow ASSEMBLY_REPORT {
     REPORT_DTOL( TOL_SEARCH( meta.map{ meta -> meta.sample.taxId } ).json )
 
     // Genome traits table
+        // Expected vs Observed
+        // Haploid Size   // GOAT vs Assembly
+        // Haploid Number // GOAT vs HiC
+        // Ploidy         // GOAT vs HiC
+        // Sample Sex     // GOAT vs HiC
     REPORT_GENOMETRAITS( meta )
 
-    // Also genome traits // Expected vs Observed
-        // Haploid Size   // Assembly vs GOAT
-        // Haploid Number //
-        // Ploidy         // Ploidyplot vs GOAT
-        // Sample Sex     // Chr/ assignment? vs GOAT?
-
     // Data profile
+    // Input // [ meta, notebook, files ]
     // GenomeScope jsons // plots?
     //
 
