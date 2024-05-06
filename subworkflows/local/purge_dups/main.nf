@@ -3,6 +3,7 @@
  * https://github.com/dfguan/purge_dups
  */
 
+include { getPrimaryAssembly                                   } from "$projectDir/modules/local/functions"
 include { joinByMetaKeys                                       } from "$projectDir/modules/local/functions"
 include { combineByMetaKeys                                    } from "$projectDir/modules/local/functions"
 include { MINIMAP2_ALIGN as MINIMAP2_ALIGN_READS               } from "$projectDir/modules/nf-core/minimap2/align/main"
@@ -41,9 +42,7 @@ workflow PURGE_DUPLICATES {
             assembly_ch: assembly
         }
         .set { input }
-    reads_plus_assembly_ch
-        .map { meta, reads, assembly -> [ meta, assembly.pri_fasta ] }
-        .set { primary_assembly_ch }
+    
     // Map pacbio reads
     MINIMAP2_ALIGN_READS(
         input.reads_ch,
@@ -57,7 +56,7 @@ workflow PURGE_DUPLICATES {
     PURGEDUPS_HISTPLOT( PURGEDUPS_PBCSTAT.out.stat.join( PURGEDUPS_CALCUTS.out.cutoff ) )
 
     // Purge primary assembly
-    PURGEDUPS_SPLITFA_PRIMARY( primary_assembly_ch )
+    PURGEDUPS_SPLITFA_PRIMARY( getPrimaryAssembly(ch_assemblies) )
     MINIMAP2_ALIGN_ASSEMBLY_PRIMARY(
         PURGEDUPS_SPLITFA_PRIMARY.out.split_fasta,
         [],    // Trigger read to read alignment
