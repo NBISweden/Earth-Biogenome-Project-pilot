@@ -2,7 +2,7 @@
  * Workflow based around the DeepVariant tool to polish homozygous variants.
  * https://git.mpi-cbg.de/assembly/programs/polishing
  */
-
+include { getPrimaryAssembly                      } from "$projectDir/modules/local/functions"
 include { constructAssemblyRecord                 } from "$projectDir/modules/local/functions"
 include { joinByMetaKeys                          } from "$projectDir/modules/local/functions"
 include { combineByMetaKeys                       } from "$projectDir/modules/local/functions"
@@ -46,9 +46,11 @@ workflow DVPOLISH {
         }
         .set { input }
 
+    uniq_assembly_ch = getPrimaryAssembly(ch_assemblies)
+
     // index assembly file(s)
     SAMTOOLS_FAIDX (
-        input.assembly_ch,
+        getPrimaryAssembly(uniq_assembly_ch),
         [[],[]]
     )
     
@@ -188,16 +190,10 @@ workflow DVPOLISH {
         meta: 'lhs'
     )
 
-    vcf_plus_index_plus_assembly_ch.view { "vcf_plus_index_plus_assembly_ch: " + it }
-
     // create consensus sequence 
     BCFTOOLS_CONSENSUS(
         vcf_plus_index_plus_assembly_ch
     )
-
-    BCFTOOLS_CONSENSUS.out.fasta.view { " BCFTOOLS_CONSENSUS.out.fasta: " + it }
-
-    ch_polished_assemblies = BCFTOOLS_CONSENSUS.out.fasta
 
     ch_polished_assemblies = constructAssemblyRecord(
     BCFTOOLS_CONSENSUS.out.fasta
