@@ -7,9 +7,9 @@ process QUARTO {
 
     input:
     tuple (
-        val meta,
-        path notebook,
-        path data, stageAs: 'data/*', arity: '1..*'
+        val (meta),
+        path (notebook),
+        path (data, stageAs: 'data/*', arity: '1..*')
     )
 
     output:
