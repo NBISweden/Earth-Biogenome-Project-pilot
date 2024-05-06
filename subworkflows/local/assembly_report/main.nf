@@ -5,9 +5,9 @@ include { REPORT_SOFTWAREVERSIONS    } from "$projectDir/modules/local/report/so
 // include { QUARTO as QUARTO_DTOL      } from "$projectDir/modules/local/quarto"
 // include { QUARTO as QUARTO_GENESCOPE } from "$projectDir/modules/local/quarto"
 include { QUARTO } from "$projectDir/modules/local/quarto"
-include { MULTIQC as MULTIQC_FULL    } from "$projectDir/modules/nf-core/multiqc/main"
-include { MULTIQC as MULTIQC_SUMMARY } from "$projectDir/modules/nf-core/multiqc/main"
-// include { MULTIQC } from "$projectDir/modules/nf-core/multiqc/main"
+// include { MULTIQC as MULTIQC_FULL    } from "$projectDir/modules/nf-core/multiqc/main"
+// include { MULTIQC as MULTIQC_SUMMARY } from "$projectDir/modules/nf-core/multiqc/main"
+include { MULTIQC } from "$projectDir/modules/nf-core/multiqc/main"
 
 workflow ASSEMBLY_REPORT {
     take:
@@ -61,6 +61,5 @@ workflow ASSEMBLY_REPORT {
         params.multiqc.summary_report_extra_config ? file(params.multiqc.summary_report_extra_config, checkIfExists: true) : [],
         []
     )
-
 
 }
