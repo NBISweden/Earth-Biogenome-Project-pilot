@@ -50,7 +50,7 @@ workflow DVPOLISH {
 
     // index assembly file(s)
     SAMTOOLS_FAIDX (
-        getPrimaryAssembly(uniq_assembly_ch),
+        uniq_assembly_ch,
         [[],[]]
     )
     
@@ -63,7 +63,7 @@ workflow DVPOLISH {
 
     // create minimap2 index for assemblies
     DVPOLISH_PBMM2_INDEX (
-        input.assembly_ch
+        uniq_assembly_ch
     )
 
     // map reads with pbmm2 to complete assemblies (chunks are not used in that step)
@@ -123,7 +123,7 @@ workflow DVPOLISH {
     // run deepvariant and the chunked bam files 
     DEEPVARIANT(
         deepvariant_ch,
-        input.assembly_ch,
+        uniq_assembly_ch,
         SAMTOOLS_FAIDX.out.fai,
         [[],[]]     // tuple val(meta4), path(gzi)
     )
@@ -167,7 +167,7 @@ workflow DVPOLISH {
     // merge all vcf files 
     BCFTOOLS_MERGE(
         vcf_merge_ch.merge,
-        input.assembly_ch,
+        uniq_assembly_ch,
         SAMTOOLS_FAIDX.out.fai,
         [] // path(bed)
     )
@@ -185,7 +185,7 @@ workflow DVPOLISH {
 
     vcf_plus_index_plus_assembly_ch = joinByMetaKeys (
         vcf_plus_index_ch,
-        input.assembly_ch,
+        uniq_assembly_ch,
         keySet: ['id','single_end'],
         meta: 'lhs'
     )
