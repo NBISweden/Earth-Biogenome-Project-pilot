@@ -10,7 +10,7 @@ process REPORT_GENOMETRAITS {
     when:
     task.ext.when == null || task.ext.when
 
-    script:
+    exec:
     def trait_table = """\
         Genome traits\tExpected\tObserved
         Haploid Size\t${meta.sample.genome_size}\tunknown
