@@ -53,7 +53,7 @@ workflow ASSEMBLY_REPORT {
                 .mix( QUARTO.out.versions.first() )
                 .collect()
         ).yml,
-        QUARTO.out.multiqc
+        QUARTO.out.html
     )
     MULTIQC(
         mqc_files.collect(),
