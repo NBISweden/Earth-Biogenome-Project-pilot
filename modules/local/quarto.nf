@@ -23,11 +23,17 @@ process QUARTO {
     def args = task.ext.args ?: ''
     def prefix = task.ext.args ?: notebook.baseName
     """
+    USERID=\$UID
+    XDG_CACHE_HOME=tmp/quarto_cache_home
+    XDG_DATA_HOME=tmp/quarto_data_home
+
     quarto \\
         render \\
         $notebook \\
         $args \\
         --output ${prefix}.html
+
+    rm -rf tmp
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
