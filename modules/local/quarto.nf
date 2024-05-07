@@ -21,7 +21,7 @@ process QUARTO {
 
     script:
     def args = task.ext.args ?: ''
-    def prefix = task.ext.args ?: notebook.baseName
+    def prefix = task.ext.prefix ?: notebook.baseName
     """
     export USERID=\$UID
     export XDG_CACHE_HOME=tmp/quarto_cache_home
