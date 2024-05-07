@@ -42,7 +42,7 @@ workflow GENOME_PROPERTIES {
         .join( GENESCOPEFK.out.log_plot )
         .join( GENESCOPEFK.out.transformed_linear_plot )
         .join( GENESCOPEFK.out.transformed_log_plot )
-        .map { meta, gsf -> [ meta, file("$projectDir/assets/notebooks/genescope.qmd", checkIfExists: true), gsf ] }
+        .map { meta, linplot, logplot, tlinplot, tlogplot -> [ meta, file("$projectDir/assets/notebooks/genescope.qmd", checkIfExists: true), [ linplot, logplot, tlinplot, tlogplot ] ] }
         .set { quarto_files }
 
     // Generate Smudgeplot
