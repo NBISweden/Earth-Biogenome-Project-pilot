@@ -48,6 +48,8 @@ workflow ASSEMBLY_REPORT {
     // Blobtools
 
     def mqc_files = logs.mix(
+        REPORT_DTOL.out.tsv,
+        REPORT_GENOMETRAITS.out.tsv,
         REPORT_SOFTWAREVERSIONS(
             versions
                 .mix( QUARTO.out.versions.first() )
@@ -56,7 +58,7 @@ workflow ASSEMBLY_REPORT {
         QUARTO.out.html
     )
     MULTIQC(
-        mqc_files.collect(),
+        mqc_files.collect().dump(tag:'MultiQC'),
         file("$projectDir/configs/multiqc_summary_report_config.yml", checkIfExists: true),
         params.multiqc.summary_report_extra_config ? file(params.multiqc.summary_report_extra_config, checkIfExists: true) : [],
         []
