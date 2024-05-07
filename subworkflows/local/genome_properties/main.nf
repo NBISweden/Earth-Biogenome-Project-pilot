@@ -53,6 +53,7 @@ workflow GENOME_PROPERTIES {
 
     MERQURYFK_PLOIDYPLOT.out.stacked_ploidy_plot_png
         .mix( MERQURYFK_KATGC.out.stacked_gc_plot_png )
+        .map { it[1] } // Remove meta
         .set { logs }
 
     FASTK_HISTEX.out.versions.first().mix(
