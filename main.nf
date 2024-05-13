@@ -119,6 +119,8 @@ workflow {
         ch_raw_assemblies,
         BUILD_HIFI_DATABASES.out.fastk_hist_ktab,
     )
+    ch_multiqc_files = ch_multiqc_files.mix( EVALUATE_RAW_ASSEMBLY.out.logs )
+    ch_versions = ch_versions.mix( EVALUATE_RAW_ASSEMBLY.out.versions )
 
     // Contamination screen
     ch_to_screen = setAssemblyStage (
@@ -156,6 +158,8 @@ workflow {
         ch_purged_assemblies,
         BUILD_HIFI_DATABASES.out.fastk_hist_ktab
     )
+    ch_multiqc_files = ch_multiqc_files.mix( EVALUATE_PURGED_ASSEMBLY.out.logs )
+    ch_versions = ch_versions.mix( EVALUATE_PURGED_ASSEMBLY.out.versions )
 
     // Polish
     ch_to_polish = setAssemblyStage (
