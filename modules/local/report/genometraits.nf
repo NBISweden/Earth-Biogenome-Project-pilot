@@ -1,4 +1,5 @@
 process REPORT_GENOMETRAITS {
+    tag "$meta.id"
     label 'process_single'
 
     input:
