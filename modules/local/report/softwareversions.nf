@@ -1,4 +1,5 @@
 process REPORT_SOFTWAREVERSIONS {
+    tag ""
     label 'process_single'
 
     input:

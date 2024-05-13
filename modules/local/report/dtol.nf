@@ -1,4 +1,5 @@
 process REPORT_DTOL {
+    tag ""
     label 'process_single'
 
     input:
