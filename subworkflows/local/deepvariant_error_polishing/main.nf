@@ -77,17 +77,18 @@ workflow DVPOLISH {
     DVPOLISH_PBMM2_ALIGN.out.bam
     .flatMap(path_closure)
     .combine(DVPOLISH_CHUNKFA.out.bed.flatMap(path_closure), by:0)
-    .map { map, bam, bed -> [ map + [mergeID: bed.baseName], bam, bed]
-    }
-    .set { bam_bed_ch }
-
-    DVPOLISH_PBMM2_ALIGN.out.bai
-    .flatMap(path_closure)
-    .combine(DVPOLISH_CHUNKFA.out.bed.flatMap(path_closure), by:0)
-    .map { meta, bai, bed -> bai }
-    .set { bai_ch }
+    .combine(DVPOLISH_PBMM2_ALIGN.out.bai.flatMap(path_closure), by:0)
+    .multiMap { meta, bam, bai, bed ->
+            bam_bai_ch: [ meta + [mergeID: bed.baseName], bam, bai]
+            bed_ch: bed
+        }
+    .set { bam_bai_bed_ch }
     // split bam files according to bed file chunks 
-    SAMTOOLS_VIEW (bam_bed_ch, [[],[]], bai_ch)
+    SAMTOOLS_VIEW (bam_bai_bed_ch.bam_bai_ch,   //  val(meta), path(input), path(index)
+    [[],[]],                                    //  val(meta2), path(fasta)  NOT USED
+    bam_bai_bed_ch.bed_ch)                      //  path qname IS REUSED, i.e. qname is removed(+patched) from the SAMTOOLS_VIEW process 
+//                                                  and a bed file is provided, which needs to be liked into the CWD
+//                                                  but its actually only be used via the ext.args = "-L ${index}"
 
     // index the splitted bam files 
     SAMTOOLS_INDEX_FILTER(SAMTOOLS_VIEW.out.bam)
