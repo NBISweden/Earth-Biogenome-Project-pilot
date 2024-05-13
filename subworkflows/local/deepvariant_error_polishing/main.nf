@@ -117,8 +117,8 @@ workflow DVPOLISH {
     .mix(SAMTOOLS_MERGE.out.bam
         .join(SAMTOOLS_INDEX_MERGE.out.bai, by:0)
     )
-    .join(bam_bed_ch
-    .map { meta, bam, bed -> [meta, bed]}
+    .join(bam_bai_bed_ch
+    .map { meta, bam, bai, bed -> [meta, bed]}
     .unique())
     .set {deepvariant_ch}
     // run deepvariant and the chunked bam files 
