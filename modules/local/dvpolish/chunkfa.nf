@@ -29,7 +29,7 @@ process DVPOLISH_CHUNKFA {
 
     output:
     tuple val(meta), path ("*.bed", arity: '1..*')        , emit: bed
-    path "versions.yml"                    , emit: versions
+    path "versions.yml"                                   , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -38,24 +38,11 @@ process DVPOLISH_CHUNKFA {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
 
+    oneKilobyte = MemoryUnit.of(1000)
+    val chunk_size = getBytes(args.find { it.key == 'chunk_size' }?.value ?: '100.MB')
     """
     # convert chunk size into base pairs
-
-    chunk_size=$params.chunk_size
-    chunk_size_inBases=$params.chunk_size
-    i=\$((\${#chunk_size}-1))
-    if [[ "\${chunk_size: -1}" =~ [gG] ]]
-    then
-        chunk_size_inBases=\$((\${chunk_size:0:\$i}*1000*1000*1000))
-    elif [[ "\${chunk_size: -1}" =~ [mM] ]]
-    then
-        chunk_size_inBases=\$((\${chunk_size:0:\$i}*1000*1000))
-    elif [[ "\${chunk_size: -1}" =~ [kK] ]]
-    then
-        chunk_size_inBases=\$((\${chunk_size:0:\$i}*1000))
-    fi
-
-    awk -v chunk_size_inBases=\${chunk_size_inBases} -v prefix=$prefix 'BEGIN {
+    awk -v chunk_size_inBases=${chunk_size} -v prefix=$prefix 'BEGIN {
         block=1
         cum_basecount=0
     }{
