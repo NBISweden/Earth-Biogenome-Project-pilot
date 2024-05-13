@@ -8,6 +8,7 @@ module_order:
   - "traits"
   # - "Custom insert curation notes", e.g. like methodology section
   - "Data Profile"
+  - "genescope"
   - "katgc"
   - "ploidyplot"
   - "Software versions - Assembly"
@@ -28,6 +29,9 @@ custom_data:
     section_name: "Genome traits"
     description: "Sample genome traits."
     plot_type: "table"
+  genescope:
+    section_name: "GenomeScope2"
+    description: "Sample data k-mer histogram."
   ploidyplot:
     file_format: "png"
     section_name: "Ploidy Plot"
@@ -42,6 +46,8 @@ sp: # Search pattern
     fn: "DToL.tsv"
   traits:
     fn: "Genome_traits.tsv"
+  genescope:
+    fn: "genescope.html"
   ploidyplot:
     fn: "*_ploidyplot.st.png"
   katgc:
