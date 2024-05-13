@@ -24,6 +24,7 @@ process DVPOLISH_CHUNKFA {
         'https://depot.galaxyproject.org/singularity/ubuntu:20.04' :
         'nf-core/ubuntu:20.04' }"
 
+
     input:
     tuple val(meta), path(fai)
 
@@ -38,8 +39,15 @@ process DVPOLISH_CHUNKFA {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
 
-    oneKilobyte = MemoryUnit.of(1000)
-    val chunk_size = getBytes(args.find { it.key == 'chunk_size' }?.value ?: '100.MB')
+    // Split the string by spaces, then iterate to create a map
+    // assumption all arguments are provided like key1 = value1 key2 = value2 ...
+    def args_map = [:]
+    args.replaceAll(' = ', '=').split().each {
+        def (key, value) = it.split('=')
+        args_map[key.trim()] = value.trim()
+    }
+    def chunk_size = MemoryUnit.of(args_map['chunk_size'] ?: '90MB').toBytes()
+    
     """
     # convert chunk size into base pairs
     awk -v chunk_size_inBases=${chunk_size} -v prefix=$prefix 'BEGIN {
