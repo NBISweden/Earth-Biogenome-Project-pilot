@@ -50,8 +50,6 @@ sp: # Search pattern
     fn: "DToL.tsv"
   traits:
     fn: "Genome_traits.tsv"
-  genescope:
-    fn: "genescope.html"
   ploidyplot:
     fn: "*_ploidyplot.st.png"
   katgc:
