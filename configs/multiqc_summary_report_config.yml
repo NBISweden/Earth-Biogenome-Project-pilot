@@ -3,6 +3,9 @@ output_fn_name: BGE_assembly_multiqc_report.html
 intro_text: |
   An assembly report for the BGE project.
 
+ignore_images: false
+disable_version_detection: true
+
 module_order:
   - "dtol"
   - "traits"
@@ -52,5 +55,3 @@ sp: # Search pattern
     fn: "*_ploidyplot.st.png"
   katgc:
     fn: "*_katgc.st.png"
-
-disable_version_detection: true
