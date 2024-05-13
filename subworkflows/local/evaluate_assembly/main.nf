@@ -1,4 +1,6 @@
 include { combineByMetaKeys   } from "$projectDir/modules/local/functions"
+include { getEachAssembly     } from "$projectDir/modules/local/functions"
+include { getPrimaryAssembly  } from "$projectDir/modules/local/functions"
 include { BUSCO               } from "$projectDir/modules/nf-core/busco/main"
 include { MERQURYFK_MERQURYFK } from "$projectDir/modules/local/merquryfk/merquryfk"
 // include { INSPECTOR           } from "$projectDir/modules/local/inspector/inspector"
@@ -15,16 +17,14 @@ workflow EVALUATE_ASSEMBLY {
     MERQURYFK_MERQURYFK (
         combineByMetaKeys (
             fastk_db,
-            assembly_ch.map { sample, assembly ->
-                [ sample, ( assembly.alt_fasta ? [ assembly.pri_fasta, assembly.alt_fasta ] : assembly.pri_fasta ) ]
-            },
+            getEachAssembly(assembly_ch),
             keySet: ['id','sample'],
             meta: 'rhs'
         )
     )
 
     // Evaluate core gene space coverage
-    busco_input = assembly_ch.map { sample, assembly -> [ sample, assembly.pri_fasta ] }
+    busco_input = getPrimaryAssembly(assembly_ch)
         .flatMap { meta, asm ->
             if ( meta.settings?.busco?.lineages ) {
                 // Use lineages from params.busco.lineages/GOAT.
@@ -46,4 +46,15 @@ workflow EVALUATE_ASSEMBLY {
         params.busco.lineages_db_path ? file( params.busco.lineages_db_path, checkIfExists: true ) : [],
         []
     )
+
+    // TODO: Add Merqury stats to logs
+    BUSCO.out.batch_summary
+        .set { logs }
+    MERQURYFK_MERQURYFK.out.versions.mix(
+        BUSCO.out.versions
+    ).set { versions }
+
+    emit:
+    logs
+    versions
 }
