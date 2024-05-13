@@ -95,22 +95,22 @@ workflow DVPOLISH {
     SAMTOOLS_VIEW.out.bam
     .groupTuple(by:0)
     .branch { meta, bam_list ->
-        merge: bam_list.size() > 1
-        link: true
+        multiples: bam_list.size() > 1
+        singleton: true
     }
     .set { bam_merge_ch }
 
     // in case multiple reads files are present, all corresping bam files 
     // the where splitted in the previous step need to be merged. key:bed file ID
     SAMTOOLS_MERGE(
-        bam_merge_ch.merge,
+        bam_merge_ch.multiples,
         [[],[]],
         [[],[]]
     )
     // index merged bam files
     SAMTOOLS_INDEX_MERGE(SAMTOOLS_MERGE.out.bam)
 
-    bam_merge_ch.link
+    bam_merge_ch.singleton
     .map { meta, bam -> [ meta, *bam ]} // the spread operator (*) flattens the bam list
     .join(SAMTOOLS_INDEX_FILTER.out.bai, by:0)
     .mix(SAMTOOLS_MERGE.out.bam
@@ -159,14 +159,14 @@ workflow DVPOLISH {
     filt_vcf_list_ch
     .join(filt_tbi_list_ch, by:0)
     .branch { meta, vcf_list, vcf_index_list ->
-        merge: vcf_list.size() > 1
-        other: true
+        multiples: vcf_list.size() > 1
+        singleton: true
     }
     .set { vcf_merge_ch }
 
     // merge all vcf files 
     BCFTOOLS_MERGE(
-        vcf_merge_ch.merge,
+        vcf_merge_ch.multiples,
         uniq_assembly_ch,
         SAMTOOLS_FAIDX.out.fai,
         [] // path(bed)
@@ -177,7 +177,7 @@ workflow DVPOLISH {
         BCFTOOLS_MERGE.out.merged_variants
     )
 
-    vcf_plus_index_ch = vcf_merge_ch.other
+    vcf_plus_index_ch = vcf_merge_ch.singleton
     .map { meta, vcf, idx  -> [ meta, *vcf, *idx ] } // the spread operator (*) flattens the bam list
     .mix(BCFTOOLS_MERGE.out.merged_variants
         .join(TABIX_TABIX_MERGED.out.tbi)
