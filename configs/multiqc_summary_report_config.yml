@@ -14,7 +14,7 @@ module_order:
   - "genescope"
   - "katgc"
   - "ploidyplot"
-  - "Busco"
+  - "busco"
   - "Software versions - Assembly"
   - "Software versions - Curation"
   - "Assembly metrics"
