@@ -49,6 +49,7 @@ workflow EVALUATE_ASSEMBLY {
 
     // TODO: Add Merqury stats to logs
     BUSCO.out.short_summaries_txt
+        .map { it[1] } // Remove meta
         .set { logs }
     MERQURYFK_MERQURYFK.out.versions.mix(
         BUSCO.out.versions
