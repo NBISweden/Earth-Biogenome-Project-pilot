@@ -63,7 +63,7 @@ workflow EVALUATE_ASSEMBLY {
         .map { it[1] } // Remove meta
         .set { logs }
     MERQURYFK_MERQURYFK.out.versions.first().mix(
-        MERQURY.out.versions.first()
+        MERQURY.out.versions.first(),
         BUSCO.out.versions.first()
     ).set { versions }
 
