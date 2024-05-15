@@ -1,7 +1,7 @@
 include { FASTK_FASTK     } from "$projectDir/modules/nf-core/fastk/fastk/main"
 include { FASTK_MERGE     } from "$projectDir/modules/nf-core/fastk/merge/main"
 
-workflow BUILD_DATABASES {
+workflow BUILD_FASTK_DATABASE {
 
     take:
     fastx_data

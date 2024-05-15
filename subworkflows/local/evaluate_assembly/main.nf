@@ -3,6 +3,7 @@ include { getEachAssembly     } from "$projectDir/modules/local/functions"
 include { getPrimaryAssembly  } from "$projectDir/modules/local/functions"
 include { BUSCO               } from "$projectDir/modules/nf-core/busco/main"
 include { MERQURYFK_MERQURYFK } from "$projectDir/modules/local/merquryfk/merquryfk"
+include { MERQURY             } from "$projectDir/modules/nf-core/merqury/main"
 // include { INSPECTOR           } from "$projectDir/modules/local/inspector/inspector"
 
 workflow EVALUATE_ASSEMBLY {
@@ -10,6 +11,7 @@ workflow EVALUATE_ASSEMBLY {
     take:
     assembly_ch        // input type: [ meta, [ id:'assemblerX_build1', pri_fasta: '/path/to/primary_asm', alt_fasta: '/path/to/alternate_asm' ] ]
     fastk_db           // input type: [ meta, [ 'path/to/reads.hist' ], [ '/path/to/reads.ktab' ] ]
+    meryl_db           // input type: [ meta, 'path/to/reads.union.meryldb' ]
 
     main:
 
@@ -20,7 +22,16 @@ workflow EVALUATE_ASSEMBLY {
             getEachAssembly(assembly_ch),
             keySet: ['id','sample'],
             meta: 'rhs'
-        )
+        ) // [ meta, hist, ktab, assembly ]
+    )
+
+    MERQURY (
+        combineByMetaKeys (
+            meryl_db,
+            getEachAssembly(assembly_ch),
+            keySet: ['id','sample'],
+            meta: 'rhs'
+        ) // [ meta, meryldb, assembly ]
     )
 
     // Evaluate core gene space coverage
@@ -51,8 +62,9 @@ workflow EVALUATE_ASSEMBLY {
     BUSCO.out.short_summaries_txt
         .map { it[1] } // Remove meta
         .set { logs }
-    MERQURYFK_MERQURYFK.out.versions.mix(
-        BUSCO.out.versions
+    MERQURYFK_MERQURYFK.out.versions.first().mix(
+        MERQURY.out.versions.first()
+        BUSCO.out.versions.first()
     ).set { versions }
 
     emit:

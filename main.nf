@@ -9,8 +9,10 @@ include { setAssemblyStage                         } from "$projectDir/modules/l
 
 include { PREPARE_INPUT } from "$projectDir/subworkflows/local/prepare_input/main"
 
-include { BUILD_DATABASES as BUILD_HIFI_DATABASES } from "$projectDir/subworkflows/local/build_databases/main"
-include { BUILD_DATABASES as BUILD_HIC_DATABASES  } from "$projectDir/subworkflows/local/build_databases/main"
+include { BUILD_FASTK_DATABASE as BUILD_FASTK_HIFI_DATABASE } from "$projectDir/subworkflows/local/build_fastk_database/main"
+include { BUILD_FASTK_DATABASE as BUILD_FASTK_HIC_DATABASE  } from "$projectDir/subworkflows/local/build_fastk_database/main"
+include { BUILD_MERYL_DATABASE as BUILD_MERYL_HIFI_DATABASE } from "$projectDir/subworkflows/local/build_meryl_database/main"
+include { BUILD_MERYL_DATABASE as BUILD_MERYL_HIC_DATABASE  } from "$projectDir/subworkflows/local/build_meryl_database/main"
 
 include { INSPECT_DATA } from "$projectDir/subworkflows/local/inspect_data/main"
 
@@ -73,8 +75,11 @@ workflow {
 
     // Build necessary databases
     if ( ['inspect','preprocess','assemble','purge','polish','screen','scaffold','curate'].any{ it in workflow_steps}) {
-        BUILD_HIFI_DATABASES ( PREPARE_INPUT.out.hifi )
-        BUILD_HIC_DATABASES ( PREPARE_INPUT.out.hic )
+        // TODO: Migrate back to Meryl. Genome inspection missing KATGC and PLOIDYPLOT for meryldb
+        BUILD_FASTK_HIFI_DATABASES ( PREPARE_INPUT.out.hifi )
+        BUILD_FASTK_HIC_DATABASES ( PREPARE_INPUT.out.hic )
+        BUILD_MERYL_HIFI_DATABASES ( PREPARE_INPUT.out.hifi )
+        BUILD_MERYL_HIC_DATABASES ( PREPARE_INPUT.out.hic )
     }
 
     // Data inspection
@@ -83,8 +88,8 @@ workflow {
         // QC Steps
         INSPECT_DATA(
             PREPARE_INPUT.out.hifi,
-            BUILD_HIFI_DATABASES.out.fastk_hist_ktab,
-            BUILD_HIC_DATABASES.out.fastk_hist_ktab
+            BUILD_FASTK_HIFI_DATABASES.out.fastk_hist_ktab,
+            BUILD_FASTK_HIC_DATABASES.out.fastk_hist_ktab
         )
         ch_hifi = INSPECT_DATA.out.hifi // with added kmer coverage
         ch_multiqc_files = ch_multiqc_files.mix( INSPECT_DATA.out.logs )
@@ -117,7 +122,8 @@ workflow {
     COMPARE_ASSEMBLIES ( ch_raw_assemblies )
     EVALUATE_RAW_ASSEMBLY (
         ch_raw_assemblies,
-        BUILD_HIFI_DATABASES.out.fastk_hist_ktab,
+        BUILD_FASTK_HIFI_DATABASES.out.fastk_hist_ktab,
+        BUILD_MERYL_HIFI_DATABASES.out.uniondb
     )
     ch_multiqc_files = ch_multiqc_files.mix(
         EVALUATE_RAW_ASSEMBLY.out.logs,
@@ -159,7 +165,8 @@ workflow {
     ).dump(tag: 'Assemblies: Purged')
     EVALUATE_PURGED_ASSEMBLY (
         ch_purged_assemblies,
-        BUILD_HIFI_DATABASES.out.fastk_hist_ktab
+        BUILD_FASTK_HIFI_DATABASES.out.fastk_hist_ktab,
+        BUILD_MERYL_HIFI_DATABASES.out.uniondb
     )
     ch_multiqc_files = ch_multiqc_files.mix( EVALUATE_PURGED_ASSEMBLY.out.logs )
     ch_versions = ch_versions.mix( EVALUATE_PURGED_ASSEMBLY.out.versions )
