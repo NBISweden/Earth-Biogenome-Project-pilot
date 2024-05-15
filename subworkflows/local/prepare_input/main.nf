@@ -121,8 +121,14 @@ workflow PREPARE_INPUT {
     ch_input = Channel.fromPath( infile, checkIfExists: true )
         .map { file -> readYAML( file ) }
 
+    ch_input.map { yaml -> yaml + [id: yaml.name.replace(" ","_") ] }
+        .branch{ yaml ->
+            fetch_taxid: !yaml.sample.taxid && !yaml.sample.kingdom
+            skip: true
+        }
+        .set { ch_taxonkit }
     UNTAR_TAXONOMY( Channel.fromPath( taxdb, checkIfExists: true ).map{ tar -> [ [ id: 'taxdb' ], tar ] } )
-    TAXONKIT_NAME2LINEAGE( ch_input, UNTAR_TAXONOMY.out.untar.map{ meta, archive -> archive }.collect() ).tsv
+    TAXONKIT_NAME2LINEAGE( ch_taxonkit.fetch_taxid, UNTAR_TAXONOMY.out.untar.map{ meta, archive -> archive }.collect() ).tsv
         .branch { meta, tsv_f -> def sv = tsv_f.splitCsv( sep:"\t" )
         def new_meta = meta.deepMerge( [ id: sv[0][0].replace(" ","_"), sample: [ taxid: sv[0][1], kingdom: sv[0][2] ] ] )
             eukaryota: sv[0][2] == 'Eukaryota'
@@ -130,8 +136,20 @@ workflow PREPARE_INPUT {
             other: true
                 return new_meta
         }.set { ch_input_wTaxID }
+
     // Update meta with GOAT before propagating (eukaryotes only)
-    GOAT_TAXONSEARCH( ch_input_wTaxID.eukaryota.map { data -> [ data, data.sample.name, [] ] } ).taxonsearch
+    ch_taxonkit.skip
+        .filter { yaml -> yaml.sample.kingdom == "Eukaryota" }
+        .mix( ch_input_wTaxID.eukaryota )
+        .branch { yaml ->
+            taxsearch: !params.busco.lineages
+                && !yaml.sample.genome_size
+                && !yaml.sample.haploid_number
+                && !yaml.sample.ploidy
+            skip: true
+        }
+        .set { ch_goat }
+    GOAT_TAXONSEARCH( ch_goat.taxsearch.map { data -> [ data, data.sample.name, [] ] } ).taxonsearch
         .map { meta, tsv ->
             def busco_lineages = tsv.splitCsv( sep:"\t", header: true ).findAll { it.odb10_lineage }.collect { it.odb10_lineage }.join(',')
             def species = tsv.splitCsv( sep:"\t", header: true ).find { it.scientific_name == meta.sample.name }
@@ -144,7 +162,11 @@ workflow PREPARE_INPUT {
                 settings: [ busco: [ lineages: params.busco.lineages?: busco_lineages ] ]
             ])
         }
-        .mix( ch_input_wTaxID.other )
+        .mix(
+            ch_input_wTaxID.other,
+            ch_taxonkit.skip.filter{ yaml -> yaml.sample.kingdom != "Eukaryota"},
+            ch_goat.skip
+        )
         .tap { sample_meta_ch }
         .dump( tag: 'Input: Meta', pretty: true )
         .multiMap { data ->
