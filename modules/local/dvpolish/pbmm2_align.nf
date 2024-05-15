@@ -13,8 +13,7 @@ process DVPOLISH_PBMM2_ALIGN {
     tuple val(meta2), path(reference)
 
     output:
-    tuple val(meta), path("*.bam", arity: '1..*'), emit: bam
-    tuple val(meta), path("*.bai", arity: '1..*'), emit: bai
+    tuple val(meta), path("*.bam", arity: '1..*'), path("*.bai", arity: '1..*'), emit: bam_bai
     path "versions.yml"           , emit: versions
 
     when:
