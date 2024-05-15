@@ -41,7 +41,7 @@ workflow DVPOLISH {
             reads.collect{ [ meta + [ single_end: true ], it, assembly.pri_fasta ] }
             : [ [ meta + [ single_end: true ], reads, assembly.pri_fasta ] ] }
         .multiMap { meta, reads, assembly ->
-            reads_ch: [ meta + readID: reads.baseName, reads ]
+            reads_ch: [ meta + [ readID: reads.baseName ], reads ]
             assembly_ch: [meta, assembly ]
         }
         .set { input }
@@ -68,8 +68,8 @@ workflow DVPOLISH {
 
     // map reads with pbmm2 to complete assemblies (chunks are not used in that step)
     DVPOLISH_PBMM2_ALIGN (
-        input.reads_ch
-        input.assembly_ch,
+        input.reads_ch,
+        input.assembly_ch
     )
 
     def path_closure = {meta, files -> files.collect(){[meta, it ]}}
@@ -78,15 +78,15 @@ workflow DVPOLISH {
     .flatMap(path_closure)
     .combine(DVPOLISH_CHUNKFA.out.bed.flatMap(path_closure), by:0)
     .multiMap { meta, bam, bai, bed ->
-            bam_bai_ch:  [ meta + mergeID: bed.baseName, bam, bai ]
-            bed_ch:      bed
-        }
-    .set { alignment_ch }
+        bam_bai_ch:  [ meta + [ mergeID: bed.baseName ], bam, bai ]
+        bed_ch:      bed
+    }
+    .set { alignment }
 
     // split bam files according to bed file chunks 
-    SAMTOOLS_VIEW (alignment_ch.bam_bai_ch,          // val(meta), path(input), path(index)
+    SAMTOOLS_VIEW (alignment.bam_bai_ch,          // val(meta), path(input), path(index)
     [[],[]],                            // val(meta2), path(fasta)  NOT USED
-    alignment_ch.bed_ch)                             // path qname IS REUSED, i.e. qname is removed(+patched) from the SAMTOOLS_VIEW process 
+    alignment.bed_ch)                   // path qname IS REUSED, i.e. qname is removed(+patched) from the SAMTOOLS_VIEW process 
                                         // and a bed file is provided, which needs to be liked into the CWD
                                         // but its actually only be used via the ext.args = "-L ${index}"
 
