@@ -76,10 +76,10 @@ workflow {
     // Build necessary databases
     if ( ['inspect','preprocess','assemble','purge','polish','screen','scaffold','curate'].any{ it in workflow_steps}) {
         // TODO: Migrate back to Meryl. Genome inspection missing KATGC and PLOIDYPLOT for meryldb
-        BUILD_FASTK_HIFI_DATABASES ( PREPARE_INPUT.out.hifi )
-        BUILD_FASTK_HIC_DATABASES ( PREPARE_INPUT.out.hic )
-        BUILD_MERYL_HIFI_DATABASES ( PREPARE_INPUT.out.hifi )
-        BUILD_MERYL_HIC_DATABASES ( PREPARE_INPUT.out.hic )
+        BUILD_FASTK_HIFI_DATABASE ( PREPARE_INPUT.out.hifi )
+        BUILD_FASTK_HIC_DATABASE ( PREPARE_INPUT.out.hic )
+        BUILD_MERYL_HIFI_DATABASE ( PREPARE_INPUT.out.hifi )
+        BUILD_MERYL_HIC_DATABASE ( PREPARE_INPUT.out.hic )
     }
 
     // Data inspection
@@ -88,8 +88,8 @@ workflow {
         // QC Steps
         INSPECT_DATA(
             PREPARE_INPUT.out.hifi,
-            BUILD_FASTK_HIFI_DATABASES.out.fastk_hist_ktab,
-            BUILD_FASTK_HIC_DATABASES.out.fastk_hist_ktab
+            BUILD_FASTK_HIFI_DATABASE.out.fastk_hist_ktab,
+            BUILD_FASTK_HIC_DATABASE.out.fastk_hist_ktab
         )
         ch_hifi = INSPECT_DATA.out.hifi // with added kmer coverage
         ch_multiqc_files = ch_multiqc_files.mix( INSPECT_DATA.out.logs )
@@ -122,8 +122,8 @@ workflow {
     COMPARE_ASSEMBLIES ( ch_raw_assemblies )
     EVALUATE_RAW_ASSEMBLY (
         ch_raw_assemblies,
-        BUILD_FASTK_HIFI_DATABASES.out.fastk_hist_ktab,
-        BUILD_MERYL_HIFI_DATABASES.out.uniondb
+        BUILD_FASTK_HIFI_DATABASE.out.fastk_hist_ktab,
+        BUILD_MERYL_HIFI_DATABASE.out.uniondb
     )
     ch_multiqc_files = ch_multiqc_files.mix(
         EVALUATE_RAW_ASSEMBLY.out.logs,
@@ -165,8 +165,8 @@ workflow {
     ).dump(tag: 'Assemblies: Purged')
     EVALUATE_PURGED_ASSEMBLY (
         ch_purged_assemblies,
-        BUILD_FASTK_HIFI_DATABASES.out.fastk_hist_ktab,
-        BUILD_MERYL_HIFI_DATABASES.out.uniondb
+        BUILD_FASTK_HIFI_DATABASE.out.fastk_hist_ktab,
+        BUILD_MERYL_HIFI_DATABASE.out.uniondb
     )
     ch_multiqc_files = ch_multiqc_files.mix( EVALUATE_PURGED_ASSEMBLY.out.logs )
     ch_versions = ch_versions.mix( EVALUATE_PURGED_ASSEMBLY.out.versions )
