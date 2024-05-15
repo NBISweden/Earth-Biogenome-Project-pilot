@@ -8,9 +8,9 @@ workflow BUILD_MERYL_DATABASE {
     fastx_data
 
     main:
-    MERYL_COUNT ( fastx_data )
-    MERYL_UNIONSUM ( MERYL_COUNT.out.meryl_db.transpose().groupTuple() )
-    MERYL_HISTOGRAM ( MERYL_UNIONSUM.out.meryl_db )
+    MERYL_COUNT ( fastx_data, params.meryl.kmer_size )
+    MERYL_UNIONSUM ( MERYL_COUNT.out.meryl_db.transpose().groupTuple(), params.meryl.kmer_size )
+    MERYL_HISTOGRAM ( MERYL_UNIONSUM.out.meryl_db, params.meryl.kmer_size )
 
     MERYL_COUNT.out.versions.first().mix(
         MERYL_UNIONSUM.out.versions.first(),
