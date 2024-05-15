@@ -15,6 +15,7 @@ module_order:
   - "katgc"
   - "ploidyplot"
   - "busco"
+  - "quast"
   - "Software versions - Assembly"
   - "Software versions - Curation"
   - "Assembly metrics"
