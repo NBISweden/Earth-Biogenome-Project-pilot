@@ -143,9 +143,9 @@ workflow PREPARE_INPUT {
         .mix( ch_input_wTaxID.eukaryota )
         .branch { yaml ->
             taxsearch: !params.busco.lineages
-                && !yaml.sample.genome_size
-                && !yaml.sample.haploid_number
-                && !yaml.sample.ploidy
+                || !yaml.sample.genome_size
+                || !yaml.sample.haploid_number
+                || !yaml.sample.ploidy
             skip: true
         }
         .set { ch_goat }
