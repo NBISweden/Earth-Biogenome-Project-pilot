@@ -123,7 +123,7 @@ workflow PREPARE_INPUT {
 
     ch_input.map { yaml -> yaml + [id: yaml.sample.name.replace(" ","_") ] }
         .branch{ yaml ->
-            fetch_taxid: !yaml.sample.taxid && !yaml.sample.kingdom
+            fetch_taxid: !yaml.sample.taxid || !yaml.sample.kingdom
             skip: true
         }
         .set { ch_taxonkit }
