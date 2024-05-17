@@ -74,22 +74,29 @@ workflow DVPOLISH {
 
     def path_closure = {meta, files -> files.collect(){[meta, it ]}}
 
-    DVPOLISH_PBMM2_ALIGN.out.bam_bai
-    .flatMap(path_closure)
-    .combine(DVPOLISH_CHUNKFA.out.bed.flatMap(path_closure), by:0)
+    combineByMetaKeys (
+            DVPOLISH_PBMM2_ALIGN.out.bam_bai,
+            DVPOLISH_CHUNKFA.out.bed.flatMap(path_closure),
+            keySet: ['sample','assembly'],
+            meta: 'rhs'
+        )
     .multiMap { meta, bam, bai, bed ->
         bam_bai_ch:  [ meta + [ mergeID: bed.baseName ], bam, bai ]
         bed_ch:      bed
     }
     .set { alignment }
+    
+   alignment.bam_bai_ch.view{ " alignment.bam_bai_ch.view " + it}
+   alignment.bed_ch.view{ " alignment.bed_ch.view " + it}
 
     // split bam files according to bed file chunks 
-    SAMTOOLS_VIEW (alignment.bam_bai_ch,          // val(meta), path(input), path(index)
-    [[],[]],                            // val(meta2), path(fasta)  NOT USED
-    alignment.bed_ch)                   // path qname IS REUSED, i.e. qname is removed(+patched) from the SAMTOOLS_VIEW process 
-                                        // and a bed file is provided, which needs to be liked into the CWD
-                                        // but its actually only be used via the ext.args = "-L ${index}"
+    SAMTOOLS_VIEW (alignment.bam_bai_ch,
+    [[],[]],                            
+    alignment.bed_ch)                   
+                                        
+                                        
 
+    SAMTOOLS_VIEW.out.bam.view { " SAMTOOLS_VIEW.out.bam " + it}
     // index the splitted bam files 
     SAMTOOLS_INDEX_FILTER(SAMTOOLS_VIEW.out.bam)
 
@@ -117,9 +124,9 @@ workflow DVPOLISH {
     .mix(SAMTOOLS_MERGE.out.bam
         .join(SAMTOOLS_INDEX_MERGE.out.bai, by:0)
     )
-    .join(bam_bed_ch
-    .map { meta, bam, bed -> [meta, bed]}
-    .unique())
+//    .join(alignment.bed_ch
+//    .map { meta, bam, bed -> [meta, bed]}
+//    .unique())
     .set {deepvariant_ch}
     // run deepvariant and the chunked bam files 
     DEEPVARIANT(
