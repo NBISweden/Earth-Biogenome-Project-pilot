@@ -5,6 +5,7 @@
 
 include { joinByMetaKeys                                       } from "$projectDir/modules/local/functions"
 include { combineByMetaKeys                                    } from "$projectDir/modules/local/functions"
+include { constructAssemblyRecord                              } from "$projectDir/modules/local/functions"
 include { MINIMAP2_ALIGN as MINIMAP2_ALIGN_READS               } from "$projectDir/modules/nf-core/minimap2/align/main"
 include { MINIMAP2_ALIGN as MINIMAP2_ALIGN_ASSEMBLY_PRIMARY    } from "$projectDir/modules/nf-core/minimap2/align/main"
 include { MINIMAP2_ALIGN as MINIMAP2_ALIGN_ASSEMBLY_ALTERNATE  } from "$projectDir/modules/nf-core/minimap2/align/main"
@@ -25,9 +26,14 @@ workflow PURGE_DUPLICATES {
     ch_hifi       // [ meta, hifi ]
 
     main:
+    //! Only purge duplicates on polyploids (diploids and higher)
+    ch_assemblies.branch { meta, asm ->
+        polyploid: meta.sample.ploidy > 1
+        haploid  : true
+    }.set { assemblies }
     reads_plus_assembly_ch = combineByMetaKeys (
             ch_hifi,
-            ch_assemblies,
+            assemblies.polyploid,
             keySet: ['id','sample'],
             meta: 'rhs'
         )
@@ -106,13 +112,11 @@ workflow PURGE_DUPLICATES {
         PURGEDUPS_SPLITFA_ALTERNATE.out.merged_fasta
             .join( PURGEDUPS_PURGEDUPS_ALTERNATE.out.bed )
     )
-    ch_purged_assemblies = PURGEDUPS_GETSEQS_PRIMARY.out.purged
-        .mix(PURGEDUPS_GETSEQS_ALTERNATE.out.purged)
-        .groupTuple( sort: { a, b -> a.name <=> b.name } )
-        .map { meta, fasta ->
-            def asm_meta = meta.assembly.subMap(['assembler','stage','id','build'])
-            [ meta, asm_meta + (fasta.size() == 1 ? [ pri_fasta: fasta[0] ] : [ pri_fasta: fasta[0], alt_fasta: fasta[1] ] ) ]
-        }
+    ch_purged_assemblies = constructAssemblyRecord(
+        PURGEDUPS_GETSEQS_PRIMARY.out.purged
+            .mix(PURGEDUPS_GETSEQS_ALTERNATE.out.purged)
+        )
+        .mix( assemblies.haploid )
 
     emit:
     assemblies = ch_purged_assemblies
