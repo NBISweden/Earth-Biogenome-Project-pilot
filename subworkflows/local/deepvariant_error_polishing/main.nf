@@ -21,6 +21,22 @@ include { TABIX_TABIX as TABIX_TABIX_MERGED       } from "$projectDir/modules/nf
 include { BCFTOOLS_MERGE                          } from "$projectDir/modules/nf-core/bcftools/merge/main"
 include { BCFTOOLS_CONSENSUS                      } from "$projectDir/modules/nf-core/bcftools/consensus/main"
 
+/*
+outline: 
+
+|- create pbmm2 index for assembly (1)
+|- create bed chunks for given assembly (1..n)
+|- align all read files to full assembly (1..m)
+    \- for each alignment file split file according to contig according to bed chunks files (n*m)
+    |- in case of multiple read files (therefore optional) merge all read files that belong to same assembly chunk (1..n)
+    |- index merged alignment files (1..n)
+    |- call variants with DeepVartiant (1..n)
+    |- filter variants (PASS + homozygous) (1..n)
+    |- create tabix index files  (1..n)
+    |- merge all variants (1)
+    |- create consensus sequence (1)
+*/
+
 workflow DVPOLISH {
 
     take:
@@ -42,7 +58,7 @@ workflow DVPOLISH {
             : [ [ meta + [ single_end: true ], reads, assembly.pri_fasta ] ] }
         .multiMap { meta, reads, assembly ->
             reads_ch: [ meta + [ readID: reads.baseName ], reads ]
-            assembly_ch: [meta, assembly ]
+            assembly_ch: [ meta, assembly ]
         }
         .set { input }
 
@@ -52,8 +68,7 @@ workflow DVPOLISH {
     SAMTOOLS_FAIDX (
         uniq_assembly_ch,
         [[],[]]
-    )
-    
+    )    
 
     // split assembly into smaller chunks, this step just creates bed files 
     // that represent the assembly chunks, no sequence is split
@@ -81,20 +96,19 @@ workflow DVPOLISH {
             meta: 'rhs'
         )
     .multiMap { meta, bam, bai, bed ->
-        bam_bai_ch:  [ meta + [ mergeID: bed.baseName ], bam, bai ]
-        bed_ch:      bed
+        meta_bam_bai_ch:  [ meta + [ mergeID: bed.baseName ], bam, bai ]
+        meta_bed_ch:      [ meta + [ mergeID: bed.baseName ], bed ]
+        bed_ch:             bed
     }
     .set { alignment }
     
-   alignment.bam_bai_ch.view{ " alignment.bam_bai_ch.view " + it}
-   alignment.bed_ch.view{ " alignment.bed_ch.view " + it}
+    alignment.meta_bam_bai_ch.view{ " alignment.bam_bai_ch.view " + it}
+    alignment.meta_bed_ch.view{ " alignment.bed_ch.view " + it}
 
     // split bam files according to bed file chunks 
-    SAMTOOLS_VIEW (alignment.bam_bai_ch,
+    SAMTOOLS_VIEW (alignment.meta_bam_bai_ch,
     [[],[]],                            
     alignment.bed_ch)                   
-                                        
-                                        
 
     SAMTOOLS_VIEW.out.bam.view { " SAMTOOLS_VIEW.out.bam " + it}
     // index the splitted bam files 
@@ -108,8 +122,8 @@ workflow DVPOLISH {
     }
     .set { bam_merge_ch }
 
-    // in case multiple reads files are present, all corresping bam files 
-    // the where splitted in the previous step need to be merged. key:bed file ID
+    // in case multiple reads files are present, all corresponding bam files 
+    // that were splitted in the previous step need to be merged. key:bed file ID
     SAMTOOLS_MERGE(
         bam_merge_ch.multiples,
         [[],[]],
@@ -124,9 +138,7 @@ workflow DVPOLISH {
     .mix(SAMTOOLS_MERGE.out.bam
         .join(SAMTOOLS_INDEX_MERGE.out.bai, by:0)
     )
-//    .join(alignment.bed_ch
-//    .map { meta, bam, bed -> [meta, bed]}
-//    .unique())
+    .join(alignment.meta_bed_ch)
     .set {deepvariant_ch}
     // run deepvariant and the chunked bam files 
     DEEPVARIANT(
