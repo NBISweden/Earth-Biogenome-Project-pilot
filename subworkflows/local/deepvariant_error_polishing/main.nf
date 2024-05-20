@@ -27,7 +27,7 @@ outline:
 |- create pbmm2 index for assembly (1)
 |- create bed chunks for given assembly (1..n)
 |- align all read files to full assembly (1..m)
-    \- for each alignment file split file according to contig according to bed chunks files (n*m)
+    \- split each alignment file to contig according to bed chunks files (n*m)
     |- in case of multiple read files (therefore optional) merge all read files that belong to same assembly chunk (1..n)
     |- index merged alignment files (1..n)
     |- call variants with DeepVartiant (1..n)
@@ -102,15 +102,11 @@ workflow DVPOLISH {
     }
     .set { alignment }
     
-    alignment.meta_bam_bai_ch.view{ " alignment.bam_bai_ch.view " + it}
-    alignment.meta_bed_ch.view{ " alignment.bed_ch.view " + it}
-
     // split bam files according to bed file chunks 
     SAMTOOLS_VIEW (alignment.meta_bam_bai_ch,
     [[],[]],                            
     alignment.bed_ch)                   
 
-    SAMTOOLS_VIEW.out.bam.view { " SAMTOOLS_VIEW.out.bam " + it}
     // index the splitted bam files 
     SAMTOOLS_INDEX_FILTER(SAMTOOLS_VIEW.out.bam)
 
