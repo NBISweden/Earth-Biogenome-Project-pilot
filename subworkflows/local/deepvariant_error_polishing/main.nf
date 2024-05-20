@@ -136,11 +136,22 @@ workflow DVPOLISH {
     )
     .join(alignment.meta_bed_ch)
     .set {deepvariant_ch}
+
+    deepvariant_ch
+    .join(uniq_assembly_ch)
+    .join(SAMTOOLS_FAIDX.out)
+    .multiMap(meta, bam, bai, bed, fasta, fai -> 
+        bam_ch: [ meta, bam, bai, bed ] 
+        fasta_ch: [ meta, fasta ]
+        fai_ch: [ meta, fai ]
+    )
+    .set { deepvariant_in}
+
     // run deepvariant and the chunked bam files 
     DEEPVARIANT(
-        deepvariant_ch,
-        uniq_assembly_ch,
-        SAMTOOLS_FAIDX.out.fai,
+        deepvariant_in.bam_ch,
+        deepvariant_in.fasta_ch,
+        deepvariant_in.fai_ch,
         [[],[]]     // tuple val(meta4), path(gzi)
     )
 
