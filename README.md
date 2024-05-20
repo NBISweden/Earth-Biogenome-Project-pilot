@@ -27,11 +27,14 @@ flowchart TD
     input --> taxonkit[[ TaxonKit name2taxid/reformat ]]
     taxonkit --> goat_taxon[[ GOAT taxon search ]]
     goat_taxon --> busco
+    goat_taxon --> dtol[[ DToL lookup ]]
     hifi --> samtools_fa[[ Samtools fasta ]]
     samtools_fa --> fastk_hifi
     samtools_fa --> mash_screen
     hifi[/ HiFi reads /] --> fastk_hifi[[ FastK - HiFi ]]
-    hic[/ Hi-C reads /] --> fastk_hic[[ FastK - HiC ]]
+    hifi --> meryl_hifi[[ Meryl - HiFi ]]
+    hic[/ Hi-C reads /] --> fastk_hic[[ FastK - Hi-C ]]
+    hifi --> meryl_hic[[ Meryl - Hi-C ]]
     assembly[/ Assembly /] --> quast[[ Quast ]]
     fastk_hifi --> histex[[ Histex ]]
     histex --> genescopefk[[ GeneScopeFK ]]
@@ -39,6 +42,8 @@ flowchart TD
     fastk_hifi --> katgc[[ KatGC ]]
     fastk_hifi --> merquryfk[[ MerquryFK ]]
     assembly --> merquryfk
+    meryl_hifi --> merqury[[ Merqury ]]
+    assembly --> merqury
     fastk_hifi --> katcomp[[ KatComp ]]
     fastk_hic --> katcomp
     assembly --> busco[[ Busco ]]
@@ -52,6 +57,14 @@ flowchart TD
     assembly --> fcsgx[[ FCS GX ]]
     fcs_fetchdb[( FCS fetchdb )] --> fcsgx
     mitoref --> mitohifi
+    genescopefk --> quarto[[ Quarto ]]
+    goat_taxon --> multiqc[[ MultiQC ]]
+    quarto --> multiqc
+    dtol --> multiqc
+    katgc --> multiqc
+    ploidyplot --> multiqc
+    busco --> multiqc
+    quast --> multiqc
 ```
 
 ## Usage
@@ -122,6 +135,8 @@ Mandatory:
       ploidy: 2                      # Optional: Estimated ploidy (default: retrieved from GOAT)
       genome_size: 2345              # Optional: Estimated genome size (default: retrieved from GOAT)
       haploid_number: 13             # Optional: Estimated haploid chromosome count (default: retrieved from GOAT)
+      taxid: 5630                    # Optional: Taxon ID (default: retrieved with Taxonkit)
+      kingdom: Eukaryota             # Optional: (default: retrived with Taxonkit)
     assembly:                        # Optional: List of assemblies to curate and validate.
       - assembler: hifiasm           # For each entry, the assembler,
         stage: raw                   # stage of assembly,
