@@ -70,6 +70,12 @@ def getPrimaryAssembly( assemblies ) {
     assemblies.map { meta, assembly -> [ meta, assembly.pri_fasta ] }
 }
 
+def getEachAssembly( assemblies ) {
+    assemblies.map { meta, assembly ->
+        [ meta, ( assembly.alt_fasta ? [ assembly.pri_fasta, assembly.alt_fasta ] : assembly.pri_fasta ) ]
+    }
+}
+
 def constructAssemblyRecord( assemblies ) {
     assemblies.groupTuple( sort: { a, b -> a.name <=> b.name } )
         .map { meta, fasta ->

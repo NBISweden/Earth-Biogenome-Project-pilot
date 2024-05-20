@@ -45,6 +45,11 @@
             "git_sha": "3f908700a03ca2fa388f794914f89be977ce5740",
             "installed_by": ["modules"]
           },
+          "genomescope2": {
+            "branch": "master",
+            "git_sha": "c95215baf20e6d8cf2ae0e8411d03c5d9ef21d4a",
+            "installed_by": ["modules"]
+          },
           "gfastats": {
             "branch": "master",
             "git_sha": "9e51255c4f8ec69fb6ccf68593392835f14fecb8",
@@ -70,6 +75,11 @@
             "git_sha": "911696ea0b62df80e900ef244d7867d177971f73",
             "installed_by": ["modules"]
           },
+          "merqury": {
+            "branch": "master",
+            "git_sha": "3f5420aa22e00bd030a2556dfdffc9e164ec0ec5",
+            "installed_by": ["modules"]
+          },
           "merquryfk/katcomp": {
             "branch": "master",
             "git_sha": "6f150e1503c0826c21fedf1fa566cdbecbe98ec7",
@@ -83,6 +93,21 @@
           "merquryfk/ploidyplot": {
             "branch": "master",
             "git_sha": "ebb27711cd5f4de921244bfa81c676504072d31c",
+            "installed_by": ["modules"]
+          },
+          "meryl/count": {
+            "branch": "master",
+            "git_sha": "c95215baf20e6d8cf2ae0e8411d03c5d9ef21d4a",
+            "installed_by": ["modules"]
+          },
+          "meryl/histogram": {
+            "branch": "master",
+            "git_sha": "c95215baf20e6d8cf2ae0e8411d03c5d9ef21d4a",
+            "installed_by": ["modules"]
+          },
+          "meryl/unionsum": {
+            "branch": "master",
+            "git_sha": "b7f584e61c35c138a5717f837f4da9b838e290a7",
             "installed_by": ["modules"]
           },
           "minimap2/align": {
@@ -100,6 +125,11 @@
             "git_sha": "5bcbc0c522879ba15a224eb06cd42e6c46932545",
             "installed_by": ["modules"],
             "patch": "modules/nf-core/mitohifi/mitohifi/mitohifi-mitohifi.diff"
+          },
+          "multiqc": {
+            "branch": "master",
+            "git_sha": "ccacf6f5de6df3bc6d73b665c1fd2933d8bbc290",
+            "installed_by": ["modules"]
           },
           "pilon": {
             "branch": "master",

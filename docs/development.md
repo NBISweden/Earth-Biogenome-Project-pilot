@@ -19,7 +19,7 @@ sample = [
     name: <species name>,
     genome_size: <GOAT>,
     ploidy: <GOAT>,
-    chromosome_number: <GOAT>
+    haploid_number: <GOAT>
 ]
 hifi_reads = [
     single_end: true,

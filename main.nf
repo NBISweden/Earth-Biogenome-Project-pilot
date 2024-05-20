@@ -9,8 +9,10 @@ include { setAssemblyStage                         } from "$projectDir/modules/l
 
 include { PREPARE_INPUT } from "$projectDir/subworkflows/local/prepare_input/main"
 
-include { BUILD_DATABASES as BUILD_HIFI_DATABASES } from "$projectDir/subworkflows/local/build_databases/main"
-include { BUILD_DATABASES as BUILD_HIC_DATABASES  } from "$projectDir/subworkflows/local/build_databases/main"
+include { BUILD_FASTK_DATABASE as BUILD_FASTK_HIFI_DATABASE } from "$projectDir/subworkflows/local/build_fastk_database/main"
+include { BUILD_FASTK_DATABASE as BUILD_FASTK_HIC_DATABASE  } from "$projectDir/subworkflows/local/build_fastk_database/main"
+include { BUILD_MERYL_DATABASE as BUILD_MERYL_HIFI_DATABASE } from "$projectDir/subworkflows/local/build_meryl_database/main"
+include { BUILD_MERYL_DATABASE as BUILD_MERYL_HIC_DATABASE  } from "$projectDir/subworkflows/local/build_meryl_database/main"
 
 include { INSPECT_DATA } from "$projectDir/subworkflows/local/inspect_data/main"
 
@@ -26,6 +28,8 @@ include { PURGE_DUPLICATES } from "$projectDir/subworkflows/local/purge_dups/mai
 include { EVALUATE_ASSEMBLY as EVALUATE_PURGED_ASSEMBLY } from "$projectDir/subworkflows/local/evaluate_assembly/main"
 
 include { ALIGN_RNASEQ       } from "$projectDir/subworkflows/local/align_rnaseq/main"
+
+include { ASSEMBLY_REPORT } from "$projectDir/subworkflows/local/assembly_report/main"
 
 /*
  * Development: See docs/development to understand the workflow programming model and
@@ -58,6 +62,11 @@ workflow {
     Running NBIS Earth Biogenome Project Assembly workflow.
     """)
 
+    // Setup sink channels
+    ch_multiqc_files = Channel.empty()
+    ch_quarto_files  = Channel.empty()
+    ch_versions      = Channel.empty()
+
     // Read in data
     PREPARE_INPUT (
         params.input,
@@ -66,8 +75,11 @@ workflow {
 
     // Build necessary databases
     if ( ['inspect','preprocess','assemble','purge','polish','screen','scaffold','curate'].any{ it in workflow_steps}) {
-        BUILD_HIFI_DATABASES ( PREPARE_INPUT.out.hifi )
-        BUILD_HIC_DATABASES ( PREPARE_INPUT.out.hic )
+        // TODO: Migrate back to Meryl. Genome inspection missing KATGC and PLOIDYPLOT for meryldb
+        BUILD_FASTK_HIFI_DATABASE ( PREPARE_INPUT.out.hifi )
+        BUILD_FASTK_HIC_DATABASE ( PREPARE_INPUT.out.hic )
+        BUILD_MERYL_HIFI_DATABASE ( PREPARE_INPUT.out.hifi )
+        BUILD_MERYL_HIC_DATABASE ( PREPARE_INPUT.out.hic )
     }
 
     // Data inspection
@@ -76,10 +88,13 @@ workflow {
         // QC Steps
         INSPECT_DATA(
             PREPARE_INPUT.out.hifi,
-            BUILD_HIFI_DATABASES.out.fastk_hist_ktab,
-            BUILD_HIC_DATABASES.out.fastk_hist_ktab
+            BUILD_FASTK_HIFI_DATABASE.out.fastk_hist_ktab,
+            BUILD_FASTK_HIC_DATABASE.out.fastk_hist_ktab
         )
         ch_hifi = INSPECT_DATA.out.hifi // with added kmer coverage
+        ch_multiqc_files = ch_multiqc_files.mix( INSPECT_DATA.out.logs )
+        ch_quarto_files = ch_quarto_files.mix( INSPECT_DATA.out.quarto_files )
+        ch_versions = ch_versions.mix( INSPECT_DATA.out.versions )
     }
 
     // Preprocess data
@@ -107,8 +122,14 @@ workflow {
     COMPARE_ASSEMBLIES ( ch_raw_assemblies )
     EVALUATE_RAW_ASSEMBLY (
         ch_raw_assemblies,
-        BUILD_HIFI_DATABASES.out.fastk_hist_ktab,
+        BUILD_FASTK_HIFI_DATABASE.out.fastk_hist_ktab,
+        BUILD_MERYL_HIFI_DATABASE.out.uniondb
     )
+    ch_multiqc_files = ch_multiqc_files.mix(
+        EVALUATE_RAW_ASSEMBLY.out.logs,
+        COMPARE_ASSEMBLIES.out.logs
+    )
+    ch_versions = ch_versions.mix( EVALUATE_RAW_ASSEMBLY.out.versions )
 
     // Contamination screen
     ch_to_screen = setAssemblyStage (
@@ -144,8 +165,11 @@ workflow {
     ).dump(tag: 'Assemblies: Purged')
     EVALUATE_PURGED_ASSEMBLY (
         ch_purged_assemblies,
-        BUILD_HIFI_DATABASES.out.fastk_hist_ktab
+        BUILD_FASTK_HIFI_DATABASE.out.fastk_hist_ktab,
+        BUILD_MERYL_HIFI_DATABASE.out.uniondb
     )
+    ch_multiqc_files = ch_multiqc_files.mix( EVALUATE_PURGED_ASSEMBLY.out.logs )
+    ch_versions = ch_versions.mix( EVALUATE_PURGED_ASSEMBLY.out.versions )
 
     // Polish
     ch_to_polish = setAssemblyStage (
@@ -200,6 +224,13 @@ workflow {
                 .map { meta, assembly -> [ meta, assembly.pri_fasta ] }
         )
     }
+
+    ASSEMBLY_REPORT(
+        PREPARE_INPUT.out.sample_meta,
+        ch_multiqc_files,
+        ch_quarto_files,
+        ch_versions
+    )
 }
 
 workflow.onComplete {

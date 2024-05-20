@@ -4,7 +4,7 @@ include { QUAST              } from "$projectDir/modules/nf-core/quast/main"
 workflow COMPARE_ASSEMBLIES {
 
     take:
-    assembly_ch        // input type: [ [ id: 'sample_name' ], [ id:'assemblerX_build1', primary_asm_path: '/path/to/primary_asm', alternate_asm_path: '/path/to/alternate_asm' ] ]
+    assembly_ch        // input type: [ meta, AssemblyMap ]
 
     main:
     QUAST (
@@ -14,8 +14,12 @@ workflow COMPARE_ASSEMBLIES {
         []              // No GFF
     )
     versions_ch = QUAST.out.versions
+    QUAST.out.tsv
+        .map { it[1] } // Remove meta
+        .set { logs }
 
     emit:
     versions = versions_ch
+    logs
 
 }

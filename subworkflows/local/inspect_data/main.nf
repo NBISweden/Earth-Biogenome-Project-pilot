@@ -10,7 +10,6 @@ workflow INSPECT_DATA {
     hic_histogram  // [ meta, hic_hist, ktab ]
 
     main:
-    ch_versions = Channel.empty()
     // QC Steps
     GENOME_PROPERTIES ( hifi_histogram )
     COMPARE_LIBRARIES ( hifi_histogram.join( hic_histogram ) )
@@ -28,7 +27,18 @@ workflow INSPECT_DATA {
     )
     .map { meta, reads, kmer_cov -> [ meta + [ kmercov: kmer_cov ], reads ] }
 
+    GENOME_PROPERTIES.out.quarto_files
+        .set { quarto_files }
+    GENOME_PROPERTIES.out.logs
+        .set { logs }
+    GENOME_PROPERTIES.out.versions.mix(
+        COMPARE_LIBRARIES.out.versions,
+        SCREEN_READS.out.versions
+    ).set { versions }
+
     emit:
-    hifi     = ch_hifi_with_kmer_cov
-    versions = ch_versions
+    hifi = ch_hifi_with_kmer_cov
+    quarto_files
+    logs
+    versions
 }
