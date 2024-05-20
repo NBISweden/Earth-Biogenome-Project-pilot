@@ -1,0 +1,84 @@
+---
+format:
+    html:
+        embed-resources: true
+
+params:
+    species: 'Species'
+    data_path : '.'
+---
+
+# Assembly report (`r params$species`)
+
+## General
+
+- ToLID:
+- Species Name:
+- Class:
+- Order:
+
+## Genome Traits
+
+- Haploid Genome Size:
+- Haploid Number:
+- Ploidy:
+- Sample Sex:
+
+## EBP Metrics and curation notes
+
+- Table of Assembly standards
+    - Metrics flagged as red ( below EBP standards )
+- Curator notes
+- Contaminants detected
+- Other observations
+
+## Data Profile
+
+### Data inspection
+
+- Table of Coverage ( HiFi, ONT, Bionano, HiC )
+- Total base sequenced
+- Sequence distribution
+- GenomeScope plot
+
+### Data preprocessing
+
+- Table of Coverage ( HiFi, ONT, Bionano, HiC )
+- Total base sequenced
+- Sequence distribution
+- GenomeScope plot
+
+### Raw assembly metrics
+
+- Assembly metrics
+- Mitochondria metrics
+- Chloroplast metrics
+
+### Contamination screening
+
+- FCS metrics
+
+### Duplicate purging
+
+## Assembly pipeline
+
+- Tool version table ( Hifiasm, purge_dups, bionano, YaHS )
+
+## Curation pipeline
+
+- Tool version table ( GRIT_rapid, HiGlass )
+
+## Metrics Table
+
+- Hi Contact Map
+- Kmer Spectra
+- Blob ( Bubble ) of cov vs gc.
+
+
+
+    Table of assembly standards met
+    Sequence metrics ( from ? )
+        Total sequence data
+        Sequence distribution
+        Expected coverage ( total bases / estimated genome size )
+    GenomeScope

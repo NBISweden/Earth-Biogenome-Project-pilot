@@ -121,7 +121,7 @@ Mandatory:
       name: 'Laetiporus sulphureus'  # Required: Species name. Correct spelling is important to look up species information.
       ploidy: 2                      # Optional: Estimated ploidy (default: retrieved from GOAT)
       genome_size: 2345              # Optional: Estimated genome size (default: retrieved from GOAT)
-      chromosome_number: 13          # Optional: Estimated chromosome count (default: retrieved from GOAT)
+      haploid_number: 13             # Optional: Estimated haploid chromosome count (default: retrieved from GOAT)
     assembly:                        # Optional: List of assemblies to curate and validate.
       - assembler: hifiasm           # For each entry, the assembler,
         stage: raw                   # stage of assembly,

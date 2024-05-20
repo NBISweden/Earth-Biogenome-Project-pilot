@@ -1,0 +1,16 @@
+module_order:
+  - "DToL"
+  - "Genome Traits"
+  - "Assembly metrics"
+  - "Data Profile"
+  - "GenomeScope"
+  - "Merqury" # PloidyPlot, GC
+  - "Contact Maps"
+  - "Quast"
+  - "Merqury" # Completeness
+  - "Busco"
+  - "Blobtools"
+
+export_plots: true
+
+disable_version_detection: true
