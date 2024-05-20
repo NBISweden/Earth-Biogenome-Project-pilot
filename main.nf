@@ -34,7 +34,7 @@ include { ALIGN_RNASEQ                                      } from "./subworkflo
 // Report
 include { ASSEMBLY_REPORT                                   } from "./subworkflows/local/assembly_report/main"
 
-include { DVPOLISH          } from "$projectDir/subworkflows/local/deepvartiant_error_polishing/main"
+include { DVPOLISH          } from "$projectDir/subworkflows/local/deepvariant_error_polishing/main"
 
 /*
  * Development: See docs/development to understand the workflow programming model and
