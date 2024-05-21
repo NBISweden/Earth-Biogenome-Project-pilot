@@ -150,7 +150,7 @@ workflow DVPOLISH {
         keySet: ['sample','assembly'],
         meta: 'lhs'
     )
-    .muliMap { meta, bam, bai, bed, fasta, fai ->
+    .multiMap { meta, bam, bai, bed, fasta, fai ->
         bam_bai_bed_ch: [ meta, bam, bai, bed ]
         fasta_ch:       [ meta, fasta ]
         fai_ch:         [ meta, fai ]
@@ -207,7 +207,7 @@ workflow DVPOLISH {
         keySet: ['sample','assembly'],
         meta: 'lhs'
     )
-    .muliMap { meta, vcfs, tbis, fasta, fai ->
+    .multiMap { meta, vcfs, tbis, fasta, fai ->
         vcf_tbis_ch:    [ meta, vcfs, tbis ]
         fasta_ch:       [ meta, fasta ]
         fai_ch:         [ meta, fai ]
