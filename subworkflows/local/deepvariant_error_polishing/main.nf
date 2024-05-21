@@ -90,11 +90,11 @@ workflow DVPOLISH {
     def path_closure = {meta, files -> files.collect(){[meta, it ]}}
 
     combineByMetaKeys (
-            DVPOLISH_PBMM2_ALIGN.out.bam_bai,
-            DVPOLISH_CHUNKFA.out.bed.flatMap(path_closure),
-            keySet: ['sample','assembly'],
-            meta: 'rhs'
-        )
+        DVPOLISH_PBMM2_ALIGN.out.bam_bai,
+        DVPOLISH_CHUNKFA.out.bed.flatMap(path_closure),
+        keySet: ['sample','assembly'],
+        meta: 'rhs'
+    )
     .multiMap { meta, bam, bai, bed ->
         meta_bam_bai_ch:  [ meta + [ mergeID: bed.baseName ], bam, bai ]
         meta_bed_ch:      [ meta + [ mergeID: bed.baseName ], bed ]
@@ -129,30 +129,40 @@ workflow DVPOLISH {
     SAMTOOLS_INDEX_MERGE(SAMTOOLS_MERGE.out.bam)
 
     bam_merge_ch.singleton
-    .map { meta, bam -> [ meta, *bam ]} // the spread operator (*) flattens the bam list
-    .join(SAMTOOLS_INDEX_FILTER.out.bai, by:0)
+    .map { meta, bam -> [ meta, *bam ] } // the spread operator (*) flattens the bam list
+    .join(SAMTOOLS_INDEX_FILTER.out.bai)
     .mix(SAMTOOLS_MERGE.out.bam
-        .join(SAMTOOLS_INDEX_MERGE.out.bai, by:0)
+        .join(SAMTOOLS_INDEX_MERGE.out.bai)
     )
     .join(alignment.meta_bed_ch)
-    .set {deepvariant_ch}
+    .set { dv_bam_bai_bed_ch }
 
-    deepvariant_ch
-    .join(uniq_assembly_ch)
-    .join(SAMTOOLS_FAIDX.out)
-    .multiMap(meta, bam, bai, bed, fasta, fai -> 
-        bam_ch: [ meta, bam, bai, bed ] 
-        fasta_ch: [ meta, fasta ]
-        fai_ch: [ meta, fai ]
+    asm_fai_ch = joinByMetaKeys (
+        uniq_assembly_ch,
+        SAMTOOLS_FAIDX.out.fai,
+        keySet: ['sample','assembly'],
+        meta: 'lhs'
     )
-    .set { deepvariant_in}
+
+    joinByMetaKeys (
+        dv_bam_bai_bed_ch,
+        asm_fai_ch,
+        keySet: ['sample','assembly'],
+        meta: 'lhs'
+    )
+    .muliMap { meta, bam, bai, bed, fasta, fai ->
+        bam_bai_bed_ch: [ meta, bam, bai, bed ]
+        fasta_ch:       [ meta, fasta ]
+        fai_ch:         [ meta, fai ]
+    }
+    .set { dv_input }
 
     // run deepvariant and the chunked bam files 
     DEEPVARIANT(
-        deepvariant_in.bam_ch,
-        deepvariant_in.fasta_ch,
-        deepvariant_in.fai_ch,
-        [[],[]]     // tuple val(meta4), path(gzi)
+        dv_input.bam_bai_bed_ch,    // tuple val(meta), path(input), path(index), path(intervals)
+        dv_input.fasta_ch,          // tuple val(meta2), path(fasta)
+        dv_input.fai_ch,            // tuple val(meta3), path(fai)
+        [[],[]]                     // tuple val(meta4), path(gzi)
     )
 
     DEEPVARIANT.out.vcf
@@ -191,11 +201,24 @@ workflow DVPOLISH {
     }
     .set { vcf_merge_ch }
 
+    joinByMetaKeys (
+        vcf_merge_ch.multiples,
+        asm_fai_ch,
+        keySet: ['sample','assembly'],
+        meta: 'lhs'
+    )
+    .muliMap { meta, vcfs, tbis, fasta, fai ->
+        vcf_tbis_ch:    [ meta, vcfs, tbis ]
+        fasta_ch:       [ meta, fasta ]
+        fai_ch:         [ meta, fai ]
+    }
+    .set { bcf_input }
+
     // merge all vcf files 
     BCFTOOLS_MERGE(
-        vcf_merge_ch.multiples,
-        uniq_assembly_ch,
-        SAMTOOLS_FAIDX.out.fai,
+        bcf_input.vcf_tbis_ch,
+        bcf_input.fasta_ch,
+        bcf_input.fai_ch,
         [] // path(bed)
     )
 
@@ -213,7 +236,7 @@ workflow DVPOLISH {
     vcf_plus_index_plus_assembly_ch = joinByMetaKeys (
         vcf_plus_index_ch,
         uniq_assembly_ch,
-        keySet: ['id','single_end'],
+        keySet: ['sample','assembly'],
         meta: 'lhs'
     )
 
