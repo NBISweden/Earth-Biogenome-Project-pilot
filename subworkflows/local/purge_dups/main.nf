@@ -26,14 +26,9 @@ workflow PURGE_DUPLICATES {
     ch_hifi       // [ meta, hifi ]
 
     main:
-    //! Only purge duplicates on polyploids (diploids and higher)
-    ch_assemblies.branch { meta, asm ->
-        polyploid: meta.sample.ploidy > 1
-        haploid  : true
-    }.set { assemblies }
     reads_plus_assembly_ch = combineByMetaKeys (
             ch_hifi,
-            assemblies.polyploid,
+            ch_assemblies,
             keySet: ['id','sample'],
             meta: 'rhs'
         )
@@ -116,7 +111,6 @@ workflow PURGE_DUPLICATES {
         PURGEDUPS_GETSEQS_PRIMARY.out.purged
             .mix(PURGEDUPS_GETSEQS_ALTERNATE.out.purged)
         )
-        .mix( assemblies.haploid )
 
     emit:
     assemblies = ch_purged_assemblies
