@@ -22,6 +22,8 @@ include { ASSEMBLE_ORGANELLES                               } from "./subworkflo
 include { DECONTAMINATE                                     } from "./subworkflows/local/04_decontaminate/main"
 // Purge duplicates
 include { PURGE_DUPLICATES                                  } from "./subworkflows/local/05_purge_dups/main"
+// Polish
+include { DVPOLISH                                          } from "./subworkflows/local/deepvariant_error_polishing/main"
 // Scaffold
 include { SCAFFOLD                                          } from "./subworkflows/local/07_scaffold/main"
 // Curation
@@ -34,7 +36,6 @@ include { ALIGN_RNASEQ                                      } from "./subworkflo
 // Report
 include { ASSEMBLY_REPORT                                   } from "./subworkflows/local/assembly_report/main"
 
-include { DVPOLISH          } from "$projectDir/subworkflows/local/deepvariant_error_polishing/main"
 
 /*
  * Development: See docs/development to understand the workflow programming model and
@@ -188,7 +189,8 @@ workflow {
         // Run polishers
         DVPOLISH(
             ch_to_polish,
-            ch_hifi
+            ch_hifi,
+            BUILD_MERYL_HIFI_DATABASE.out.uniondb
         )
         ch_polished_assemblies = DVPOLISH.out.assemblies
     } else {
@@ -197,6 +199,13 @@ workflow {
     ch_polished_assemblies = ch_polished_assemblies.mix(
         preassembledInput( PREPARE_INPUT.out.assemblies, 'polished' )
     ).dump(tag: 'Assemblies: Polished', pretty: true)
+    EVALUATE_POLISHED_ASSEMBLY (
+        ch_polished_assemblies,
+        BUILD_FASTK_HIFI_DATABASE.out.fastk_hist_ktab,
+        BUILD_MERYL_HIFI_DATABASE.out.uniondb
+    )
+    ch_multiqc_files = ch_multiqc_files.mix( EVALUATE_POLISHED_ASSEMBLY.out.logs )
+    ch_versions = ch_versions.mix( EVALUATE_POLISHED_ASSEMBLY.out.versions )
 
     // Scaffold
     ch_to_scaffold = setAssemblyStage (
