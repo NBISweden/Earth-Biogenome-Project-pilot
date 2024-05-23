@@ -68,8 +68,8 @@ workflow DVPOLISH {
     uniq_assembly_ch = getPrimaryAssembly(ch_assemblies)
 
     assembly_plus_meryl_ch = combineByMetaKeys (
-            uniq_assembly_ch,
             ch_meryl_hifi,
+            uniq_assembly_ch,
             keySet: ['id','sample'],
             meta: 'rhs'
         )
