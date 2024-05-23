@@ -144,7 +144,7 @@ workflow DVPOLISH {
         meta: 'lhs'
     )
 
-    joinByMetaKeys (
+    combineByMetaKeys (
         dv_bam_bai_bed_ch,
         asm_fai_ch,
         keySet: ['sample','assembly'],
