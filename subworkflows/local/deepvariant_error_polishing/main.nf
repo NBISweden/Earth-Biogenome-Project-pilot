@@ -53,26 +53,26 @@ workflow DVPOLISH {
             keySet: ['id','sample'],
             meta: 'rhs'
         )
-    reads_assembly_meryldb_ch = combineByMetaKeys (
-            reads_plus_assembly_ch,
-            ch_meryl_hifi,
-            keySet: ['id','sample'],
-            meta: 'rhs'
-        )
 
-    reads_assembly_meryldb_ch
+    reads_plus_assembly_ch
         // Add single_end for minimap module
-        .flatMap { meta, reads, assembly, meryldb -> reads instanceof List ?
-            reads.collect{ [ meta + [ single_end: true ], it, assembly.pri_fasta, meryldb ] }
-            : [ [ meta + [ single_end: true ], reads, assembly.pri_fasta, meryldb ] ] }
-        .multiMap { meta, reads, assembly, meryldb ->
+        .flatMap { meta, reads, assembly -> reads instanceof List ?
+            reads.collect{ [ meta + [ single_end: true ], it, assembly.pri_fasta ] }
+            : [ [ meta + [ single_end: true ], reads, assembly.pri_fasta ] ] }
+        .multiMap { meta, reads, assembly ->
             reads_ch: [ meta + [ readID: reads.baseName ], reads ]
             assembly_ch: [ meta, assembly ]
-            merqury_in_ch: [ meta, assembly, meryldb ]
         }
         .set { input }
 
     uniq_assembly_ch = getPrimaryAssembly(ch_assemblies)
+
+    assembly_plus_meryl_ch = combineByMetaKeys (
+            uniq_assembly_ch,
+            ch_meryl_hifi,
+            keySet: ['id','sample'],
+            meta: 'rhs'
+        )
 
     // index assembly file(s)
     SAMTOOLS_FAIDX (
@@ -256,7 +256,7 @@ workflow DVPOLISH {
     )
 
     // run merquery on input assembly 
-    MERQURY_INPUT_ASM(input.merqury_in_ch)
+    MERQURY_INPUT_ASM(assembly_plus_meryl_ch)
 
     ch_polished_assemblies = constructAssemblyRecord(
     BCFTOOLS_CONSENSUS.out.fasta
