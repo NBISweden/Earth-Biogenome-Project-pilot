@@ -42,9 +42,13 @@ workflow DVPOLISH {
     take:
     ch_assemblies // [ meta, assembly ]
     ch_hifi       // [ meta, hifi ]
+    ch_meryl_hifi // [ uniondb ] 
 
     main:
 
+    
+    ch_meryl_hifi.view {"ch_meryl_hifi: " + it}
+    
     reads_plus_assembly_ch = combineByMetaKeys (
             ch_hifi,
             ch_assemblies,
