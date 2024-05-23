@@ -20,8 +20,8 @@ include { TABIX_TABIX as TABIX_TABIX              } from "$projectDir/modules/nf
 include { TABIX_TABIX as TABIX_TABIX_MERGED       } from "$projectDir/modules/nf-core/tabix/tabix/main"
 include { BCFTOOLS_MERGE                          } from "$projectDir/modules/nf-core/bcftools/merge/main"
 include { BCFTOOLS_CONSENSUS                      } from "$projectDir/modules/nf-core/bcftools/consensus/main"
-include { MERQURY as MERQURY_INPUT_ASM            } from "modules/nf-core/merqury/main"
-include { MERQURY as MERQURY_POLISHED_ASM         } from "modules/nf-core/merqury/main"
+include { MERQURY as MERQURY_INPUT_ASM            } from "$projectDir/modules/nf-core/merqury/main"
+include { MERQURY as MERQURY_POLISHED_ASM         } from "$projectDir/modules/nf-core/merqury/main"
 /*
 outline: 
 
