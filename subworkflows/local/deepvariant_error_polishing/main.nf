@@ -20,7 +20,8 @@ include { TABIX_TABIX as TABIX_TABIX              } from "$projectDir/modules/nf
 include { TABIX_TABIX as TABIX_TABIX_MERGED       } from "$projectDir/modules/nf-core/tabix/tabix/main"
 include { BCFTOOLS_MERGE                          } from "$projectDir/modules/nf-core/bcftools/merge/main"
 include { BCFTOOLS_CONSENSUS                      } from "$projectDir/modules/nf-core/bcftools/consensus/main"
-
+include { MERQURY as MERQURY_INPUT_ASM            } from "modules/nf-core/merqury/main"
+include { MERQURY as MERQURY_POLISHED_ASM         } from "modules/nf-core/merqury/main"
 /*
 outline: 
 
@@ -42,12 +43,9 @@ workflow DVPOLISH {
     take:
     ch_assemblies // [ meta, assembly ]
     ch_hifi       // [ meta, hifi ]
-    ch_meryl_hifi // [ uniondb ] 
+    ch_meryl_hifi // [ meta, union.meryldb ] 
 
     main:
-
-    
-    ch_meryl_hifi.view {"ch_meryl_hifi: " + it}
     
     reads_plus_assembly_ch = combineByMetaKeys (
             ch_hifi,
@@ -55,14 +53,22 @@ workflow DVPOLISH {
             keySet: ['id','sample'],
             meta: 'rhs'
         )
-    reads_plus_assembly_ch
+    reads_assembly_meryldb_ch = combineByMetaKeys (
+            reads_plus_assembly_ch,
+            ch_meryl_hifi,
+            keySet: ['id','sample'],
+            meta: 'rhs'
+        )
+
+    reads_assembly_meryldb_ch
         // Add single_end for minimap module
-        .flatMap { meta, reads, assembly -> reads instanceof List ?
-            reads.collect{ [ meta + [ single_end: true ], it, assembly.pri_fasta ] }
-            : [ [ meta + [ single_end: true ], reads, assembly.pri_fasta ] ] }
-        .multiMap { meta, reads, assembly ->
+        .flatMap { meta, reads, assembly, meryldb -> reads instanceof List ?
+            reads.collect{ [ meta + [ single_end: true ], it, assembly.pri_fasta, meryldb ] }
+            : [ [ meta + [ single_end: true ], reads, assembly.pri_fasta, meryldb ] ] }
+        .multiMap { meta, reads, assembly, meryldb ->
             reads_ch: [ meta + [ readID: reads.baseName ], reads ]
             assembly_ch: [ meta, assembly ]
+            merqury_in_ch: [ meta, assembly, meryldb ]
         }
         .set { input }
 
@@ -248,6 +254,9 @@ workflow DVPOLISH {
     BCFTOOLS_CONSENSUS(
         vcf_plus_index_plus_assembly_ch
     )
+
+    // run merquery on input assembly 
+    MERQURY_INPUT_ASM(input.merqury_in_ch)
 
     ch_polished_assemblies = constructAssemblyRecord(
     BCFTOOLS_CONSENSUS.out.fasta
