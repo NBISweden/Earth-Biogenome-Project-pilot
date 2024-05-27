@@ -255,8 +255,19 @@ workflow DVPOLISH {
         vcf_plus_index_plus_assembly_ch
     )
 
-    // run merquery on input assembly 
+    // run merqury on input assembly 
     MERQURY_INPUT_ASM(assembly_plus_meryl_ch)
+
+    // run merqury on polished assembly
+    polishedASM_plus_meryl_ch = combineByMetaKeys (
+        ch_meryl_hifi,
+        BCFTOOLS_CONSENSUS.out.fasta,
+        keySet: ['id','sample'],
+        meta: 'rhs'
+    )
+    MERQURY_POLISHED_ASM(polishedASM_plus_meryl_ch)
+
+// TODO write modile which reads in the two qv files (csv) from input merqury and polsihed merqury run and select all contigs based on the QV value
 
     ch_polished_assemblies = constructAssemblyRecord(
     BCFTOOLS_CONSENSUS.out.fasta
