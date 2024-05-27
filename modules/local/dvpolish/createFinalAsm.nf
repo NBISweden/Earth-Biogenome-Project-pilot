@@ -27,8 +27,8 @@ process DVPOLISH_CREATE_FINALASM {
     def pol_ext    = pol_fasta.getExtension()
 
     """
-    nl_unpol_ASM=$(wc -l < ${unpol_merqury_cxv})
-    nl_pol_ASM=$(wc -l < ${pol_merqury_csv})
+    nl_unpol_ASM=\$(wc -l < ${unpol_merqury_cxv})
+    nl_pol_ASM=\$(wc -l < ${pol_merqury_csv})
 
     if [[ ${nl_unpol_ASM} -ne ${nl_pol_ASM} ]]
     then 
@@ -45,8 +45,8 @@ process DVPOLISH_CREATE_FINALASM {
     l=1 
     while [[ $l -le ${nl_pol_ASM} ]]
     do 
-        IFS='\t' read -r -a l_uasm <<< "$(sed -n ${l}p ${pol_merqury_cxv})"
-        IFS='\t' read -r -a l_pasm <<< "$(sed -n ${l}p ${unpol_merqury_cxv})"
+        IFS='\t' read -r -a l_uasm <<< "\$(sed -n ${l}p ${pol_merqury_cxv})"
+        IFS='\t' read -r -a l_pasm <<< "\$(sed -n ${l}p ${unpol_merqury_cxv})"
 
         // check if the contig names (column 1) are the same
         if [[ "${l_uasm[0]}" != "${l_pasm[0]}" ]]
@@ -66,7 +66,7 @@ process DVPOLISH_CREATE_FINALASM {
             cat polished_asm/${pol_name}_part_${l_pasm[0]}.${pol_ext}
         fi | gzip -c > ${prefix}.fa.gz
 
-        l=$((l+1))
+        l=\$((l+1))
     done
     
     cat <<-END_VERSIONS > versions.yml
