@@ -22,6 +22,8 @@ include { BCFTOOLS_MERGE                          } from "$projectDir/modules/nf
 include { BCFTOOLS_CONSENSUS                      } from "$projectDir/modules/nf-core/bcftools/consensus/main"
 include { MERQURY as MERQURY_INPUT_ASM            } from "$projectDir/modules/nf-core/merqury/main"
 include { MERQURY as MERQURY_POLISHED_ASM         } from "$projectDir/modules/nf-core/merqury/main"
+include { DVPOLISH_CREATE_FINALASM                } from "$projectDir/modules/local/dvpolish/createFinalAsm"
+
 /*
 outline: 
 
@@ -267,7 +269,21 @@ workflow DVPOLISH {
     )
     MERQURY_POLISHED_ASM(polishedASM_plus_meryl_ch)
 
-// TODO write modile which reads in the two qv files (csv) from input merqury and polsihed merqury run and select all contigs based on the QV value
+    combineByMetaKeys(
+        uniq_assembly_ch
+        MERQURY_INPUT_ASM.out.assembly_qv
+        keySet: ['id','assembly'],
+        meta: 'rhs'
+    ).view { "combine input + merqy: " + it }    
+
+    combineByMetaKeys(
+        BCFTOOLS_CONSENSUS.out.fasta
+        MERQURY_POLISHED_ASM.out.assembly_qv
+        keySet: ['id','assembly'],
+        meta: 'rhs'
+    ).view { "combine polis + merqy: " + it }
+    // TODO write modile which reads in the two qv files (csv) from input merqury and polsihed merqury run and select all contigs based on the QV value
+    //DVPOLISH_CREATE_FINALASM()
 
     ch_polished_assemblies = constructAssemblyRecord(
     BCFTOOLS_CONSENSUS.out.fasta
