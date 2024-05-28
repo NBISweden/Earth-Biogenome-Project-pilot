@@ -304,7 +304,7 @@ workflow DVPOLISH {
     // 3. publish result
 
     ch_polished_assemblies = constructAssemblyRecord(
-    BCFTOOLS_CONSENSUS.out.fasta
+    DVPOLISH_CREATE_FINALASM.out.fa_gz
     )
 
     emit:
