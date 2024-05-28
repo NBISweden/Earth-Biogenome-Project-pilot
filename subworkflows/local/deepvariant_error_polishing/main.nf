@@ -269,21 +269,39 @@ workflow DVPOLISH {
     )
     MERQURY_POLISHED_ASM(polishedASM_plus_meryl_ch)
 
-    combineByMetaKeys(
-        uniq_assembly_ch
-        MERQURY_INPUT_ASM.out.assembly_qv
+    unpolASM_merqQV_ch = combineByMetaKeys(
+        uniq_assembly_ch,
+        MERQURY_INPUT_ASM.out.assembly_qv,
         keySet: ['id','assembly'],
         meta: 'rhs'
-    ).view { "combine input + merqy: " + it }    
+    )
+
+    polASM_merqQV_ch = combineByMetaKeys(
+        BCFTOOLS_CONSENSUS.out.fasta,
+        MERQURY_POLISHED_ASM.out.assembly_qv,
+        keySet: ['id','assembly'],
+        meta: 'rhs'
+    )
 
     combineByMetaKeys(
-        BCFTOOLS_CONSENSUS.out.fasta
-        MERQURY_POLISHED_ASM.out.assembly_qv
+        unpolASM_merqQV_ch,
+        polASM_merqQV_ch,
         keySet: ['id','assembly'],
         meta: 'rhs'
-    ).view { "combine polis + merqy: " + it }
-    // TODO write modile which reads in the two qv files (csv) from input merqury and polsihed merqury run and select all contigs based on the QV value
-    //DVPOLISH_CREATE_FINALASM()
+    )
+    .multiMap { meta, unpol_asm, unpol_qv, pol_asm, pol_qv ->
+        unpolASM_qv_ch: [ meta, unpol_asm, unpol_qv ]
+        polASM_qv_ch: [ meta, pol_asm, pol_qv ]
+    }
+    .set { createFinalAsm }
+
+    DVPOLISH_CREATE_FINALASM(
+        createFinalAsm.unpolASM_qv_ch,
+        createFinalAsm.polASM_qv_ch,
+    )
+
+    // TODO 
+    // 3. publish result
 
     ch_polished_assemblies = constructAssemblyRecord(
     BCFTOOLS_CONSENSUS.out.fasta
