@@ -271,14 +271,14 @@ workflow DVPOLISH {
 
     unpolASM_merqQV_ch = combineByMetaKeys(
         uniq_assembly_ch,
-        MERQURY_INPUT_ASM.out.assembly_qv,
+        MERQURY_INPUT_ASM.out.scaffold_qv,
         keySet: ['id','assembly'],
         meta: 'rhs'
     )
 
     polASM_merqQV_ch = combineByMetaKeys(
         BCFTOOLS_CONSENSUS.out.fasta,
-        MERQURY_POLISHED_ASM.out.assembly_qv,
+        MERQURY_POLISHED_ASM.out.scaffold_qv,
         keySet: ['id','assembly'],
         meta: 'rhs'
     )
