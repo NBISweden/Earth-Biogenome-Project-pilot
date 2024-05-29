@@ -60,10 +60,10 @@ process DVPOLISH_CREATE_FINALASM {
         # compare number of errorneous kmers (column 2)
         if [[ \${l_uasm[1]} -le \${l_pasm[1]} ]]    # unpolished assembly has fewer errors, or no difference -> go with the unpolished assembly 
         then 
-            cat unpolished_asm/${unpol_name}_part_\${l_uasm[0]}.${unpol_ext}
+            cat unpolished_asm/${unpol_name}.part_\${l_uasm[0]}.${unpol_ext}
             >&2 echo "[WARNING] DVPOLISH_CREATE_FINALASM: unpolished contig \${l_uasm[0]} has better or equal QV: \${l_uasm[3]} vs \${l_pasm[3]}"
         else                                      # polished assembly has fewer errors
-            cat polished_asm/${pol_name}_part_\${l_pasm[0]}.${pol_ext}
+            cat polished_asm/${pol_name}.part_\${l_pasm[0]}.${pol_ext}
         fi | gzip -c > ${prefix}.fasta.gz
 
         l=\$((l+1))
