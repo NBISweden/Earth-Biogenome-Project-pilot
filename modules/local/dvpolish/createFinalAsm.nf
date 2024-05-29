@@ -64,7 +64,7 @@ process DVPOLISH_CREATE_FINALASM {
             >&2 echo "[WARNING] DVPOLISH_CREATE_FINALASM: unpolished contig \${l_uasm[0]} has better or equal QV: \${l_uasm[3]} vs \${l_pasm[3]}"
         else                                      # polished assembly has fewer errors
             cat polished_asm/${pol_name}_part_\${l_pasm[0]}.${pol_ext}
-        fi | gzip -c > ${prefix}.fa.gz
+        fi | gzip -c > ${prefix}.fasta.gz
 
         l=\$((l+1))
     done
