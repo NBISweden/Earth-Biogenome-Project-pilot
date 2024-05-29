@@ -12,8 +12,8 @@ process DVPOLISH_CREATE_FINALASM {
     tuple val(meta2), path(pol_fasta), path(pol_merqury_csv)     // meta map, polished assembly, corresponding merqury qv file
 
     output:
-    tuple val(meta), path('*.fa.gz')  , emit: fa_gz
-    path  "versions.yml"              , emit: versions
+    tuple val(meta), path('*.fasta.gz')  , emit: fasta_gz
+    path  "versions.yml"                 , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
