@@ -21,9 +21,9 @@ process DVPOLISH_CREATE_FINALASM {
     script:
     def args       = task.ext.args ?: ''
     def prefix     = task.ext.prefix ?: "${meta.id}"
-    def unpol_name = unpol_fasta.getSimpleName()
+    def unpol_name = unpol_fasta.getBaseName()
     def unpol_ext  = unpol_fasta.getExtension()
-    def pol_name   = pol_fasta.getSimpleName()
+    def pol_name   = pol_fasta.getBaseName()
     def pol_ext    = pol_fasta.getExtension()
 
     """
