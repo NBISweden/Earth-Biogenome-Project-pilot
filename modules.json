@@ -183,6 +183,11 @@
             "git_sha": "911696ea0b62df80e900ef244d7867d177971f73",
             "installed_by": ["modules"]
           },
+          "seqkit/seq": {
+            "branch": "master",
+            "git_sha": "2be41ca2cc780eca4293d1b0dd3850b0b7ac40a3",
+            "installed_by": ["modules"]
+          },
           "star/align": {
             "branch": "master",
             "git_sha": "cc08a888069f67cab8120259bddab8032d4c0fe3",
