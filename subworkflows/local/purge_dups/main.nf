@@ -17,6 +17,8 @@ include { PURGEDUPS_PURGEDUPS as PURGEDUPS_PURGEDUPS_PRIMARY   } from "$projectD
 include { PURGEDUPS_PURGEDUPS as PURGEDUPS_PURGEDUPS_ALTERNATE } from "$projectDir/modules/nf-core/purgedups/purgedups"
 include { PURGEDUPS_GETSEQS as PURGEDUPS_GETSEQS_PRIMARY       } from "$projectDir/modules/nf-core/purgedups/getseqs"
 include { PURGEDUPS_GETSEQS as PURGEDUPS_GETSEQS_ALTERNATE     } from "$projectDir/modules/nf-core/purgedups/getseqs"
+include { PURGEDUPS_SEQKITSEQ as PURGEDUPS_SEQKITSEQ_PRIMARY   } from "$projectDir/modules/nf-core/seqkit/seq/main"
+include { PURGEDUPS_SEQKITSEQ as PURGEDUPS_SEQKITSEQ_ALTERNATE } from "$projectDir/modules/nf-core/seqkit/seq/main"
 
 workflow PURGE_DUPLICATES {
 
@@ -78,6 +80,10 @@ workflow PURGE_DUPLICATES {
             .join( PURGEDUPS_PURGEDUPS_PRIMARY.out.bed )
     )
 
+    PURGEDUPS_SEQKITSEQ_PRIMARY(
+        PURGEDUPS_GETSEQS_PRIMARY.out.purged
+    )
+
     // Purge alternate contigs. // TODO: Skip when using consensus
     reads_plus_assembly_ch
         .filter { meta, reads, assembly -> assembly.alt_fasta != null }
@@ -106,8 +112,11 @@ workflow PURGE_DUPLICATES {
         PURGEDUPS_SPLITFA_ALTERNATE.out.merged_fasta
             .join( PURGEDUPS_PURGEDUPS_ALTERNATE.out.bed )
     )
-    ch_purged_assemblies = PURGEDUPS_GETSEQS_PRIMARY.out.purged
-        .mix(PURGEDUPS_GETSEQS_ALTERNATE.out.purged)
+    PURGEDUPS_SEQKITSEQ_ALTERNATE(
+        PURGEDUPS_GETSEQS_ALTERNATE.out.purged
+    )
+    ch_purged_assemblies = PURGEDUPS_SEQKITSEQ_PRIMARY.out.fastx
+        .mix(PURGEDUPS_SEQKITSEQ_ALTERNATE.out.fastx)
         .groupTuple( sort: { a, b -> a.name <=> b.name } )
         .map { meta, fasta ->
             def asm_meta = meta.assembly.subMap(['assembler','stage','id','build'])
