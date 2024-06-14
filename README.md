@@ -27,11 +27,14 @@ flowchart TD
     input --> taxonkit[[ TaxonKit name2taxid/reformat ]]
     taxonkit --> goat_taxon[[ GOAT taxon search ]]
     goat_taxon --> busco
+    goat_taxon --> dtol[[ DToL lookup ]]
     hifi --> samtools_fa[[ Samtools fasta ]]
     samtools_fa --> fastk_hifi
     samtools_fa --> mash_screen
     hifi[/ HiFi reads /] --> fastk_hifi[[ FastK - HiFi ]]
-    hic[/ Hi-C reads /] --> fastk_hic[[ FastK - HiC ]]
+    hifi --> meryl_hifi[[ Meryl - HiFi ]]
+    hic[/ Hi-C reads /] --> fastk_hic[[ FastK - Hi-C ]]
+    hifi --> meryl_hic[[ Meryl - Hi-C ]]
     assembly[/ Assembly /] --> quast[[ Quast ]]
     fastk_hifi --> histex[[ Histex ]]
     histex --> genescopefk[[ GeneScopeFK ]]
@@ -39,6 +42,8 @@ flowchart TD
     fastk_hifi --> katgc[[ KatGC ]]
     fastk_hifi --> merquryfk[[ MerquryFK ]]
     assembly --> merquryfk
+    meryl_hifi --> merqury[[ Merqury ]]
+    assembly --> merqury
     fastk_hifi --> katcomp[[ KatComp ]]
     fastk_hic --> katcomp
     assembly --> busco[[ Busco ]]
@@ -52,6 +57,14 @@ flowchart TD
     assembly --> fcsgx[[ FCS GX ]]
     fcs_fetchdb[( FCS fetchdb )] --> fcsgx
     mitoref --> mitohifi
+    genescopefk --> quarto[[ Quarto ]]
+    goat_taxon --> multiqc[[ MultiQC ]]
+    quarto --> multiqc
+    dtol --> multiqc
+    katgc --> multiqc
+    ploidyplot --> multiqc
+    busco --> multiqc
+    quast --> multiqc
 ```
 
 ## Usage
@@ -122,6 +135,8 @@ Mandatory:
       ploidy: 2                      # Optional: Estimated ploidy (default: retrieved from GOAT)
       genome_size: 2345              # Optional: Estimated genome size (default: retrieved from GOAT)
       haploid_number: 13             # Optional: Estimated haploid chromosome count (default: retrieved from GOAT)
+      taxid: 5630                    # Optional: Taxon ID (default: retrieved with Taxonkit)
+      kingdom: Eukaryota             # Optional: (default: retrived with Taxonkit)
     assembly:                        # Optional: List of assemblies to curate and validate.
       - assembler: hifiasm           # For each entry, the assembler,
         stage: raw                   # stage of assembly,
@@ -187,7 +202,7 @@ busco:
 
 - `multiqc_config`: Path to MultiQC configuration file (default: `configs/multiqc_conf.yaml`).
 
-Uppmax cluster specific:
+Uppmax and PDC cluster specific:
 
 - `project`: NAISS Compute allocation number.
 
@@ -215,6 +230,29 @@ The profile is enabled using the `-profile` parameter to nextflow:
 ```bash
 nextflow run -profile uppmax <nextflow_script>
 ```
+
+A NAISS compute allocation should also be supplied using the `--project` parameter.
+
+### Customization for PDC
+
+A custom profile named `dardel` is available to run this workflow specifically
+on the PDC cluster *Dardel*. The process `executor` is `slurm` so jobs are
+submitted to the Slurm Queue Manager. All jobs submitted to slurm
+must have a project allocation. This is automatically added to the `clusterOptions`
+in the `dardel` profile. Calculations are performed in the scratch space allocated
+by `PDC_TMP` which is also on the lustre file system and is not node local storage.
+The path to this disk space is provided by the `$PDC_TMP` variable, used by
+the `process.scratch` directive in the `dardel` profile. Lastly
+the profile enables the use of Singularity so that all processes must be
+executed within Singularity containers. See [nextflow.config](nextflow.config)
+for the profile specification.
+
+The profile is enabled using the `-profile` parameter to nextflow:
+```bash
+nextflow run -profile dardel <nextflow_script>
+```
+
+A NAISS compute allocation should also be supplied using the `--project` parameter.
 
 ## Workflow organization
 

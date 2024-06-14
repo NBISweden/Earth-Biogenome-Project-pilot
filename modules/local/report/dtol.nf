@@ -13,7 +13,7 @@ process REPORT_DTOL {
 
     exec:
     def tol_table = [
-        tolId: tol_search_json.species[0].tolIds[0].tolId,
+        tolId: tol_search_json.species[0].tolIds[0]?.tolId?: "No ToL ID",
         species: tol_search_json.species[0].scientificName,
         class: tol_search_json.species[0].taxaClass,
         order: tol_search_json.species[0].order

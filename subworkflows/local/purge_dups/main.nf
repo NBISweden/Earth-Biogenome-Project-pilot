@@ -107,9 +107,9 @@ workflow PURGE_DUPLICATES {
         PURGEDUPS_SPLITFA_ALTERNATE.out.merged_fasta
             .join( PURGEDUPS_PURGEDUPS_ALTERNATE.out.bed )
     )
-
-    SEQKIT_SEQ( PURGEDUPS_GETSEQS_PRIMARY.out.purged
-        .mix( PURGEDUPS_GETSEQS_ALTERNATE.out.purged )
+    SEQKIT_SEQ( 
+        PURGEDUPS_GETSEQS_PRIMARY.out.purged
+            .mix( PURGEDUPS_GETSEQS_ALTERNATE.out.purged )
     )
     ch_purged_assemblies = constructAssemblyRecord( SEQKIT_SEQ.out.fastx )
 
