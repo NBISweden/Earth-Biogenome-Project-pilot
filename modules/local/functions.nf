@@ -11,7 +11,7 @@ MYPROCESS (
         channel_two,    // [ [ id: 'sample', group: Y    ], bed ]
         keySet: ['id'], // Use operator `combine` with `by` key meta.id
         meta: 'rhs'     // Output channel retains meta map from channel_two
-    )
+    ) // Output: [ [ id: 'sample', group: Y ], bam, bed ]
 )
 */
 def combineByMetaKeys( Map args = [:], lhs, rhs ){
@@ -56,7 +56,7 @@ MYPROCESS (
         keySet: ['id'], // Use operator `join` with `by` key meta.id
         meta: 'rhs',    // Output channel retains meta map from channel_two
         remainder: true // additional flags valid for the channel operator can be set here
-    )
+    ) // Output: [ [ id: 'sample', group: Y ], bam, bed ]
 )
 */
 def joinByMetaKeys( Map args = [:], lhs, rhs ) {
