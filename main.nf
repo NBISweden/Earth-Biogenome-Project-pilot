@@ -23,13 +23,16 @@ include { EVALUATE_ASSEMBLY as EVALUATE_RAW_ASSEMBLY } from "$projectDir/subwork
 
 include { DECONTAMINATE } from "$projectDir/subworkflows/local/decontaminate/main"
 
-include { PURGE_DUPLICATES } from "$projectDir/subworkflows/local/purge_dups/main"
-
+include { PURGE_DUPLICATES                              } from "$projectDir/subworkflows/local/purge_dups/main"
 include { EVALUATE_ASSEMBLY as EVALUATE_PURGED_ASSEMBLY } from "$projectDir/subworkflows/local/evaluate_assembly/main"
+
+include { DVPOLISH                                        } from "$projectDir/subworkflows/local/deepvariant_error_polishing/main"
+include { EVALUATE_ASSEMBLY as EVALUATE_POLISHED_ASSEMBLY } from "$projectDir/subworkflows/local/evaluate_assembly/main"
 
 include { ALIGN_RNASEQ       } from "$projectDir/subworkflows/local/align_rnaseq/main"
 
 include { ASSEMBLY_REPORT } from "$projectDir/subworkflows/local/assembly_report/main"
+
 
 /*
  * Development: See docs/development to understand the workflow programming model and
@@ -178,13 +181,26 @@ workflow {
     ).dump(tag: 'Assemblies: to polish')
     if ( 'polish' in workflow_steps ) {
         // Run polishers
-        ch_polished_assemblies = ch_to_polish
+        DVPOLISH(
+            ch_to_polish,
+            ch_hifi,
+            BUILD_MERYL_HIFI_DATABASE.out.uniondb
+        )
+        ch_polished_assemblies = DVPOLISH.out.assemblies
     } else {
         ch_polished_assemblies = ch_to_polish
     }
     ch_polished_assemblies = ch_polished_assemblies.mix(
         preassembledInput( PREPARE_INPUT.out.assemblies, 'polished' )
     ).dump(tag: 'Assemblies: Polished')
+    EVALUATE_POLISHED_ASSEMBLY (
+        ch_polished_assemblies,
+        BUILD_FASTK_HIFI_DATABASE.out.fastk_hist_ktab,
+        BUILD_MERYL_HIFI_DATABASE.out.uniondb
+    )
+    ch_multiqc_files = ch_multiqc_files.mix( EVALUATE_POLISHED_ASSEMBLY.out.logs )
+    ch_versions = ch_versions.mix( EVALUATE_POLISHED_ASSEMBLY.out.versions )
+
 
     // Scaffold
     ch_to_scaffold = setAssemblyStage (
