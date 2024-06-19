@@ -45,6 +45,7 @@ process DVPOLISH_CREATE_FINALASM {
     l=1 
     while [[ \$l -le \${nl_pol_ASM} ]]
     do 
+        # read qv string in line p from unpolished and polished merqury files into bash array l_uasm and l_pasm respectively
         IFS='\t' read -r -a l_uasm <<< "\$(sed -n \${l}p ${unpol_merqury_csv})"
         IFS='\t' read -r -a l_pasm <<< "\$(sed -n \${l}p ${pol_merqury_csv})"
 
