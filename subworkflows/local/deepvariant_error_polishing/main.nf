@@ -99,11 +99,9 @@ workflow DVPOLISH {
         input.assembly_ch
     )
 
-    def path_closure = {meta, files -> files.collect(){[meta, it ]}}
-
     combineByMetaKeys (
         DVPOLISH_PBMM2_ALIGN.out.bam_bai,
-        DVPOLISH_CHUNKFA.out.bed.flatMap(path_closure),
+        DVPOLISH_CHUNKFA.out.bed.transpose(),
         keySet: ['sample','assembly'],
         meta: 'rhs'
     )
