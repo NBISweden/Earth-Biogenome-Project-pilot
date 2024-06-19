@@ -52,7 +52,7 @@ workflow DVPOLISH {
     reads_plus_assembly_ch = combineByMetaKeys (
             ch_hifi,
             ch_assemblies,
-            keySet: ['id','sample'],
+            keySet: [ 'id', 'sample' ],
             meta: 'rhs'
         )
 
@@ -72,14 +72,14 @@ workflow DVPOLISH {
     assembly_plus_meryl_ch = combineByMetaKeys (
             ch_meryl_hifi,
             uniq_assembly_ch,
-            keySet: ['id','sample'],
+            keySet: [ 'id', 'sample' ],
             meta: 'rhs'
         )
 
     // index assembly file(s)
     SAMTOOLS_FAIDX (
         uniq_assembly_ch,
-        [[],[]]
+        [ [] , [] ]
     )    
 
     // split assembly into smaller chunks, this step just creates bed files 
@@ -102,7 +102,7 @@ workflow DVPOLISH {
     combineByMetaKeys (
         DVPOLISH_PBMM2_ALIGN.out.bam_bai,
         DVPOLISH_CHUNKFA.out.bed.transpose(),
-        keySet: ['sample','assembly'],
+        keySet: [ 'sample', 'assembly' ],
         meta: 'rhs'
     )
     .multiMap { meta, bam, bai, bed ->
@@ -114,7 +114,7 @@ workflow DVPOLISH {
     
     // split bam files according to bed file chunks 
     SAMTOOLS_VIEW (alignment.meta_bam_bai_ch,
-    [[],[]],                            
+    [ [],[] ],
     alignment.bed_ch)                   
 
     // index the splitted bam files 
@@ -132,32 +132,32 @@ workflow DVPOLISH {
     // that were splitted in the previous step need to be merged. key:bed file ID
     SAMTOOLS_MERGE(
         bam_merge_ch.multiples,
-        [[],[]],
-        [[],[]]
+        [ [], [] ],
+        [ [], [] ]
     )
     // index merged bam files
     SAMTOOLS_INDEX_MERGE(SAMTOOLS_MERGE.out.bam)
 
     bam_merge_ch.singleton
-    .map { meta, bam -> [ meta, *bam ] } // the spread operator (*) flattens the bam list
-    .join(SAMTOOLS_INDEX_FILTER.out.bai)
-    .mix(SAMTOOLS_MERGE.out.bam
-        .join(SAMTOOLS_INDEX_MERGE.out.bai)
-    )
-    .join(alignment.meta_bed_ch)
-    .set { dv_bam_bai_bed_ch }
+        .map { meta, bam -> [ meta, *bam ] } // the spread operator (*) flattens the bam list
+        .join( SAMTOOLS_INDEX_FILTER.out.bai )
+        .mix( SAMTOOLS_MERGE.out.bam
+            .join( SAMTOOLS_INDEX_MERGE.out.bai )
+        )
+        .join( alignment.meta_bed_ch )
+        .set { dv_bam_bai_bed_ch }
 
     asm_fai_ch = joinByMetaKeys (
         uniq_assembly_ch,
         SAMTOOLS_FAIDX.out.fai,
-        keySet: ['sample','assembly'],
+        keySet: [ 'sample', 'assembly' ],
         meta: 'lhs'
     )
 
     combineByMetaKeys (
         dv_bam_bai_bed_ch,
         asm_fai_ch,
-        keySet: ['sample','assembly'],
+        keySet: ['sample', 'assembly' ],
         meta: 'lhs'
     )
     .multiMap { meta, bam, bai, bed, fasta, fai ->
@@ -172,7 +172,7 @@ workflow DVPOLISH {
         dv_input.bam_bai_bed_ch,    // tuple val(meta), path(input), path(index), path(intervals)
         dv_input.fasta_ch,          // tuple val(meta2), path(fasta)
         dv_input.fai_ch,            // tuple val(meta3), path(fai)
-        [[],[]]                     // tuple val(meta4), path(gzi)
+        [ [], [] ]                  // tuple val(meta4), path(gzi)
     )
 
     DEEPVARIANT.out.vcf
@@ -194,22 +194,22 @@ workflow DVPOLISH {
 
     // in case of multiple vcf files, merge them prior the consenus step
     BCFTOOLS_VIEW.out.vcf
-    .map { meta, vcf -> [ meta - meta.subMap('mergeID'), vcf ] }
-    .groupTuple(by:0)
-    .set { filt_vcf_list_ch }
+        .map { meta, vcf -> [ meta - meta.subMap( 'mergeID' ), vcf ] }
+        .groupTuple(by:0)
+        .set { filt_vcf_list_ch }
 
     TABIX_TABIX.out.tbi
-    .map { meta, tbi -> [ meta - meta.subMap('mergeID'), tbi ] }
-    .groupTuple(by:0)
-    .set { filt_tbi_list_ch }
+        .map { meta, tbi -> [ meta - meta.subMap( 'mergeID' ), tbi ] }
+        .groupTuple( by:0 )
+        .set { filt_tbi_list_ch }
 
     filt_vcf_list_ch
-    .join(filt_tbi_list_ch, by:0)
-    .branch { meta, vcf_list, vcf_index_list ->
-        multiples: vcf_list.size() > 1
-        singleton: true
-    }
-    .set { vcf_merge_ch }
+        .join( filt_tbi_list_ch, by:0 )
+        .branch { meta, vcf_list, vcf_index_list ->
+            multiples: vcf_list.size() > 1
+            singleton: true
+        }
+        .set { vcf_merge_ch }
 
     joinByMetaKeys (
         vcf_merge_ch.multiples,
@@ -246,7 +246,7 @@ workflow DVPOLISH {
     vcf_plus_index_plus_assembly_ch = joinByMetaKeys (
         vcf_plus_index_ch,
         uniq_assembly_ch,
-        keySet: ['sample','assembly'],
+        keySet: [ 'sample', 'assembly' ],
         meta: 'lhs'
     )
 
@@ -262,7 +262,7 @@ workflow DVPOLISH {
     polishedASM_plus_meryl_ch = combineByMetaKeys (
         ch_meryl_hifi,
         BCFTOOLS_CONSENSUS.out.fasta,
-        keySet: ['id','sample'],
+        keySet: [ 'id', 'sample' ],
         meta: 'rhs'
     )
     MERQURY_POLISHED_ASM(polishedASM_plus_meryl_ch)
@@ -270,21 +270,21 @@ workflow DVPOLISH {
     unpolASM_merqQV_ch = combineByMetaKeys(
         uniq_assembly_ch,
         MERQURY_INPUT_ASM.out.scaffold_qv,
-        keySet: ['id','assembly'],
+        keySet: [ 'id', 'assembly' ],
         meta: 'rhs'
     )
 
     polASM_merqQV_ch = combineByMetaKeys(
         BCFTOOLS_CONSENSUS.out.fasta,
         MERQURY_POLISHED_ASM.out.scaffold_qv,
-        keySet: ['id','assembly'],
+        keySet: [ 'id', 'assembly' ],
         meta: 'rhs'
     )
 
     combineByMetaKeys(
         unpolASM_merqQV_ch,
         polASM_merqQV_ch,
-        keySet: ['id','assembly'],
+        keySet: [ 'id', 'assembly' ],
         meta: 'rhs'
     )
     .multiMap { meta, unpol_asm, unpol_qv, pol_asm, pol_qv ->
