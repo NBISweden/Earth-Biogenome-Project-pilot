@@ -97,7 +97,7 @@
           },
           "meryl/count": {
             "branch": "master",
-            "git_sha": "c95215baf20e6d8cf2ae0e8411d03c5d9ef21d4a",
+            "git_sha": "2910aa889fd3497727d87854148a0e0aa1105da3",
             "installed_by": ["modules"]
           },
           "meryl/histogram": {
