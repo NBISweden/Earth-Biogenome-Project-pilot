@@ -114,9 +114,14 @@ workflow {
         // Nothing more than evaluate
     }
     ch_raw_assemblies.dump(tag: 'Assemblies: Raw')
-    // TODO: Add organelle assembly from reads
-    ASSEMBLE_ORGANELLES ( ch_raw_assemblies )
-    // TODO: filter organelles from assemblies
+
+    // Organelle assembly
+    if ( params.organelle_assembly_mode == 'reads' ) {
+        // TODO: Add organelle assembly from reads
+    } else if ( params.organelle_assembly_mode == 'contigs' ){
+        ASSEMBLE_ORGANELLES ( ch_raw_assemblies )
+        // TODO: filter organelles from assemblies
+    } // else params.organelle_assembly_mode == 'none'
 
     // Assess assemblies
     COMPARE_ASSEMBLIES ( ch_raw_assemblies )
