@@ -153,6 +153,7 @@ workflow PREPARE_INPUT {
         .map { meta, tsv ->
             def busco_lineages = tsv.splitCsv( sep:"\t", header: true ).findAll { it.odb10_lineage }.collect { it.odb10_lineage }.join(',')
             def species = tsv.splitCsv( sep:"\t", header: true ).find { it.scientific_name == meta.sample.name }
+            assert species != null : "GOAT_TAXONSEARCH failed to retrieve species information"
             meta.deepMerge([
                 sample: [
                     genome_size: meta.sample.genome_size ?: species.genome_size,
