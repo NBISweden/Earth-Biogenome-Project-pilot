@@ -20,24 +20,6 @@ workflow GENOME_PROPERTIES {
     FASTK_HISTEX ( fastk_hist_ktab.map { meta, hist, ktab -> [ meta, hist ] } )
     GENESCOPEFK ( FASTK_HISTEX.out.hist )
 
-    // Print warning if genome size estimate is outside predicted range.
-    GENESCOPEFK.out.summary
-        .subscribe { meta, summary ->
-            def genome_size_estimates = summary.readLines().find { it.startsWith("Genome Haploid Length") } =~ /[0-9,]+/
-            def nf = java.text.NumberFormat.getInstance(Locale.US)
-            if ( genome_size_estimates.size() == 1 ) {
-                if ( nf.parse(meta.sample.genome_size).intValue() < 0.9 * nf.parse(genome_size_estimates[0]).intValue() ||
-                    nf.parse(meta.sample.genome_size).intValue() > 1.1 * nf.parse(genome_size_estimates[0]).intValue() ) {
-                        log.warn "GeneScopeFK genome size estimate differs from GOAT estimate"
-                }
-            } else {
-                // Min and Max estimate
-                if ( nf.parse(meta.sample.genome_size).intValue() < nf.parse(genome_size_estimates[0]).intValue() ||
-                    nf.parse(meta.sample.genome_size).intValue() > nf.parse(genome_size_estimates[1]).intValue() ) {
-                        log.warn "GeneScopeFK genome size estimate differs from GOAT estimate"
-                }
-            }
-        }
     GENESCOPEFK.out.linear_plot
         .join( GENESCOPEFK.out.log_plot )
         .join( GENESCOPEFK.out.transformed_linear_plot )
