@@ -78,39 +78,41 @@ workflow PURGE_DUPLICATES {
         PURGEDUPS_SPLITFA_PRIMARY.out.merged_fasta
             .join( PURGEDUPS_PURGEDUPS_PRIMARY.out.bed )
     )
+    def ch_to_format = PURGEDUPS_GETSEQS_PRIMARY.out.purged
 
-    // Purge alternate contigs. // TODO: Skip when using consensus
-    reads_plus_assembly_ch
-        .filter { meta, reads, assembly -> assembly.alt_fasta != null }
-        .map { meta, reads, assembly -> [ meta, assembly.alt_fasta ] }
-        // Purges only primary haplotigs when using consensus
-        .mix( PURGEDUPS_GETSEQS_PRIMARY.out.haplotigs )
-        .groupTuple()  // TODO Find size to prevent blocking
-        .set { alternate_assembly_ch }
-    PURGEDUPS_SPLITFA_ALTERNATE( alternate_assembly_ch )
-    MINIMAP2_ALIGN_ASSEMBLY_ALTERNATE(
-        PURGEDUPS_SPLITFA_ALTERNATE.out.split_fasta,
-        [],    // Trigger read to read alignment
-        false, // bam output
-        false, // cigar in paf file
-        false  // cigar in bam file
-    )
-    PURGEDUPS_PURGEDUPS_ALTERNATE(
-        joinByMetaKeys(
-            PURGEDUPS_PBCSTAT.out.basecov.join( PURGEDUPS_CALCUTS.out.cutoff ),
-            MINIMAP2_ALIGN_ASSEMBLY_ALTERNATE.out.paf,
-            keySet: [ 'sample', 'assembly' ],
-            meta: 'rhs'
+    if( params.use_phased ){
+        // Purge alternate contigs.
+        reads_plus_assembly_ch
+            .filter { meta, reads, assembly -> assembly.alt_fasta != null }
+            .map { meta, reads, assembly -> [ meta, assembly.alt_fasta ] }
+            //! WARN Purges only primary haplotigs when using consensus
+            .mix( PURGEDUPS_GETSEQS_PRIMARY.out.haplotigs )
+            .groupTuple()  // TODO Find size to prevent blocking
+            .set { alternate_assembly_ch }
+        PURGEDUPS_SPLITFA_ALTERNATE( alternate_assembly_ch )
+        MINIMAP2_ALIGN_ASSEMBLY_ALTERNATE(
+            PURGEDUPS_SPLITFA_ALTERNATE.out.split_fasta,
+            [],    // Trigger read to read alignment
+            false, // bam output
+            false, // cigar in paf file
+            false  // cigar in bam file
         )
-    )
-    PURGEDUPS_GETSEQS_ALTERNATE(
-        PURGEDUPS_SPLITFA_ALTERNATE.out.merged_fasta
-            .join( PURGEDUPS_PURGEDUPS_ALTERNATE.out.bed )
-    )
-    SEQKIT_SEQ( 
-        PURGEDUPS_GETSEQS_PRIMARY.out.purged
-            .mix( PURGEDUPS_GETSEQS_ALTERNATE.out.purged )
-    )
+        PURGEDUPS_PURGEDUPS_ALTERNATE(
+            joinByMetaKeys(
+                PURGEDUPS_PBCSTAT.out.basecov.join( PURGEDUPS_CALCUTS.out.cutoff ),
+                MINIMAP2_ALIGN_ASSEMBLY_ALTERNATE.out.paf,
+                keySet: [ 'sample', 'assembly' ],
+                meta: 'rhs'
+            )
+        )
+        PURGEDUPS_GETSEQS_ALTERNATE(
+            PURGEDUPS_SPLITFA_ALTERNATE.out.merged_fasta
+                .join( PURGEDUPS_PURGEDUPS_ALTERNATE.out.bed )
+        )
+        ch_to_format = ch_to_format.mix( PURGEDUPS_GETSEQS_ALTERNATE.out.purged )
+    }
+    // Format sequences and enforce line breaks
+    SEQKIT_SEQ( ch_to_format )
     ch_purged_assemblies = constructAssemblyRecord( SEQKIT_SEQ.out.fastx )
 
     emit:
