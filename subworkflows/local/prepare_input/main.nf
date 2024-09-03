@@ -147,6 +147,7 @@ workflow PREPARE_INPUT {
                 || !yaml.sample.haploid_number
                 || !yaml.sample.ploidy
             skip: true
+                return yaml.deepMerge([ settings: [ busco: [ lineages: params.busco.lineages ] ] ])
         }
         .set { ch_goat }
     GOAT_TAXONSEARCH( ch_goat.taxsearch.map { data -> [ data, data.sample.name, [] ] } ).taxonsearch
