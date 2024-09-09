@@ -1,4 +1,4 @@
-process QUARTO {
+process QUARTO_NOTEBOOK {
     tag "$notebook.baseName"
     label 'process_single'
 
@@ -6,11 +6,9 @@ process QUARTO {
     container "docker.io/rocker/verse:4.3.2"
 
     input:
-    tuple (
-        val (meta),
-        path (notebook),
-        path (data, stageAs: 'data/*', arity: '1..*')
-    )
+    tuple val(meta), path(notebook)
+    path (log_files, stageAs: 'log_files/*', arity: '1..*')
+
 
     output:
     path "*.html"      , emit: html
