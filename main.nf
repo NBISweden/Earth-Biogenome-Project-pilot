@@ -27,6 +27,9 @@ include { PURGE_DUPLICATES } from "$projectDir/subworkflows/local/purge_dups/mai
 
 include { EVALUATE_ASSEMBLY as EVALUATE_PURGED_ASSEMBLY } from "$projectDir/subworkflows/local/evaluate_assembly/main"
 
+include { SCAFFOLD } from "$projectDir/subworkflows/local/scaffold/main.nf"
+include { EVALUATE_ASSEMBLY as EVALUATE_SCAFFOLDED_ASSEMBLY } from "$projectDir/subworkflows/local/evaluate_assembly/main"
+
 include { ALIGN_RNASEQ       } from "$projectDir/subworkflows/local/align_rnaseq/main"
 
 include { ASSEMBLY_REPORT } from "$projectDir/subworkflows/local/assembly_report/main"
@@ -197,14 +200,24 @@ workflow {
         'scaffolded' // Set assembly stage now for filenaming
     ).dump(tag: 'Assemblies: to scaffold')
     if ( 'scaffold' in workflow_steps ) {
-        // Run scaffolder
-        ch_scaffolded_assemblies = ch_to_scaffold
+        SCAFFOLD (
+            ch_to_scaffold,
+            PREPARE_INPUT.out.hic
+        )
+        ch_scaffolded_assemblies = SCAFFOLD.out.assemblies
     } else {
         ch_scaffolded_assemblies = ch_to_scaffold
     }
     ch_scaffolded_assemblies = ch_scaffolded_assemblies.mix(
         preassembledInput( PREPARE_INPUT.out.assemblies, 'scaffolded' )
     ).dump(tag: 'Assemblies: Scaffolded')
+    EVALUATE_SCAFFOLDED_ASSEMBLY (
+        ch_scaffolded_assemblies,
+        BUILD_FASTK_HIFI_DATABASE.out.fastk_hist_ktab,
+        BUILD_MERYL_HIFI_DATABASE.out.uniondb
+    )
+    ch_multiqc_files = ch_multiqc_files.mix( EVALUATE_SCAFFOLDED_ASSEMBLY.out.logs )
+    ch_versions = ch_versions.mix( EVALUATE_SCAFFOLDED_ASSEMBLY.out.versions )
 
     // Curate
     ch_to_curate = setAssemblyStage (
