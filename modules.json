@@ -10,6 +10,16 @@
             "git_sha": "5892730425a245e4830124f8429c011d18a562a5",
             "installed_by": ["modules"]
           },
+          "bwamem2/index": {
+            "branch": "master",
+            "git_sha": "06c8865e36741e05ad32ef70ab3fac127486af48",
+            "installed_by": ["modules"]
+          },
+          "bwamem2/mem": {
+            "branch": "master",
+            "git_sha": "06c8865e36741e05ad32ef70ab3fac127486af48",
+            "installed_by": ["modules"]
+          },
           "cat/cat": {
             "branch": "master",
             "git_sha": "81f27e75847087865299cc46605deb3b09b4e0a2",
@@ -207,7 +217,7 @@
           },
           "yahs": {
             "branch": "master",
-            "git_sha": "9e51255c4f8ec69fb6ccf68593392835f14fecb8",
+            "git_sha": "06c8865e36741e05ad32ef70ab3fac127486af48",
             "installed_by": ["modules"]
           }
         }
