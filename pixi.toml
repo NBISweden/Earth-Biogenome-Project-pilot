@@ -1,0 +1,13 @@
+[project]
+name = "Earth-Biogenome-Project-pilot"
+version = "0.1.0"
+description = "Add a short description here"
+authors = ["Mahesh Binzer-Panchal <mahesh.binzer-panchal@nbis.se>"]
+channels = ["conda-forge", "bioconda"]
+platforms = ["linux-64", "osx-64", "osx-arm64"]
+
+[tasks]
+
+[dependencies]
+nf-core = ">=2.14.1,<2.15"
+nextflow = ">=24.4.4,<24.5"
