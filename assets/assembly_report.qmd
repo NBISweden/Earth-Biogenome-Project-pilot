@@ -1,30 +1,168 @@
 ---
+title: 'NBIS EBP Assembly Report'
 format:
     html:
         embed-resources: true
-
-params:
-    species: 'Species'
-    data_path : '.'
 ---
 
-# Assembly report (`r params$species`)
+## Introduction
 
-## General
+This is an assembly report written by National Bioinformatics Infrastructure Sweden (NBIS) Earth Biogenome Project workflow.
+
+The aim of this report is to guide you through the analysis, rather than
+provide a summary of tool logs. If you have any additional
+suggestions, please submit at feature request at [NBIS Earth Biogenome Project - Issues](https://github.com/NBISweden/Earth-Biogenome-Project-pilot/issues).
+
+::: {.content-visible when-meta="debug"}
+
+### Setup
+
+This [Quarto notebook](https://quarto.org/) sets up certain parameters
+at this point, and uses the MultiQC python package to find log
+files of tools executed in the workflow.
+
+```{python}
+#| echo: false
+#| tags: [parameters]
+
+log_path = 'log_files'
+```
+
+<details>
+<summary>MultiQC Log parse</summary>
+
+```{python}
+#| output: true
+#| echo: false
+
+import multiqc
+from pprint import pprint
+multiqc.reset() # Important for Quarto preview
+# Then load a custom config using
+multiqc.load_config(f"{log_path}/multiqc_assembly_report_config.yml")
+# The path appears to be relative to the current notebook location.
+multiqc.parse_logs(log_path)
+```
+
+</details>
+
+:::
+
+## Species information
+
+A first step in this analysis is to see what species information is available.
+The following information is drawn from [Genomes on a Tree (GOAT)](https://goat.genomehubs.org/).
+
+```{python}
+#| echo: false
+#| output: true
+
+# TODO Print DTOL table
+```
 
 - ToLID:
 - Species Name:
 - Class:
 - Order:
 
-## Genome Traits
+### Genome Traits
 
 - Haploid Genome Size:
 - Haploid Number:
 - Ploidy:
 - Sample Sex:
 
-## EBP Metrics and curation notes
+## Data inspection
+
+It's important to check the quality of the input data we start with.
+
+### Sequence data quantity
+
+* Do we have enough total sequence data?
+* Do we enough long reads?
+
+::: {.callout-note}
+For long read data (PacBio, ONT) we expect to see 30x coverage per haplotype, for a good assembly.
+:::
+
+```{python}
+# TODO data quantity table
+```
+
+### Genomic characteristics
+
+We can glean a good amount of information about the sequenced species from the k-mer content of the data.
+
+#### Ploidy
+Does it show the correct ploidy?
+
+::: {.callout-note}
+A Kmer histogram counts the frequency of k-mers in the data. Some parts of the genome are unique, and
+there are expected to be *coverage* times copies of these k-mers in the data. If the organism is diploid,
+the regions unique to a haplotype should have *coverage* times copies of these k-mers, and regions shared
+between both haplotypes should have *coverage* times two copies of these k-mers. This leads to formations
+of peaks in the k-mer histogram. A haploid organism should have one peak, while a diploid should have two peaks.
+:::
+
+```{python}
+# TODO load GenomeScope histogram panel
+```
+
+#### SmudgePlot
+
+Does the smudgeplot indicate the expected ploidy?
+
+#### GC content
+
+KAT GC
+
+:::{.callout-note}
+* Unexpected GC content value can indicate contamination.
+* Unexpected blobs(?) in the plot can indicate contamination.
+:::
+
+### Synthetic sequence content
+
+Do we see indications of synthetic sequences such as adaptors?
+
+```{python}
+# TODO FastQC, FCS-Adaptor
+```
+
+## Data processing
+
+## Assembly
+
+### General comparison
+
+TODO Insert Quast output.
+
+### Best ranked assembly
+
+#### Assembly statistics
+
+#### Assembly k-mer completeness
+
+#### Assembly gene space completeness
+
+### Other assemblies
+TODO for each assembly output a stats section (expandable).
+
+## Organelle detection
+
+## Contamination Screen
+
+## Duplication purging
+
+## Polishing
+
+## Scaffolding
+
+## Curation
+
+## Summary
+
+### EBP Metrics and curation notes
 
 - Table of Assembly standards
     - Metrics flagged as red ( below EBP standards )
@@ -32,53 +170,10 @@ params:
 - Contaminants detected
 - Other observations
 
-## Data Profile
-
-### Data inspection
-
-- Table of Coverage ( HiFi, ONT, Bionano, HiC )
-- Total base sequenced
-- Sequence distribution
-- GenomeScope plot
-
-### Data preprocessing
-
-- Table of Coverage ( HiFi, ONT, Bionano, HiC )
-- Total base sequenced
-- Sequence distribution
-- GenomeScope plot
-
-### Raw assembly metrics
-
-- Assembly metrics
-- Mitochondria metrics
-- Chloroplast metrics
-
-### Contamination screening
-
-- FCS metrics
-
-### Duplicate purging
-
-## Assembly pipeline
+### Assembly pipeline
 
 - Tool version table ( Hifiasm, purge_dups, bionano, YaHS )
 
 ## Curation pipeline
 
 - Tool version table ( GRIT_rapid, HiGlass )
-
-## Metrics Table
-
-- Hi Contact Map
-- Kmer Spectra
-- Blob ( Bubble ) of cov vs gc.
-
-
-
-    Table of assembly standards met
-    Sequence metrics ( from ? )
-        Total sequence data
-        Sequence distribution
-        Expected coverage ( total bases / estimated genome size )
-    GenomeScope

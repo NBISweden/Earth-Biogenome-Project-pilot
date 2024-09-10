@@ -66,7 +66,7 @@ workflow {
     """)
 
     // Setup sink channels
-    ch_multiqc_files = Channel.empty()
+    ch_multiqc_files = Channel.value( file(params.multiqc_assembly_report_config, checkIfExists: true) )
     ch_quarto_files  = Channel.empty()
     ch_versions      = Channel.empty()
 
@@ -244,9 +244,8 @@ workflow {
     }
 
     ASSEMBLY_REPORT(
-        PREPARE_INPUT.out.sample_meta,
+        PREPARE_INPUT.out.sample_meta.map{ meta -> [ meta, file(params.quarto_assembly_report, checkIfExists: true) ] },
         ch_multiqc_files,
-        ch_quarto_files,
         ch_versions
     )
 }
