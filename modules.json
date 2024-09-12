@@ -141,6 +141,36 @@
             "git_sha": "ccacf6f5de6df3bc6d73b665c1fd2933d8bbc290",
             "installed_by": ["modules"]
           },
+          "pairix": {
+            "branch": "master",
+            "git_sha": "06c8865e36741e05ad32ef70ab3fac127486af48",
+            "installed_by": ["modules"]
+          },
+          "pairtools/dedup": {
+            "branch": "master",
+            "git_sha": "06c8865e36741e05ad32ef70ab3fac127486af48",
+            "installed_by": ["modules"]
+          },
+          "pairtools/parse": {
+            "branch": "master",
+            "git_sha": "06c8865e36741e05ad32ef70ab3fac127486af48",
+            "installed_by": ["modules"]
+          },
+          "pairtools/select": {
+            "branch": "master",
+            "git_sha": "06c8865e36741e05ad32ef70ab3fac127486af48",
+            "installed_by": ["modules"]
+          },
+          "pairtools/sort": {
+            "branch": "master",
+            "git_sha": "06c8865e36741e05ad32ef70ab3fac127486af48",
+            "installed_by": ["modules"]
+          },
+          "pairtools/split": {
+            "branch": "master",
+            "git_sha": "06c8865e36741e05ad32ef70ab3fac127486af48",
+            "installed_by": ["modules"]
+          },
           "pilon": {
             "branch": "master",
             "git_sha": "240937a2a9c30298110753292be041188891f2cb",
