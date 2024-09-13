@@ -151,6 +151,11 @@
             "git_sha": "06c8865e36741e05ad32ef70ab3fac127486af48",
             "installed_by": ["modules"]
           },
+          "pairtools/merge": {
+            "branch": "master",
+            "git_sha": "06c8865e36741e05ad32ef70ab3fac127486af48",
+            "installed_by": ["modules"]
+          },
           "pairtools/parse": {
             "branch": "master",
             "git_sha": "06c8865e36741e05ad32ef70ab3fac127486af48",
@@ -221,6 +226,11 @@
           "salsa2": {
             "branch": "master",
             "git_sha": "911696ea0b62df80e900ef244d7867d177971f73",
+            "installed_by": ["modules"]
+          },
+          "samtools/faidx": {
+            "branch": "master",
+            "git_sha": "06c8865e36741e05ad32ef70ab3fac127486af48",
             "installed_by": ["modules"]
           },
           "seqkit/seq": {
