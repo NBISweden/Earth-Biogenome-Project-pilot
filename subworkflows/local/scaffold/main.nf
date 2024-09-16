@@ -21,10 +21,6 @@ workflow SCAFFOLD {
     ch_versions = Channel.empty()
     ch_scaffolded_assemblies = Channel.empty()
 
-
-    ch_assemblies.view()
-    ch_hic.view()
-
     BWAMEM2_INDEX ( getPrimaryAssembly(ch_assemblies) )
 
     SAMTOOLS_FAIDX (
