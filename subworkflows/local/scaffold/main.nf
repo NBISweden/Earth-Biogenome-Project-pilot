@@ -108,7 +108,7 @@ workflow SCAFFOLD {
 
     ch_scaffolded_assemblies = constructAssemblyRecord( YAHS.out.scaffolds_fasta )
 
-    versions_ch = BWAMEM2_INDEX.out.versions.first()
+    ch_versions = BWAMEM2_INDEX.out.versions.first()
         .mix( SAMTOOLS_FAIDX.out.versions.first() )
         .mix( BWAMEM2_MEM.out.versions.first() )
         .mix( PAIRTOOLS_PARSE.out.versions.first() )
