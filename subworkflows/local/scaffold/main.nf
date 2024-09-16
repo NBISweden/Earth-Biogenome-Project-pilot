@@ -18,8 +18,6 @@ workflow SCAFFOLD {
     ch_hic        // [ meta, hic-pairs ]
 
     main:
-    ch_versions = Channel.empty()
-    ch_scaffolded_assemblies = Channel.empty()
 
     BWAMEM2_INDEX ( getPrimaryAssembly(ch_assemblies) )
 
@@ -109,6 +107,16 @@ workflow SCAFFOLD {
     )
 
     ch_scaffolded_assemblies = constructAssemblyRecord( YAHS.out.scaffolds_fasta )
+
+    versions_ch = BWAMEM2_INDEX.out.versions.first()
+        .mix( SAMTOOLS_FAIDX.out.versions.first() )
+        .mix( BWAMEM2_MEM.out.versions.first() )
+        .mix( PAIRTOOLS_PARSE.out.versions.first() )
+        .mix( PAIRTOOLS_SORT.out.versions.first() )
+        .mix( PAIRTOOLS_MERGE.out.versions.first() )
+        .mix( PAIRTOOLS_DEDUP.out.versions.first() )
+        .mix( PAIRTOOLS_SPLIT.out.versions.first() )
+        .mix( YAHS.out.versions.first() )
 
     emit:
     assemblies = ch_scaffolded_assemblies
