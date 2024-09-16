@@ -77,39 +77,42 @@ workflow SCAFFOLD {
         )
     )
 
+    joinByMetaKeys(PAIRTOOLS_DEDUP.out.pairs, 
+        getPrimaryAssembly(ch_assemblies),
+        keySet: ['id','sample'],
+        meta: 'rhs'
+    ).multiMap{ meta, pairs, fasta -> 
+        pairs: [ meta, pairs ]
+        fasta: [ meta, fasta ]
+    }.set { pairtools_split_input }
 
-
+    PAIRTOOLS_SPLIT(pairtools_split_input.pairs,
+        pairtools_split_input.fasta,
+        true    // sort_bam
+    )
     
 
-/*
-    reads_plus_assembly_ch = combineByMetaKeys (
-            ch_hic,
-            ch_assemblies,
+    joinByMetaKeys(
+        joinByMetaKeys(PAIRTOOLS_SPLIT.out.bam, 
+            getPrimaryAssembly(ch_assemblies), 
             keySet: ['id','sample'],
             meta: 'rhs'
-        )
-    reads_plus_assembly_ch
-        // Add single_end for minimap module
-        .flatMap { meta, reads, assembly -> reads instanceof List ?
-            reads.collect{ [ meta + [ single_end: true ], it, assembly.pri_fasta ] }
-            : [ [ meta + [ single_end: true ], reads, assembly.pri_fasta ] ] }
-        .multiMap { meta, reads, assembly ->
-            reads_ch: [ meta, reads ]
-            assembly_ch: assembly
-        }
-        .set { input }
-*/
-    // TODO Fill in workflow
-    // Scaffold Assembly using HiC
+        ),
+        SAMTOOLS_FAIDX.out.fai,
+        keySet: ['id','sample'],
+        meta: 'rhs'
+    ).multiMap{ meta, bam, fasta, fai -> 
+        bam:   [ meta, bam ]
+        fasta: [ fasta ]
+        fai:   [ fai ]
+    }.set{ yahs_input } 
 
-    // Map HiC to assembly
-    // BWAMEM2_INDEX ( ch_assemblies )
-    // Use join and multiMap operators to ensure correctly paired input.
-    // BWAMEM2_MEM ( index, hic )
+    YAHS(yahs_input.bam,
+        yahs_input.fasta,
+        yahs_input.fai
+    )
 
-    // Yahs
-    // YAHS( channels )
-    //
+    ch_scaffolded_assemblies = constructAssemblyRecord( YAHS.out.scaffolds_fasta )
 
     emit:
     assemblies = ch_scaffolded_assemblies
