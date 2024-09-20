@@ -207,21 +207,24 @@
                         "git_sha": "06c8865e36741e05ad32ef70ab3fac127486af48",
                         "installed_by": [
                             "modules"
-                        ]
+                        ],
+                        "patch": "modules/nf-core/pairtools/dedup/pairtools-dedup.diff"
                     },
                     "pairtools/merge": {
                         "branch": "master",
                         "git_sha": "06c8865e36741e05ad32ef70ab3fac127486af48",
                         "installed_by": [
                             "modules"
-                        ]
+                        ],
+                        "patch": "modules/nf-core/pairtools/merge/pairtools-merge.diff"
                     },
                     "pairtools/parse": {
                         "branch": "master",
                         "git_sha": "06c8865e36741e05ad32ef70ab3fac127486af48",
                         "installed_by": [
                             "modules"
-                        ]
+                        ],
+                        "patch": "modules/nf-core/pairtools/parse/pairtools-parse.diff"
                     },
                     "pairtools/select": {
                         "branch": "master",
@@ -235,7 +238,8 @@
                         "git_sha": "06c8865e36741e05ad32ef70ab3fac127486af48",
                         "installed_by": [
                             "modules"
-                        ]
+                        ],
+                        "patch": "modules/nf-core/pairtools/sort/pairtools-sort.diff"
                     },
                     "pairtools/split": {
                         "branch": "master",
