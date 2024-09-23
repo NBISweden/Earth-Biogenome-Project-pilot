@@ -3,12 +3,12 @@
 sample:
   name: 'Drosophila melanogaster'
 hic:
-  - read1: 'tests/data/tiny/HIC/dmel_2Mb_p1_R1.fastq.gz'
-    read2: 'tests/data/tiny/HIC/dmel_2Mb_p1_R2.fastq.gz'
-  - read1: 'tests/data/tiny/HIC/dmel_2Mb_p2_R1.fastq.gz'
-    read2: 'tests/data/tiny/HIC/dmel_2Mb_p2_R2.fastq.gz'
+  - read1: 'https://raw.githubusercontent.com/NBISweden/Earth-Biogenome-Project-pilot/main/tests/data/tiny/HIC/dmel_2Mb_p1_R1.fastq.gz'
+    read2: 'https://raw.githubusercontent.com/NBISweden/Earth-Biogenome-Project-pilot/main/tests/data/tiny/HIC/dmel_2Mb_p1_R2.fastq.gz'
+  - read1: 'https://raw.githubusercontent.com/NBISweden/Earth-Biogenome-Project-pilot/main/tests/data/tiny/HIC/dmel_2Mb_p2_R1.fastq.gz'
+    read2: 'https://raw.githubusercontent.com/NBISweden/Earth-Biogenome-Project-pilot/main/tests/data/tiny/HIC/dmel_2Mb_p2_R2.fastq.gz'
 hifi:
-  - reads: 'tests/data/tiny/PB_HIFI/dmel_2Mb.fasta.gz'
+  - reads: 'https://raw.githubusercontent.com/NBISweden/Earth-Biogenome-Project-pilot/main/tests/data/tiny/PB_HIFI/dmel_2Mb.fasta.gz'
 # rnaseq:
 #   - /path/to/reads
 # isoseq:
