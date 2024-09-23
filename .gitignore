@@ -1,12 +1,16 @@
+# Nextflow files
 .nextflow*
 work/
-results/
 
-# pixi environments
+# Pipeline files
+results/
+*_cache/
+
+# Pixi environments
 .pixi/
 *.egg-info
 
-# nf-test
+# nf-test files
 .nf-test.log
 .nf-test/
 
