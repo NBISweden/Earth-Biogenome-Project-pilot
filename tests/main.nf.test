@@ -1,0 +1,21 @@
+nextflow_pipeline {
+
+    name "Test Workflow main.nf - Tiny"
+    script "main.nf"
+    profile "+test"
+
+    test("Tiny dataset") {
+
+        when {
+            params {
+                // Params are supplied by -profile test
+            }
+        }
+
+        then {
+            assert workflow.success
+        }
+
+    }
+
+}
