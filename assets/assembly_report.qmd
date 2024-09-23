@@ -1,8 +1,11 @@
 ---
 title: 'NBIS EBP Assembly Report'
+
+engine: 'jupyter'
+
 format:
-    html:
-        embed-resources: true
+  html:
+    embed-resources: true
 ---
 
 ## Introduction
