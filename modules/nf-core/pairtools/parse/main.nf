@@ -24,8 +24,8 @@ process PAIRTOOLS_PARSE {
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    int decompression_cpus = Math.min(1, Math.ceil(task.cpus/4.0) as int)
-    int compression_cpus = Math.min(1, task.cpus-decompression_cpus-1) as int
+    int decompression_cpus = Math.max(1, Math.ceil(task.cpus/4.0) as int)
+    int compression_cpus = Math.max(1, task.cpus-decompression_cpus-1) as int
     """
     pairtools \\
         parse \\
