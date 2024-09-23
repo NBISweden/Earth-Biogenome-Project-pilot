@@ -3,8 +3,13 @@ work/
 results/
 
 # pixi environments
-.pixi
+.pixi/
 *.egg-info
 
-# misc 
+# nf-test
+.nf-test.log
+.nf-test/
+
+# misc
 .DS_Store
+.screenrc
