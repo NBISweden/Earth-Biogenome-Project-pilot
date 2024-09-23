@@ -1,5 +1,5 @@
 process REPORT_DTOL {
-    tag ""
+    tag "${tol_search_json.species[0].scientificName}"
     label 'process_single'
 
     input:
