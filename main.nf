@@ -1,8 +1,5 @@
 #! /usr/bin/env nextflow
 
-// Include Map.deepMerge() function
-evaluate(new File("$projectDir/lib/MapExtended.groovy"))
-
 include { combineByMetaKeys                        } from "$projectDir/modules/local/functions"
 include { assembliesFromStage as preassembledInput } from "$projectDir/modules/local/functions"
 include { setAssemblyStage                         } from "$projectDir/modules/local/functions"
@@ -40,6 +37,8 @@ include { ASSEMBLY_REPORT } from "$projectDir/subworkflows/local/assembly_report
  */
 
 workflow {
+    // Include Map.deepMerge() function
+    new GroovyShell().evaluate(new File("$projectDir/lib/MapExtended.groovy"))
 
     // Define constants
     def workflow_permitted_stages = [
@@ -248,24 +247,24 @@ workflow {
         ch_multiqc_files,
         ch_versions
     )
-}
 
-workflow.onComplete {
-    if( workflow.success ){
-        log.info("""
-        Thank you for using the NBIS Earth Biogenome Project Assembly workflow.
-        The workflow completed successfully.
+    workflow.onComplete = {
+        if( workflow.success ){
+            log.info("""
+            Thank you for using the NBIS Earth Biogenome Project Assembly workflow.
+            The workflow completed successfully.
 
-        Results are located in the folder: $params.outdir
-        """)
-    } else {
-        log.info("""
-        Thank you for using the NBIS Earth Biogenome Project Assembly workflow.
-        The workflow completed unsuccessfully.
+            Results are located in the folder: $params.outdir
+            """)
+        } else {
+            log.info("""
+            Thank you for using the NBIS Earth Biogenome Project Assembly workflow.
+            The workflow completed unsuccessfully.
 
-        Please read over the error message. If you are unable to solve it, please
-        post an issue at https://github.com/NBISweden/Earth-Biogenome-Project-pilot/issues
-        where we will do our best to help.
-        """)
+            Please read over the error message. If you are unable to solve it, please
+            post an issue at https://github.com/NBISweden/Earth-Biogenome-Project-pilot/issues
+            where we will do our best to help.
+            """)
+        }
     }
 }
