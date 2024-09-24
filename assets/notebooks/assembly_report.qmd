@@ -14,6 +14,9 @@ execute:
 format:
   html:
     embed-resources: true
+    theme:
+      light: minty
+      dark: darkly
 ---
 
 ## Introduction
@@ -37,6 +40,16 @@ files of tools executed in the workflow.
 #| tags: [parameters]
 
 log_path = 'log_files'
+inspect = True
+preprocess = True
+assemble = True
+screen = True
+purge = True
+polish = True
+scaffold = True
+curate = True
+alignRNA = False
+debug = False
 ```
 
 <details>
@@ -61,8 +74,7 @@ multiqc.parse_logs(log_path)
 
 ## Species information
 
-A first step in this analysis is to see what species information is available.
-The following information is drawn from [Genomes on a Tree (GOAT)](https://goat.genomehubs.org/).
+To begin our analysis, let’s explore the available species information. The following details are sourced from [Genomes on a Tree (GOAT)](https://goat.genomehubs.org/).
 
 ```{python}
 #| echo: false
@@ -83,9 +95,11 @@ The following information is drawn from [Genomes on a Tree (GOAT)](https://goat.
 - Ploidy:
 - Sample Sex:
 
+::: {.content-visible when-meta="inspect"}
+
 ## Data inspection
 
-It's important to check the quality of the input data we start with.
+Let’s ensure the quality of our input data.
 
 ### Sequence data quantity
 
@@ -116,7 +130,63 @@ of peaks in the k-mer histogram. A haploid organism should have one peak, while 
 :::
 
 ```{python}
-# TODO load GenomeScope histogram panel
+#| output: asis
+import glob
+import os
+from itertools import groupby
+
+if inspect:
+    images = [
+        img
+        for pattern in ["log_plot", "linear_plot"]
+        for img in glob.glob(f"{log_path}/*_{pattern}.png")
+    ]
+
+    if len(images) == 0:
+        raise ValueError("No files found")
+
+    # Ensure we have multiples of 4 images
+    if len(images) % 4 != 0:
+        raise ValueError("There should be 4 images per GenomeScope2 process")
+
+    # Function to sort filenames
+    def sort_key(filename):
+        filename = os.path.basename(filename)
+        parts = filename.split("_")
+        # Order: linear < log, non-transformed < transformed
+        order = {"linear": 0, "log": 1}
+        transformed = 1 if "transformed" in parts else 0
+        return (" ".join(parts[:2]), transformed, order[parts[-2]])
+
+    # Sort filenames first
+    sorted_filenames = sorted(images, key=sort_key)
+
+    # Group by sample
+    grouped_filenames = {}
+    for key, group in groupby(
+        sorted_filenames, key=lambda x: " ".join(os.path.basename(x).split("_")[:2])
+    ):
+        grouped_filenames[key] = list(group)
+
+
+    # Function to format filenames
+    def format_filename(filename):
+        # return os.path.basename(filename).replace(".png", "").replace("_", " ")
+        return " ".join(os.path.basename(filename).split("_")[2:-1])
+
+    # Print grouped and sorted filenames
+    tabs = []  # tabbed panels
+    for sample, files in grouped_filenames.items():
+        # tabs.append(f"### {sample}")
+        tabs.append("::: {.panel-tabset}")
+        for image in files:
+            formatted_filename = format_filename(image)
+            tabs.append(f"## {formatted_filename}")
+            tabs.append(f"![{formatted_filename}]({image})")
+        tabs.append(":::")
+
+    markdown = "\n\n".join(tabs)
+    print(markdown)
 ```
 
 #### SmudgePlot
@@ -140,7 +210,15 @@ Do we see indications of synthetic sequences such as adaptors?
 # TODO FastQC, FCS-Adaptor
 ```
 
+:::
+
+::: {.content-visible when-meta="preprocess"}
+
 ## Data processing
+
+:::
+
+::: {.content-visible when-meta="assemble"}
 
 ## Assembly
 
@@ -161,15 +239,37 @@ TODO for each assembly output a stats section (expandable).
 
 ## Organelle detection
 
+:::
+
+::: {.content-visible when-meta="screen"}
+
 ## Contamination Screen
+
+:::
+
+::: {.content-visible when-meta="purge"}
 
 ## Duplication purging
 
+:::
+
+::: {.content-visible when-meta="polish"}
+
 ## Polishing
+
+:::
+
+::: {.content-visible when-meta="scaffold"}
 
 ## Scaffolding
 
+:::
+
+::: {.content-visible when-meta="curate"}
+
 ## Curation
+
+:::
 
 ## Summary
 
@@ -185,6 +285,6 @@ TODO for each assembly output a stats section (expandable).
 
 - Tool version table ( Hifiasm, purge_dups, bionano, YaHS )
 
-## Curation pipeline
+## Curation pipeline
 
 - Tool version table ( GRIT_rapid, HiGlass )
