@@ -1,7 +1,15 @@
 ---
-title: 'NBIS EBP Assembly Report'
+title: 'Earth Biogenome Project'
+subtitle: 'NBIS Assembly Report'
+date: today
+toc: true
+toc-location: left
 
 engine: 'jupyter'
+
+execute:
+  echo: false
+  warning: true
 
 format:
   html:

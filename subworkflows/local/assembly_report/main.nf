@@ -7,13 +7,14 @@ include { REPORT_SOFTWAREVERSIONS    } from "$projectDir/modules/local/report/so
 include { QUARTO_NOTEBOOK } from "$projectDir/modules/local/quarto/notebook/main.nf"
 // include { MULTIQC as MULTIQC_FULL    } from "$projectDir/modules/nf-core/multiqc/main"
 // include { MULTIQC as MULTIQC_SUMMARY } from "$projectDir/modules/nf-core/multiqc/main"
-include { MULTIQC } from "$projectDir/modules/nf-core/multiqc/main"
+// include { MULTIQC } from "$projectDir/modules/nf-core/multiqc/main"
 
 workflow ASSEMBLY_REPORT {
     take:
-    notebook
-    logs
-    versions
+    notebook        // Channel: [ meta:Map, notebook:Path ]
+    logs            // Channel: Path
+    versions        // Channel: Path
+    executed_steps  // Object: Map
 
     main:
     // DTOL table
@@ -25,7 +26,7 @@ workflow ASSEMBLY_REPORT {
         // Haploid Number // GOAT vs HiC
         // Ploidy         // GOAT vs HiC
         // Sample Sex     // GOAT vs HiC
-    REPORT_GENOMETRAITS( meta )
+    REPORT_GENOMETRAITS( notebook.map{ meta, notebook -> meta } )
 
     // MultiQC panels from Quarto
     // QUARTO( quarto_files )
@@ -51,13 +52,14 @@ workflow ASSEMBLY_REPORT {
         REPORT_GENOMETRAITS.out.tsv,
         REPORT_SOFTWAREVERSIONS(
             versions
-                .mix( QUARTO.out.versions.first() )
                 .collect()
         ).yml,
     )
+
     QUARTO_NOTEBOOK(
-        notebook.toList(),
+        notebook.collect(),
         mqc_files.collect().dump(tag:'MultiQC'),
+        Channel.value(executed_steps.collect{ k, v -> "$k: ${v}" }.join('\n')).collectFile(),
     )
     // MULTIQC(
     //     mqc_files.collect().dump(tag:'MultiQC'),
@@ -65,5 +67,8 @@ workflow ASSEMBLY_REPORT {
     //     params.multiqc.summary_report_extra_config ? file(params.multiqc.summary_report_extra_config, checkIfExists: true) : [],
     //     []
     // )
+
+    emit:
+    report = QUARTO_NOTEBOOK.out.html
 
 }
