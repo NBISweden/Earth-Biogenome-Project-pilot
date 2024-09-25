@@ -246,8 +246,8 @@ workflow {
         PREPARE_INPUT.out.sample_meta.map{ meta -> [ meta, file(params.quarto_assembly_report, checkIfExists: true) ] },
         ch_multiqc_files,
         ch_versions,
-        workflow_permitted_stages.collectEntries{ step -> [(step): step in params.steps.tokenize(",")] }
-        + [ debug: "debug" in workflow.profile.tokenize(",") ]
+        [ diagnostics: "debug" in workflow.profile.tokenize(",") ] +
+            workflow_permitted_stages.collectEntries{ step -> [(step): step in params.steps.tokenize(",")] }
     )
 
     workflow.onComplete = {
