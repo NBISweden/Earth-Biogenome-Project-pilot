@@ -1,6 +1,6 @@
 process PAIRTOOLS_PARSE {
     tag "$meta.id"
-    label 'process_low'
+    label 'process_high'
 
     // Pinning numpy to 1.23 until https://github.com/open2c/pairtools/issues/170 is resolved
     // Not an issue with the biocontainers because they were built prior to numpy 1.24
@@ -24,10 +24,14 @@ process PAIRTOOLS_PARSE {
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
+    int decompression_cpus = Math.max(1, Math.ceil(task.cpus/4.0) as int)
+    int compression_cpus = Math.max(1, task.cpus-decompression_cpus-1) as int
     """
     pairtools \\
         parse \\
         -c $chromsizes \\
+        --nproc-in $decompression_cpus \\
+        --nproc-out $compression_cpus \\
         $args \\
         --output-stats ${prefix}.pairsam.stat \\
         -o ${prefix}.pairsam.gz \\

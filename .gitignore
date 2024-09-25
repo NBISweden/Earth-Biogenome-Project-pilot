@@ -1,10 +1,19 @@
+# Nextflow files
 .nextflow*
 work/
-results/
 
-# pixi environments
-.pixi
+# Pipeline files
+results/
+*_cache/
+
+# Pixi environments
+.pixi/
 *.egg-info
 
-# misc 
+# nf-test files
+.nf-test.log
+.nf-test/
+
+# misc
 .DS_Store
+.screenrc
