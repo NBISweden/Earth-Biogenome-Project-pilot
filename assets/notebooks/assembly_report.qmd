@@ -21,22 +21,22 @@ format:
 
 ## Introduction
 
-This is an assembly report written by National Bioinformatics Infrastructure Sweden (NBIS) Earth Biogenome Project workflow.
+This assembly report has been prepared by the National Bioinformatics Infrastructure Sweden
+(NBIS) as part of the Earth Biogenome Project workflow.
 
-The aim of this report is to guide you through the analysis, rather than
-provide a summary of tool logs. If you have any additional
-suggestions, please submit at feature request at [NBIS Earth Biogenome Project - Issues](https://github.com/NBISweden/Earth-Biogenome-Project-pilot/issues).
+The purpose of this report is to guide you through the analysis process, rather than merely
+summarizing tool logs. If you have any suggestions or feedback, please submit a feature
+request at [NBIS Earth Biogenome Project - Issues](https://github.com/NBISweden/Earth-Biogenome-Project-pilot/issues).
 
 ::: {.content-visible when-meta="debug"}
 
 ### Setup
 
-This [Quarto notebook](https://quarto.org/) sets up certain parameters
-at this point, and uses the MultiQC python package to find log
-files of tools executed in the workflow.
+This [Quarto notebook](https://quarto.org/) establishes default parameters
+in this section and utilizes the MultiQC Python package to locate log files
+from tools executed within the workflow.
 
 ```{python}
-#| echo: false
 #| tags: [parameters]
 
 log_path = 'log_files'
@@ -56,15 +56,11 @@ debug = False
 <summary>MultiQC Log parse</summary>
 
 ```{python}
-#| output: true
-#| echo: false
-
 import multiqc
 from pprint import pprint
 multiqc.reset() # Important for Quarto preview
-# Then load a custom config using
+# Load a custom config
 multiqc.load_config(f"{log_path}/multiqc_assembly_report_config.yml")
-# The path appears to be relative to the current notebook location.
 multiqc.parse_logs(log_path)
 ```
 
@@ -74,7 +70,8 @@ multiqc.parse_logs(log_path)
 
 ## Species information
 
-To begin our analysis, let’s explore the available species information. The following details are sourced from [Genomes on a Tree (GOAT)](https://goat.genomehubs.org/).
+To begin our analysis, let’s explore the available species information. The following
+details are sourced from [Genomes on a Tree (GOAT)](https://goat.genomehubs.org/).
 
 ```{python}
 #| echo: false
@@ -107,7 +104,7 @@ Let’s ensure the quality of our input data.
 * Do we have enough long reads?
 
 ::: {.callout-note}
-For long read data (PacBio, ONT) we expect to see 30x coverage per haplotype, for a good assembly.
+For long read data (PacBio, ONT) we expect to see 15-20x coverage per haplotype, for a good assembly.
 :::
 
 ```{python}
