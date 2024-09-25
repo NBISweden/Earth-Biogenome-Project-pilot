@@ -52,8 +52,7 @@ alignRNA = False
 diagnostics = False
 ```
 
-<details>
-<summary>MultiQC Log parse</summary>
+#### MultiQC
 
 ```{python}
 import glob
@@ -72,8 +71,6 @@ multiqc.parse_logs(log_path)
 pprint(multiqc.list_plots())
 pprint(multiqc.list_modules())
 ```
-
-</details>
 
 :::
 
@@ -233,6 +230,10 @@ TODO Insert Quast output.
 
 #### Assembly gene space completeness
 
+```{python}
+multiqc.get_plot("busco","Lineage: bacteria_odb10").show() if "busco" in multiqc.list_modules() else ""
+```
+
 ### Other assemblies
 TODO for each assembly output a stats section (expandable).
 
@@ -260,7 +261,7 @@ TODO for each assembly output a stats section (expandable).
 
 ::: {.content-visible when-meta="scaffold"}
 
-## Scaffolding
+## Scaffolding
 
 :::
 
