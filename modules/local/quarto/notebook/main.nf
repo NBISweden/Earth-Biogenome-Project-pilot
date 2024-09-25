@@ -3,7 +3,7 @@ process QUARTO_NOTEBOOK {
     label 'process_single'
 
     conda "${moduleDir}/environment.yml"
-    // container "docker.io/rocker/verse:4.3.2"
+    container "community.wave.seqera.io/library/multiqc_jupyter_papermill_quarto:35947dae3c4bfbf3"
 
     input:
     tuple val(meta), path(notebook, arity: '1')
