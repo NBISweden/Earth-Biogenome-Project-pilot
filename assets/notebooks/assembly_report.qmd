@@ -104,7 +104,7 @@ Let’s ensure the quality of our input data.
 ### Sequence data quantity
 
 * Do we have enough total sequence data?
-* Do we enough long reads?
+* Do we have enough long reads?
 
 ::: {.callout-note}
 For long read data (PacBio, ONT) we expect to see 30x coverage per haplotype, for a good assembly.
