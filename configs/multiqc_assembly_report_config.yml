@@ -29,6 +29,13 @@ custom_data:
     section_name: "DToL"
     description: "Darwin Tree of Life identifier and related meta data."
     plot_type: "table"
+    # headers: # Doesn't work
+    #   property:
+    #     title: "Property"
+    #   value:
+    #     title: "Value"
+    # pconfig:
+    #   no_violin: True
   traits:
     file_format: "tsv"
     section_name: "Genome traits"
@@ -38,10 +45,12 @@ custom_data:
     section_name: "GenomeScope2"
     description: "Sample data k-mer histogram."
   ploidyplot:
+    id: "ploidyplot"
     file_format: "png"
     section_name: "Ploidy Plot"
     description: "Ploidy estimate based on kmers."
   katgc:
+    id: "katgc"
     file_format: "png"
     section_name: "GC Content"
     description: "Sequence GC content."
