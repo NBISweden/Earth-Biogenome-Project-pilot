@@ -113,6 +113,9 @@ For long read data (PacBio, ONT) we expect to see 15-20x coverage per haplotype,
 Image(filename=glob.glob(f"{log_path}/*_katcomp.st.png")[0])
 ```
 
+### Genomic screen
+
+* Do the libraries contain our expected organism.
 
 ### Genomic characteristics
 
@@ -233,6 +236,10 @@ TODO Insert Quast output.
 #### Assembly statistics
 
 #### Assembly k-mer completeness
+
+```{python}
+multiqc.get_plot("hifiasm","HiFiasm kmer graph").show() if "hifiasm" in multiqc.list_modules() else ""
+```
 
 #### Assembly gene space completeness
 
