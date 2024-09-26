@@ -64,3 +64,5 @@ sp: # Search pattern
     fn: "*_ploidyplot.st.png"
   katgc:
     fn: "*_katgc.st.png"
+  quast:
+    fn: "*_quast_report.tsv"

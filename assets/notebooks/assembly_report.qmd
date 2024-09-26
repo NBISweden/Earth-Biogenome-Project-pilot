@@ -229,7 +229,13 @@ Do we see indications of synthetic sequences such as adaptors?
 
 ### General comparison
 
-TODO Insert Quast output.
+```{python}
+multiqc.get_plot("quast","Assembly Statistics").show() if "quast" in multiqc.list_modules() else ""
+```
+
+```{python}
+multiqc.get_plot("quast","Number of Contigs").show() if "quast" in multiqc.list_modules() else ""
+```
 
 ### Best ranked assembly
 
