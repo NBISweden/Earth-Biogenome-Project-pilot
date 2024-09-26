@@ -165,6 +165,8 @@ workflow {
             ch_hifi
         )
         ch_purged_assemblies = PURGE_DUPLICATES.out.assemblies
+        ch_multiqc_files = ch_multiqc_files.mix( PURGE_DUPLICATES.out.logs )
+        ch_versions = ch_versions.mix( PURGE_DUPLICATES.out.versions )
     } else {
         ch_purged_assemblies = ch_to_purge
     }

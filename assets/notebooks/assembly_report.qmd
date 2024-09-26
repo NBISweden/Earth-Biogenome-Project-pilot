@@ -372,6 +372,12 @@ TODO for each assembly output a stats section (expandable).
 
 ## Duplication purging
 
+### Purge dups
+
+```{python}
+Image(filename=glob.glob(f"{log_path}/*_purgedups_hist.png")[0])
+```
+
 #### Assembly k-mer completeness
 
 ```{python}
