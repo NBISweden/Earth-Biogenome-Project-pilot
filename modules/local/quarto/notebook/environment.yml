@@ -1,9 +1,10 @@
 channels:
-  - conda-forge
-  - bioconda
+- conda-forge
+- bioconda
 dependencies:
-  - conda-forge::quarto=1.5.57
-  - conda-forge::jupyter=1.1.1
-  - conda-forge::papermill=2.6.0
-  - conda-forge::pandas=2.2.3
-  - bioconda::multiqc=1.25
+- bioconda::multiqc=1.25
+- conda-forge::jupyter=1.1.1
+- conda-forge::pandas=2.2.3
+- conda-forge::papermill=2.6.0
+- conda-forge::quarto=1.5.57
+- conda-forge::tabulate=0.9.0

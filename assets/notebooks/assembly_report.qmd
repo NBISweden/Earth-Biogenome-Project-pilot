@@ -28,7 +28,7 @@ The purpose of this report is to guide you through the analysis process, rather 
 summarizing tool logs. If you have any suggestions or feedback, please submit a feature
 request at [NBIS Earth Biogenome Project - Issues](https://github.com/NBISweden/Earth-Biogenome-Project-pilot/issues).
 
-::: {.content-visible when-meta="diagnostics"}
+::::: {.content-visible when-meta="diagnostics"}
 
 ### Setup
 
@@ -58,6 +58,7 @@ diagnostics = False
 import glob
 import multiqc
 import os
+import pandas as pd
 from itertools import groupby
 from pprint import pprint
 from IPython.display import Image
@@ -72,7 +73,7 @@ pprint(multiqc.list_plots())
 pprint(multiqc.list_modules())
 ```
 
-:::
+:::::
 
 ## Species information
 
@@ -80,16 +81,20 @@ To begin our analysis, let’s explore the available species information. The fo
 details are sourced from [Genomes on a Tree (GOAT)](https://goat.genomehubs.org/).
 
 ```{python}
-multiqc.get_plot("dtol","dtol-section").show() if "dtol" in multiqc.list_modules() else ""
+multiqc.get_plot(
+    "dtol", "dtol-section"
+).show() if "dtol" in multiqc.list_modules() else ""
 ```
 
 ### Genome Traits
 
 ```{python}
-multiqc.get_plot("traits","traits-section").show() if "traits" in multiqc.list_modules() else ""
+multiqc.get_plot(
+    "traits", "traits-section"
+).show() if "traits" in multiqc.list_modules() else ""
 ```
 
-::: {.content-visible when-meta="inspect"}
+::::: {.content-visible when-meta="inspect"}
 
 ## Data inspection
 
@@ -202,7 +207,7 @@ Image(filename=glob.glob(f"{log_path}/*_ploidyplot.st.png")[0])
 Image(filename=glob.glob(f"{log_path}/*_katgc.st.png")[0])
 ```
 
-:::{.callout-note}
+::: {.callout-note}
 * Unexpected GC content value can indicate contamination.
 * Unexpected blobs(?) in the plot can indicate contamination.
 :::
@@ -215,26 +220,30 @@ Do we see indications of synthetic sequences such as adaptors?
 # TODO FastQC, FCS-Adaptor
 ```
 
-:::
+:::::
 
-::: {.content-visible when-meta="preprocess"}
+::::: {.content-visible when-meta="preprocess"}
 
 ## Data processing
 
-:::
+:::::
 
-::: {.content-visible when-meta="assemble"}
+::::: {.content-visible when-meta="assemble"}
 
 ## Assembly
 
 ### General comparison
 
 ```{python}
-multiqc.get_plot("quast","Assembly Statistics").show() if "quast" in multiqc.list_modules() else ""
+multiqc.get_plot(
+    "quast", "Assembly Statistics"
+).show() if "quast" in multiqc.list_modules() else ""
 ```
 
 ```{python}
-multiqc.get_plot("quast","Number of Contigs").show() if "quast" in multiqc.list_modules() else ""
+multiqc.get_plot(
+    "quast", "Number of Contigs"
+).show() if "quast" in multiqc.list_modules() else ""
 ```
 
 ### Best ranked assembly
@@ -244,13 +253,106 @@ multiqc.get_plot("quast","Number of Contigs").show() if "quast" in multiqc.list_
 #### Assembly k-mer completeness
 
 ```{python}
-multiqc.get_plot("hifiasm","HiFiasm kmer graph").show() if "hifiasm" in multiqc.list_modules() else ""
+#| output: asis
+print(
+    pd.read_csv(
+        glob.glob(f"{log_path}/*-raw-default_merquryfk.completeness.stats")[0], sep="\t"
+    ).to_markdown(index=False)
+)
+```
+
+```{python}
+multiqc.get_plot(
+    "hifiasm", "HiFiasm kmer graph"
+).show() if "hifiasm" in multiqc.list_modules() else ""
+```
+
+##### Assembly quality value
+
+```{python}
+#| output: asis
+print(
+    pd.read_csv(
+        glob.glob(f"{log_path}/*-raw-default_merquryfk.qv")[0], sep="\t"
+    ).to_markdown(index=False)
+)
+```
+
+<details>
+<summary>QV per scaffold</summary>
+
+```{python}
+#| output: asis
+per_scaffold_qv_raw = pd.read_csv(
+    glob.glob(f"{log_path}/*-raw-default_merqury.*.qv")[0], sep="\t", header=None
+)
+per_scaffold_qv_raw.columns = [
+    "Scaffold",
+    "No support k-mers",
+    "Total k-mers",
+    "QV",
+    "Error rate",
+]
+print(per_scaffold_qv_raw.to_markdown(index=False))
+```
+
+</details>
+
+##### Copy number spectra
+
+:::: {.panel-tabset}
+
+## MerquryFK
+
+```{python}
+# TODO account for multiple assemblers
+Image(filename=glob.glob(f"{log_path}/*-raw-default_merquryfk.*.spectra-cn.st.png")[0])
+```
+
+## Merqury
+
+```{python}
+Image(filename=glob.glob(f"{log_path}/*-raw-default_merqury.*.spectra-cn.st.png")[0])
+```
+
+::::
+
+##### Assembly spectra
+
+:::: {.panel-tabset}
+
+## MerquryFK
+
+```{python}
+# TODO account for multiple assemblers
+Image(filename=glob.glob(f"{log_path}/*-raw-default_merquryfk.spectra-asm.st.png")[0])
+```
+
+## Merqury
+
+```{python}
+Image(filename=glob.glob(f"{log_path}/*-raw-default_merqury.spectra-asm.st.png")[0])
+```
+
+::::
+
+##### False duplications
+
+```{python}
+#| output: asis
+print(
+    pd.read_csv(
+        glob.glob(f"{log_path}/*-raw-default_merquryfk.false_duplications.tsv")[0], sep="\t"
+    ).to_markdown(index=False)
+)
 ```
 
 #### Assembly gene space completeness
 
 ```{python}
-multiqc.get_plot("busco","Lineage: bacteria_odb10").show() if "busco" in multiqc.list_modules() else ""
+multiqc.get_plot(
+    "busco", "Lineage: bacteria_odb10"
+).show() if "busco" in multiqc.list_modules() else ""
 ```
 
 ### Other assemblies
@@ -258,37 +360,219 @@ TODO for each assembly output a stats section (expandable).
 
 ## Organelle detection
 
-:::
+:::::
 
-::: {.content-visible when-meta="screen"}
+::::: {.content-visible when-meta="screen"}
 
 ## Contamination Screen
 
-:::
+:::::
 
-::: {.content-visible when-meta="purge"}
+::::: {.content-visible when-meta="purge"}
 
 ## Duplication purging
 
-:::
+#### Assembly k-mer completeness
 
-::: {.content-visible when-meta="polish"}
+```{python}
+#| output: asis
+print(
+    pd.read_csv(
+        glob.glob(f"{log_path}/*-purged-default_merquryfk.completeness.stats")[0], sep="\t"
+    ).to_markdown(index=False)
+)
+```
+
+##### Assembly quality value
+
+```{python}
+#| output: asis
+print(
+    pd.read_csv(
+        glob.glob(f"{log_path}/*-purged-default_merquryfk.qv")[0], sep="\t"
+    ).to_markdown(index=False)
+)
+```
+
+<details>
+<summary>QV per scaffold</summary>
+
+```{python}
+#| output: asis
+per_scaffold_qv_raw = pd.read_csv(
+    glob.glob(f"{log_path}/*-purged-default_merqury.*.qv")[0], sep="\t", header=None
+)
+per_scaffold_qv_raw.columns = [
+    "Scaffold",
+    "No support k-mers",
+    "Total k-mers",
+    "QV",
+    "Error rate",
+]
+print(per_scaffold_qv_raw.to_markdown(index=False))
+```
+
+</details>
+
+##### Copy number spectra
+
+:::: {.panel-tabset}
+
+## MerquryFK
+
+```{python}
+# TODO account for multiple assemblers
+Image(filename=glob.glob(f"{log_path}/*-purged-default_merquryfk.*.spectra-cn.st.png")[0])
+```
+
+## Merqury
+
+```{python}
+Image(filename=glob.glob(f"{log_path}/*-purged-default_merqury.*.spectra-cn.st.png")[0])
+```
+
+::::
+
+##### Assembly spectra
+
+:::: {.panel-tabset}
+
+## MerquryFK
+
+```{python}
+# TODO account for multiple assemblers
+Image(filename=glob.glob(f"{log_path}/*-purged-default_merquryfk.spectra-asm.st.png")[0])
+```
+
+## Merqury
+
+```{python}
+Image(filename=glob.glob(f"{log_path}/*-purged-default_merqury.spectra-asm.st.png")[0])
+```
+
+::::
+
+##### False duplications
+
+```{python}
+#| output: asis
+print(
+    pd.read_csv(
+        glob.glob(f"{log_path}/*-purged-default_merquryfk.false_duplications.tsv")[0], sep="\t"
+    ).to_markdown(index=False)
+)
+```
+
+:::::
+
+::::: {.content-visible when-meta="polish"}
 
 ## Polishing
 
-:::
+:::::
 
-::: {.content-visible when-meta="scaffold"}
+::::: {.content-visible when-meta="scaffold"}
 
 ## Scaffolding
 
-:::
+#### Assembly k-mer completeness
 
-::: {.content-visible when-meta="curate"}
+```{python}
+#| output: asis
+print(
+    pd.read_csv(
+        glob.glob(f"{log_path}/*-scaffolded-default_merquryfk.completeness.stats")[0], sep="\t"
+    ).to_markdown(index=False)
+)
+```
+
+##### Assembly quality value
+
+```{python}
+#| output: asis
+print(
+    pd.read_csv(
+        glob.glob(f"{log_path}/*-scaffolded-default_merquryfk.qv")[0], sep="\t"
+    ).to_markdown(index=False)
+)
+```
+
+<details>
+<summary>QV per scaffold</summary>
+
+```{python}
+#| output: asis
+per_scaffold_qv_raw = pd.read_csv(
+    glob.glob(f"{log_path}/*-scaffolded-default_merqury.*.qv")[0], sep="\t", header=None
+)
+per_scaffold_qv_raw.columns = [
+    "Scaffold",
+    "No support k-mers",
+    "Total k-mers",
+    "QV",
+    "Error rate",
+]
+print(per_scaffold_qv_raw.to_markdown(index=False))
+```
+
+</details>
+
+##### Copy number spectra
+
+:::: {.panel-tabset}
+
+## MerquryFK
+
+```{python}
+# TODO account for multiple assemblers
+Image(filename=glob.glob(f"{log_path}/*-scaffolded-default_merquryfk.*.spectra-cn.st.png")[0])
+```
+
+## Merqury
+
+```{python}
+Image(filename=glob.glob(f"{log_path}/*-scaffolded-default_merqury.*.spectra-cn.st.png")[0])
+```
+
+::::
+
+##### Assembly spectra
+
+:::: {.panel-tabset}
+
+## MerquryFK
+
+```{python}
+# TODO account for multiple assemblers
+Image(filename=glob.glob(f"{log_path}/*-scaffolded-default_merquryfk.spectra-asm.st.png")[0])
+```
+
+## Merqury
+
+```{python}
+Image(filename=glob.glob(f"{log_path}/*-scaffolded-default_merqury.spectra-asm.st.png")[0])
+```
+
+::::
+
+##### False duplications
+
+```{python}
+#| output: asis
+print(
+    pd.read_csv(
+        glob.glob(f"{log_path}/*-scaffolded-default_merquryfk.false_duplications.tsv")[0], sep="\t"
+    ).to_markdown(index=False)
+)
+```
+
+:::::
+
+::::: {.content-visible when-meta="curate"}
 
 ## Curation
 
-:::
+:::::
 
 ## Summary
 
