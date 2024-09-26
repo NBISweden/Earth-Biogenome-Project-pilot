@@ -32,14 +32,12 @@ workflow INSPECT_DATA {
     )
     .map { meta, reads, kmer_cov -> [ meta + [ kmercov: kmer_cov ], reads ] }
 
-    // GENOME_PROPERTIES.out.quarto_files
-    //     .set { quarto_files }
     GENOME_PROPERTIES.out.logs
+        .mix( COMPARE_LIBRARIES.out.logs )
         .set { logs }
 
     emit:
     hifi = ch_hifi_with_kmer_cov
-    // quarto_files
     logs
     versions = ch_versions
 }

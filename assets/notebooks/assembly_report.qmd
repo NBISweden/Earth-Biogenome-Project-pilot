@@ -108,6 +108,12 @@ For long read data (PacBio, ONT) we expect to see 15-20x coverage per haplotype,
 # TODO data quantity table
 ```
 
+* Do our libraries have similar data content?
+```{python}
+Image(filename=glob.glob(f"{log_path}/*_katcomp.st.png")[0])
+```
+
+
 ### Genomic characteristics
 
 We can glean a good amount of information about the sequenced species from the k-mer content of the data.

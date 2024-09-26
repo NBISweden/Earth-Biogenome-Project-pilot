@@ -20,13 +20,6 @@ workflow GENOME_PROPERTIES {
     FASTK_HISTEX ( fastk_hist_ktab.map { meta, hist, ktab -> [ meta, hist ] } )
     GENESCOPEFK ( FASTK_HISTEX.out.hist )
 
-    // GENESCOPEFK.out.linear_plot
-    //     .join( GENESCOPEFK.out.log_plot )
-    //     .join( GENESCOPEFK.out.transformed_linear_plot )
-    //     .join( GENESCOPEFK.out.transformed_log_plot )
-    //     .map { meta, linplot, logplot, tlinplot, tlogplot -> [ meta, file("$projectDir/assets/notebooks/genescope.qmd", checkIfExists: true), [ linplot, logplot, tlinplot, tlogplot ] ] }
-    //     .set { quarto_files }
-
     // Generate Smudgeplot
     MERQURYFK_PLOIDYPLOT ( fastk_hist_ktab )
 
@@ -40,7 +33,7 @@ workflow GENOME_PROPERTIES {
         MERQURYFK_PLOIDYPLOT.out.stacked_ploidy_plot_png,
         MERQURYFK_KATGC.out.stacked_gc_plot_png
     )
-    .map { it[1] } // Remove meta
+    .map { meta, img -> img }
     .set { logs }
 
     FASTK_HISTEX.out.versions.first().mix(
@@ -50,8 +43,7 @@ workflow GENOME_PROPERTIES {
     ).set { versions }
 
     emit:
-    kmer_cov      = GENESCOPEFK.out.kmer_cov
-    // quarto_files
+    kmer_cov = GENESCOPEFK.out.kmer_cov
     logs
     versions
 }
