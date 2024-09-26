@@ -481,6 +481,27 @@ print(
 
 ## Scaffolding
 
+### Pairtools
+
+```{python}
+multiqc.get_plot(
+    "pairtools", "Pairs by alignment status"
+).show() if "pairtools" in multiqc.list_modules() else ""
+```
+
+```{python}
+multiqc.get_plot(
+    "pairtools", "Fraction of read pairs by strand orientation"
+).show() if "pairtools" in multiqc.list_modules() else ""
+```
+
+```{python}
+multiqc.get_plot(
+    "pairtools", "Pre-filtered pairs as a function of genomic separation (in detail)"
+).show() if "pairtools" in multiqc.list_modules() else ""
+```
+
+
 #### Assembly k-mer completeness
 
 ```{python}

@@ -207,6 +207,8 @@ workflow {
             PREPARE_INPUT.out.hic
         )
         ch_scaffolded_assemblies = SCAFFOLD.out.assemblies
+        ch_multiqc_files = ch_multiqc_files.mix( SCAFFOLD.out.logs )
+        ch_versions = ch_versions.mix( SCAFFOLD.out.versions )
     } else {
         ch_scaffolded_assemblies = ch_to_scaffold
     }
