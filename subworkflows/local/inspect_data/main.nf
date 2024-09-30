@@ -1,4 +1,5 @@
 include { combineByMetaKeys } from "$projectDir/modules/local/functions"
+include { FASTQC            } from "$projectDir/modules/nf-core/fastqc/main"
 include { GENOME_PROPERTIES } from "$projectDir/subworkflows/local/genome_properties/main"
 include { COMPARE_LIBRARIES } from "$projectDir/subworkflows/local/compare_libraries/main"
 include { SCREEN_READS      } from "$projectDir/subworkflows/local/screen_read_contamination/main"
@@ -6,15 +7,19 @@ include { SCREEN_READS      } from "$projectDir/subworkflows/local/screen_read_c
 workflow INSPECT_DATA {
     take:
     hifi_reads     // [ meta, hifi ]
+    hic_reads      // [ meta, hic ]
     hifi_histogram // [ meta, hifi_hist, ktab ]
     hic_histogram  // [ meta, hic_hist, ktab ]
 
     main:
     // QC Steps
     GENOME_PROPERTIES ( hifi_histogram )
+    FASTQC ( hic_reads )
     COMPARE_LIBRARIES ( hifi_histogram.join( hic_histogram ) )
     ch_versions =  GENOME_PROPERTIES.out.versions.mix(
-        COMPARE_LIBRARIES.out.versions)
+        FASTQC.out.versions.first(),
+        COMPARE_LIBRARIES.out.versions
+    )
     if ( 'screen' in params.steps.tokenize(",") ) {
         SCREEN_READS (
             hifi_reads,
@@ -32,8 +37,12 @@ workflow INSPECT_DATA {
     )
     .map { meta, reads, kmer_cov -> [ meta + [ kmercov: kmer_cov ], reads ] }
 
-    GENOME_PROPERTIES.out.logs
-        .mix( COMPARE_LIBRARIES.out.logs )
+    FASTQC.out.zip
+        .map { meta, zip -> zip }
+        .mix(
+            GENOME_PROPERTIES.out.logs,
+            COMPARE_LIBRARIES.out.logs
+        )
         .set { logs }
 
     emit:
