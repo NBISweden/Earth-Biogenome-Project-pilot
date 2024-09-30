@@ -105,6 +105,8 @@ Let’s ensure the quality of our input data.
 * Do we have enough total sequence data?
 * Do we have enough long reads?
 
+#### HiFi
+
 ::: {.callout-note}
 For long read data (PacBio, ONT) we expect to see 15-20x coverage per haplotype, for a good assembly.
 :::
@@ -112,6 +114,25 @@ For long read data (PacBio, ONT) we expect to see 15-20x coverage per haplotype,
 ```{python}
 # TODO data quantity table
 ```
+#### Hi-C
+
+```{python}
+multiqc.get_plot(
+    "fastqc", "Sequence Counts"
+).show() if "fastqc" in multiqc.list_modules() else "No Hi-C data available"
+```
+```{python}
+multiqc.get_plot(
+    "fastqc", "Per Sequence GC Content"
+).show() if "fastqc" in multiqc.list_modules() else ""
+```
+```{python}
+multiqc.get_plot(
+    "fastqc", "Adapter Content"
+).show() if "fastqc" in multiqc.list_modules() else ""
+```
+
+#### HiFi vs Hi-C
 
 * Do our libraries have similar data content?
 ```{python}
