@@ -15,7 +15,7 @@ dev = "nextflow run main.nf -profile docker,test,debug"
 nftest-docker = "nf-test test tests/main.nf.test"
 nftest-singularity = "nf-test test tests/main.nf.test --profile singularity"
 # Clean up
-clean-unused = "nextflow clean -f -before $(nextflow log -q | tail -n 1) && find work/ -type d -empty -delete"
+clean-work = "nextflow clean -f -before $(nextflow log -q | tail -n 1) && find work/ -type d -empty -delete"
 clean-nf = "rm -rf .nextflow* work/"
 clean-results = "rm -rf results/"
 clean-nftest = "rm -rf .nf-test/"
