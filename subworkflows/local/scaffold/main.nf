@@ -124,6 +124,13 @@ workflow SCAFFOLD {
 
     ch_scaffolded_assemblies = constructAssemblyRecord( YAHS.out.scaffolds_fasta )
 
+    PAIRTOOLS_PARSE.out.stat
+        .mix (
+            PAIRTOOLS_DEDUP.out.stat
+        )
+        .map { meta, stats -> stats }
+        .set { logs }
+
     ch_versions = BWAMEM2_INDEX.out.versions.first().mix(
         SAMTOOLS_FAIDX.out.versions.first(),
         BWAMEM2_MEM.out.versions.first(),
@@ -137,5 +144,6 @@ workflow SCAFFOLD {
 
     emit:
     assemblies = ch_scaffolded_assemblies
+    logs
     versions   = ch_versions
 }

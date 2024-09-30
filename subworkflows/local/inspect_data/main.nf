@@ -14,8 +14,8 @@ workflow INSPECT_DATA {
     GENOME_PROPERTIES ( hifi_histogram )
     COMPARE_LIBRARIES ( hifi_histogram.join( hic_histogram ) )
     ch_versions =  GENOME_PROPERTIES.out.versions.mix(
-        COMPARE_LIBRARIES.out.versions) 
-    if ( 'screen' in params.steps.tokenize(",") ) { 
+        COMPARE_LIBRARIES.out.versions)
+    if ( 'screen' in params.steps.tokenize(",") ) {
         SCREEN_READS (
             hifi_reads,
             // TODO:: Allow custom database ala nf-core/genomeassembler.
@@ -32,14 +32,12 @@ workflow INSPECT_DATA {
     )
     .map { meta, reads, kmer_cov -> [ meta + [ kmercov: kmer_cov ], reads ] }
 
-    GENOME_PROPERTIES.out.quarto_files
-        .set { quarto_files }
     GENOME_PROPERTIES.out.logs
+        .mix( COMPARE_LIBRARIES.out.logs )
         .set { logs }
-    
+
     emit:
     hifi = ch_hifi_with_kmer_cov
-    quarto_files
     logs
     versions = ch_versions
 }
