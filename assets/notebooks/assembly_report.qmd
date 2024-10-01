@@ -109,7 +109,7 @@ Let’s ensure the quality of our input data.
 
 #### HiFi
 
-::: {.callout-note title="Expectation"}
+::: {.callout-note title="Expectation" collapse="true"}
 For long read data (PacBio, ONT) we expect to see 15-20x coverage per haplotype, for a good assembly.
 :::
 
@@ -124,7 +124,7 @@ multiqc.get_plot(
 ).show() if "fastqc" in multiqc.list_modules() else "No Hi-C data available"
 ```
 
-::: {.callout-tip}
+::: {.callout-note title="Expectation" collapse="true"}
 Arima
 : Duplication levels expected to be ~10-30%.
 
@@ -135,18 +135,6 @@ Omni-C
 ```{python}
 multiqc.get_plot(
     "fastqc", "Sequence Duplication Levels"
-).show() if "fastqc" in multiqc.list_modules() else ""
-```
-
-```{python}
-multiqc.get_plot(
-    "fastqc", "Per Sequence GC Content"
-).show() if "fastqc" in multiqc.list_modules() else ""
-```
-
-```{python}
-multiqc.get_plot(
-    "fastqc", "Adapter Content"
 ).show() if "fastqc" in multiqc.list_modules() else ""
 ```
 
@@ -246,17 +234,37 @@ Image(filename=glob.glob(f"{log_path}/*_ploidyplot.st.png")[0])
 Image(filename=glob.glob(f"{log_path}/*_katgc.st.png")[0])
 ```
 
-::: {.callout-note}
+::: {.callout-note title="Expectation" collapse="true"}
 * Unexpected GC content value can indicate contamination.
 * Unexpected blobs(?) in the plot can indicate contamination.
+:::
+
+#### Hi-C
+
+```{python}
+multiqc.get_plot(
+    "fastqc", "Per Sequence GC Content"
+).show() if "fastqc" in multiqc.list_modules() else ""
+```
+
+::: {.callout-note title="Expectation" collapse="true"}
+The peak GC content on the x-axis should be the same value
+as the peak on the HiFi KatGC plot on the y-axis.
 :::
 
 ### Synthetic sequence content
 
 Do we see indications of synthetic sequences such as adaptors?
 
+#### HiFi
+
+TODO: FCS
+
+#### Hi-C
 ```{python}
-# TODO FastQC, FCS-Adaptor
+multiqc.get_plot(
+    "fastqc", "Adapter Content"
+).show() if "fastqc" in multiqc.list_modules() else ""
 ```
 
 :::::
