@@ -12,6 +12,7 @@ process QUARTO_NOTEBOOK {
 
     output:
     path "*.html"      , arity: '1', emit: html
+    path "*.md"        , arity: '1', emit: github_markdown
     path "versions.yml", arity: '1', emit: versions
 
     when:

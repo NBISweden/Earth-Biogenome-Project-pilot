@@ -17,6 +17,8 @@ format:
     theme:
       light: minty
       dark: darkly
+  gfm:
+    preview-mode: raw
 ---
 
 ## Introduction
@@ -107,7 +109,7 @@ Let’s ensure the quality of our input data.
 
 #### HiFi
 
-::: {.callout-note}
+::: {.callout-note title="Expectation"}
 For long read data (PacBio, ONT) we expect to see 15-20x coverage per haplotype, for a good assembly.
 :::
 
@@ -121,11 +123,27 @@ multiqc.get_plot(
     "fastqc", "Sequence Counts"
 ).show() if "fastqc" in multiqc.list_modules() else "No Hi-C data available"
 ```
+
+::: {.callout-tip}
+Arima
+: Duplication levels expected to be ~10-30%.
+
+Omni-C
+: Duplication levels expected to be ~30-80%.
+:::
+
+```{python}
+multiqc.get_plot(
+    "fastqc", "Sequence Duplication Levels"
+).show() if "fastqc" in multiqc.list_modules() else ""
+```
+
 ```{python}
 multiqc.get_plot(
     "fastqc", "Per Sequence GC Content"
 ).show() if "fastqc" in multiqc.list_modules() else ""
 ```
+
 ```{python}
 multiqc.get_plot(
     "fastqc", "Adapter Content"
@@ -150,7 +168,7 @@ We can glean a good amount of information about the sequenced species from the k
 #### Ploidy
 Does it show the correct ploidy?
 
-::: {.callout-note}
+::: {.callout-note title="Interpretation" collapse="true"}
 A Kmer histogram counts the frequency of k-mers in the data. Some parts of the genome are unique, and
 there are expected to be *coverage* times copies of these k-mers in the data. If the organism is diploid,
 the regions unique to a haplotype should have *coverage* times copies of these k-mers, and regions shared
