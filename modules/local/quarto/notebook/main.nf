@@ -11,16 +11,17 @@ process QUARTO_NOTEBOOK {
     path 'params.yml'
 
     output:
-    path "*.html"      , arity: '1', emit: html
-    path "*.md"        , arity: '1', emit: github_markdown
-    path "versions.yml", arity: '1', emit: versions
+    path "${prefix}.html", arity: '1', emit: html
+    path "${prefix}.md"  , arity: '1', emit: github_markdown
+    path "multiqc*.html" , arity: '1', emit: multiqc_summary
+    path "versions.yml"  , arity: '1', emit: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''
-    prefix = notebook.baseName
+    prefix = task.ext.prefix ?: notebook.baseName
     """
     export USERID=\$UID
     export XDG_CACHE_HOME=tmp/quarto_cache_home
