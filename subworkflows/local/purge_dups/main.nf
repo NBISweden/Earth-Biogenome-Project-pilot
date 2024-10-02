@@ -28,6 +28,7 @@ workflow PURGE_DUPLICATES {
     ch_hifi       // [ meta, hifi ]
 
     main:
+    ch_versions = Channel.empty()
     reads_plus_assembly_ch = combineByMetaKeys (
             ch_hifi,
             ch_assemblies,
@@ -115,7 +116,23 @@ workflow PURGE_DUPLICATES {
     SEQKIT_SEQ( ch_to_format )
     ch_purged_assemblies = constructAssemblyRecord( SEQKIT_SEQ.out.fastx )
 
+    PURGEDUPS_HISTPLOT.out.png
+        .map { meta, file -> file }
+        .set { logs }
+
+    MINIMAP2_ALIGN_READS.out.versions.first().mix(
+        PURGEDUPS_PBCSTAT.out.versions.first(),
+        PURGEDUPS_CALCUTS.out.versions.first(),
+        PURGEDUPS_HISTPLOT.out.versions.first(),
+        PURGEDUPS_SPLITFA_PRIMARY.out.versions.first(),
+        MINIMAP2_ALIGN_ASSEMBLY_PRIMARY.out.versions.first(),
+        PURGEDUPS_PURGEDUPS_PRIMARY.out.versions.first(),
+        PURGEDUPS_GETSEQS_PRIMARY.out.versions.first()
+    ).set { versions }
+
     emit:
     assemblies = ch_purged_assemblies
     coverage   = PURGEDUPS_PBCSTAT.out.basecov
+    logs
+    versions
 }

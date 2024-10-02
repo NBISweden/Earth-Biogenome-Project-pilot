@@ -1,0 +1,47 @@
+Changes in module 'nf-core/pairtools/parse'
+--- modules/nf-core/pairtools/parse/environment.yml
++++ modules/nf-core/pairtools/parse/environment.yml
+@@ -2,5 +2,5 @@
+   - conda-forge
+   - bioconda
+ dependencies:
+-  - bioconda::pairtools=1.0.2
++  - bioconda::pairtools=1.1.0
+   - conda-forge::numpy=1.23
+
+--- modules/nf-core/pairtools/parse/main.nf
++++ modules/nf-core/pairtools/parse/main.nf
+@@ -1,13 +1,13 @@
+ process PAIRTOOLS_PARSE {
+     tag "$meta.id"
+-    label 'process_low'
++    label 'process_high'
+
+     // Pinning numpy to 1.23 until https://github.com/open2c/pairtools/issues/170 is resolved
+     // Not an issue with the biocontainers because they were built prior to numpy 1.24
+     conda "${moduleDir}/environment.yml"
+     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+-        'https://depot.galaxyproject.org/singularity/pairtools:1.0.2--py39h2a9f597_0' :
+-        'biocontainers/pairtools:1.0.2--py39h2a9f597_0' }"
++        'https://depot.galaxyproject.org/singularity/pairtools:1.1.0--py39hd5a99d8_2' :
++        'biocontainers/pairtools:1.1.0--py39hd5a99d8_2' }"
+
+     input:
+     tuple val(meta), path(bam)
+@@ -24,10 +24,14 @@
+     script:
+     def args = task.ext.args ?: ''
+     def prefix = task.ext.prefix ?: "${meta.id}"
++    int decompression_cpus = Math.max(1, Math.ceil(task.cpus/4.0) as int)
++    int compression_cpus = Math.max(1, task.cpus-decompression_cpus-1) as int
+     """
+     pairtools \\
+         parse \\
+         -c $chromsizes \\
++        --nproc-in $decompression_cpus \\
++        --nproc-out $compression_cpus \\
+         $args \\
+         --output-stats ${prefix}.pairsam.stat \\
+         -o ${prefix}.pairsam.gz \\
+
+************************************************************

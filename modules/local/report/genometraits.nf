@@ -1,5 +1,5 @@
 process REPORT_GENOMETRAITS {
-    tag ""
+    tag "${meta.sample.name}"
     label 'process_single'
 
     input:
