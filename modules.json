@@ -191,6 +191,11 @@
             "git_sha": "240937a2a9c30298110753292be041188891f2cb",
             "installed_by": ["modules"]
           },
+          "preseq/lcextrap": {
+            "branch": "master",
+            "git_sha": "666652151335353eef2fcd58880bcef5bc2928e1",
+            "installed_by": ["modules"]
+          },
           "purgedups/calcuts": {
             "branch": "master",
             "git_sha": "911696ea0b62df80e900ef244d7867d177971f73",

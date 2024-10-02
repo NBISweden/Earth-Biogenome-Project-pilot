@@ -1,7 +1,5 @@
 #! /usr/bin/env nextflow
 
-import org.yaml.snakeyaml.Yaml
-
 include { UNTAR as UNTAR_TAXONOMY } from "$projectDir/modules/nf-core/untar/main"
 include { TAXONKIT_NAME2LINEAGE   } from "$projectDir/modules/local/taxonkit/name2lineage"
 include { GOAT_TAXONSEARCH        } from "$projectDir/modules/nf-core/goat/taxonsearch/main"
@@ -248,5 +246,5 @@ workflow PREPARE_INPUT {
 
 def readYAML( yamlfile ) {
     // TODO: Validate sample file
-    return new Yaml().load( new FileReader( yamlfile.toString() ) )
+    return new org.yaml.snakeyaml.Yaml().load( new FileReader( yamlfile.toString() ) )
 }
