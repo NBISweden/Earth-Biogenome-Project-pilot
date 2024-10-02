@@ -650,6 +650,13 @@ print(
 
 ## Summary
 
+```{python}
+multiqc.write_report(
+    force=True,
+    output_dir=".",
+)
+```
+
 ### EBP Metrics and curation notes
 
 - Table of Assembly standards
