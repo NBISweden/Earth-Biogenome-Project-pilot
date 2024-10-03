@@ -1,10 +1,10 @@
-title: "BGE Assembly Report"
-output_fn_name: BGE_assembly_multiqc_report.html
+title: "Assembly Summary"
+output_fn_name: multiqc-summary.html
 intro_text: |
-  An assembly report for the BGE project.
+  An assembly summary report for the BGE project.
 
 ignore_images: false
-disable_version_detection: true
+# disable_version_detection: true
 
 module_order:
   - "dtol"

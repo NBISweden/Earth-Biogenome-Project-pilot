@@ -4,6 +4,7 @@ include { joinByMetaKeys          } from "$projectDir/modules/local/functions"
 include { combineByMetaKeys       } from "$projectDir/modules/local/functions"
 include { BWAMEM2_INDEX           } from "$projectDir/modules/nf-core/bwamem2/index/main"
 include { BWAMEM2_MEM             } from "$projectDir/modules/nf-core/bwamem2/mem/main"
+include { PRESEQ_LCEXTRAP         } from "$projectDir/modules/nf-core/preseq/lcextrap/main"
 include { SAMTOOLS_FAIDX          } from "$projectDir/modules/nf-core/samtools/faidx/main"
 include { PAIRTOOLS_PARSE         } from "$projectDir/modules/nf-core/pairtools/parse/main"
 include { PAIRTOOLS_SORT          } from "$projectDir/modules/nf-core/pairtools/sort/main"
@@ -11,7 +12,6 @@ include { PAIRTOOLS_MERGE         } from "$projectDir/modules/nf-core/pairtools/
 include { PAIRTOOLS_DEDUP         } from "$projectDir/modules/nf-core/pairtools/dedup/main"
 include { PAIRTOOLS_SPLIT         } from "$projectDir/modules/nf-core/pairtools/split/main"
 include { YAHS                    } from "$projectDir/modules/nf-core/yahs/main.nf"
-
 
 workflow SCAFFOLD {
     take:
@@ -48,6 +48,8 @@ workflow SCAFFOLD {
         bwamem2_input.fasta,
         false
     )
+
+    PRESEQ_LCEXTRAP ( BWAMEM2_MEM.out.bam )
 
     SAMTOOLS_FAIDX.out.fai
         .map{ meta, fai ->
@@ -126,7 +128,8 @@ workflow SCAFFOLD {
 
     PAIRTOOLS_PARSE.out.stat
         .mix (
-            PAIRTOOLS_DEDUP.out.stat
+            PAIRTOOLS_DEDUP.out.stat,
+            PRESEQ_LCEXTRAP.out.lc_extrap,
         )
         .map { meta, stats -> stats }
         .set { logs }
@@ -134,6 +137,7 @@ workflow SCAFFOLD {
     ch_versions = BWAMEM2_INDEX.out.versions.first().mix(
         SAMTOOLS_FAIDX.out.versions.first(),
         BWAMEM2_MEM.out.versions.first(),
+        PRESEQ_LCEXTRAP.out.versions.first(),
         PAIRTOOLS_PARSE.out.versions.first(),
         PAIRTOOLS_SORT.out.versions.first(),
         PAIRTOOLS_MERGE.out.versions.first(),

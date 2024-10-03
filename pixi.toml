@@ -9,13 +9,13 @@ platforms = ["linux-64", "osx-64", "osx-arm64"]
 [tasks]
 # Run Nextflow directly
 test-docker = "nextflow run main.nf -profile docker,test"
-test-singularity = "nextflow run main.nf -profile singularity,docker"
+test-singularity = "nextflow run main.nf -profile singularity,test"
 dev = "nextflow run main.nf -profile docker,test,debug"
 # Run nf-tests
 nftest-docker = "nf-test test tests/main.nf.test"
 nftest-singularity = "nf-test test tests/main.nf.test --profile singularity"
 # Clean up
-clean-unused = "nextflow clean -f -before $(nextflow log -q | tail -n 1) && find work/ -type d -empty -delete"
+clean-work = "nextflow clean -f -before $(nextflow log -q | tail -n 1) && find work/ -type d -empty -delete"
 clean-nf = "rm -rf .nextflow* work/"
 clean-results = "rm -rf results/"
 clean-nftest = "rm -rf .nf-test/"
