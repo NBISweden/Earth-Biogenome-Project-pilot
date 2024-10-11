@@ -49,7 +49,7 @@ workflow SCAFFOLD {
         false
     )
 
-    PRESEQ_LCEXTRAP ( BWAMEM2_MEM.out.bam )
+    // PRESEQ_LCEXTRAP ( BWAMEM2_MEM.out.bam )
 
     SAMTOOLS_FAIDX.out.fai
         .map{ meta, fai ->
@@ -129,7 +129,7 @@ workflow SCAFFOLD {
     PAIRTOOLS_PARSE.out.stat
         .mix (
             PAIRTOOLS_DEDUP.out.stat,
-            PRESEQ_LCEXTRAP.out.lc_extrap,
+            // PRESEQ_LCEXTRAP.out.lc_extrap,
         )
         .map { meta, stats -> stats }
         .set { logs }
@@ -137,7 +137,7 @@ workflow SCAFFOLD {
     ch_versions = BWAMEM2_INDEX.out.versions.first().mix(
         SAMTOOLS_FAIDX.out.versions.first(),
         BWAMEM2_MEM.out.versions.first(),
-        PRESEQ_LCEXTRAP.out.versions.first(),
+        // PRESEQ_LCEXTRAP.out.versions.first(),
         PAIRTOOLS_PARSE.out.versions.first(),
         PAIRTOOLS_SORT.out.versions.first(),
         PAIRTOOLS_MERGE.out.versions.first(),
