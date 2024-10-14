@@ -130,7 +130,7 @@ Example:
 
 PROCESSA.out.fasta // contains [ meta, 'assembler-stage-uuid-hap0.fasta' ] and [ meta, 'assembler-stage-uuid-hap1.fasta']
     .set { processed_assemblies }
-output_assembly_ch = constructAssemblyRecord ( processed_assemblies )
+output_assembly_ch = constructAssemblyRecord ( processed_assemblies, sort_by_name )
 
 The output is the map:
     [
@@ -145,8 +145,8 @@ The output is the map:
         ]
     ]
 */
-def constructAssemblyRecord( assemblies ) {
-    assemblies.groupTuple( sort: { a, b -> a.name <=> b.name } )
+def constructAssemblyRecord( assemblies, Boolean byName ) {
+    assemblies.groupTuple( sort: byName? { a, b -> a.name <=> b.name }: { a, b -> b.name <=> a.name } )
         .map { meta, fasta ->
             def asm_meta = meta.assembly.subMap(['assembler','stage','id','build'])
             [ meta, asm_meta + (fasta.size() == 1 ? [ pri_fasta: fasta[0] ] : [ pri_fasta: fasta[0], alt_fasta: fasta[1] ] ) ]

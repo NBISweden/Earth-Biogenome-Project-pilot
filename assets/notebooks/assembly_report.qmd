@@ -330,17 +330,36 @@ print(
 
 ```{python}
 #| output: asis
-per_scaffold_qv_raw = pd.read_csv(
-    glob.glob(f"{log_path}/*-raw-default_merqury.*.qv")[0], sep="\t", header=None
-)
-per_scaffold_qv_raw.columns = [
-    "Scaffold",
-    "No support k-mers",
-    "Total k-mers",
-    "QV",
-    "Error rate",
-]
-print(per_scaffold_qv_raw.to_markdown(index=False))
+qvs = []
+for qv_file in glob.glob(f"{log_path}/*-raw-default_merqury.*.qv"):
+    if os.path.getsize(qv_file) > 0:
+        qvs.append(
+            pd.read_csv(
+                qv_file,
+                sep="\t",
+                header=None,
+                names=[
+                    "Scaffold",
+                    "No support k-mers",
+                    "Total k-mers",
+                    "QV",
+                    "Error rate",
+                ],
+                dtype={
+                    "Scaffold": str,
+                    "No support k-mers": int,
+                    "Total k-mers": int,
+                    "QV": float,
+                    "Error rate": float,
+                },
+                na_values=["", "inf"],
+            )
+        )
+if qvs:
+    per_scaffold_qv_raw = pd.concat(qvs, ignore_index=True)
+    print(per_scaffold_qv_raw.to_markdown(index=False))
+else:
+    print("No per scaffold qv found")
 ```
 
 </details>
@@ -452,17 +471,36 @@ print(
 
 ```{python}
 #| output: asis
-per_scaffold_qv_raw = pd.read_csv(
-    glob.glob(f"{log_path}/*-purged-default_merqury.*.qv")[0], sep="\t", header=None
-)
-per_scaffold_qv_raw.columns = [
-    "Scaffold",
-    "No support k-mers",
-    "Total k-mers",
-    "QV",
-    "Error rate",
-]
-print(per_scaffold_qv_raw.to_markdown(index=False))
+qvs = []
+for qv_file in glob.glob(f"{log_path}/*-purged-default_merqury.*.qv"):
+    if os.path.getsize(qv_file) > 0:
+        qvs.append(
+            pd.read_csv(
+                qv_file,
+                sep="\t",
+                header=None,
+                names=[
+                    "Scaffold",
+                    "No support k-mers",
+                    "Total k-mers",
+                    "QV",
+                    "Error rate",
+                ],
+                dtype={
+                    "Scaffold": str,
+                    "No support k-mers": int,
+                    "Total k-mers": int,
+                    "QV": float,
+                    "Error rate": float,
+                },
+                na_values=["", "inf"],
+            )
+        )
+if qvs:
+    per_scaffold_qv_raw = pd.concat(qvs, ignore_index=True)
+    print(per_scaffold_qv_raw.to_markdown(index=False))
+else:
+    print("No per scaffold qv found")
 ```
 
 </details>
@@ -573,17 +611,36 @@ print(
 
 ```{python}
 #| output: asis
-per_scaffold_qv_raw = pd.read_csv(
-    glob.glob(f"{log_path}/*-scaffolded-default_merqury.*.qv")[0], sep="\t", header=None
-)
-per_scaffold_qv_raw.columns = [
-    "Scaffold",
-    "No support k-mers",
-    "Total k-mers",
-    "QV",
-    "Error rate",
-]
-print(per_scaffold_qv_raw.to_markdown(index=False))
+qvs = []
+for qv_file in glob.glob(f"{log_path}/*-scaffolded-default_merqury.*.qv"):
+    if os.path.getsize(qv_file) > 0:
+        qvs.append(
+            pd.read_csv(
+                qv_file,
+                sep="\t",
+                header=None,
+                names=[
+                    "Scaffold",
+                    "No support k-mers",
+                    "Total k-mers",
+                    "QV",
+                    "Error rate",
+                ],
+                dtype={
+                    "Scaffold": str,
+                    "No support k-mers": int,
+                    "Total k-mers": int,
+                    "QV": float,
+                    "Error rate": float,
+                },
+                na_values=["", "inf"],
+            )
+        )
+if qvs:
+    per_scaffold_qv_raw = pd.concat(qvs, ignore_index=True)
+    print(per_scaffold_qv_raw.to_markdown(index=False))
+else:
+    print("No per scaffold qv found")
 ```
 
 </details>
