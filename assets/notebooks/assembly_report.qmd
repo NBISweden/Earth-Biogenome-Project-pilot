@@ -63,7 +63,7 @@ import os
 import pandas as pd
 from itertools import groupby
 from pprint import pprint
-from IPython.core.display import display # MQCPlot.show() returns a HTML object which needs to be forced to render in a cell
+from IPython.display import display # MQCPlot.show() returns a HTML object which needs to be forced to render in a cell
 from IPython.display import Image
 
 multiqc.reset() # Important for Quarto preview
@@ -74,6 +74,12 @@ multiqc.parse_logs(log_path)
 # pprint pretty prints the dictionary
 pprint(multiqc.list_plots())
 pprint(multiqc.list_modules())
+
+# Write out report (If other parts error, we should at least have the summary)
+multiqc.write_report(
+    force=True,
+    output_dir=".",
+)
 ```
 
 :::::
@@ -642,10 +648,75 @@ print(
 ## Summary
 
 ```{python}
-multiqc.write_report(
-    force=True,
-    output_dir=".",
-)
+import yaml
+
+# Write out EAR
+# https://github.com/ERGA-consortium/EARs
+pprint(multiqc.get_module_data(module="dtol"))
+
+## ToL ID
+tolid = next(iter(multiqc.get_module_data(module="dtol")))
+
+ear_data = {
+    'ToLID': tolid,
+    'Species': multiqc.get_module_data(module="dtol")[tolid]['Species'],
+    'Sex': 'XX',
+    'Submitter': 'NBIS',
+    'Affiliation': 'NBIS',
+    'Tags': 'ERGA-BGE',
+    'DATA': [
+        {'data_type': 'WGS', 'coverage': '30x'}
+    ],
+    'PROFILING': {
+        'GenomeScope': {
+            'genomescope_summary_txt': '/path/to/genomescope_summary.txt'
+        },
+        'Smudgeplot': {
+            'smudgeplot_verbose_summary_txt': '/path/to/smudgeplot_summary.txt'
+        }
+    },
+    'ASSEMBLIES': {
+        'Pre-curation': {
+            'hap1': {
+                'gfastats--nstar-report_txt': '/path/to/gfastats--nstar-report.txt',
+                'busco_short_summary_txt': '/path/to/busco_short_summary.txt',
+                'merqury_folder': '/path/to/merqury_folder'
+            }
+        },
+        'Curated': {
+            'hap1': {
+                'gfastats--nstar-report_txt': '/path/to/gfastats--nstar-report.txt',
+                'busco_short_summary_txt': '/path/to/busco_short_summary.txt',
+                'merqury_folder': '/path/to/merqury_folder',
+                'hic_FullMap_png': '/path/to/hic_FullMap.png',
+                'hic_FullMap_link': 'http://example.com/pretext_file',
+                'blobplot_cont_png': '/path/to/blobplot_cont.png'
+            }
+        }
+    },
+    'PIPELINES': {
+        'Assembly': {
+            'ToolA': 'ToolA v1.0/param1/param2',
+            'ToolB': 'ToolB v2.0'
+        },
+        'Curation': {
+            'ToolX': 'ToolX v1.0',
+            'ToolY': 'ToolY v2.0/param1'
+        }
+    },
+    'NOTES': {
+        'Obs_Haploid_num': 23,
+        'Obs_Sex': 'XX',
+        'Interventions_per_Gb': 5,
+        'Contamination_notes': '"No contamination detected"',
+        'Other_notes': '"Sample quality is high"'
+    }
+}
+
+with open('ear.yaml', 'w') as ear_file:
+    yaml.dump(ear_data, ear_file, sort_keys=False, default_flow_style=False)
+
+print("An EAR file has been created successfully.")
 ```
 
 ### EBP Metrics and curation notes

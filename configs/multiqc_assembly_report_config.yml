@@ -29,13 +29,8 @@ custom_data:
     section_name: "DToL"
     description: "Darwin Tree of Life identifier and related meta data."
     plot_type: "table"
-    # headers: # Doesn't work
-    #   property:
-    #     title: "Property"
-    #   value:
-    #     title: "Value"
     # pconfig:
-    #   no_violin: True
+    #   col1_header: "ToL ID"
   traits:
     file_format: "tsv"
     section_name: "Genome traits"
