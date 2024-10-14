@@ -5,6 +5,7 @@ include { TAXONKIT_NAME2LINEAGE   } from "$projectDir/modules/local/taxonkit/nam
 include { GOAT_TAXONSEARCH        } from "$projectDir/modules/nf-core/goat/taxonsearch/main"
 include { SAMTOOLS_FASTA          } from "$projectDir/modules/local/samtools/fasta/main"
 include { CAT_CAT as MERGE_PACBIO } from "$projectDir/modules/nf-core/cat/cat/main"
+include { WGET as FETCH_TAXDB     } from "$projectDir/modules/local/wget"
 
 /* params.input example sample sheet (samplesheet.yml)
 ```yaml
@@ -111,8 +112,8 @@ Output meta map structure:
 workflow PREPARE_INPUT {
 
     take:
-    infile
-    taxdb
+    infile // String: Path to input file
+    taxdb  // String: Path to taxdb
 
     main:
     // Read in YAML
@@ -125,7 +126,9 @@ workflow PREPARE_INPUT {
             skip: true
         }
         .set { ch_taxonkit }
-    UNTAR_TAXONOMY( Channel.fromPath( taxdb, checkIfExists: true ).map{ tar -> [ [ id: 'taxdb' ], tar ] } )
+    FETCH_TAXDB( taxdb ) // Inbuilt caching is failing so implement it using process.
+    // UNTAR_TAXONOMY( Channel.fromPath( taxdb, checkIfExists: true ).map{ tar -> [ [ id: 'taxdb' ], tar ] } )
+    UNTAR_TAXONOMY( FETCH_TAXDB.out.download.map{ tar -> [ [ id: 'taxdb' ], tar ] } )
     TAXONKIT_NAME2LINEAGE( ch_taxonkit.fetch_taxid, UNTAR_TAXONOMY.out.untar.map{ meta, archive -> archive }.collect() ).tsv
         .branch { meta, tsv_f -> def sv = tsv_f.splitCsv( sep:"\t" )
         def new_meta = meta.deepMerge( [ sample: [ taxid: sv[0][1], kingdom: sv[0][2] ] ] )
