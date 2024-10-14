@@ -29,7 +29,8 @@ workflow SCAFFOLD {
 
     combineByMetaKeys( // Combine (Hi-C + index) with Assembly
         combineByMetaKeys( // Combine Hi-C reads with BWA index
-            ch_hic, BWAMEM2_INDEX.out.index,
+            ch_hic,
+            BWAMEM2_INDEX.out.index,
             keySet: ['id','sample'],
             meta: 'rhs'
         ),
@@ -123,8 +124,11 @@ workflow SCAFFOLD {
         yahs_input.fasta,
         yahs_input.fai
     )
-
-    ch_scaffolded_assemblies = constructAssemblyRecord( YAHS.out.scaffolds_fasta )
+    // Consensus case:
+    // Preserve haplotigs from purge dups
+    ch_scaff_and_alt = ch_assemblies.map { meta, assembly -> [ meta, assembly.alt_fasta ] }
+        .mix( YAHS.out.scaffolds_fasta )
+    ch_scaffolded_assemblies = constructAssemblyRecord( ch_scaff_and_alt, params.use_phased )
 
     PAIRTOOLS_PARSE.out.stat
         .mix (
