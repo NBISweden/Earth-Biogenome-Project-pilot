@@ -440,6 +440,39 @@ TODO for each assembly output a stats section (expandable).
 
 ### Purge dups
 
+::: {.callout-note title="Interpretation" collapse="true"}
+
+X-axis (Read Depth)
+: This axis represents the read depth, which is the number of times a particular base is covered by reads. It typically starts from 0 and increases to the maximum read depth observed.
+
+Y-axis (Number of Positions)
+: This axis shows the number of positions in the assembly that have a specific read depth. Higher values indicate more positions with that particular read depth.
+
+Histogram Peaks
+: For a diploid organism, there should be a heterozgyous peak and a homozygous peak.
+
+  - **Heterozygous Peak**: The first major peak from the left usually represents the expected read depth for the heterozgyous portion of the genome, i.e., a haplotype.
+  - **Homozygous Peak**: The second major peak from the left usually represents the expected read depth for the homozygous portion, i.e.,
+  where the both alleles are the same.
+
+Cutoff Lines
+: The plot includes three vertical lines indicating coverage cutoffs. These cutoffs help distinguish between primary contigs, haplotigs, and potential contaminants or low-quality regions.
+
+  - **Low Coverage Cutoff**: Positions below this line are considered low coverage and might be errors or low-quality regions.
+  - **Haploid-Diploid Transition**: Marks the transition where average coverage denotes a heterozygous or homozygous region.
+  - **High Coverage Cutoff**: Positions above this line are considered high coverage and might indicate duplicated regions or haplotigs.
+
+Interpreting the Data
+:
+
+  - **JUNK**: Contigs with an average coverage below the low-coverage threshold.
+  - **HAPLOTIG**: Contigs with an average coverage between low coverage cutoff and the transition, that overlap with another region.
+  - **HIGHCOV**: Contigs with an average coverage above the high coverage cutoff.
+  - **REPEAT**: Repeat contig.
+  - **OVLP**: Overlap.
+
+:::
+
 ```{python}
 Image(filename=glob.glob(f"{log_path}/*_purgedups_hist.png")[0])
 ```
