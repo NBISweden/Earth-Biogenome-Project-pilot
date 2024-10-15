@@ -86,7 +86,7 @@ multiqc.write_report(
 
 ## Species information
 
-To begin our analysis, let’s explore the available species information. The following
+To begin our analysis, let's explore the available species information. The following
 details are sourced from [Genomes on a Tree (GOAT)](https://goat.genomehubs.org/).
 
 ```{python}
@@ -442,6 +442,22 @@ TODO for each assembly output a stats section (expandable).
 
 ```{python}
 Image(filename=glob.glob(f"{log_path}/*_purgedups_hist.png")[0])
+```
+
+```{python}
+#| output: asis
+assemblies = [ asm for asm in multiqc.list_samples() if asm.startswith("hifiasm-raw-default.asm.bp") ]
+assembly_size_mb = [ multiqc.get_module_data(module="quast",sample=f"{asm}")['Total length'] for asm in assemblies ]
+for bed in glob.glob(f"{log_path}/*-purged-*.dups.bed"):
+    dup_bed = pd.read_csv(
+        bed,
+        sep="\t",
+        names=['Contig','Start','End','Type','Partner']
+    )
+    dup_bed['Length'] = dup_bed['End'] - dup_bed['Start']
+    summary = dup_bed.groupby('Type')['Length'].sum().reset_index() # TODO Fix for multiple assemblies
+    summary['Percentage'] = summary['Length'].apply(lambda x: x * 100 / (assembly_size_mb[0] * 1000000) ).apply(lambda x: f"{x:.2f}%")
+    print(summary.to_markdown(index=False))
 ```
 
 #### Assembly k-mer completeness
