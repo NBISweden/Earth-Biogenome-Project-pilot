@@ -105,7 +105,7 @@ if "traits" in multiqc.list_modules():
 
 ## Data inspection
 
-Let’s ensure the quality of our input data.
+Let's ensure the quality of our input data.
 
 ### Sequence data quantity
 
