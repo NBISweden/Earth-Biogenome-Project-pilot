@@ -120,6 +120,7 @@ workflow PURGE_DUPLICATES {
     ch_purged_assemblies = constructAssemblyRecord( SEQKIT_SEQ.out.fastx, params.use_phased )
 
     PURGEDUPS_HISTPLOT.out.png
+        .mix( PURGEDUPS_PURGEDUPS_PRIMARY.out.bed )
         .map { meta, file -> file }
         .set { logs }
 
