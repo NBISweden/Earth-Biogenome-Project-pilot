@@ -298,6 +298,33 @@ if "quast" in multiqc.list_modules():
 
 #### Assembly statistics
 
+```{python}
+#| output: asis
+raw_asm_stats = pd.read_csv(
+    glob.glob(f"{log_path}/*-raw-*.fasta.assembly_summary")[0],
+    sep="\t",
+    header=None,
+    names=["Metric","Value"]
+)
+raw_asm_t1=raw_asm_stats.iloc[[0, 31, 32]]
+print(raw_asm_t1.to_markdown(index=False))
+```
+```{python}
+#| output: asis
+raw_asm_t2=raw_asm_stats.iloc[1:12] # TODO Add conversion
+print(raw_asm_t2.to_markdown(index=False))
+```
+```{python}
+#| output: asis
+raw_asm_t3=raw_asm_stats.iloc[12:23] # TODO Add conversion
+print(raw_asm_t3.to_markdown(index=False))
+```
+```{python}
+#| output: asis
+raw_asm_t4=raw_asm_stats.iloc[24:31] # TODO Add conversion
+print(raw_asm_t4.to_markdown(index=False))
+```
+
 #### Assembly k-mer completeness
 
 ```{python}
