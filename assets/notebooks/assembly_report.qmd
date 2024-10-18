@@ -378,6 +378,7 @@ Image(filename=glob.glob(f"{log_path}/*-raw-default_merquryfk.*.spectra-cn.st.pn
 ## Merqury
 
 ```{python}
+# TODO This path will be different depending on phased or not
 Image(filename=glob.glob(f"{log_path}/*-raw-default_merqury.*.spectra-cn.st.png")[0])
 ```
 
@@ -561,14 +562,14 @@ else:
 ## MerquryFK
 
 ```{python}
-# TODO account for multiple assemblers
-Image(filename=glob.glob(f"{log_path}/*-purged-default_merquryfk.*.spectra-cn.st.png")[0])
+# TODO Do we need separate for each fasta? This is combined
+Image(filename=glob.glob(f"{log_path}/*-purged-default_merquryfk.spectra-cn.st.png")[0])
 ```
 
 ## Merqury
 
 ```{python}
-Image(filename=glob.glob(f"{log_path}/*-purged-default_merqury.*.spectra-cn.st.png")[0])
+Image(filename=glob.glob(f"{log_path}/*-purged-default_merqury.spectra-cn.st.png")[0])
 ```
 
 ::::
@@ -701,14 +702,14 @@ else:
 ## MerquryFK
 
 ```{python}
-# TODO account for multiple assemblers
-Image(filename=glob.glob(f"{log_path}/*-scaffolded-default_merquryfk.*.spectra-cn.st.png")[0])
+# TODO Do we need for each fasta. This is combined fastas
+Image(filename=glob.glob(f"{log_path}/*-scaffolded-default_merquryfk.spectra-cn.st.png")[0])
 ```
 
 ## Merqury
 
 ```{python}
-Image(filename=glob.glob(f"{log_path}/*-scaffolded-default_merqury.*.spectra-cn.st.png")[0])
+Image(filename=glob.glob(f"{log_path}/*-scaffolded-default_merqury.spectra-cn.st.png")[0])
 ```
 
 ::::
