@@ -1,21 +1,37 @@
-include { constructAssemblyRecord } from "$projectDir/modules/local/functions"
-include { getPrimaryAssembly      } from "$projectDir/modules/local/functions"
-include { joinByMetaKeys          } from "$projectDir/modules/local/functions"
-include { BWAMEM2_INDEX           } from "$projectDir/modules/nf-core/bwamem2/index/main"
-include { BWAMEM2_MEM             } from "$projectDir/modules/nf-core/bwamem2/mem/main"
-include { SAMTOOLS_FAIDX          } from "$projectDir/modules/nf-core/samtools/faidx/main"
-include { PAIRTOOLS_PARSE         } from "$projectDir/modules/nf-core/pairtools/parse/main"
-include { PAIRTOOLS_SORT          } from "$projectDir/modules/nf-core/pairtools/sort/main"
-include { PAIRTOOLS_MERGE         } from "$projectDir/modules/nf-core/pairtools/merge/main"
-include { PAIRTOOLS_DEDUP         } from "$projectDir/modules/nf-core/pairtools/dedup/main"
-include { PAIRTOOLS_SPLIT         } from "$projectDir/modules/nf-core/pairtools/split/main"
-include { YAHS                    } from "$projectDir/modules/nf-core/yahs/main.nf"
-
+include { constructAssemblyRecord               } from "$projectDir/modules/local/functions"
+include { getPrimaryAssembly                    } from "$projectDir/modules/local/functions"
+include { combineByMetaKeys                     } from "$projectDir/modules/local/functions"
+include { joinByMetaKeys                        } from "$projectDir/modules/local/functions"
+include { BWAMEM2_INDEX                         } from "$projectDir/modules/nf-core/bwamem2/index/main"
+include { BWAMEM2_MEM as BWAMEM2_MEM_CURATION   } from "$projectDir/modules/nf-core/bwamem2/mem/main"
+include { FILTER_FIVE_END                       } from "$projectDir/modules/local/hic_curation/filter_five_end"
+include { TWOREADCOMBINER_FIXMATE_SORT          } from "$projectDir/modules/local/hic_curation/tworeadcombiner_fixmate_sort"
+include { BIOBAMBAM_BAMMARKDUPLICATES2          } from "$projectDir/modules/nf-core/biobambam/bammarkduplicates2/main"
+include { SAMTOOLS_FAIDX                        } from "$projectDir/modules/nf-core/samtools/faidx/main"
+include { SAMTOOLS_MERGE as SAMTOOLS_MERGE_HIC  } from "$projectDir/modules/nf-core/samtools/merge/main"
+include { SAMTOOLS_MERGE as SAMTOOLS_MERGE_HIFI } from "$projectDir/modules/nf-core/samtools/merge/main"
+include { SAMTOOLS_SORT                         } from "$projectDir/modules/nf-core/samtools/sort/main"
+include { BAM2BED_SORT                          } from "$projectDir/modules/local/hic_curation/bam2bed_sort"
+include { COOLER_CLOAD                          } from "$projectDir/modules/nf-core/cooler/cload/main"
+include { COOLER_ZOOMIFY                        } from "$projectDir/modules/nf-core/cooler/zoomify/main"
+include { CREATE_CHROMOSOME_SIZES_FILE          } from "$projectDir/modules/local/hic_curation/create_chromosome_sizes"
+include { PRETEXTMAP                            } from "$projectDir/modules/nf-core/pretextmap/main"   
+include { MINIMAP2_INDEX                        } from "$projectDir/modules/nf-core/minimap2/index/main"
+include { MINIMAP2_ALIGN                        } from "$projectDir/modules/nf-core/minimap2/align/main"
+include { BAM2COVERAGE_TRACKS                   } from "$projectDir/modules/local/hic_curation/bam2coverageTracks"
+include { SEQTK_CUTN                            } from "$projectDir/modules/nf-core/seqtk/cutn/main"
+include { CREATE_GAP_TRACKS                     } from "$projectDir/modules/local/hic_curation/create_gap_tracks"
+include { TIDK_SEARCH as TIDK_SEARCH_BEDGRAPH   } from "$projectDir/modules/nf-core/tidk/search/main"
+include { TIDK_SEARCH as TIDK_SEARCH_TSV        } from "$projectDir/modules/nf-core/tidk/search/main"
+include { TIDK_PLOT                             } from "$projectDir/modules/nf-core/tidk/plot/main"
+include { CREATE_TELOMER_HITILE_TRACK           } from "$projectDir/modules/local/hic_curation/create_telomer_hitile_track"
+include { PRETEXT_TRACKS_INGESTION              } from "$projectDir/modules/local/hic_curation/pretext_tracks_ingestion"
 
 workflow SCAFFOLD_CURATION {
     take:
     ch_assemblies // [ meta, assembly ]
     ch_hic        // [ meta, hic-pairs ]
+    ch_hifi       // [ meta, hifi-reads ]
 
     main:
 
@@ -26,99 +42,269 @@ workflow SCAFFOLD_CURATION {
         [ [ ], [ ] ]
     )
 
-    joinByMetaKeys(joinByMetaKeys(ch_hic, BWAMEM2_INDEX.out.index, 
-        keySet: ['id','sample'],
-        meta: 'rhs'
+    ch_hifi.view { it: "ch_hifi: " + it }
+
+    combineByMetaKeys( // Combine (Hi-C + index) with Assembly
+        combineByMetaKeys( // Combine Hi-C reads with BWA index
+            ch_hic, BWAMEM2_INDEX.out.index,
+            keySet: ['id','sample'],
+            meta: 'merge'
         ),
-        getPrimaryAssembly(ch_assemblies),
+        getPrimaryAssembly( ch_assemblies ),
         keySet: ['id','sample'],
-        meta: 'rhs'
-    ).multiMap{ meta, hic_reads, index, fasta -> 
+        meta: 'merge'
+    ).transpose(by:1)
+    .multiMap{ meta, hic_reads, index, fasta ->
         reads: [ meta, hic_reads ]
         index: [ meta, index ]
         fasta: [ meta, fasta ]
-    }.set{ bwamem2_input } 
+    }.set{ bwamem2_input }
 
-    BWAMEM2_MEM (bwamem2_input.reads, bwamem2_input.index, bwamem2_input.fasta, false)
+    BWAMEM2_MEM_CURATION (bwamem2_input.reads, bwamem2_input.index, bwamem2_input.fasta, false)
 
-    SAMTOOLS_FAIDX.out.fai.map{ meta, fai ->
-        fai.splitCsv( sep: '\t', header: false )
-            .collect{ row -> 
-                row[ 0..1 ]
-                .join('\t')
-            }.join('\n')        
-    }.collectFile()
-    .set {chrom_sizes}
+    // filter alignments 
+    FILTER_FIVE_END(BWAMEM2_MEM_CURATION.out.bam)
 
-    PAIRTOOLS_PARSE(BWAMEM2_MEM.out.bam, chrom_sizes)
+    // combine reads 
+    FILTER_FIVE_END.out.bam
+    .map { meta, bam -> [ meta.subMap('id', 'sample', 'assembly', 'pair_id'), bam ] }
+    .groupTuple( sort: {a, b -> a.name <=> b.name } )
+    //.view {it: "groupTuple: " + it}
+    .set { combine_input }
 
-    PAIRTOOLS_SORT(PAIRTOOLS_PARSE.out.pairsam)
+    TWOREADCOMBINER_FIXMATE_SORT(combine_input)
 
-    PAIRTOOLS_SORT.out.sorted.groupTuple()
-        .branch { meta, pairsam ->
-            single: pairsam.size() == 1
-                return [ meta, *pairsam ]
-            multi: true
-                return [ meta, pairsam ]
+    // merge bam files in case multiple HIC paired-end libraries are present 
+    TWOREADCOMBINER_FIXMATE_SORT.out.bam
+        .map { meta, bam_list -> [ meta - meta.subMap( 'pair_id' ), bam_list ] }
+        .groupTuple()
+        .view { it: ".groupTuple: " + it }
+        .branch { meta, bam_list ->
+            multiples: bam_list.size() > 1
+            singleton: true
         }
-        .set { pairtools_sorted }
+    .set { merge_bam }
 
-    PAIRTOOLS_MERGE(pairtools_sorted.multi)
-
-    PAIRTOOLS_DEDUP(
-        PAIRTOOLS_MERGE.out.pairs.mix(
-            pairtools_sorted.single
-        )
+    SAMTOOLS_MERGE_HIC(
+        merge_bam.multiples,
+        [ [], [] ],
+        [ [], [] ]
     )
 
-    joinByMetaKeys(PAIRTOOLS_DEDUP.out.pairs, 
-        getPrimaryAssembly(ch_assemblies),
+    merge_bam.singleton
+        .map { meta, bam -> [ meta, *bam ] } // the spread operator (*) flattens the bam list
+        .mix( SAMTOOLS_MERGE_HIC.out.bam)
+        .set { dedup_bam }
+
+    // dedupliucate bam file 
+    BIOBAMBAM_BAMMARKDUPLICATES2(dedup_bam)
+
+    // convert bam to sorted bed file
+    BAM2BED_SORT(BIOBAMBAM_BAMMARKDUPLICATES2.out.bam)
+
+    // create chrome sizes file from fai file
+    CREATE_CHROMOSOME_SIZES_FILE(SAMTOOLS_FAIDX.out.fai)
+
+    // create cooler files 
+    // tuple val(meta), path(pairs), path(index), val(cool_bin)
+    // path chromsizes
+    BAM2BED_SORT.out.pairs
+        .view { it; "BAM2BED_SORT.out.pairs: " + it }
+        .map { meta, pairs  -> [ meta, pairs, [ ] ] }
+        .combine(
+            Channel.value(params.cooler_bin_size)
+        )
+        .view { it: "pairs_idx_binsize_ch: " + it }
+        .set { pairs_idx_binsize_ch }
+    
+    combineByMetaKeys( // Combine Hi-C reads with BWA index
+        pairs_idx_binsize_ch, CREATE_CHROMOSOME_SIZES_FILE.out.sizes,
         keySet: ['id','sample'],
         meta: 'rhs'
-    ).multiMap{ meta, pairs, fasta -> 
-        pairs: [ meta, pairs ]
-        fasta: [ meta, fasta ]
-    }.set { pairtools_split_input }
-
-    PAIRTOOLS_SPLIT(pairtools_split_input.pairs,
-        pairtools_split_input.fasta,
-        true    // sort_bam
     )
-    
+    .multiMap { meta, pairs, fake_index, cool_bin, chrom_sizes -> 
+        cload_in     : [ meta, pairs, fake_index, cool_bin ] 
+        chrom_sizes  : chrom_sizes
+    }
+    .set { cooler_cload_ch }
 
-    joinByMetaKeys(
-        joinByMetaKeys(PAIRTOOLS_SPLIT.out.bam, 
-            getPrimaryAssembly(ch_assemblies), 
+    COOLER_CLOAD(
+        cooler_cload_ch.cload_in,
+        cooler_cload_ch.chrom_sizes
+    )
+
+    COOLER_CLOAD.out.cool.map { meta, cool, cool_bin ->  [ meta, cool ] }
+    .set { cooler_zoomify_ch }
+    
+    COOLER_ZOOMIFY(cooler_zoomify_ch)
+
+    // create pretext maps 
+    combineByMetaKeys(combineByMetaKeys(
+            getPrimaryAssembly(ch_assemblies),
+            SAMTOOLS_FAIDX.out.fai,
             keySet: ['id','sample'],
             meta: 'rhs'
-        ),
-        SAMTOOLS_FAIDX.out.fai,
+        ), BIOBAMBAM_BAMMARKDUPLICATES2.out.bam,
         keySet: ['id','sample'],
         meta: 'rhs'
-    ).multiMap{ meta, bam, fasta, fai -> 
-        bam:   [ meta, bam ]
-        fasta: [ fasta ]
-        fai:   [ fai ]
-    }.set{ yahs_input } 
-
-    YAHS(yahs_input.bam,
-        yahs_input.fasta,
-        yahs_input.fai
+    )
+    .multiMap { meta, fasta, fai, bam ->
+        bam       : [ meta, bam ]
+        fasta_fai : [ meta, fasta, fai ]
+    }
+    .set { pretext_ch }
+    
+    PRETEXTMAP(
+        pretext_ch.bam,
+        pretext_ch.fasta_fai
     )
 
-    ch_scaffolded_assemblies = constructAssemblyRecord( YAHS.out.scaffolds_fasta )
+    // create tracks for PretextMap:
+    // coverage, gap, telomer
+    
+    combineByMetaKeys( 
+        ch_hifi,
+        getPrimaryAssembly( ch_assemblies ),
+        keySet: ['id','sample'],
+        meta: 'rhs'
+    )
+    .multiMap { meta, hifi_reads, fasta -> 
+        hifi_reads: [ meta, hifi_reads ]
+        reference : fasta 
+    }
+    .set{ asm_hifi_ch }
 
-    ch_versions = BWAMEM2_INDEX.out.versions.first()
-        .mix( SAMTOOLS_FAIDX.out.versions.first() )
-        .mix( BWAMEM2_MEM.out.versions.first() )
-        .mix( PAIRTOOLS_PARSE.out.versions.first() )
-        .mix( PAIRTOOLS_SORT.out.versions.first() )
-        .mix( PAIRTOOLS_MERGE.out.versions.first() )
-        .mix( PAIRTOOLS_DEDUP.out.versions.first() )
-        .mix( PAIRTOOLS_SPLIT.out.versions.first() )
-        .mix( YAHS.out.versions.first() )
+    // Coverage-track: create minimap2 index 
+    MINIMAP2_INDEX(getPrimaryAssembly( ch_assemblies ))
+
+    // Coverage-track: align HiFi reads 
+    MINIMAP2_ALIGN(
+        asm_hifi_ch.hifi_reads, // [ meta, reads ]
+        asm_hifi_ch.reference,  // reference 
+        1,                      // bam_format 
+        0,                      // cigar_paf_format
+        0                       // cigar_ba, 
+    )
+
+    // Coverage-track: merge hifi-bam files (if multiple hifi reads are present)
+    MINIMAP2_ALIGN.out.bam
+        .branch { meta, bam_list ->
+            multiples: bam_list.size() > 1
+            singleton: true
+        }
+    .set { merge_hifi_bam }
+
+    SAMTOOLS_MERGE_HIFI(
+        merge_hifi_bam.multiples,
+        [ [], [] ],
+        [ [], [] ]
+    )
+
+
+    combineByMetaKeys( 
+        ch_hifi,
+        getPrimaryAssembly( ch_assemblies ),
+        keySet: ['id','sample'],
+        meta: 'rhs'
+    )
+    .multiMap { meta, hifi_reads, fasta -> 
+        hifi_reads: [ meta, hifi_reads ]
+        reference : fasta 
+    }
+    .set{ asm_hifi_ch }
+
+    combineByMetaKeys( 
+        merge_hifi_bam.singleton
+            .map { meta, bam -> [ meta, *bam ] } // the spread operator (*) flattens the bam list
+            .mix( SAMTOOLS_MERGE_HIFI.out.bam),
+        CREATE_CHROMOSOME_SIZES_FILE.out.sizes,
+        keySet: ['id','sample'],
+        meta: 'rhs'
+    )
+    .multiMap { meta, bam, chrom_sizes -> 
+        merged_bam   : [ meta, bam ] 
+        chrom_sizes  : chrom_sizes
+    }
+    .set { bam2coverage_ch }
+
+    // Coverage-track: create hitile- and bed-coverage tracks 
+    BAM2COVERAGE_TRACKS(
+        bam2coverage_ch.merged_bam,
+        bam2coverage_ch.chrom_sizes
+    )
+
+    // Gap-track: create bedtrack 
+    SEQTK_CUTN(getPrimaryAssembly( ch_assemblies ))
+
+    // Gap-track: create beddb- and bed-gap tracks 
+    combineByMetaKeys( 
+        SEQTK_CUTN.out.bed,
+        CREATE_CHROMOSOME_SIZES_FILE.out.sizes,
+        keySet: ['id','sample'],
+        meta: 'rhs'
+    )
+    .multiMap { meta, bed, chrom_sizes -> 
+        bed          : [ meta, bed ] 
+        chrom_sizes  : chrom_sizes
+    }
+    .set { bed2gap_ch }
+
+    CREATE_GAP_TRACKS(
+        bed2gap_ch.bed,
+        bed2gap_ch.chrom_sizes
+    ) 
+    // Telomer-track: create track
+    TIDK_SEARCH_BEDGRAPH(
+        getPrimaryAssembly( ch_assemblies ),
+        params.telomer_motif
+    )
+    TIDK_SEARCH_TSV(
+        getPrimaryAssembly( ch_assemblies ),
+        params.telomer_motif
+    )
+    // Telomer-track: create plot - thats not really necessary, but nice to have 
+    TIDK_PLOT(TIDK_SEARCH_TSV.out.tsv)
+    // Telomer-track: convert telomer bedgraph into beddb file that can be ingested into HiGlass 
+    combineByMetaKeys( 
+        TIDK_SEARCH_BEDGRAPH.out.bedgraph,
+        CREATE_CHROMOSOME_SIZES_FILE.out.sizes,
+        keySet: ['id','sample'],
+        meta: 'rhs'
+    )
+    .multiMap { meta, bedgraph, chrom_sizes -> 
+        bedgraph          : [ meta, bedgraph ] 
+        chrom_sizes  : chrom_sizes
+    }
+    .set { bedgraph_telomer_ch }
+    CREATE_TELOMER_HITILE_TRACK(
+        bedgraph_telomer_ch.bedgraph,
+        bedgraph_telomer_ch.chrom_sizes
+    )
+
+    // ingest coverage, gap and telomer track into Pretext
+    joinByMetaKeys(
+        joinByMetaKeys(
+            joinByMetaKeys(
+                PRETEXTMAP.out.pretext,
+                BAM2COVERAGE_TRACKS.out.capped_bed,
+                keySet: ['id','sample', 'assembly'],
+                meta: 'rhs'
+            ), 
+            TIDK_SEARCH_BEDGRAPH.out.bedgraph,
+            keySet: ['id','sample','assembly'],
+            meta: 'rhs'
+        ),
+        CREATE_GAP_TRACKS.out.bedgraph,
+        keySet: ['id','sample','assembly'],
+        meta: 'rhs'
+    )    
+    .set { pretext_tracks_ch }
+
+    pretext_tracks_ch.view { it: "pretext_tracks_ch: " + it } 
+
+    PRETEXT_TRACKS_INGESTION(pretext_tracks_ch)    
 
     emit:
-    assemblies = ch_scaffolded_assemblies
-    versions   = ch_versions
+    assemblies = Channel.empty()    
+    versions   = Channel.empty()
 }
