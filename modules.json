@@ -54,6 +54,13 @@
                             "modules"
                         ]
                     },
+                    "fastqc": {
+                        "branch": "master",
+                        "git_sha": "666652151335353eef2fcd58880bcef5bc2928e1",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
                     "fcs/fcsadaptor": {
                         "branch": "master",
                         "git_sha": "3f5420aa22e00bd030a2556dfdffc9e164ec0ec5",
@@ -138,6 +145,14 @@
                             "modules"
                         ]
                     },
+                    "merquryfk/merquryfk": {
+                        "branch": "master",
+                        "git_sha": "666652151335353eef2fcd58880bcef5bc2928e1",
+                        "installed_by": [
+                            "modules"
+                        ],
+                        "patch": "modules/nf-core/merquryfk/merquryfk/merquryfk-merquryfk.diff"
+                    },
                     "merquryfk/ploidyplot": {
                         "branch": "master",
                         "git_sha": "ebb27711cd5f4de921244bfa81c676504072d31c",
@@ -187,13 +202,6 @@
                             "modules"
                         ],
                         "patch": "modules/nf-core/mitohifi/mitohifi/mitohifi-mitohifi.diff"
-                    },
-                    "multiqc": {
-                        "branch": "master",
-                        "git_sha": "ccacf6f5de6df3bc6d73b665c1fd2933d8bbc290",
-                        "installed_by": [
-                            "modules"
-                        ]
                     },
                     "pairix": {
                         "branch": "master",
@@ -252,6 +260,13 @@
                     "pilon": {
                         "branch": "master",
                         "git_sha": "240937a2a9c30298110753292be041188891f2cb",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
+                    "preseq/lcextrap": {
+                        "branch": "master",
+                        "git_sha": "666652151335353eef2fcd58880bcef5bc2928e1",
                         "installed_by": [
                             "modules"
                         ]

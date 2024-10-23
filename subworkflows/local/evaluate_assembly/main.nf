@@ -2,7 +2,7 @@ include { combineByMetaKeys   } from "$projectDir/modules/local/functions"
 include { getEachAssembly     } from "$projectDir/modules/local/functions"
 include { getPrimaryAssembly  } from "$projectDir/modules/local/functions"
 include { BUSCO               } from "$projectDir/modules/nf-core/busco/main"
-include { MERQURYFK_MERQURYFK } from "$projectDir/modules/local/merquryfk/merquryfk"
+include { MERQURYFK_MERQURYFK } from "$projectDir/modules/nf-core/merquryfk/merquryfk"
 include { MERQURY             } from "$projectDir/modules/nf-core/merqury/main"
 // include { INSPECTOR           } from "$projectDir/modules/local/inspector/inspector"
 
@@ -22,7 +22,14 @@ workflow EVALUATE_ASSEMBLY {
             getEachAssembly(assembly_ch),
             keySet: ['id','sample'],
             meta: 'rhs'
-        ) // [ meta, hist, ktab, assembly ]
+        ) // TODO: Change the function so we don't need the map
+        .map{ meta, hist, ktab, assembly ->
+            assembly instanceof Path ?
+            tuple(meta, hist, ktab, assembly, []) :
+            tuple(meta, hist, ktab, assembly.head(), assembly.last())
+        }, // [ meta, hist, ktab, assembly ]
+        [],
+        [],
     )
 
     MERQURY (
@@ -63,8 +70,10 @@ workflow EVALUATE_ASSEMBLY {
             MERQURYFK_MERQURYFK.out.stats,
             MERQURYFK_MERQURYFK.out.qv,
             // MERQURYFK_MERQURYFK.out.assembly_qv, // Contig names are missing in first column
-            MERQURYFK_MERQURYFK.out.spectra_cn_st_png,
-            MERQURYFK_MERQURYFK.out.spectra_asm_st_png,
+            MERQURYFK_MERQURYFK.out.full_spectra_cn_st.join(
+                MERQURYFK_MERQURYFK.out.part_spectra_cn_st, remainder: true
+            ).map { meta, full, part -> full ? tuple(meta, full): tuple(meta, part) },
+            MERQURYFK_MERQURYFK.out.spectra_asm_st,
             MERQURYFK_MERQURYFK.out.false_duplications,
             MERQURY.out.scaffold_qv,
             MERQURY.out.spectra_cn_st_png,
