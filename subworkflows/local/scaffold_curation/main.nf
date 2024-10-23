@@ -146,7 +146,7 @@ workflow SCAFFOLD_CURATION {
     ch_versions  = ch_versions.mix( COOLER_ZOOMIFY.out.versions )
 
     // create pretext maps 
-    combineByMetaKeys(combineByMetaKeys(
+    joinByMetaKeys(joinByMetaKeys(
             getPrimaryAssembly(ch_assemblies),
             SAMTOOLS_FAIDX.out.fai,
             keySet: ['id','sample'],
@@ -170,7 +170,7 @@ workflow SCAFFOLD_CURATION {
     // create tracks for PretextMap:
     // coverage, gap, telomer
     
-    combineByMetaKeys( 
+    joinByMetaKeys( 
         ch_hifi,
         getPrimaryAssembly( ch_assemblies ),
         keySet: ['id','sample'],
@@ -211,7 +211,7 @@ workflow SCAFFOLD_CURATION {
     )
     ch_versions  = ch_versions.mix( SAMTOOLS_MERGE_HIFI.out.versions )
 
-    combineByMetaKeys( 
+    joinByMetaKeys( 
         ch_hifi,
         getPrimaryAssembly( ch_assemblies ),
         keySet: ['id','sample'],
@@ -223,7 +223,7 @@ workflow SCAFFOLD_CURATION {
     }
     .set{ asm_hifi_ch }
 
-    combineByMetaKeys( 
+    joinByMetaKeys( 
         merge_hifi_bam.singleton
             .map { meta, bam -> [ meta, *bam ] } // the spread operator (*) flattens the bam list
             .mix( SAMTOOLS_MERGE_HIFI.out.bam),
@@ -249,7 +249,7 @@ workflow SCAFFOLD_CURATION {
     ch_versions  = ch_versions.mix( SEQTK_CUTN.out.versions )
 
     // Gap-track: create beddb- and bed-gap tracks 
-    combineByMetaKeys( 
+    joinByMetaKeys( 
         SEQTK_CUTN.out.bed,
         CREATE_CHROMOSOME_SIZES_FILE.out.sizes,
         keySet: ['id','sample'],
@@ -285,7 +285,7 @@ workflow SCAFFOLD_CURATION {
     ch_versions  = ch_versions.mix( TIDK_PLOT.out.versions )
 
     // Telomer-track: convert telomer bedgraph into beddb file that can be ingested into HiGlass 
-    combineByMetaKeys( 
+    joinByMetaKeys( 
         TIDK_SEARCH_BEDGRAPH.out.bedgraph,
         CREATE_CHROMOSOME_SIZES_FILE.out.sizes,
         keySet: ['id','sample'],
