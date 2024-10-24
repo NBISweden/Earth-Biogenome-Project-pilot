@@ -8,10 +8,12 @@ workflow BUILD_FASTK_DATABASE {
 
     main:
     FASTK_FASTK ( fastx_data )
-    fkdb_ch = FASTK_FASTK.out.hist.groupTuple()
-        .join( FASTK_FASTK.out.ktab.groupTuple(), remainder: true )
-        .join( FASTK_FASTK.out.prof.groupTuple(), remainder: true )
-        .map { meta, hist, ktab, prof -> [meta.findAll { it.key != 'single_end' } , hist, ktab ? ktab.flatten() : [] , prof ? prof.flatten() : [] ] }
+    fkdb_ch = FASTK_FASTK.out.hist
+        .join( FASTK_FASTK.out.ktab, remainder: true )
+        .join( FASTK_FASTK.out.prof, remainder: true )
+        .map { meta, hist, ktab, prof -> [ meta.subMap(meta.keySet()-['single_end', 'pair_id'] ) , hist, ktab , prof ] }
+        .groupTuple()
+        .map { meta, hist, ktab, prof -> [ meta , hist, ktab.head() ? ktab.flatten() : [] , prof.head() ? prof.flatten() : [] ] }
         .branch { meta, hist, ktab, prof ->
             single_hist: hist.size() == 1
             multi_hist : hist.size() > 1
