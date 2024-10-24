@@ -27,7 +27,7 @@ process CREATE_TELOMER_HITILE_TRACK {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        sort:     \$(echo \$(sort --version 2>&1) | head -n 1 | sed 's/^.*sort //; s/Copyright.*\$//')
+        sort:     \$(echo \$(sort --version 2>&1) | sed 's/^.*sort //; s/Copyright.*\$//')
     END_VERSIONS
     """
 }
