@@ -131,10 +131,10 @@ else:
 ```
 
 ::: {.callout-note title="Expectation" collapse="true"}
-Arima
+Arima-HiC (Arima Genomics)
 : Duplication levels expected to be ~10-30%.
 
-Omni-C
+Dovetail Omni-C (Cantata Bio)
 : Duplication levels expected to be ~30-80%.
 :::
 
@@ -399,6 +399,7 @@ else:
 
 ```{python}
 # TODO account for multiple assemblers
+# TODO: Add ln plot too see the relative contribution
 Image(filename=glob.glob(f"{log_path}/*-raw-default_merquryfk.*.spectra-cn.st.png")[0])
 ```
 
