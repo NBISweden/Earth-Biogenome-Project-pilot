@@ -207,6 +207,7 @@ workflow PREPARE_INPUT {
     input.hic_ch.filter { !it.isEmpty() }
         .flatMap { meta, hic_pairs -> hic_pairs.withIndex().collect{ pair, index -> [ meta + [pair_id: index], pair ] } }
         .set { hic_fastx_ch }
+    SAMTOOLS_IMPORT( hic_fastx_ch )
 
     // Prepare PacBio HiFi channel
     // Convert HiFi BAMS to FastQ

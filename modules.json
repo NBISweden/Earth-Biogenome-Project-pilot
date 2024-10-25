@@ -5,11 +5,14 @@
     "https://github.com/nf-core/modules.git": {
       "modules": {
         "nf-core": {
+<<<<<<< HEAD
           "biobambam/bammarkduplicates2": {
             "branch": "master",
             "git_sha": "666652151335353eef2fcd58880bcef5bc2928e1",
             "installed_by": ["modules"]
           },
+=======
+>>>>>>> 9582e6a (Add HiC cram conversion)
           "busco": {
             "branch": "master",
             "git_sha": "5892730425a245e4830124f8429c011d18a562a5",
@@ -30,6 +33,7 @@
             "git_sha": "81f27e75847087865299cc46605deb3b09b4e0a2",
             "installed_by": ["modules"]
           },
+<<<<<<< HEAD
           "cooler/cload": {
             "branch": "master",
             "git_sha": "666652151335353eef2fcd58880bcef5bc2928e1",
@@ -40,6 +44,8 @@
             "git_sha": "666652151335353eef2fcd58880bcef5bc2928e1",
             "installed_by": ["modules"]
           },
+=======
+>>>>>>> 9582e6a (Add HiC cram conversion)
           "fastk/fastk": {
             "branch": "master",
             "git_sha": "29e87a37ae1887fc8289f2f56775604a71715cb9",
@@ -57,7 +63,11 @@
           },
           "fastqc": {
             "branch": "master",
+<<<<<<< HEAD
             "git_sha": "21f230b8cca43755bf73470e6fd0290832a98aef",
+=======
+            "git_sha": "666652151335353eef2fcd58880bcef5bc2928e1",
+>>>>>>> 9582e6a (Add HiC cram conversion)
             "installed_by": ["modules"]
           },
           "fcs/fcsadaptor": {
@@ -151,11 +161,14 @@
             "git_sha": "603ecbd9f45300c9788f197d2a15a005685b4220",
             "installed_by": ["modules"]
           },
+<<<<<<< HEAD
           "minimap2/index": {
             "branch": "master",
             "git_sha": "666652151335353eef2fcd58880bcef5bc2928e1",
             "installed_by": ["modules"]
           },
+=======
+>>>>>>> 9582e6a (Add HiC cram conversion)
           "mitohifi/findmitoreference": {
             "branch": "master",
             "git_sha": "3f5420aa22e00bd030a2556dfdffc9e164ec0ec5",
@@ -207,6 +220,7 @@
             "installed_by": ["modules"],
             "patch": "modules/nf-core/pairtools/split/pairtools-split.diff"
           },
+<<<<<<< HEAD
           "pbtk/bam2fastq": {
             "branch": "master",
             "git_sha": "666652151335353eef2fcd58880bcef5bc2928e1",
@@ -217,6 +231,8 @@
             "git_sha": "666652151335353eef2fcd58880bcef5bc2928e1",
             "installed_by": ["modules"]
           },
+=======
+>>>>>>> 9582e6a (Add HiC cram conversion)
           "pilon": {
             "branch": "master",
             "git_sha": "240937a2a9c30298110753292be041188891f2cb",
@@ -227,11 +243,14 @@
             "git_sha": "666652151335353eef2fcd58880bcef5bc2928e1",
             "installed_by": ["modules"]
           },
+<<<<<<< HEAD
           "pretextmap": {
             "branch": "master",
             "git_sha": "666652151335353eef2fcd58880bcef5bc2928e1",
             "installed_by": ["modules"]
           },
+=======
+>>>>>>> 9582e6a (Add HiC cram conversion)
           "purgedups/calcuts": {
             "branch": "master",
             "git_sha": "911696ea0b62df80e900ef244d7867d177971f73",
@@ -289,6 +308,7 @@
             "git_sha": "b13f07be4c508d6ff6312d354d09f2493243e208",
             "installed_by": ["modules"]
           },
+<<<<<<< HEAD
           "samtools/merge": {
             "branch": "master",
             "git_sha": "b13f07be4c508d6ff6312d354d09f2493243e208",
@@ -299,6 +319,8 @@
             "git_sha": "b7800db9b069ed505db3f9d91b8c72faea9be17b",
             "installed_by": ["modules"]
           },
+=======
+>>>>>>> 9582e6a (Add HiC cram conversion)
           "seqkit/seq": {
             "branch": "master",
             "git_sha": "2be41ca2cc780eca4293d1b0dd3850b0b7ac40a3",
@@ -321,6 +343,7 @@
             "installed_by": ["modules"],
             "patch": "modules/nf-core/star/genomegenerate/star-genomegenerate.diff"
           },
+<<<<<<< HEAD
           "tidk/plot": {
             "branch": "master",
             "git_sha": "666652151335353eef2fcd58880bcef5bc2928e1",
@@ -331,6 +354,8 @@
             "git_sha": "666652151335353eef2fcd58880bcef5bc2928e1",
             "installed_by": ["modules"]
           },
+=======
+>>>>>>> 9582e6a (Add HiC cram conversion)
           "untar": {
             "branch": "master",
             "git_sha": "e719354ba77df0a1bd310836aa2039b45c29d620",
