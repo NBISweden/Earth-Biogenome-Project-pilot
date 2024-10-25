@@ -24,7 +24,7 @@ process PRETEXT_TRACKS_INGESTION {
     if [[ ${telomer_bedgraph.size()} -gt 0 && ${gap_bedgraph.size()} -gt 0  ]]
     then 
         cat ${telomer_bedgraph} | PretextGraph -i ${prefix}_cov.pretext -n telomer -o ${prefix}_wTracks.pretext
-        cat ${gap_bedgraph} | PretextGraph -i ${prefix}_wTracks.pretext -n gap -o ${prefix}_wTracks.pretext
+        cat ${gap_bedgraph} | PretextGraph -i ${prefix}_wTracks.pretext -n gap
     elif [[ ${telomer_bedgraph.size()} -eq 0 && ${gap_bedgraph.size()} -gt 0  ]]
     then 
         cat ${gap_bedgraph} | PretextGraph -i ${prefix}_cov.pretext -n gap -o ${prefix}_wTracks.pretext
