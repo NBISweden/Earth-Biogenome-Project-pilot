@@ -304,6 +304,8 @@ workflow SCAFFOLD_CURATION {
     ch_versions  = ch_versions.mix( CREATE_TELOMER_HITILE_TRACK.out.versions )
 
     // ingest coverage, gap and telomer track into Pretext
+    // for each assembly always join:
+    // 1-PretextMap with 1-CoverageTrack with 1-TelomereTrack with 1-GapTrack
     joinByMetaKeys(
         joinByMetaKeys(
             joinByMetaKeys(
