@@ -2,7 +2,7 @@ process BAM2BED_SORT {
     tag "$meta.id"
     label 'process_medium'
 
-    container = "community.wave.seqera.io/library/bedtools_samtools_pip_awk:61be4cfccef27592"
+    container "community.wave.seqera.io/library/bedtools_samtools_pip_awk:61be4cfccef27592"
 
     input:
     tuple val(meta), path(bam)
