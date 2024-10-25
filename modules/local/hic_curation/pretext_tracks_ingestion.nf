@@ -9,7 +9,6 @@ process PRETEXT_TRACKS_INGESTION {
 
     output:
     tuple val(meta), path("*_wTracks.pretext") , emit: hitile 
-    
     path "versions.yml"              , emit: versions
 
     when:
