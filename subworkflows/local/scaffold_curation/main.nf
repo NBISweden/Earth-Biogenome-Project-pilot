@@ -198,6 +198,7 @@ workflow SCAFFOLD_CURATION {
 
     // Coverage-track: merge hifi-bam files (if multiple hifi reads are present)
     MINIMAP2_ALIGN.out.bam
+        .groupTuple()
         .branch { meta, bam_list ->
             multiples: bam_list.size() > 1
             singleton: true
