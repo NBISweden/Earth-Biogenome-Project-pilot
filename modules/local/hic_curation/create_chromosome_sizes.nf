@@ -2,7 +2,7 @@ process CREATE_CHROMOSOME_SIZES_FILE {
     tag "$meta.id"
     label 'process_low'
 
-    container = "community.wave.seqera.io/library/pip_awk:e0daab0638d06dfd"
+    container "community.wave.seqera.io/library/pip_awk:e0daab0638d06dfd"
 
     input:
     tuple val(meta), path(fai)

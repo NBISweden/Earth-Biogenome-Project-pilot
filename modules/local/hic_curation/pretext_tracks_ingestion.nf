@@ -2,7 +2,7 @@ process PRETEXT_TRACKS_INGESTION {
     tag "$meta.id"
     label 'process_medium'
 
-    container = "community.wave.seqera.io/library/pretextgraph:0.0.6--561a906eedf096a7"
+    container "community.wave.seqera.io/library/pretextgraph:0.0.6--561a906eedf096a7"
 
     input:
     tuple val(meta), path(pretext_in), path(cov_bedgraph), path(telomer_bedgraph), path(gap_bedgraph)

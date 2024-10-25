@@ -2,7 +2,7 @@ process CREATE_GAP_TRACKS {
     tag "$meta.id"
     label 'process_medium'
 
-    container = "community.wave.seqera.io/library/pysam_pip_awk_clodius:79d5112d656076f9"
+    container "community.wave.seqera.io/library/pysam_pip_awk_clodius:79d5112d656076f9"
 
     input:
     tuple val(meta), path(bed)

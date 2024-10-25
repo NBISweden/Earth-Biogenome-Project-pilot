@@ -2,7 +2,7 @@ process FILTER_FIVE_END {
     tag "$meta.id"
     label 'process_medium'
 
-    container = "community.wave.seqera.io/library/samtools_perl:e2ce3f7265547d1f"
+    container "community.wave.seqera.io/library/samtools_perl:e2ce3f7265547d1f"
 
     input:
     tuple val(meta), path(bam)
