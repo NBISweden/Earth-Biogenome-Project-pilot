@@ -10,7 +10,6 @@ process CREATE_TELOMER_HITILE_TRACK {
 
     output:
     tuple val(meta), path("*_telomer.hitile")         , emit: hitile 
-    
     path "versions.yml"              , emit: versions
 
     when:
