@@ -1,3 +1,5 @@
+// Portions of this code adapted from Sanger Institute's "curationpretext" (https://github.com/sanger-tol/curationpretext)
+// and from https://github.com/MartinPippel/DAMARVEL/blob/master-v1/scripts/createHiCPlans.sh
 process BAM2BED_SORT {
     tag "$meta.id"
     label 'process_medium'
