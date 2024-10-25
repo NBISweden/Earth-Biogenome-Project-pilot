@@ -41,8 +41,8 @@ workflow SCAFFOLD_CURATION {
     ch_versions  = ch_versions.mix( BWAMEM2_INDEX.out.versions )
 
     SAMTOOLS_FAIDX (
-        getPrimaryAssembly(ch_assemblies),
-        [ [ ], [ ] ]
+        getPrimaryAssembly(ch_assemblies), // [meta, fasta]
+        [ [ ], [ ] ]                       // [meta2, fai] 
     )
     ch_versions  = ch_versions.mix( SAMTOOLS_FAIDX.out.versions )
 
@@ -55,7 +55,7 @@ workflow SCAFFOLD_CURATION {
         getPrimaryAssembly( ch_assemblies ),
         keySet: ['id','sample'],
         meta: 'merge'
-    ).transpose(by:1)
+    ).transpose(by:1)       // by meta info: [id, sample, settings, single_end, pair_id, assembly]
     .multiMap{ meta, hic_reads, index, fasta ->
         reads: [ meta, hic_reads ]
         index: [ meta, index ]
@@ -90,8 +90,8 @@ workflow SCAFFOLD_CURATION {
 
     SAMTOOLS_MERGE_HIC(
         merge_bam.multiples,
-        [ [], [] ],
-        [ [], [] ]
+        [ [], [] ],             // [meta2, fasta]
+        [ [], [] ]              // [meta2, fai]
     )
     ch_versions  = ch_versions.mix( SAMTOOLS_MERGE_HIC.out.versions )
 
