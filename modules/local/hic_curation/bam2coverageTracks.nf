@@ -2,7 +2,7 @@ process BAM2COVERAGE_TRACKS {
     tag "$meta.id"
     label 'process_medium'
 
-    container = "community.wave.seqera.io/library/bedtools_pysam_samtools_ucsc-bedgraphtobigwig_pruned:cc5ee8bcdaac18a3"
+    container "community.wave.seqera.io/library/bedtools_pysam_samtools_ucsc-bedgraphtobigwig_pruned:cc5ee8bcdaac18a3"
 
     input:
     tuple val(meta), path(bam)
