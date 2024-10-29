@@ -31,10 +31,8 @@ workflow ASSEMBLE_HIFI {
             }
         HIFIASM(
             reads_ch,
-            [], // paternal k-mers
-            [], // maternal k-mers
-            [], // Hi-C r1
-            []  // Hi-C r2
+            [[],[],[]], // meta, paternal k-mers, maternal k-mers
+            [[],[],[]], // meta, Hi-C r1, Hi-C r2
         )
         raw_assembly_ch = params.use_phased ? HIFIASM.out.paternal_contigs.mix( HIFIASM.out.maternal_contigs ) : HIFIASM.out.processed_contigs
         GFATOOLS_GFA2FA( raw_assembly_ch )
