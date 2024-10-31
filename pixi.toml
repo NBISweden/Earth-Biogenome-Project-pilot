@@ -1,0 +1,27 @@
+[project]
+name = "Earth-Biogenome-Project-pilot"
+version = "0.1.0"
+description = "Add a short description here"
+authors = ["Mahesh Binzer-Panchal <mahesh.binzer-panchal@nbis.se>"]
+channels = ["conda-forge", "bioconda"]
+platforms = ["linux-64", "osx-64", "osx-arm64"]
+
+[tasks]
+# Run Nextflow directly
+test-docker = "nextflow run main.nf -profile docker,test"
+test-singularity = "nextflow run main.nf -profile singularity,docker"
+dev = "nextflow run main.nf -profile docker,test,debug"
+# Run nf-tests
+nftest-docker = "nf-test test tests/main.nf.test"
+nftest-singularity = "nf-test test tests/main.nf.test --profile singularity"
+# Clean up
+clean-unused = "nextflow clean -f -before $(nextflow log -q | tail -n 1) && find work/ -type d -empty -delete"
+clean-nf = "rm -rf .nextflow* work/"
+clean-results = "rm -rf results/"
+clean-nftest = "rm -rf .nf-test/"
+clean-all = { depends-on = [ "clean-nf", "clean-results", "clean-nftest" ] }
+
+[dependencies]
+nf-core = ">=2.14.1,<2.15"
+nextflow = ">=24.4.4,<24.5"
+mamba = ">=1.5.10,<1.6"

@@ -10,6 +10,6 @@ workflow COMPARE_LIBRARIES {
     versions_ch = MERQURYFK_KATCOMP.out.versions.first()
 
     emit:
-    versions = versions_ch    
-
+    versions = versions_ch
+    logs = MERQURYFK_KATCOMP.out.stacked_png.map{ meta, img -> img }
 }

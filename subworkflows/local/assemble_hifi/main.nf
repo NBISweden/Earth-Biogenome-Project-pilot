@@ -51,38 +51,42 @@ workflow ASSEMBLE_HIFI {
             []                    // SAK instructions
         )
 
-        gfa_ch = params.use_phased ?
-            HIFIASM.out.paternal_contigs
-                .join( HIFIASM.out.maternal_contigs )
-                .map { meta, pgfa, mgfa -> [ meta, [ pgfa, mgfa ] ] } :
-            HIFIASM.out.processed_contigs
-        assemblies_ch = GFATOOLS_GFA2FA.out.fasta.groupTuple( sort: { it.name } )
-            .join( gfa_ch )
-            .map { meta, fasta, gfa ->
-                [ meta, meta.assembly + (
-                    params.use_phased ?
-                    [
-                        pri_fasta: fasta[0],
-                        alt_fasta: fasta[1],
-                        pri_gfa: gfa[0],
-                        alt_gfa: gfa[1]
-                    ] :
-                    [
-                        pri_fasta: fasta[0],
-                        alt_fasta: null,
-                        pri_gfa: gfa,
-                        alt_gfa: null
-                    ]
-                ) ]
-            }
-            .dump( tag: "Assemblies: Pre-purge", pretty: true )
+    gfa_ch = params.use_phased ?
+        HIFIASM.out.paternal_contigs
+            .join( HIFIASM.out.maternal_contigs )
+            .map { meta, pgfa, mgfa -> [ meta, [ pgfa, mgfa ] ] } :
+        HIFIASM.out.processed_contigs
+    assemblies_ch = GFATOOLS_GFA2FA.out.fasta.groupTuple( sort: { it.name } )
+        .join( gfa_ch )
+        .map { meta, fasta, gfa ->
+            [ meta, meta.assembly + (
+                params.use_phased ?
+                [
+                    pri_fasta: fasta[0],
+                    alt_fasta: fasta[1],
+                    pri_gfa: gfa[0],
+                    alt_gfa: gfa[1]
+                ] :
+                [
+                    pri_fasta: fasta[0],
+                    alt_fasta: null,
+                    pri_gfa: gfa,
+                    alt_gfa: null
+                ]
+            ) ]
+        }
+        .dump( tag: "Assemblies: Pre-purge", pretty: true )
 
+    HIFIASM.out.log
+        .mix( GFASTATS.out.assembly_summary )
+        .map { meta, log -> log }
+        .set { logs }
     versions_ch = HIFIASM.out.versions.first()
         .mix( GFASTATS.out.versions.first() )
         .mix( GFATOOLS_GFA2FA.out.versions.first() )
 
     emit:
     assemblies = assemblies_ch
+    logs
     versions = versions_ch
-
 }

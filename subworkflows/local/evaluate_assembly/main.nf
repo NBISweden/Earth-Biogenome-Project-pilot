@@ -58,9 +58,19 @@ workflow EVALUATE_ASSEMBLY {
         []
     )
 
-    // TODO: Add Merqury stats to logs
     BUSCO.out.short_summaries_txt
-        .map { it[1] } // Remove meta
+        .mix(
+            MERQURYFK_MERQURYFK.out.stats,
+            MERQURYFK_MERQURYFK.out.qv,
+            // MERQURYFK_MERQURYFK.out.assembly_qv, // Contig names are missing in first column
+            MERQURYFK_MERQURYFK.out.spectra_cn_st_png,
+            MERQURYFK_MERQURYFK.out.spectra_asm_st_png,
+            MERQURYFK_MERQURYFK.out.false_duplications,
+            MERQURY.out.scaffold_qv,
+            MERQURY.out.spectra_cn_st_png,
+            MERQURY.out.spectra_asm_st_png,
+        )
+        .map { meta, file -> file }
         .set { logs }
     MERQURYFK_MERQURYFK.out.versions.first().mix(
         MERQURY.out.versions.first(),
