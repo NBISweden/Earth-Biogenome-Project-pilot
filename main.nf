@@ -27,6 +27,8 @@ include { EVALUATE_ASSEMBLY as EVALUATE_PURGED_ASSEMBLY } from "$projectDir/subw
 include { SCAFFOLD } from "$projectDir/subworkflows/local/scaffold/main.nf"
 include { EVALUATE_ASSEMBLY as EVALUATE_SCAFFOLDED_ASSEMBLY } from "$projectDir/subworkflows/local/evaluate_assembly/main"
 
+include { SCAFFOLD_CURATION } from "$projectDir/subworkflows/local/scaffold_curation/main.nf"
+
 include { ALIGN_RNASEQ       } from "$projectDir/subworkflows/local/align_rnaseq/main"
 
 include { ASSEMBLY_REPORT } from "$projectDir/subworkflows/local/assembly_report/main"
@@ -229,14 +231,19 @@ workflow {
         'curated' // Set assembly stage now for filenaming
     ).dump(tag: 'Assemblies: to curate')
     if ( 'curate' in workflow_steps ) {
-        // Run assemblers
-        ch_curated_assemblies = ch_to_curate
+        SCAFFOLD_CURATION (
+            ch_scaffolded_assemblies,
+            PREPARE_INPUT.out.hic,
+            PREPARE_INPUT.out.hifi
+        )
+        ch_versions = ch_versions.mix( SCAFFOLD_CURATION.out.versions )
     } else {
         ch_curated_assemblies = ch_to_curate
     }
-    ch_curated_assemblies = ch_curated_assemblies.mix(
-        preassembledInput( PREPARE_INPUT.out.assemblies, 'curated' )
-    ).dump(tag: 'Assemblies: Curated')
+    // TODO: output needs to be defined 
+    //ch_curated_assemblies = ch_curated_assemblies.mix(
+    //    preassembledInput( PREPARE_INPUT.out.assemblies, 'curated' )
+    //).dump(tag: 'Assemblies: Curated')
 
     // Align RNAseq
     if( 'alignRNA' in workflow_steps ) {
