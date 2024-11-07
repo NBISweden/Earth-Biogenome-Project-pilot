@@ -21,7 +21,7 @@ process MERYL_COUNT {
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    def red_mem = ${task.memory.toGiga()*0.9}
+    def red_mem = ${task.memory.multiply(0.9).toGiga()}
     """
     for READ in $reads; do
         meryl count \\
