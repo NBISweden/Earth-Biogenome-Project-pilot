@@ -1,0 +1,23 @@
+Changes in module 'nf-core/meryl/count'
+--- modules/nf-core/meryl/count/main.nf
++++ modules/nf-core/meryl/count/main.nf
+@@ -21,14 +21,15 @@
+     script:
+     def args = task.ext.args ?: ''
+     def prefix = task.ext.prefix ?: "${meta.id}"
++    def red_mem = ${task.memory.toGiga()*0.9}
+     """
+     for READ in $reads; do
+         meryl count \\
+             k=$kvalue \\
+             threads=$task.cpus \\
+-            memory=${task.memory.toGiga()} \\
++            memory=$red_mem \\
+             $args \\
+-            $reads \\
++            \$READ \\
+             output read.\${READ%.f*}.meryl
+     done
+ 
+
+************************************************************
