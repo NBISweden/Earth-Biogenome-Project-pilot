@@ -24,7 +24,7 @@ include { CREATE_GAP_TRACKS                     } from "$projectDir/modules/loca
 include { TIDK_SEARCH as TIDK_SEARCH_BEDGRAPH   } from "$projectDir/modules/nf-core/tidk/search/main"
 include { TIDK_SEARCH as TIDK_SEARCH_TSV        } from "$projectDir/modules/nf-core/tidk/search/main"
 include { TIDK_PLOT                             } from "$projectDir/modules/nf-core/tidk/plot/main"
-include { CREATE_TELOMER_HITILE_TRACK           } from "$projectDir/modules/local/hic_curation/create_telomer_hitile_track"
+include { CREATE_TELOMER_BIGWIG_TRACK           } from "$projectDir/modules/local/hic_curation/create_telomer_bigwig_track"
 include { PRETEXT_TRACKS_INGESTION              } from "$projectDir/modules/local/hic_curation/pretext_tracks_ingestion"
 
 workflow SCAFFOLD_CURATION {
@@ -298,11 +298,11 @@ workflow SCAFFOLD_CURATION {
     }
     .set { bedgraph_telomer_ch }
 
-    CREATE_TELOMER_HITILE_TRACK(
+    CREATE_TELOMER_BIGWIG_TRACK(
         bedgraph_telomer_ch.bedgraph,
         bedgraph_telomer_ch.chrom_sizes
     )
-    ch_versions  = ch_versions.mix( CREATE_TELOMER_HITILE_TRACK.out.versions )
+    ch_versions  = ch_versions.mix( CREATE_TELOMER_BIGWIG_TRACK.out.versions )
 
     // ingest coverage, gap and telomer track into Pretext
     // for each assembly always join:
