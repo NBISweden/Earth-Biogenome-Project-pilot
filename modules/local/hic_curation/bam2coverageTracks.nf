@@ -2,7 +2,7 @@ process BAM2COVERAGE_TRACKS {
     tag "$meta.id"
     label 'process_medium'
 
-    container "community.wave.seqera.io/library/bedtools_pysam_samtools_ucsc-bedgraphtobigwig_pruned:cc5ee8bcdaac18a3"
+    container "community.wave.seqera.io/library/bedtools_samtools_ucsc-bedgraphtobigwig:ba8edacb0d7bff96"
 
     input:
     tuple val(meta), path(bam)
@@ -12,7 +12,7 @@ process BAM2COVERAGE_TRACKS {
     tuple val(meta), path("*_coverage.bed")            , emit: bed
     tuple val(meta), path("*_coverage.bw")             , emit: bigwig
     tuple val(meta), path("*_coverage_capped.bed")     , emit: capped_bed
-    tuple val(meta), path("*_coverage_capped.hitile")  , emit: capped_hitile    
+    tuple val(meta), path("*_coverage_capped.bw")      , emit: capped_bigwig    
 
     path "versions.yml"              , emit: versions
 
@@ -38,8 +38,8 @@ process BAM2COVERAGE_TRACKS {
     # coverage cap 
     sort -k1,1V -k2,2n -k3,3n $args4 ${prefix}_coverage.bed | \\
     awk -v COVERAGE_CAP=$params.hifi_coverage_cap 'BEGIN {FS = " "; OFS = "\t";}{if(int(\$4)>COVERAGE_CAP){print \$1,\$2,\$3,COVERAGE_CAP} else {print \$1,\$2,\$3,\$4}}' > ${prefix}_coverage_capped.bed
-    # create coverage hitile 
-    clodius aggregate bedgraph --chromsizes-filename ${chrom_sizes} ${args5} ${prefix}_coverage_capped.bed
+    # convert bed to bigwig
+    bedGraphToBigWig ${prefix}_coverage_capped.bed ${chrom_sizes} ${prefix}_coverage_capped.bw
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
