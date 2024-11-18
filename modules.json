@@ -284,6 +284,11 @@
             "git_sha": "06c8865e36741e05ad32ef70ab3fac127486af48",
             "installed_by": ["modules"]
           },
+          "samtools/import": {
+            "branch": "master",
+            "git_sha": "b13f07be4c508d6ff6312d354d09f2493243e208",
+            "installed_by": ["modules"]
+          },
           "samtools/merge": {
             "branch": "master",
             "git_sha": "b13f07be4c508d6ff6312d354d09f2493243e208",
