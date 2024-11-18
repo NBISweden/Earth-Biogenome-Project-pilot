@@ -6,6 +6,9 @@ include { GOAT_TAXONSEARCH        } from "$projectDir/modules/nf-core/goat/taxon
 include { SAMTOOLS_FASTA          } from "$projectDir/modules/local/samtools/fasta/main"
 include { CAT_CAT as MERGE_PACBIO } from "$projectDir/modules/nf-core/cat/cat/main"
 include { WGET as FETCH_TAXDB     } from "$projectDir/modules/local/wget"
+include { SAMTOOLS_IMPORT         } from "$projectDir/modules/nf-core/samtools/import/main"
+include { PBTK_PBINDEX            } from "$projectDir/modules/nf-core/pbtk/pbindex/main"
+include { PBTK_BAM2FASTQ          } from "$projectDir/modules/nf-core/pbtk/bam2fastq/main"
 
 /* params.input example sample sheet (samplesheet.yml)
 ```yaml
@@ -214,8 +217,28 @@ workflow PREPARE_INPUT {
             bam_ch: filename.toString().endsWith(".bam")
             fastx_ch: true // assume everything else is fastx
         }.set { hifi }
-    SAMTOOLS_FASTA ( hifi.bam_ch )
-    hifi.fastx_ch.mix( SAMTOOLS_FASTA.out.fasta )
+    // SAMTOOLS_FASTA ( hifi.bam_ch )
+    // hifi.fastx_ch.mix( SAMTOOLS_FASTA.out.fasta )
+    hifi_bams = hifi.bam_ch.branch { meta, bam ->
+        def bam_index = file("${bam.toUriString()}.pbi")
+        with_index: bam_index.exists()
+            tuple( meta, bam, bam_index )
+        make_index: params.pbtk.index_bam && !bam_index.exists()
+            tuple( meta, bam )
+        error_index: true
+            error("Error: params.pbtk.index_bam = false: PacBio index files are missing. Please link them in the same directory as the bams")
+    }
+    built_index = hifi_bams.make_index.map{ meta, bam ->
+        tuple(bam.baseName, meta, bam)
+    }.join(
+        PBTK_PBINDEX( hifi_bams.make_index ).pbi
+            .map{ meta, pbi ->
+                tuple( pbi.getBaseName(2), meta, pbi )
+            }
+        , by: [0,1] // shared basename and meta
+    ).map { bam_name, meta, bam, pbi -> tuple(meta, bam, pbi ) }
+    PBTK_BAM2FASTQ( hifi_bams.with_index.mix( built_index ) )
+    hifi.fastx_ch.mix( PBTK_BAM2FASTQ.out.fastq )
         .set { hifi_fastx_ch }
     sample_fastx = hifi_fastx_ch.groupTuple()
         .branch { meta, fastx ->

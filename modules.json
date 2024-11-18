@@ -207,6 +207,16 @@
             "installed_by": ["modules"],
             "patch": "modules/nf-core/pairtools/split/pairtools-split.diff"
           },
+          "pbtk/bam2fastq": {
+            "branch": "master",
+            "git_sha": "666652151335353eef2fcd58880bcef5bc2928e1",
+            "installed_by": ["modules"]
+          },
+          "pbtk/pbindex": {
+            "branch": "master",
+            "git_sha": "666652151335353eef2fcd58880bcef5bc2928e1",
+            "installed_by": ["modules"]
+          },
           "pilon": {
             "branch": "master",
             "git_sha": "240937a2a9c30298110753292be041188891f2cb",
