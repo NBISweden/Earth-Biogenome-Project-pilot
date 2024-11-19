@@ -1,0 +1,52 @@
+Changes in module 'nf-core/merquryfk/merquryfk'
+'modules/nf-core/merquryfk/merquryfk/meta.yml' is unchanged
+Changes in 'merquryfk/merquryfk/main.nf':
+--- modules/nf-core/merquryfk/merquryfk/main.nf
++++ modules/nf-core/merquryfk/merquryfk/main.nf
+@@ -14,9 +14,12 @@
+     tuple val(meta), path("${prefix}.completeness.stats")         , emit: stats
+     tuple val(meta), path("${prefix}.*_only.bed")                 , emit: bed
+     tuple val(meta), path("${prefix}.*.qv")                       , emit: assembly_qv
+-    tuple val(meta), path("${prefix}.*.spectra-cn.fl.{png,pdf}")  , emit: spectra_cn_fl,  optional: true
+-    tuple val(meta), path("${prefix}.*.spectra-cn.ln.{png,pdf}")  , emit: spectra_cn_ln,  optional: true
+-    tuple val(meta), path("${prefix}.*.spectra-cn.st.{png,pdf}")  , emit: spectra_cn_st,  optional: true
++    tuple val(meta), path("${prefix}.*.spectra-cn.fl.{png,pdf}")  , emit: part_spectra_cn_fl,  optional: true
++    tuple val(meta), path("${prefix}.*.spectra-cn.ln.{png,pdf}")  , emit: part_spectra_cn_ln,  optional: true
++    tuple val(meta), path("${prefix}.*.spectra-cn.st.{png,pdf}")  , emit: part_spectra_cn_st,  optional: true
++    tuple val(meta), path("${prefix}.spectra-cn.fl.{png,pdf}")    , emit: full_spectra_cn_fl, optional: true
++    tuple val(meta), path("${prefix}.spectra-cn.ln.{png,pdf}")    , emit: full_spectra_cn_ln, optional: true
++    tuple val(meta), path("${prefix}.spectra-cn.st.{png,pdf}")    , emit: full_spectra_cn_st, optional: true
+     tuple val(meta), path("${prefix}.qv")                         , emit: qv
+     tuple val(meta), path("${prefix}.spectra-asm.fl.{png,pdf}")   , emit: spectra_asm_fl, optional: true
+     tuple val(meta), path("${prefix}.spectra-asm.ln.{png,pdf}")   , emit: spectra_asm_ln, optional: true
+@@ -27,6 +30,8 @@
+     tuple val(meta), path("${prefix}.block.N.{pdf,png}")          , emit: block_N,            optional: true
+     tuple val(meta), path("${prefix}.block.blob.{pdf,png}")       , emit: block_blob,         optional: true
+     tuple val(meta), path("${prefix}.hapmers.blob.{pdf,png}")     , emit: hapmers_blob,       optional: true
++    tuple val(meta), path("${prefix}.false_duplications.tsv")     , emit: false_duplications
++    tuple val(meta), path("${prefix}.cni.gz")                     , emit: cn_histogram
+     path "versions.yml"                                           , emit: versions
+ 
+     when:
+@@ -54,6 +59,12 @@
+         $haplotigs \\
+         $prefix
+ 
++    mv .cni ${prefix}.cni
++    awk -v asm_ploidy=${assembly instanceof List ? assembly.size() : 1} \\
++        -f $projectDir/bin/false_duplications.awk ${prefix}.cni \\
++        > ${prefix}.false_duplications.tsv
++    gzip ${prefix}.cni
++
+     cat <<-END_VERSIONS > versions.yml
+     "${task.process}":
+         fastk: $FASTK_VERSION
+
+'modules/nf-core/merquryfk/merquryfk/tests/nextflow.trio.config' is unchanged
+'modules/nf-core/merquryfk/merquryfk/tests/main.nf.test.snap' is unchanged
+'modules/nf-core/merquryfk/merquryfk/tests/nextflow.pdf.config' is unchanged
+'modules/nf-core/merquryfk/merquryfk/tests/tags.yml' is unchanged
+'modules/nf-core/merquryfk/merquryfk/tests/nextflow.config' is unchanged
+'modules/nf-core/merquryfk/merquryfk/tests/main.nf.test' is unchanged
+'modules/nf-core/merquryfk/merquryfk/tests/nextflow.png.config' is unchanged
+************************************************************

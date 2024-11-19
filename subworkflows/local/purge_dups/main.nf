@@ -80,6 +80,7 @@ workflow PURGE_DUPLICATES {
             .join( PURGEDUPS_PURGEDUPS_PRIMARY.out.bed )
     )
     def ch_to_format = PURGEDUPS_GETSEQS_PRIMARY.out.purged
+        .mix( PURGEDUPS_GETSEQS_PRIMARY.out.haplotigs )
 
     if( params.use_phased ){
         // Purge alternate contigs.
@@ -110,13 +111,16 @@ workflow PURGE_DUPLICATES {
             PURGEDUPS_SPLITFA_ALTERNATE.out.merged_fasta
                 .join( PURGEDUPS_PURGEDUPS_ALTERNATE.out.bed )
         )
-        ch_to_format = ch_to_format.mix( PURGEDUPS_GETSEQS_ALTERNATE.out.purged )
+        ch_to_format = PURGEDUPS_GETSEQS_PRIMARY.out.purged.mix( PURGEDUPS_GETSEQS_ALTERNATE.out.purged )
     }
     // Format sequences and enforce line breaks
     SEQKIT_SEQ( ch_to_format )
-    ch_purged_assemblies = constructAssemblyRecord( SEQKIT_SEQ.out.fastx )
+    // If phased [ meta, [*hap.fa, *purged.fa] ] // don't sort by name
+    // else [ meta, [*hap1.fa, *hap2.fa] ]       // sort by name
+    ch_purged_assemblies = constructAssemblyRecord( SEQKIT_SEQ.out.fastx, params.use_phased )
 
     PURGEDUPS_HISTPLOT.out.png
+        .mix( PURGEDUPS_PURGEDUPS_PRIMARY.out.bed )
         .map { meta, file -> file }
         .set { logs }
 

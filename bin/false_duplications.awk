@@ -1,3 +1,5 @@
+#!/usr/bin/awk -f
+
 # Code adapted from https://github.com/marbl/merqury/blob/master/eval/false_duplications.sh
 $1 == asm_ploidy {
     asm_ploidy_hist[$2] = $3 # Defer processing ploidy copy k-mers until end when cutoff is fixed

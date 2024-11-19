@@ -1,12 +1,14 @@
 #! /usr/bin/env nextflow
 
-import org.yaml.snakeyaml.Yaml
-
 include { UNTAR as UNTAR_TAXONOMY } from "$projectDir/modules/nf-core/untar/main"
 include { TAXONKIT_NAME2LINEAGE   } from "$projectDir/modules/local/taxonkit/name2lineage"
 include { GOAT_TAXONSEARCH        } from "$projectDir/modules/nf-core/goat/taxonsearch/main"
 include { SAMTOOLS_FASTA          } from "$projectDir/modules/local/samtools/fasta/main"
 include { CAT_CAT as MERGE_PACBIO } from "$projectDir/modules/nf-core/cat/cat/main"
+include { WGET as FETCH_TAXDB     } from "$projectDir/modules/local/wget"
+include { SAMTOOLS_IMPORT         } from "$projectDir/modules/nf-core/samtools/import/main"
+include { PBTK_PBINDEX            } from "$projectDir/modules/nf-core/pbtk/pbindex/main"
+include { PBTK_BAM2FASTQ          } from "$projectDir/modules/nf-core/pbtk/bam2fastq/main"
 
 /* params.input example sample sheet (samplesheet.yml)
 ```yaml
@@ -113,8 +115,8 @@ Output meta map structure:
 workflow PREPARE_INPUT {
 
     take:
-    infile
-    taxdb
+    infile // String: Path to input file
+    taxdb  // String: Path to taxdb
 
     main:
     // Read in YAML
@@ -127,7 +129,9 @@ workflow PREPARE_INPUT {
             skip: true
         }
         .set { ch_taxonkit }
-    UNTAR_TAXONOMY( Channel.fromPath( taxdb, checkIfExists: true ).map{ tar -> [ [ id: 'taxdb' ], tar ] } )
+    FETCH_TAXDB( taxdb ) // Inbuilt caching is failing so implement it using process.
+    // UNTAR_TAXONOMY( Channel.fromPath( taxdb, checkIfExists: true ).map{ tar -> [ [ id: 'taxdb' ], tar ] } )
+    UNTAR_TAXONOMY( FETCH_TAXDB.out.download.map{ tar -> [ [ id: 'taxdb' ], tar ] } )
     TAXONKIT_NAME2LINEAGE( ch_taxonkit.fetch_taxid, UNTAR_TAXONOMY.out.untar.map{ meta, archive -> archive }.collect() ).tsv
         .branch { meta, tsv_f -> def sv = tsv_f.splitCsv( sep:"\t" )
         def new_meta = meta.deepMerge( [ sample: [ taxid: sv[0][1], kingdom: sv[0][2] ] ] )
@@ -203,6 +207,7 @@ workflow PREPARE_INPUT {
     input.hic_ch.filter { !it.isEmpty() }
         .flatMap { meta, hic_pairs -> hic_pairs.withIndex().collect{ pair, index -> [ meta + [pair_id: index], pair ] } }
         .set { hic_fastx_ch }
+    SAMTOOLS_IMPORT( hic_fastx_ch )
 
     // Prepare PacBio HiFi channel
     // Convert HiFi BAMS to FastQ
@@ -213,8 +218,28 @@ workflow PREPARE_INPUT {
             bam_ch: filename.toString().endsWith(".bam")
             fastx_ch: true // assume everything else is fastx
         }.set { hifi }
-    SAMTOOLS_FASTA ( hifi.bam_ch )
-    hifi.fastx_ch.mix( SAMTOOLS_FASTA.out.fasta )
+    // SAMTOOLS_FASTA ( hifi.bam_ch )
+    // hifi.fastx_ch.mix( SAMTOOLS_FASTA.out.fasta )
+    hifi_bams = hifi.bam_ch.branch { meta, bam ->
+        def bam_index = file("${bam.toUriString()}.pbi")
+        with_index: bam_index.exists()
+            tuple( meta, bam, bam_index )
+        make_index: params.pbtk.index_bam && !bam_index.exists()
+            tuple( meta, bam )
+        error_index: true
+            error("Error: params.pbtk.index_bam = false: PacBio index files are missing. Please link them in the same directory as the bams")
+    }
+    built_index = hifi_bams.make_index.map{ meta, bam ->
+        tuple(bam.baseName, meta, bam)
+    }.join(
+        PBTK_PBINDEX( hifi_bams.make_index ).pbi
+            .map{ meta, pbi ->
+                tuple( pbi.getBaseName(2), meta, pbi )
+            }
+        , by: [0,1] // shared basename and meta
+    ).map { bam_name, meta, bam, pbi -> tuple(meta, bam, pbi ) }
+    PBTK_BAM2FASTQ( hifi_bams.with_index.mix( built_index ) )
+    hifi.fastx_ch.mix( PBTK_BAM2FASTQ.out.fastq )
         .set { hifi_fastx_ch }
     sample_fastx = hifi_fastx_ch.groupTuple()
         .branch { meta, fastx ->
@@ -248,5 +273,5 @@ workflow PREPARE_INPUT {
 
 def readYAML( yamlfile ) {
     // TODO: Validate sample file
-    return new Yaml().load( new FileReader( yamlfile.toString() ) )
+    return new org.yaml.snakeyaml.Yaml().load( new FileReader( yamlfile.toString() ) )
 }

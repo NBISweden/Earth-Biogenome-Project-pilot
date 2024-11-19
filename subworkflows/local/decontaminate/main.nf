@@ -28,7 +28,8 @@ workflow DECONTAMINATE {
     )
     ch_cleaned_assemblies = constructAssemblyRecord(
         FCSGX_CLEAN.out.clean_fasta
-            .map { meta, asm -> [ meta.subMap(meta.keySet()-['haplotype']), asm ] }
+            .map { meta, asm -> [ meta.subMap(meta.keySet()-['haplotype']), asm ] },
+        true
     )
 
     emit:
