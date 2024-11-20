@@ -109,7 +109,7 @@ workflow SCAFFOLD_CURATION {
     ch_versions  = ch_versions.mix( BAM2BED_SORT.out.versions )
 
     // create chrome sizes file from fai file
-    CREATE_CHROMOSOME_SIZES_FILE(SAMTOOLS_FAIDX.out.fai)
+    CREATE_CHROMOSOME_SIZES_FILE(SAMTOOLS_FAIDX.out.fai, params.hic_map_sort_by)
     ch_versions  = ch_versions.mix( CREATE_CHROMOSOME_SIZES_FILE.out.versions )
 
     // create cooler files

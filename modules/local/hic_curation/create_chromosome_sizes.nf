@@ -6,6 +6,7 @@ process CREATE_CHROMOSOME_SIZES_FILE {
 
     input:
     tuple val(meta), path(fai)
+    val hic_map_sort_by
 
     output:
     tuple val(meta), path("*.sizes")  , emit: sizes
@@ -15,19 +16,18 @@ process CREATE_CHROMOSOME_SIZES_FILE {
     task.ext.when == null || task.ext.when
 
     script:
-    def args = task.ext.args ?: ''
+    // def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    
     """
-    if [[ "$params.hic_map_sort_by" == "length" ]]
-    then 
+    if [[ "$hic_map_sort_by" == "length" ]]
+    then
         awk '{print \$1\"\t\"\$2}' ${fai} | \\
         sort -k2,2 -nr > ${prefix}.sizes
-    elif [[ "$params.hic_map_sort_by" == "name" ]]
-    then 
+    elif [[ "$hic_map_sort_by" == "name" ]]
+    then
         awk '{print \$1\"\t\"\$2}' ${fai} | \\
         sort -k1,1 -nr > ${prefix}.sizes
-    else 
+    else
         awk '{print \$1\"\t\"\$2}' ${fai} > ${prefix}.sizes
     fi
 
