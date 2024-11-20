@@ -1,10 +1,10 @@
-title: "BGE Assembly Report"
-output_fn_name: BGE_assembly_multiqc_report.html
+title: "Assembly Summary"
+output_fn_name: multiqc-summary.html
 intro_text: |
-  An assembly report for the BGE project.
+  An assembly summary report for the BGE project.
 
 ignore_images: false
-disable_version_detection: true
+# disable_version_detection: true
 
 module_order:
   - "dtol"
@@ -29,13 +29,6 @@ custom_data:
     section_name: "DToL"
     description: "Darwin Tree of Life identifier and related meta data."
     plot_type: "table"
-    # headers: # Doesn't work
-    #   property:
-    #     title: "Property"
-    #   value:
-    #     title: "Value"
-    # pconfig:
-    #   no_violin: True
   traits:
     file_format: "tsv"
     section_name: "Genome traits"

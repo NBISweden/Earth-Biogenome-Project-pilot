@@ -22,6 +22,6 @@ clean-nftest = "rm -rf .nf-test/"
 clean-all = { depends-on = [ "clean-nf", "clean-results", "clean-nftest" ] }
 
 [dependencies]
-nf-core = ">=2.14.1,<2.15"
 nextflow = ">=24.4.4,<24.5"
 mamba = ">=1.5.10,<1.6"
+nf-core = ">=3.0.2,<3.1"

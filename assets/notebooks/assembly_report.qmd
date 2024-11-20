@@ -17,6 +17,8 @@ format:
     theme:
       light: minty
       dark: darkly
+  gfm:
+    preview-mode: raw
 ---
 
 ## Introduction
@@ -61,6 +63,7 @@ import os
 import pandas as pd
 from itertools import groupby
 from pprint import pprint
+from IPython.display import display # MQCPlot.show() returns a HTML object which needs to be forced to render in a cell
 from IPython.display import Image
 
 multiqc.reset() # Important for Quarto preview
@@ -71,47 +74,76 @@ multiqc.parse_logs(log_path)
 # pprint pretty prints the dictionary
 pprint(multiqc.list_plots())
 pprint(multiqc.list_modules())
+
+# Write out report (If other parts error, we should at least have the summary)
+multiqc.write_report(
+    force=True,
+    output_dir=".",
+)
 ```
 
 :::::
 
 ## Species information
 
-To begin our analysis, let’s explore the available species information. The following
+To begin our analysis, let's explore the available species information. The following
 details are sourced from [Genomes on a Tree (GOAT)](https://goat.genomehubs.org/).
 
 ```{python}
-multiqc.get_plot(
-    "dtol", "dtol-section"
-).show() if "dtol" in multiqc.list_modules() else ""
+if "dtol" in multiqc.list_modules():
+    display(multiqc.get_plot("dtol", "dtol-section").show())
 ```
 
 ### Genome Traits
 
 ```{python}
-multiqc.get_plot(
-    "traits", "traits-section"
-).show() if "traits" in multiqc.list_modules() else ""
+if "traits" in multiqc.list_modules():
+    display(multiqc.get_plot("traits", "traits-section").show())
 ```
 
 ::::: {.content-visible when-meta="inspect"}
 
 ## Data inspection
 
-Let’s ensure the quality of our input data.
+Let's ensure the quality of our input data.
 
 ### Sequence data quantity
 
 * Do we have enough total sequence data?
 * Do we have enough long reads?
 
-::: {.callout-note}
+#### HiFi
+
+::: {.callout-note title="Expectation" collapse="true"}
 For long read data (PacBio, ONT) we expect to see 15-20x coverage per haplotype, for a good assembly.
 :::
 
 ```{python}
 # TODO data quantity table
 ```
+#### Hi-C
+
+```{python}
+if "fastqc" in multiqc.list_modules():
+    display(multiqc.get_plot("fastqc", "Sequence Counts").show())
+else:
+    print("No Hi-C data available")
+```
+
+::: {.callout-note title="Expectation" collapse="true"}
+Arima-HiC (Arima Genomics)
+: Duplication levels expected to be ~10-30%.
+
+Dovetail Omni-C (Cantata Bio)
+: Duplication levels expected to be ~30-80%.
+:::
+
+```{python}
+if "fastqc" in multiqc.list_modules():
+    display(multiqc.get_plot("fastqc", "Sequence Duplication Levels").show())
+```
+
+#### HiFi vs Hi-C
 
 * Do our libraries have similar data content?
 ```{python}
@@ -129,7 +161,7 @@ We can glean a good amount of information about the sequenced species from the k
 #### Ploidy
 Does it show the correct ploidy?
 
-::: {.callout-note}
+::: {.callout-note title="Interpretation" collapse="true"}
 A Kmer histogram counts the frequency of k-mers in the data. Some parts of the genome are unique, and
 there are expected to be *coverage* times copies of these k-mers in the data. If the organism is diploid,
 the regions unique to a haplotype should have *coverage* times copies of these k-mers, and regions shared
@@ -207,17 +239,35 @@ Image(filename=glob.glob(f"{log_path}/*_ploidyplot.st.png")[0])
 Image(filename=glob.glob(f"{log_path}/*_katgc.st.png")[0])
 ```
 
-::: {.callout-note}
+::: {.callout-note title="Expectation" collapse="true"}
 * Unexpected GC content value can indicate contamination.
 * Unexpected blobs(?) in the plot can indicate contamination.
+:::
+
+#### Hi-C
+
+```{python}
+if "fastqc" in multiqc.list_modules():
+    display(multiqc.get_plot("fastqc", "Per Sequence GC Content").show())
+```
+
+::: {.callout-note title="Expectation" collapse="true"}
+The peak GC content on the x-axis should be the same value
+as the peak on the HiFi KatGC plot on the y-axis.
 :::
 
 ### Synthetic sequence content
 
 Do we see indications of synthetic sequences such as adaptors?
 
+#### HiFi
+
+TODO: FCS
+
+#### Hi-C
 ```{python}
-# TODO FastQC, FCS-Adaptor
+if "fastqc" in multiqc.list_modules():
+    display(multiqc.get_plot("fastqc", "Adapter Content").show())
 ```
 
 :::::
@@ -235,20 +285,45 @@ Do we see indications of synthetic sequences such as adaptors?
 ### General comparison
 
 ```{python}
-multiqc.get_plot(
-    "quast", "Assembly Statistics"
-).show() if "quast" in multiqc.list_modules() else ""
+if "quast" in multiqc.list_modules():
+    display(multiqc.get_plot("quast", "Assembly Statistics").show())
 ```
 
 ```{python}
-multiqc.get_plot(
-    "quast", "Number of Contigs"
-).show() if "quast" in multiqc.list_modules() else ""
+if "quast" in multiqc.list_modules():
+    display(multiqc.get_plot("quast", "Number of Contigs").show())
 ```
 
 ### Best ranked assembly
 
 #### Assembly statistics
+
+```{python}
+#| output: asis
+raw_asm_stats = pd.read_csv(
+    glob.glob(f"{log_path}/*-raw-*.fasta.assembly_summary")[0],
+    sep="\t",
+    header=None,
+    names=["Metric","Value"]
+)
+raw_asm_t1=raw_asm_stats.iloc[[0, 31, 32]]
+print(raw_asm_t1.to_markdown(index=False))
+```
+```{python}
+#| output: asis
+raw_asm_t2=raw_asm_stats.iloc[1:12] # TODO Add conversion
+print(raw_asm_t2.to_markdown(index=False))
+```
+```{python}
+#| output: asis
+raw_asm_t3=raw_asm_stats.iloc[12:23] # TODO Add conversion
+print(raw_asm_t3.to_markdown(index=False))
+```
+```{python}
+#| output: asis
+raw_asm_t4=raw_asm_stats.iloc[24:31] # TODO Add conversion
+print(raw_asm_t4.to_markdown(index=False))
+```
 
 #### Assembly k-mer completeness
 
@@ -262,9 +337,8 @@ print(
 ```
 
 ```{python}
-multiqc.get_plot(
-    "hifiasm", "HiFiasm kmer graph"
-).show() if "hifiasm" in multiqc.list_modules() else ""
+if "hifiasm" in multiqc.list_modules():
+    display(multiqc.get_plot("hifiasm", "HiFiasm kmer graph").show())
 ```
 
 ##### Assembly quality value
@@ -283,17 +357,36 @@ print(
 
 ```{python}
 #| output: asis
-per_scaffold_qv_raw = pd.read_csv(
-    glob.glob(f"{log_path}/*-raw-default_merqury.*.qv")[0], sep="\t", header=None
-)
-per_scaffold_qv_raw.columns = [
-    "Scaffold",
-    "No support k-mers",
-    "Total k-mers",
-    "QV",
-    "Error rate",
-]
-print(per_scaffold_qv_raw.to_markdown(index=False))
+qvs = []
+for qv_file in glob.glob(f"{log_path}/*-raw-default_merqury.*.qv"):
+    if os.path.getsize(qv_file) > 0:
+        qvs.append(
+            pd.read_csv(
+                qv_file,
+                sep="\t",
+                header=None,
+                names=[
+                    "Scaffold",
+                    "No support k-mers",
+                    "Total k-mers",
+                    "QV",
+                    "Error rate",
+                ],
+                dtype={
+                    "Scaffold": str,
+                    "No support k-mers": int,
+                    "Total k-mers": int,
+                    "QV": float,
+                    "Error rate": float,
+                },
+                na_values=["", "inf"],
+            )
+        )
+if qvs:
+    per_scaffold_qv_raw = pd.concat(qvs, ignore_index=True)
+    print(per_scaffold_qv_raw.to_markdown(index=False))
+else:
+    print("No per scaffold qv found")
 ```
 
 </details>
@@ -306,12 +399,14 @@ print(per_scaffold_qv_raw.to_markdown(index=False))
 
 ```{python}
 # TODO account for multiple assemblers
+# TODO: Add ln plot too see the relative contribution
 Image(filename=glob.glob(f"{log_path}/*-raw-default_merquryfk.*.spectra-cn.st.png")[0])
 ```
 
 ## Merqury
 
 ```{python}
+# TODO This path will be different depending on phased or not
 Image(filename=glob.glob(f"{log_path}/*-raw-default_merqury.*.spectra-cn.st.png")[0])
 ```
 
@@ -350,9 +445,9 @@ print(
 #### Assembly gene space completeness
 
 ```{python}
-multiqc.get_plot(
-    "busco", "Lineage: bacteria_odb10"
-).show() if "busco" in multiqc.list_modules() else ""
+if "busco" in multiqc.list_modules():
+    for lineage in multiqc.list_plots()["busco"]:
+        display(multiqc.get_plot("busco", f"{lineage}").show())
 ```
 
 ### Other assemblies
@@ -374,8 +469,57 @@ TODO for each assembly output a stats section (expandable).
 
 ### Purge dups
 
+::: {.callout-note title="Interpretation" collapse="true"}
+
+X-axis (Read Depth)
+: This axis represents the read depth, which is the number of times a particular base is covered by reads. It typically starts from 0 and increases to the maximum read depth observed.
+
+Y-axis (Number of Positions)
+: This axis shows the number of positions in the assembly that have a specific read depth. Higher values indicate more positions with that particular read depth.
+
+Histogram Peaks
+: For a diploid organism, there should be a heterozgyous peak and a homozygous peak.
+
+  - **Heterozygous Peak**: The first major peak from the left usually represents the expected read depth for the heterozgyous portion of the genome, i.e., a haplotype.
+  - **Homozygous Peak**: The second major peak from the left usually represents the expected read depth for the homozygous portion, i.e.,
+  where the both alleles are the same.
+
+Cutoff Lines
+: The plot includes three vertical lines indicating coverage cutoffs. These cutoffs help distinguish between primary contigs, haplotigs, and potential contaminants or low-quality regions.
+
+  - **Low Coverage Cutoff**: Positions below this line are considered low coverage and might be errors or low-quality regions.
+  - **Haploid-Diploid Transition**: Marks the transition where average coverage denotes a heterozygous or homozygous region.
+  - **High Coverage Cutoff**: Positions above this line are considered high coverage and might indicate duplicated regions or haplotigs.
+
+Interpreting the Data
+:
+
+  - **JUNK**: Contigs with an average coverage below the low-coverage threshold.
+  - **HAPLOTIG**: Contigs with an average coverage between low coverage cutoff and the transition, that overlap with another region.
+  - **HIGHCOV**: Contigs with an average coverage above the high coverage cutoff.
+  - **REPEAT**: Repeat contig.
+  - **OVLP**: Overlap.
+
+:::
+
 ```{python}
 Image(filename=glob.glob(f"{log_path}/*_purgedups_hist.png")[0])
+```
+
+```{python}
+#| output: asis
+assemblies = [ asm for asm in multiqc.list_samples() if asm.startswith("hifiasm-raw-default.asm.bp") ]
+assembly_size_mb = [ multiqc.get_module_data(module="quast",sample=f"{asm}")['Total length'] for asm in assemblies ]
+for bed in glob.glob(f"{log_path}/*-purged-*.dups.bed"):
+    dup_bed = pd.read_csv(
+        bed,
+        sep="\t",
+        names=['Contig','Start','End','Type','Partner']
+    )
+    dup_bed['Length'] = dup_bed['End'] - dup_bed['Start']
+    summary = dup_bed.groupby('Type')['Length'].sum().reset_index() # TODO Fix for multiple assemblies
+    summary['Percentage'] = summary['Length'].apply(lambda x: x * 100 / (assembly_size_mb[0] * 1000000) ).apply(lambda x: f"{x:.2f}%")
+    print(summary.to_markdown(index=False))
 ```
 
 #### Assembly k-mer completeness
@@ -405,17 +549,36 @@ print(
 
 ```{python}
 #| output: asis
-per_scaffold_qv_raw = pd.read_csv(
-    glob.glob(f"{log_path}/*-purged-default_merqury.*.qv")[0], sep="\t", header=None
-)
-per_scaffold_qv_raw.columns = [
-    "Scaffold",
-    "No support k-mers",
-    "Total k-mers",
-    "QV",
-    "Error rate",
-]
-print(per_scaffold_qv_raw.to_markdown(index=False))
+qvs = []
+for qv_file in glob.glob(f"{log_path}/*-purged-default_merqury.*.qv"):
+    if os.path.getsize(qv_file) > 0:
+        qvs.append(
+            pd.read_csv(
+                qv_file,
+                sep="\t",
+                header=None,
+                names=[
+                    "Scaffold",
+                    "No support k-mers",
+                    "Total k-mers",
+                    "QV",
+                    "Error rate",
+                ],
+                dtype={
+                    "Scaffold": str,
+                    "No support k-mers": int,
+                    "Total k-mers": int,
+                    "QV": float,
+                    "Error rate": float,
+                },
+                na_values=["", "inf"],
+            )
+        )
+if qvs:
+    per_scaffold_qv_raw = pd.concat(qvs, ignore_index=True)
+    print(per_scaffold_qv_raw.to_markdown(index=False))
+else:
+    print("No per scaffold qv found")
 ```
 
 </details>
@@ -427,14 +590,14 @@ print(per_scaffold_qv_raw.to_markdown(index=False))
 ## MerquryFK
 
 ```{python}
-# TODO account for multiple assemblers
-Image(filename=glob.glob(f"{log_path}/*-purged-default_merquryfk.*.spectra-cn.st.png")[0])
+# TODO Do we need separate for each fasta? This is combined
+Image(filename=glob.glob(f"{log_path}/*-purged-default_merquryfk.spectra-cn.st.png")[0])
 ```
 
 ## Merqury
 
 ```{python}
-Image(filename=glob.glob(f"{log_path}/*-purged-default_merqury.*.spectra-cn.st.png")[0])
+Image(filename=glob.glob(f"{log_path}/*-purged-default_merqury.spectra-cn.st.png")[0])
 ```
 
 ::::
@@ -484,21 +647,18 @@ print(
 ### Pairtools
 
 ```{python}
-multiqc.get_plot(
-    "pairtools", "Pairs by alignment status"
-).show() if "pairtools" in multiqc.list_modules() else ""
+if "pairtools" in multiqc.list_modules():
+    display(multiqc.get_plot("pairtools", "Pairs by alignment status").show())
 ```
 
 ```{python}
-multiqc.get_plot(
-    "pairtools", "Fraction of read pairs by strand orientation"
-).show() if "pairtools" in multiqc.list_modules() else ""
+if "pairtools" in multiqc.list_modules():
+    display(multiqc.get_plot("pairtools", "Fraction of read pairs by strand orientation").show())
 ```
 
 ```{python}
-multiqc.get_plot(
-    "pairtools", "Pre-filtered pairs as a function of genomic separation (in detail)"
-).show() if "pairtools" in multiqc.list_modules() else ""
+if "pairtools" in multiqc.list_modules():
+    display(multiqc.get_plot("pairtools", "Pre-filtered pairs as a function of genomic separation (in detail)").show())
 ```
 
 
@@ -529,17 +689,36 @@ print(
 
 ```{python}
 #| output: asis
-per_scaffold_qv_raw = pd.read_csv(
-    glob.glob(f"{log_path}/*-scaffolded-default_merqury.*.qv")[0], sep="\t", header=None
-)
-per_scaffold_qv_raw.columns = [
-    "Scaffold",
-    "No support k-mers",
-    "Total k-mers",
-    "QV",
-    "Error rate",
-]
-print(per_scaffold_qv_raw.to_markdown(index=False))
+qvs = []
+for qv_file in glob.glob(f"{log_path}/*-scaffolded-default_merqury.*.qv"):
+    if os.path.getsize(qv_file) > 0:
+        qvs.append(
+            pd.read_csv(
+                qv_file,
+                sep="\t",
+                header=None,
+                names=[
+                    "Scaffold",
+                    "No support k-mers",
+                    "Total k-mers",
+                    "QV",
+                    "Error rate",
+                ],
+                dtype={
+                    "Scaffold": str,
+                    "No support k-mers": int,
+                    "Total k-mers": int,
+                    "QV": float,
+                    "Error rate": float,
+                },
+                na_values=["", "inf"],
+            )
+        )
+if qvs:
+    per_scaffold_qv_raw = pd.concat(qvs, ignore_index=True)
+    print(per_scaffold_qv_raw.to_markdown(index=False))
+else:
+    print("No per scaffold qv found")
 ```
 
 </details>
@@ -551,14 +730,14 @@ print(per_scaffold_qv_raw.to_markdown(index=False))
 ## MerquryFK
 
 ```{python}
-# TODO account for multiple assemblers
-Image(filename=glob.glob(f"{log_path}/*-scaffolded-default_merquryfk.*.spectra-cn.st.png")[0])
+# TODO Do we need for each fasta. This is combined fastas
+Image(filename=glob.glob(f"{log_path}/*-scaffolded-default_merquryfk.spectra-cn.st.png")[0])
 ```
 
 ## Merqury
 
 ```{python}
-Image(filename=glob.glob(f"{log_path}/*-scaffolded-default_merqury.*.spectra-cn.st.png")[0])
+Image(filename=glob.glob(f"{log_path}/*-scaffolded-default_merqury.spectra-cn.st.png")[0])
 ```
 
 ::::
