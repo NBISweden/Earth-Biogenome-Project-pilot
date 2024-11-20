@@ -7,6 +7,7 @@ process BAM2COVERAGE_TRACKS {
     input:
     tuple val(meta), path(bam)
     path(chrom_sizes)
+    val(hifi_coverage_cap)
 
     output:
     tuple val(meta), path("*_coverage.bed")            , emit: bed
@@ -24,9 +25,7 @@ process BAM2COVERAGE_TRACKS {
     def args2 = task.ext.args2 ?: ''
     def args3 = task.ext.args3 ?: ''
     def args4 = task.ext.args4 ?: ''
-    def args5 = task.ext.args5 ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-
     """
     # convert bam to sorted bed
     samtools sort -@ $task.cpus $args ${bam} | \\
@@ -37,7 +36,7 @@ process BAM2COVERAGE_TRACKS {
     bedGraphToBigWig ${prefix}_coverage.bed ${chrom_sizes} ${prefix}_coverage.bw
     # coverage cap
     sort -k1,1V -k2,2n -k3,3n $args4 ${prefix}_coverage.bed | \\
-    awk -v COVERAGE_CAP=$params.hifi_coverage_cap 'BEGIN {FS = " "; OFS = "\t";}{if(int(\$4)>COVERAGE_CAP){print \$1,\$2,\$3,COVERAGE_CAP} else {print \$1,\$2,\$3,\$4}}' > ${prefix}_coverage_capped.bed
+    awk -v COVERAGE_CAP=$hifi_coverage_cap 'BEGIN {FS = " "; OFS = "\t";}{if(int(\$4)>COVERAGE_CAP){print \$1,\$2,\$3,COVERAGE_CAP} else {print \$1,\$2,\$3,\$4}}' > ${prefix}_coverage_capped.bed
     # convert bed to bigwig
     bedGraphToBigWig ${prefix}_coverage_capped.bed ${chrom_sizes} ${prefix}_coverage_capped.bw
 

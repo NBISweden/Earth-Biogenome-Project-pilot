@@ -15,7 +15,7 @@ include { BAM2BED_SORT                          } from "$projectDir/modules/loca
 include { COOLER_CLOAD                          } from "$projectDir/modules/nf-core/cooler/cload/main"
 include { COOLER_ZOOMIFY                        } from "$projectDir/modules/nf-core/cooler/zoomify/main"
 include { CREATE_CHROMOSOME_SIZES_FILE          } from "$projectDir/modules/local/hic_curation/create_chromosome_sizes"
-include { PRETEXTMAP                            } from "$projectDir/modules/nf-core/pretextmap/main"   
+include { PRETEXTMAP                            } from "$projectDir/modules/nf-core/pretextmap/main"
 include { MINIMAP2_INDEX                        } from "$projectDir/modules/nf-core/minimap2/index/main"
 include { MINIMAP2_ALIGN                        } from "$projectDir/modules/nf-core/minimap2/align/main"
 include { BAM2COVERAGE_TRACKS                   } from "$projectDir/modules/local/hic_curation/bam2coverageTracks"
@@ -42,7 +42,7 @@ workflow SCAFFOLD_CURATION {
 
     SAMTOOLS_FAIDX (
         getPrimaryAssembly(ch_assemblies), // [meta, fasta]
-        [ [ ], [ ] ]                       // [meta2, fai] 
+        [ [ ], [ ] ]                       // [meta2, fai]
     )
     ch_versions  = ch_versions.mix( SAMTOOLS_FAIDX.out.versions )
 
@@ -65,11 +65,11 @@ workflow SCAFFOLD_CURATION {
     BWAMEM2_MEM_CURATION (bwamem2_input.reads, bwamem2_input.index, bwamem2_input.fasta, false)
     ch_versions  = ch_versions.mix( BWAMEM2_MEM_CURATION.out.versions )
 
-    // filter alignments 
+    // filter alignments
     FILTER_FIVE_END(BWAMEM2_MEM_CURATION.out.bam)
     ch_versions  = ch_versions.mix( FILTER_FIVE_END.out.versions )
 
-    // combine reads 
+    // combine reads
     FILTER_FIVE_END.out.bam
     .map { meta, bam -> [ meta.subMap('id', 'sample', 'assembly', 'pair_id'), bam ] }
     .groupTuple( sort: {a, b -> a.name <=> b.name } )
@@ -78,7 +78,7 @@ workflow SCAFFOLD_CURATION {
     TWOREADCOMBINER_FIXMATE_SORT(combine_input)
     ch_versions  = ch_versions.mix( TWOREADCOMBINER_FIXMATE_SORT.out.versions )
 
-    // merge bam files in case multiple HIC paired-end libraries are present 
+    // merge bam files in case multiple HIC paired-end libraries are present
     TWOREADCOMBINER_FIXMATE_SORT.out.bam
         .map { meta, bam_list -> [ meta - meta.subMap( 'pair_id' ), bam_list ] }
         .groupTuple()
@@ -100,7 +100,7 @@ workflow SCAFFOLD_CURATION {
         .mix( SAMTOOLS_MERGE_HIC.out.bam)
         .set { dedup_bam }
 
-    // dedupliucate bam file 
+    // dedupliucate bam file
     BIOBAMBAM_BAMMARKDUPLICATES2(dedup_bam)
     ch_versions  = ch_versions.mix( BIOBAMBAM_BAMMARKDUPLICATES2.out.versions )
 
@@ -112,7 +112,7 @@ workflow SCAFFOLD_CURATION {
     CREATE_CHROMOSOME_SIZES_FILE(SAMTOOLS_FAIDX.out.fai)
     ch_versions  = ch_versions.mix( CREATE_CHROMOSOME_SIZES_FILE.out.versions )
 
-    // create cooler files 
+    // create cooler files
     // tuple val(meta), path(pairs), path(index), val(cool_bin)
     // path chromsizes
     BAM2BED_SORT.out.pairs
@@ -121,14 +121,14 @@ workflow SCAFFOLD_CURATION {
             Channel.value(params.cooler_bin_size)
         )
         .set { pairs_idx_binsize_ch }
-    
+
     combineByMetaKeys( // Combine Hi-C reads with BWA index
         pairs_idx_binsize_ch, CREATE_CHROMOSOME_SIZES_FILE.out.sizes,
         keySet: ['id','sample'],
         meta: 'rhs'
     )
-    .multiMap { meta, pairs, fake_index, cool_bin, chrom_sizes -> 
-        cload_in     : [ meta, pairs, fake_index, cool_bin ] 
+    .multiMap { meta, pairs, fake_index, cool_bin, chrom_sizes ->
+        cload_in     : [ meta, pairs, fake_index, cool_bin ]
         chrom_sizes  : chrom_sizes
     }
     .set { cooler_cload_ch }
@@ -141,11 +141,11 @@ workflow SCAFFOLD_CURATION {
 
     COOLER_CLOAD.out.cool.map { meta, cool, cool_bin ->  [ meta, cool ] }
     .set { cooler_zoomify_ch }
-    
+
     COOLER_ZOOMIFY(cooler_zoomify_ch)
     ch_versions  = ch_versions.mix( COOLER_ZOOMIFY.out.versions )
 
-    // create pretext maps 
+    // create pretext maps
     joinByMetaKeys(joinByMetaKeys(
             getPrimaryAssembly(ch_assemblies),
             SAMTOOLS_FAIDX.out.fai,
@@ -160,7 +160,7 @@ workflow SCAFFOLD_CURATION {
         fasta_fai : [ meta, fasta, fai ]
     }
     .set { pretext_ch }
-    
+
     PRETEXTMAP(
         pretext_ch.bam,
         pretext_ch.fasta_fai
@@ -169,30 +169,30 @@ workflow SCAFFOLD_CURATION {
 
     // create tracks for PretextMap:
     // coverage, gap, telomer
-    
-    joinByMetaKeys( 
+
+    joinByMetaKeys(
         ch_hifi,
         getPrimaryAssembly( ch_assemblies ),
         keySet: ['id','sample'],
         meta: 'rhs'
     )
-    .multiMap { meta, hifi_reads, fasta -> 
+    .multiMap { meta, hifi_reads, fasta ->
         hifi_reads: [ meta, hifi_reads ]
-        reference : fasta 
+        reference : fasta
     }
     .set{ asm_hifi_ch }
 
-    // Coverage-track: create minimap2 index 
+    // Coverage-track: create minimap2 index
     MINIMAP2_INDEX(getPrimaryAssembly( ch_assemblies ))
     ch_versions  = ch_versions.mix( MINIMAP2_INDEX.out.versions )
 
-    // Coverage-track: align HiFi reads 
+    // Coverage-track: align HiFi reads
     MINIMAP2_ALIGN(
         asm_hifi_ch.hifi_reads, // [ meta, reads ]
-        asm_hifi_ch.reference,  // reference 
-        1,                      // bam_format 
+        asm_hifi_ch.reference,  // reference
+        1,                      // bam_format
         0,                      // cigar_paf_format
-        0                       // cigar_ba, 
+        0                       // cigar_ba,
     )
     ch_versions  = ch_versions.mix( MINIMAP2_ALIGN.out.versions )
 
@@ -212,19 +212,19 @@ workflow SCAFFOLD_CURATION {
     )
     ch_versions  = ch_versions.mix( SAMTOOLS_MERGE_HIFI.out.versions )
 
-    joinByMetaKeys( 
+    joinByMetaKeys(
         ch_hifi,
         getPrimaryAssembly( ch_assemblies ),
         keySet: ['id','sample'],
         meta: 'rhs'
     )
-    .multiMap { meta, hifi_reads, fasta -> 
+    .multiMap { meta, hifi_reads, fasta ->
         hifi_reads: [ meta, hifi_reads ]
-        reference : fasta 
+        reference : fasta
     }
     .set{ asm_hifi_ch }
 
-    joinByMetaKeys( 
+    joinByMetaKeys(
         merge_hifi_bam.singleton
             .map { meta, bam -> [ meta, *bam ] } // the spread operator (*) flattens the bam list
             .mix( SAMTOOLS_MERGE_HIFI.out.bam),
@@ -232,32 +232,33 @@ workflow SCAFFOLD_CURATION {
         keySet: ['id','sample'],
         meta: 'rhs'
     )
-    .multiMap { meta, bam, chrom_sizes -> 
-        merged_bam   : [ meta, bam ] 
+    .multiMap { meta, bam, chrom_sizes ->
+        merged_bam   : [ meta, bam ]
         chrom_sizes  : chrom_sizes
     }
     .set { bam2coverage_ch }
 
-    // Coverage-track: create hitile- and bed-coverage tracks 
+    // Coverage-track: create hitile- and bed-coverage tracks
     BAM2COVERAGE_TRACKS(
         bam2coverage_ch.merged_bam,
-        bam2coverage_ch.chrom_sizes
+        bam2coverage_ch.chrom_sizes,
+        params.hifi_coverage_cap
     )
     ch_versions  = ch_versions.mix( BAM2COVERAGE_TRACKS.out.versions )
 
-    // Gap-track: create bedtrack 
+    // Gap-track: create bedtrack
     SEQTK_CUTN(getPrimaryAssembly( ch_assemblies ))
     ch_versions  = ch_versions.mix( SEQTK_CUTN.out.versions )
 
-    // Gap-track: create beddb- and bed-gap tracks 
-    joinByMetaKeys( 
+    // Gap-track: create beddb- and bed-gap tracks
+    joinByMetaKeys(
         SEQTK_CUTN.out.bed,
         CREATE_CHROMOSOME_SIZES_FILE.out.sizes,
         keySet: ['id','sample'],
         meta: 'rhs'
     )
-    .multiMap { meta, bed, chrom_sizes -> 
-        bed          : [ meta, bed ] 
+    .multiMap { meta, bed, chrom_sizes ->
+        bed          : [ meta, bed ]
         chrom_sizes  : chrom_sizes
     }
     .set { bed2gap_ch }
@@ -265,7 +266,7 @@ workflow SCAFFOLD_CURATION {
     CREATE_GAP_TRACKS(
         bed2gap_ch.bed,
         bed2gap_ch.chrom_sizes
-    ) 
+    )
     ch_versions  = ch_versions.mix( CREATE_GAP_TRACKS.out.versions )
 
     // Telomer-track: create track
@@ -281,19 +282,19 @@ workflow SCAFFOLD_CURATION {
     )
     ch_versions  = ch_versions.mix( TIDK_SEARCH_TSV.out.versions )
 
-    // Telomer-track: create plot - thats not really necessary, but nice to have 
+    // Telomer-track: create plot - thats not really necessary, but nice to have
     TIDK_PLOT(TIDK_SEARCH_TSV.out.tsv)
     ch_versions  = ch_versions.mix( TIDK_PLOT.out.versions )
 
-    // Telomer-track: convert telomer bedgraph into beddb file that can be ingested into HiGlass 
-    joinByMetaKeys( 
+    // Telomer-track: convert telomer bedgraph into beddb file that can be ingested into HiGlass
+    joinByMetaKeys(
         TIDK_SEARCH_BEDGRAPH.out.bedgraph,
         CREATE_CHROMOSOME_SIZES_FILE.out.sizes,
         keySet: ['id','sample'],
         meta: 'rhs'
     )
-    .multiMap { meta, bedgraph, chrom_sizes -> 
-        bedgraph          : [ meta, bedgraph ] 
+    .multiMap { meta, bedgraph, chrom_sizes ->
+        bedgraph          : [ meta, bedgraph ]
         chrom_sizes  : chrom_sizes
     }
     .set { bedgraph_telomer_ch }
@@ -314,7 +315,7 @@ workflow SCAFFOLD_CURATION {
                 BAM2COVERAGE_TRACKS.out.capped_bed,
                 keySet: ['id','sample', 'assembly'],
                 meta: 'rhs'
-            ), 
+            ),
             TIDK_SEARCH_BEDGRAPH.out.bedgraph,
             keySet: ['id','sample','assembly'],
             meta: 'rhs'
@@ -322,13 +323,13 @@ workflow SCAFFOLD_CURATION {
         CREATE_GAP_TRACKS.out.bedgraph,
         keySet: ['id','sample','assembly'],
         meta: 'rhs'
-    )    
+    )
     .set { pretext_tracks_ch }
 
-    PRETEXT_TRACKS_INGESTION(pretext_tracks_ch)    
+    PRETEXT_TRACKS_INGESTION(pretext_tracks_ch)
     ch_versions  = ch_versions.mix( PRETEXT_TRACKS_INGESTION.out.versions )
 
     emit:
-    assemblies = Channel.empty()    
+    assemblies = Channel.empty()
     versions   = ch_versions
 }
