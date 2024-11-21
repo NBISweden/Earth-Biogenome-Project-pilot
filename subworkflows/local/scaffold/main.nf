@@ -1,16 +1,16 @@
-include { constructAssemblyRecord } from "$projectDir/modules/local/functions"
-include { getPrimaryAssembly      } from "$projectDir/modules/local/functions"
-include { joinByMetaKeys          } from "$projectDir/modules/local/functions"
-include { combineByMetaKeys       } from "$projectDir/modules/local/functions"
-include { BWAMEM2_INDEX           } from "$projectDir/modules/nf-core/bwamem2/index/main"
-include { BWAMEM2_MEM             } from "$projectDir/modules/nf-core/bwamem2/mem/main"
-include { SAMTOOLS_FAIDX          } from "$projectDir/modules/nf-core/samtools/faidx/main"
-include { PAIRTOOLS_PARSE         } from "$projectDir/modules/nf-core/pairtools/parse/main"
-include { PAIRTOOLS_SORT          } from "$projectDir/modules/nf-core/pairtools/sort/main"
-include { PAIRTOOLS_MERGE         } from "$projectDir/modules/nf-core/pairtools/merge/main"
-include { PAIRTOOLS_DEDUP         } from "$projectDir/modules/nf-core/pairtools/dedup/main"
-include { PAIRTOOLS_SPLIT         } from "$projectDir/modules/nf-core/pairtools/split/main"
-include { YAHS                    } from "$projectDir/modules/nf-core/yahs/main.nf"
+include { constructAssemblyRecord                 } from "$projectDir/modules/local/functions"
+include { getPrimaryAssembly                      } from "$projectDir/modules/local/functions"
+include { joinByMetaKeys                          } from "$projectDir/modules/local/functions"
+include { combineByMetaKeys                       } from "$projectDir/modules/local/functions"
+include { BWAMEM2_INDEX as BWAMEM2_INDEX_SCAFFOLD } from "$projectDir/modules/nf-core/bwamem2/index/main"
+include { BWAMEM2_MEM as BWAMEM2_MEM_SCAFFOLD     } from "$projectDir/modules/nf-core/bwamem2/mem/main"
+include { SAMTOOLS_FAIDX                          } from "$projectDir/modules/nf-core/samtools/faidx/main"
+include { PAIRTOOLS_PARSE                         } from "$projectDir/modules/nf-core/pairtools/parse/main"
+include { PAIRTOOLS_SORT                          } from "$projectDir/modules/nf-core/pairtools/sort/main"
+include { PAIRTOOLS_MERGE                         } from "$projectDir/modules/nf-core/pairtools/merge/main"
+include { PAIRTOOLS_DEDUP                         } from "$projectDir/modules/nf-core/pairtools/dedup/main"
+include { PAIRTOOLS_SPLIT                         } from "$projectDir/modules/nf-core/pairtools/split/main"
+include { YAHS                                    } from "$projectDir/modules/nf-core/yahs/main.nf"
 
 
 workflow SCAFFOLD {
@@ -20,7 +20,7 @@ workflow SCAFFOLD {
 
     main:
 
-    BWAMEM2_INDEX ( getPrimaryAssembly(ch_assemblies) )
+    BWAMEM2_INDEX_SCAFFOLD ( getPrimaryAssembly(ch_assemblies) )
 
     SAMTOOLS_FAIDX (
         getPrimaryAssembly(ch_assemblies),
@@ -30,7 +30,7 @@ workflow SCAFFOLD {
     combineByMetaKeys( // Combine (Hi-C + index) with Assembly
         combineByMetaKeys( // Combine Hi-C reads with BWA index
             ch_hic,
-            BWAMEM2_INDEX.out.index,
+            BWAMEM2_INDEX_SCAFFOLD.out.index,
             keySet: ['id','sample'],
             meta: 'rhs'
         ),
@@ -43,7 +43,7 @@ workflow SCAFFOLD {
         fasta: [ meta, fasta ]
     }.set{ bwamem2_input }
 
-    BWAMEM2_MEM (
+    BWAMEM2_MEM_SCAFFOLD (
         bwamem2_input.reads,
         bwamem2_input.index,
         bwamem2_input.fasta,
@@ -59,7 +59,7 @@ workflow SCAFFOLD {
         .set { chrom_sizes }
 
     // Combine hi-c alignment with chrom sizes
-    BWAMEM2_MEM.out.bam.combine(chrom_sizes)
+    BWAMEM2_MEM_SCAFFOLD.out.bam.combine(chrom_sizes)
         .multiMap{ meta, hic_bam, chr_lengths ->
             hicbams: [ meta, hic_bam ]
             lengths: chr_lengths
@@ -136,9 +136,9 @@ workflow SCAFFOLD {
         .map { meta, stats -> stats }
         .set { logs }
 
-    ch_versions = BWAMEM2_INDEX.out.versions.first().mix(
+    ch_versions = BWAMEM2_INDEX_SCAFFOLD.out.versions.first().mix(
         SAMTOOLS_FAIDX.out.versions.first(),
-        BWAMEM2_MEM.out.versions.first(),
+        BWAMEM2_MEM_SCAFFOLD.out.versions.first(),
         PAIRTOOLS_PARSE.out.versions.first(),
         PAIRTOOLS_SORT.out.versions.first(),
         PAIRTOOLS_MERGE.out.versions.first(),

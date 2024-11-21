@@ -16,13 +16,12 @@ process TWOREADCOMBINER_FIXMATE_SORT {
 
     script:
     def args = task.ext.args ?: ''
-    def args2 = task.ext.args2 ?: ''
-    def args3 = task.ext.args3 ?: ''
+    def args2 = task.ext.args3 ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
 
     """
     perl ${projectDir}/bin/two_read_bam_combiner_sanger.pl ${bam} samtools ${args} | \\
-    samtools fixmate -@${task.cpus} ${args2} - - | \\
+    grep -v -e "^@HD" | \\
     samtools sort ${args3} -@${task.cpus} -T sort_tmp -o ${prefix}_comb.bam -
 
     cat <<-END_VERSIONS > versions.yml
