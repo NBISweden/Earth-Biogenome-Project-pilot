@@ -1,8 +1,5 @@
 #! /usr/bin/env nextflow
 
-// Include Map.deepMerge() function
-evaluate(new File("$projectDir/lib/MapExtended.groovy"))
-
 include { combineByMetaKeys                        } from "$projectDir/modules/local/functions"
 include { assembliesFromStage as preassembledInput } from "$projectDir/modules/local/functions"
 include { setAssemblyStage                         } from "$projectDir/modules/local/functions"
@@ -27,6 +24,11 @@ include { PURGE_DUPLICATES } from "$projectDir/subworkflows/local/purge_dups/mai
 
 include { EVALUATE_ASSEMBLY as EVALUATE_PURGED_ASSEMBLY } from "$projectDir/subworkflows/local/evaluate_assembly/main"
 
+include { SCAFFOLD } from "$projectDir/subworkflows/local/scaffold/main.nf"
+include { EVALUATE_ASSEMBLY as EVALUATE_SCAFFOLDED_ASSEMBLY } from "$projectDir/subworkflows/local/evaluate_assembly/main"
+
+include { SCAFFOLD_CURATION } from "$projectDir/subworkflows/local/scaffold_curation/main.nf"
+
 include { ALIGN_RNASEQ       } from "$projectDir/subworkflows/local/align_rnaseq/main"
 
 include { ASSEMBLY_REPORT } from "$projectDir/subworkflows/local/assembly_report/main"
@@ -37,6 +39,8 @@ include { ASSEMBLY_REPORT } from "$projectDir/subworkflows/local/assembly_report
  */
 
 workflow {
+    // Include Map.deepMerge() function
+    new GroovyShell().evaluate(new File("$projectDir/lib/MapExtended.groovy"))
 
     // Define constants
     def workflow_permitted_stages = [
@@ -63,8 +67,8 @@ workflow {
     """)
 
     // Setup sink channels
-    ch_multiqc_files = Channel.empty()
-    ch_quarto_files  = Channel.empty()
+    ch_multiqc_files = Channel.value( file(params.multiqc_assembly_report_config, checkIfExists: true) )
+    // ch_quarto_files  = Channel.empty()
     ch_versions      = Channel.empty()
 
     // Read in data
@@ -93,7 +97,6 @@ workflow {
         )
         ch_hifi = INSPECT_DATA.out.hifi // with added kmer coverage
         ch_multiqc_files = ch_multiqc_files.mix( INSPECT_DATA.out.logs )
-        ch_quarto_files = ch_quarto_files.mix( INSPECT_DATA.out.quarto_files )
         ch_versions = ch_versions.mix( INSPECT_DATA.out.versions )
     }
 
@@ -110,6 +113,8 @@ workflow {
         // Run assemblers
         ASSEMBLE ( PREPARE_INPUT.out.hifi_merged )
         ch_raw_assemblies = ch_raw_assemblies.mix( ASSEMBLE.out.raw_assemblies )
+        ch_multiqc_files = ch_multiqc_files.mix( ASSEMBLE.out.logs )
+        ch_versions = ch_versions.mix( ASSEMBLE.out.versions )
     } else {
         // Nothing more than evaluate
     }
@@ -162,6 +167,8 @@ workflow {
             ch_hifi
         )
         ch_purged_assemblies = PURGE_DUPLICATES.out.assemblies
+        ch_multiqc_files = ch_multiqc_files.mix( PURGE_DUPLICATES.out.logs )
+        ch_versions = ch_versions.mix( PURGE_DUPLICATES.out.versions )
     } else {
         ch_purged_assemblies = ch_to_purge
     }
@@ -197,14 +204,26 @@ workflow {
         'scaffolded' // Set assembly stage now for filenaming
     ).dump(tag: 'Assemblies: to scaffold')
     if ( 'scaffold' in workflow_steps ) {
-        // Run scaffolder
-        ch_scaffolded_assemblies = ch_to_scaffold
+        SCAFFOLD (
+            ch_to_scaffold,
+            PREPARE_INPUT.out.hic
+        )
+        ch_scaffolded_assemblies = SCAFFOLD.out.assemblies
+        ch_multiqc_files = ch_multiqc_files.mix( SCAFFOLD.out.logs )
+        ch_versions = ch_versions.mix( SCAFFOLD.out.versions )
     } else {
         ch_scaffolded_assemblies = ch_to_scaffold
     }
     ch_scaffolded_assemblies = ch_scaffolded_assemblies.mix(
         preassembledInput( PREPARE_INPUT.out.assemblies, 'scaffolded' )
     ).dump(tag: 'Assemblies: Scaffolded')
+    EVALUATE_SCAFFOLDED_ASSEMBLY (
+        ch_scaffolded_assemblies,
+        BUILD_FASTK_HIFI_DATABASE.out.fastk_hist_ktab,
+        BUILD_MERYL_HIFI_DATABASE.out.uniondb
+    )
+    ch_multiqc_files = ch_multiqc_files.mix( EVALUATE_SCAFFOLDED_ASSEMBLY.out.logs )
+    ch_versions = ch_versions.mix( EVALUATE_SCAFFOLDED_ASSEMBLY.out.versions )
 
     // Curate
     ch_to_curate = setAssemblyStage (
@@ -212,14 +231,19 @@ workflow {
         'curated' // Set assembly stage now for filenaming
     ).dump(tag: 'Assemblies: to curate')
     if ( 'curate' in workflow_steps ) {
-        // Run assemblers
-        ch_curated_assemblies = ch_to_curate
+        SCAFFOLD_CURATION (
+            ch_scaffolded_assemblies,
+            PREPARE_INPUT.out.hic,
+            PREPARE_INPUT.out.hifi
+        )
+        ch_versions = ch_versions.mix( SCAFFOLD_CURATION.out.versions )
     } else {
         ch_curated_assemblies = ch_to_curate
     }
-    ch_curated_assemblies = ch_curated_assemblies.mix(
-        preassembledInput( PREPARE_INPUT.out.assemblies, 'curated' )
-    ).dump(tag: 'Assemblies: Curated')
+    // TODO: output needs to be defined 
+    //ch_curated_assemblies = ch_curated_assemblies.mix(
+    //    preassembledInput( PREPARE_INPUT.out.assemblies, 'curated' )
+    //).dump(tag: 'Assemblies: Curated')
 
     // Align RNAseq
     if( 'alignRNA' in workflow_steps ) {
@@ -231,29 +255,30 @@ workflow {
     }
 
     ASSEMBLY_REPORT(
-        PREPARE_INPUT.out.sample_meta,
+        PREPARE_INPUT.out.sample_meta.map{ meta -> [ meta, file(params.quarto_assembly_report, checkIfExists: true) ] },
         ch_multiqc_files,
-        ch_quarto_files,
-        ch_versions
+        ch_versions,
+        [ diagnostics: "debug" in workflow.profile.tokenize(",") ] +
+            workflow_permitted_stages.collectEntries{ step -> [(step): step in params.steps.tokenize(",")] }
     )
-}
 
-workflow.onComplete {
-    if( workflow.success ){
-        log.info("""
-        Thank you for using the NBIS Earth Biogenome Project Assembly workflow.
-        The workflow completed successfully.
+    workflow.onComplete = {
+        if( workflow.success ){
+            log.info("""
+            Thank you for using the NBIS Earth Biogenome Project Assembly workflow.
+            The workflow completed successfully.
 
-        Results are located in the folder: $params.outdir
-        """)
-    } else {
-        log.info("""
-        Thank you for using the NBIS Earth Biogenome Project Assembly workflow.
-        The workflow completed unsuccessfully.
+            Results are located in the folder: $params.outdir
+            """)
+        } else {
+            log.info("""
+            Thank you for using the NBIS Earth Biogenome Project Assembly workflow.
+            The workflow completed unsuccessfully.
 
-        Please read over the error message. If you are unable to solve it, please
-        post an issue at https://github.com/NBISweden/Earth-Biogenome-Project-pilot/issues
-        where we will do our best to help.
-        """)
+            Please read over the error message. If you are unable to solve it, please
+            post an issue at https://github.com/NBISweden/Earth-Biogenome-Project-pilot/issues
+            where we will do our best to help.
+            """)
+        }
     }
 }

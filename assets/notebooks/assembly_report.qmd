@@ -1,0 +1,799 @@
+---
+title: 'Earth Biogenome Project'
+subtitle: 'NBIS Assembly Report'
+date: today
+toc: true
+toc-location: left
+
+engine: 'jupyter'
+
+execute:
+  echo: false
+  warning: true
+
+format:
+  html:
+    embed-resources: true
+    theme:
+      light: minty
+      dark: darkly
+  gfm:
+    preview-mode: raw
+---
+
+## Introduction
+
+This assembly report has been prepared by the National Bioinformatics Infrastructure Sweden
+(NBIS) as part of the Earth Biogenome Project workflow.
+
+The purpose of this report is to guide you through the analysis process, rather than merely
+summarizing tool logs. If you have any suggestions or feedback, please submit a feature
+request at [NBIS Earth Biogenome Project - Issues](https://github.com/NBISweden/Earth-Biogenome-Project-pilot/issues).
+
+::::: {.content-visible when-meta="diagnostics"}
+
+### Setup
+
+This [Quarto notebook](https://quarto.org/) establishes default parameters
+in this section and utilizes the MultiQC Python package to locate log files
+from tools executed within the workflow.
+
+```{python}
+#| tags: [parameters]
+
+log_path = 'log_files'
+inspect = True
+preprocess = True
+assemble = True
+screen = True
+purge = True
+polish = True
+scaffold = True
+curate = True
+alignRNA = False
+diagnostics = False
+```
+
+#### MultiQC
+
+```{python}
+import glob
+import multiqc
+import os
+import pandas as pd
+from itertools import groupby
+from pprint import pprint
+from IPython.display import display # MQCPlot.show() returns a HTML object which needs to be forced to render in a cell
+from IPython.display import Image
+
+multiqc.reset() # Important for Quarto preview
+# Load a custom config
+multiqc.load_config(f"{log_path}/multiqc_assembly_report_config.yml")
+multiqc.parse_logs(log_path)
+
+# pprint pretty prints the dictionary
+pprint(multiqc.list_plots())
+pprint(multiqc.list_modules())
+
+# Write out report (If other parts error, we should at least have the summary)
+multiqc.write_report(
+    force=True,
+    output_dir=".",
+)
+```
+
+:::::
+
+## Species information
+
+To begin our analysis, let's explore the available species information. The following
+details are sourced from [Genomes on a Tree (GOAT)](https://goat.genomehubs.org/).
+
+```{python}
+if "dtol" in multiqc.list_modules():
+    display(multiqc.get_plot("dtol", "dtol-section").show())
+```
+
+### Genome Traits
+
+```{python}
+if "traits" in multiqc.list_modules():
+    display(multiqc.get_plot("traits", "traits-section").show())
+```
+
+::::: {.content-visible when-meta="inspect"}
+
+## Data inspection
+
+Let's ensure the quality of our input data.
+
+### Sequence data quantity
+
+* Do we have enough total sequence data?
+* Do we have enough long reads?
+
+#### HiFi
+
+::: {.callout-note title="Expectation" collapse="true"}
+For long read data (PacBio, ONT) we expect to see 15-20x coverage per haplotype, for a good assembly.
+:::
+
+```{python}
+# TODO data quantity table
+```
+#### Hi-C
+
+```{python}
+if "fastqc" in multiqc.list_modules():
+    display(multiqc.get_plot("fastqc", "Sequence Counts").show())
+else:
+    print("No Hi-C data available")
+```
+
+::: {.callout-note title="Expectation" collapse="true"}
+Arima-HiC (Arima Genomics)
+: Duplication levels expected to be ~10-30%.
+
+Dovetail Omni-C (Cantata Bio)
+: Duplication levels expected to be ~30-80%.
+:::
+
+```{python}
+if "fastqc" in multiqc.list_modules():
+    display(multiqc.get_plot("fastqc", "Sequence Duplication Levels").show())
+```
+
+#### HiFi vs Hi-C
+
+* Do our libraries have similar data content?
+```{python}
+Image(filename=glob.glob(f"{log_path}/*_katcomp.st.png")[0])
+```
+
+### Genomic screen
+
+* Do the libraries contain our expected organism.
+
+### Genomic characteristics
+
+We can glean a good amount of information about the sequenced species from the k-mer content of the data.
+
+#### Ploidy
+Does it show the correct ploidy?
+
+::: {.callout-note title="Interpretation" collapse="true"}
+A Kmer histogram counts the frequency of k-mers in the data. Some parts of the genome are unique, and
+there are expected to be *coverage* times copies of these k-mers in the data. If the organism is diploid,
+the regions unique to a haplotype should have *coverage* times copies of these k-mers, and regions shared
+between both haplotypes should have *coverage* times two copies of these k-mers. This leads to formations
+of peaks in the k-mer histogram. A haploid organism should have one peak, while a diploid should have two peaks.
+:::
+
+```{python}
+#| output: asis
+if inspect:
+    images = [
+        img
+        for pattern in ["log_plot", "linear_plot"]
+        for img in glob.glob(f"{log_path}/*_{pattern}.png")
+    ]
+
+    if len(images) == 0:
+        raise ValueError("No files found")
+
+    # Ensure we have multiples of 4 images
+    if len(images) % 4 != 0:
+        raise ValueError("There should be 4 images per GenomeScope2 process")
+
+    # Function to sort filenames
+    def sort_key(filename):
+        filename = os.path.basename(filename)
+        parts = filename.split("_")
+        # Order: linear < log, non-transformed < transformed
+        order = {"linear": 0, "log": 1}
+        transformed = 1 if "transformed" in parts else 0
+        return (" ".join(parts[:2]), transformed, order[parts[-2]])
+
+    # Sort filenames first
+    sorted_filenames = sorted(images, key=sort_key)
+
+    # Group by sample
+    grouped_filenames = {}
+    for key, group in groupby(
+        sorted_filenames, key=lambda x: " ".join(os.path.basename(x).split("_")[:2])
+    ):
+        grouped_filenames[key] = list(group)
+
+
+    # Function to format filenames
+    def format_filename(filename):
+        # return os.path.basename(filename).replace(".png", "").replace("_", " ")
+        return " ".join(os.path.basename(filename).split("_")[2:-1])
+
+    # Print grouped and sorted filenames
+    tabs = []  # tabbed panels
+    for sample, files in grouped_filenames.items():
+        # tabs.append(f"### {sample}")
+        tabs.append("::: {.panel-tabset}")
+        for image in files:
+            formatted_filename = format_filename(image)
+            tabs.append(f"## {formatted_filename}")
+            tabs.append(f"![{formatted_filename}]({image})")
+        tabs.append(":::")
+
+    markdown = "\n\n".join(tabs)
+    print(markdown)
+```
+
+#### SmudgePlot
+
+Does the smudgeplot indicate the expected ploidy?
+
+```{python}
+Image(filename=glob.glob(f"{log_path}/*_ploidyplot.st.png")[0])
+```
+
+#### GC content
+
+```{python}
+Image(filename=glob.glob(f"{log_path}/*_katgc.st.png")[0])
+```
+
+::: {.callout-note title="Expectation" collapse="true"}
+* Unexpected GC content value can indicate contamination.
+* Unexpected blobs(?) in the plot can indicate contamination.
+:::
+
+#### Hi-C
+
+```{python}
+if "fastqc" in multiqc.list_modules():
+    display(multiqc.get_plot("fastqc", "Per Sequence GC Content").show())
+```
+
+::: {.callout-note title="Expectation" collapse="true"}
+The peak GC content on the x-axis should be the same value
+as the peak on the HiFi KatGC plot on the y-axis.
+:::
+
+### Synthetic sequence content
+
+Do we see indications of synthetic sequences such as adaptors?
+
+#### HiFi
+
+TODO: FCS
+
+#### Hi-C
+```{python}
+if "fastqc" in multiqc.list_modules():
+    display(multiqc.get_plot("fastqc", "Adapter Content").show())
+```
+
+:::::
+
+::::: {.content-visible when-meta="preprocess"}
+
+## Data processing
+
+:::::
+
+::::: {.content-visible when-meta="assemble"}
+
+## Assembly
+
+### General comparison
+
+```{python}
+if "quast" in multiqc.list_modules():
+    display(multiqc.get_plot("quast", "Assembly Statistics").show())
+```
+
+```{python}
+if "quast" in multiqc.list_modules():
+    display(multiqc.get_plot("quast", "Number of Contigs").show())
+```
+
+### Best ranked assembly
+
+#### Assembly statistics
+
+```{python}
+#| output: asis
+raw_asm_stats = pd.read_csv(
+    glob.glob(f"{log_path}/*-raw-*.fasta.assembly_summary")[0],
+    sep="\t",
+    header=None,
+    names=["Metric","Value"]
+)
+raw_asm_t1=raw_asm_stats.iloc[[0, 31, 32]]
+print(raw_asm_t1.to_markdown(index=False))
+```
+```{python}
+#| output: asis
+raw_asm_t2=raw_asm_stats.iloc[1:12] # TODO Add conversion
+print(raw_asm_t2.to_markdown(index=False))
+```
+```{python}
+#| output: asis
+raw_asm_t3=raw_asm_stats.iloc[12:23] # TODO Add conversion
+print(raw_asm_t3.to_markdown(index=False))
+```
+```{python}
+#| output: asis
+raw_asm_t4=raw_asm_stats.iloc[24:31] # TODO Add conversion
+print(raw_asm_t4.to_markdown(index=False))
+```
+
+#### Assembly k-mer completeness
+
+```{python}
+#| output: asis
+print(
+    pd.read_csv(
+        glob.glob(f"{log_path}/*-raw-default_merquryfk.completeness.stats")[0], sep="\t"
+    ).to_markdown(index=False)
+)
+```
+
+```{python}
+if "hifiasm" in multiqc.list_modules():
+    display(multiqc.get_plot("hifiasm", "HiFiasm kmer graph").show())
+```
+
+##### Assembly quality value
+
+```{python}
+#| output: asis
+print(
+    pd.read_csv(
+        glob.glob(f"{log_path}/*-raw-default_merquryfk.qv")[0], sep="\t"
+    ).to_markdown(index=False)
+)
+```
+
+<details>
+<summary>QV per scaffold</summary>
+
+```{python}
+#| output: asis
+qvs = []
+for qv_file in glob.glob(f"{log_path}/*-raw-default_merqury.*.qv"):
+    if os.path.getsize(qv_file) > 0:
+        qvs.append(
+            pd.read_csv(
+                qv_file,
+                sep="\t",
+                header=None,
+                names=[
+                    "Scaffold",
+                    "No support k-mers",
+                    "Total k-mers",
+                    "QV",
+                    "Error rate",
+                ],
+                dtype={
+                    "Scaffold": str,
+                    "No support k-mers": int,
+                    "Total k-mers": int,
+                    "QV": float,
+                    "Error rate": float,
+                },
+                na_values=["", "inf"],
+            )
+        )
+if qvs:
+    per_scaffold_qv_raw = pd.concat(qvs, ignore_index=True)
+    print(per_scaffold_qv_raw.to_markdown(index=False))
+else:
+    print("No per scaffold qv found")
+```
+
+</details>
+
+##### Copy number spectra
+
+:::: {.panel-tabset}
+
+## MerquryFK
+
+```{python}
+# TODO account for multiple assemblers
+# TODO: Add ln plot too see the relative contribution
+Image(filename=glob.glob(f"{log_path}/*-raw-default_merquryfk.*.spectra-cn.st.png")[0])
+```
+
+## Merqury
+
+```{python}
+# TODO This path will be different depending on phased or not
+Image(filename=glob.glob(f"{log_path}/*-raw-default_merqury.*.spectra-cn.st.png")[0])
+```
+
+::::
+
+##### Assembly spectra
+
+:::: {.panel-tabset}
+
+## MerquryFK
+
+```{python}
+# TODO account for multiple assemblers
+Image(filename=glob.glob(f"{log_path}/*-raw-default_merquryfk.spectra-asm.st.png")[0])
+```
+
+## Merqury
+
+```{python}
+Image(filename=glob.glob(f"{log_path}/*-raw-default_merqury.spectra-asm.st.png")[0])
+```
+
+::::
+
+##### False duplications
+
+```{python}
+#| output: asis
+print(
+    pd.read_csv(
+        glob.glob(f"{log_path}/*-raw-default_merquryfk.false_duplications.tsv")[0], sep="\t"
+    ).to_markdown(index=False)
+)
+```
+
+#### Assembly gene space completeness
+
+```{python}
+if "busco" in multiqc.list_modules():
+    for lineage in multiqc.list_plots()["busco"]:
+        display(multiqc.get_plot("busco", f"{lineage}").show())
+```
+
+### Other assemblies
+TODO for each assembly output a stats section (expandable).
+
+## Organelle detection
+
+:::::
+
+::::: {.content-visible when-meta="screen"}
+
+## Contamination Screen
+
+:::::
+
+::::: {.content-visible when-meta="purge"}
+
+## Duplication purging
+
+### Purge dups
+
+::: {.callout-note title="Interpretation" collapse="true"}
+
+X-axis (Read Depth)
+: This axis represents the read depth, which is the number of times a particular base is covered by reads. It typically starts from 0 and increases to the maximum read depth observed.
+
+Y-axis (Number of Positions)
+: This axis shows the number of positions in the assembly that have a specific read depth. Higher values indicate more positions with that particular read depth.
+
+Histogram Peaks
+: For a diploid organism, there should be a heterozgyous peak and a homozygous peak.
+
+  - **Heterozygous Peak**: The first major peak from the left usually represents the expected read depth for the heterozgyous portion of the genome, i.e., a haplotype.
+  - **Homozygous Peak**: The second major peak from the left usually represents the expected read depth for the homozygous portion, i.e.,
+  where the both alleles are the same.
+
+Cutoff Lines
+: The plot includes three vertical lines indicating coverage cutoffs. These cutoffs help distinguish between primary contigs, haplotigs, and potential contaminants or low-quality regions.
+
+  - **Low Coverage Cutoff**: Positions below this line are considered low coverage and might be errors or low-quality regions.
+  - **Haploid-Diploid Transition**: Marks the transition where average coverage denotes a heterozygous or homozygous region.
+  - **High Coverage Cutoff**: Positions above this line are considered high coverage and might indicate duplicated regions or haplotigs.
+
+Interpreting the Data
+:
+
+  - **JUNK**: Contigs with an average coverage below the low-coverage threshold.
+  - **HAPLOTIG**: Contigs with an average coverage between low coverage cutoff and the transition, that overlap with another region.
+  - **HIGHCOV**: Contigs with an average coverage above the high coverage cutoff.
+  - **REPEAT**: Repeat contig.
+  - **OVLP**: Overlap.
+
+:::
+
+```{python}
+Image(filename=glob.glob(f"{log_path}/*_purgedups_hist.png")[0])
+```
+
+```{python}
+#| output: asis
+assemblies = [ asm for asm in multiqc.list_samples() if asm.startswith("hifiasm-raw-default.asm.bp") ]
+assembly_size_mb = [ multiqc.get_module_data(module="quast",sample=f"{asm}")['Total length'] for asm in assemblies ]
+for bed in glob.glob(f"{log_path}/*-purged-*.dups.bed"):
+    dup_bed = pd.read_csv(
+        bed,
+        sep="\t",
+        names=['Contig','Start','End','Type','Partner']
+    )
+    dup_bed['Length'] = dup_bed['End'] - dup_bed['Start']
+    summary = dup_bed.groupby('Type')['Length'].sum().reset_index() # TODO Fix for multiple assemblies
+    summary['Percentage'] = summary['Length'].apply(lambda x: x * 100 / (assembly_size_mb[0] * 1000000) ).apply(lambda x: f"{x:.2f}%")
+    print(summary.to_markdown(index=False))
+```
+
+#### Assembly k-mer completeness
+
+```{python}
+#| output: asis
+print(
+    pd.read_csv(
+        glob.glob(f"{log_path}/*-purged-default_merquryfk.completeness.stats")[0], sep="\t"
+    ).to_markdown(index=False)
+)
+```
+
+##### Assembly quality value
+
+```{python}
+#| output: asis
+print(
+    pd.read_csv(
+        glob.glob(f"{log_path}/*-purged-default_merquryfk.qv")[0], sep="\t"
+    ).to_markdown(index=False)
+)
+```
+
+<details>
+<summary>QV per scaffold</summary>
+
+```{python}
+#| output: asis
+qvs = []
+for qv_file in glob.glob(f"{log_path}/*-purged-default_merqury.*.qv"):
+    if os.path.getsize(qv_file) > 0:
+        qvs.append(
+            pd.read_csv(
+                qv_file,
+                sep="\t",
+                header=None,
+                names=[
+                    "Scaffold",
+                    "No support k-mers",
+                    "Total k-mers",
+                    "QV",
+                    "Error rate",
+                ],
+                dtype={
+                    "Scaffold": str,
+                    "No support k-mers": int,
+                    "Total k-mers": int,
+                    "QV": float,
+                    "Error rate": float,
+                },
+                na_values=["", "inf"],
+            )
+        )
+if qvs:
+    per_scaffold_qv_raw = pd.concat(qvs, ignore_index=True)
+    print(per_scaffold_qv_raw.to_markdown(index=False))
+else:
+    print("No per scaffold qv found")
+```
+
+</details>
+
+##### Copy number spectra
+
+:::: {.panel-tabset}
+
+## MerquryFK
+
+```{python}
+# TODO Do we need separate for each fasta? This is combined
+Image(filename=glob.glob(f"{log_path}/*-purged-default_merquryfk.spectra-cn.st.png")[0])
+```
+
+## Merqury
+
+```{python}
+Image(filename=glob.glob(f"{log_path}/*-purged-default_merqury.spectra-cn.st.png")[0])
+```
+
+::::
+
+##### Assembly spectra
+
+:::: {.panel-tabset}
+
+## MerquryFK
+
+```{python}
+# TODO account for multiple assemblers
+Image(filename=glob.glob(f"{log_path}/*-purged-default_merquryfk.spectra-asm.st.png")[0])
+```
+
+## Merqury
+
+```{python}
+Image(filename=glob.glob(f"{log_path}/*-purged-default_merqury.spectra-asm.st.png")[0])
+```
+
+::::
+
+##### False duplications
+
+```{python}
+#| output: asis
+print(
+    pd.read_csv(
+        glob.glob(f"{log_path}/*-purged-default_merquryfk.false_duplications.tsv")[0], sep="\t"
+    ).to_markdown(index=False)
+)
+```
+
+:::::
+
+::::: {.content-visible when-meta="polish"}
+
+## Polishing
+
+:::::
+
+::::: {.content-visible when-meta="scaffold"}
+
+## Scaffolding
+
+### Pairtools
+
+```{python}
+if "pairtools" in multiqc.list_modules():
+    display(multiqc.get_plot("pairtools", "Pairs by alignment status").show())
+```
+
+```{python}
+if "pairtools" in multiqc.list_modules():
+    display(multiqc.get_plot("pairtools", "Fraction of read pairs by strand orientation").show())
+```
+
+```{python}
+if "pairtools" in multiqc.list_modules():
+    display(multiqc.get_plot("pairtools", "Pre-filtered pairs as a function of genomic separation (in detail)").show())
+```
+
+
+#### Assembly k-mer completeness
+
+```{python}
+#| output: asis
+print(
+    pd.read_csv(
+        glob.glob(f"{log_path}/*-scaffolded-default_merquryfk.completeness.stats")[0], sep="\t"
+    ).to_markdown(index=False)
+)
+```
+
+##### Assembly quality value
+
+```{python}
+#| output: asis
+print(
+    pd.read_csv(
+        glob.glob(f"{log_path}/*-scaffolded-default_merquryfk.qv")[0], sep="\t"
+    ).to_markdown(index=False)
+)
+```
+
+<details>
+<summary>QV per scaffold</summary>
+
+```{python}
+#| output: asis
+qvs = []
+for qv_file in glob.glob(f"{log_path}/*-scaffolded-default_merqury.*.qv"):
+    if os.path.getsize(qv_file) > 0:
+        qvs.append(
+            pd.read_csv(
+                qv_file,
+                sep="\t",
+                header=None,
+                names=[
+                    "Scaffold",
+                    "No support k-mers",
+                    "Total k-mers",
+                    "QV",
+                    "Error rate",
+                ],
+                dtype={
+                    "Scaffold": str,
+                    "No support k-mers": int,
+                    "Total k-mers": int,
+                    "QV": float,
+                    "Error rate": float,
+                },
+                na_values=["", "inf"],
+            )
+        )
+if qvs:
+    per_scaffold_qv_raw = pd.concat(qvs, ignore_index=True)
+    print(per_scaffold_qv_raw.to_markdown(index=False))
+else:
+    print("No per scaffold qv found")
+```
+
+</details>
+
+##### Copy number spectra
+
+:::: {.panel-tabset}
+
+## MerquryFK
+
+```{python}
+# TODO Do we need for each fasta. This is combined fastas
+Image(filename=glob.glob(f"{log_path}/*-scaffolded-default_merquryfk.spectra-cn.st.png")[0])
+```
+
+## Merqury
+
+```{python}
+Image(filename=glob.glob(f"{log_path}/*-scaffolded-default_merqury.spectra-cn.st.png")[0])
+```
+
+::::
+
+##### Assembly spectra
+
+:::: {.panel-tabset}
+
+## MerquryFK
+
+```{python}
+# TODO account for multiple assemblers
+Image(filename=glob.glob(f"{log_path}/*-scaffolded-default_merquryfk.spectra-asm.st.png")[0])
+```
+
+## Merqury
+
+```{python}
+Image(filename=glob.glob(f"{log_path}/*-scaffolded-default_merqury.spectra-asm.st.png")[0])
+```
+
+::::
+
+##### False duplications
+
+```{python}
+#| output: asis
+print(
+    pd.read_csv(
+        glob.glob(f"{log_path}/*-scaffolded-default_merquryfk.false_duplications.tsv")[0], sep="\t"
+    ).to_markdown(index=False)
+)
+```
+
+:::::
+
+::::: {.content-visible when-meta="curate"}
+
+## Curation
+
+:::::
+
+## Summary
+
+### EBP Metrics and curation notes
+
+- Table of Assembly standards
+    - Metrics flagged as red ( below EBP standards )
+- Curator notes
+- Contaminants detected
+- Other observations
+
+### Assembly pipeline
+
+- Tool version table ( Hifiasm, purge_dups, bionano, YaHS )
+
+## Curation pipeline
+
+- Tool version table ( GRIT_rapid, HiGlass )

@@ -21,14 +21,15 @@ process MERYL_COUNT {
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
+    def red_mem = task.memory.multiply(0.9).toGiga()
     """
     for READ in $reads; do
         meryl count \\
             k=$kvalue \\
             threads=$task.cpus \\
-            memory=${task.memory.toGiga()} \\
+            memory=$red_mem \\
             $args \\
-            $reads \\
+            \$READ \\
             output read.\${READ%.f*}.meryl
     done
 
