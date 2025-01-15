@@ -1,8 +1,12 @@
 image: nfcore/gitpod:latest
 
 tasks:
-  - name: Update Nextflow
-    command: nextflow self-update
+  - name: Install Pixi and update Nextflow
+    command: |
+      sudo chown gitpod -R /home/gitpod/
+      curl -fsSL https://pixi.sh/install.sh | bash
+      . /home/gitpod/.bashrc
+      nextflow self-update
 
 vscode:
   extensions: # based on nf-core.nf-core-extensionpack
