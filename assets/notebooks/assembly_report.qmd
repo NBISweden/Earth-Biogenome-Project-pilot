@@ -778,6 +778,27 @@ print(
 
 ## Curation
 
+The curation step performs the alignment of the hi-c reads against the draft assembly.
+Files are produced for the hi-C viewer HiGlass and the assembly editor Pretext view.
+
+### Manual curation
+
+Download the curation files locally (`08_rapid_curation/{higlass,pretext}/`) and the report (`10_report/`).
+
+Pretext view can be installed from [Github](https://github.com/sanger-tol/PretextView/releases) and
+HiGlass can be run using docker:
+```bash
+docker pull higlass/higlass-docker:latest
+docker run --detach \
+    --publish 8989:80 \
+    --volume 08_rapid_curation/higlass/data:/data \
+    --volume 08_rapid_curation/higlass:/tmp \
+    --name higlass-container \
+    higlass/higlass-docker:latest
+```
+
+The higlass website should now be visible at http://localhost:8989.
+
 :::::
 
 ## Summary
