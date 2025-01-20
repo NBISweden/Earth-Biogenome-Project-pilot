@@ -799,6 +799,14 @@ docker run --detach \
 
 The higlass website should now be visible at http://localhost:8989.
 
+Your Hi-C maps should have a strong signal (high density) along the diagonal and little off-diagonal (repetitive elements
+will show fairly strong off-diagonal signals).
+
+The aim is to rearrange sections in the assembly in Pretext view while using HiGlass to search for them since the resolution
+in Pretext view is much lower. You should tag contigs as Haplotigs (not part of consensus, but are an alternate allele),
+mark sex chromosomes (X,Y,W,Z), look for microchromosomes, and germline-restricted chromosomes, and so on. Contaminants may
+also still be present, and can potentially be recognised through differences in coverage.
+
 :::::
 
 ## Summary
