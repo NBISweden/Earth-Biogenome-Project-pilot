@@ -4,27 +4,27 @@ include { SAMTOOLS_INDEX  } from '../../../modules/nf-core/samtools/index/main'
 
 workflow CONVERT_FASTQ_CRAM {
     take:
-    ch_fastq        // [ Channel: [ meta, fastq ] ]
-    bool_trim_fastq // [ Boolean: Trim with Fastp ]
+    ch_fastq        // Channel: [ meta, fastq ]
+    bool_trim_fastq // Boolean: Trim with Fastp
 
     main:
     // Filter
     FASTP(
-        ch_fastq.filter{ bool_trim_fastq },
-        [],     // Adapter fasta
-        false,  // discard trimmed pass
-        false,  // save trimmed fail
-        false,  // save merged
+        ch_fastq.filter { bool_trim_fastq },
+        [],
+        false,
+        false,
+        false,
     )
 
     // Convert to cram
-    SAMTOOLS_IMPORT( ch_fastq.filter{ !bool_trim_fastq }.mix(FASTP.out.reads) )
+    SAMTOOLS_IMPORT(ch_fastq.filter { !bool_trim_fastq }.mix(FASTP.out.reads))
 
     // Index Cram
-    SAMTOOLS_INDEX( SAMTOOLS_IMPORT.out.cram )
+    SAMTOOLS_INDEX(SAMTOOLS_IMPORT.out.cram)
 
     emit:
-    trimmed_reads = FASTP.out.reads
-    cram          = SAMTOOLS_IMPORT.out.cram
-    crai          = SAMTOOLS_INDEX.out.crai
+    fastq = bool_trim_fastq ? FASTP.out.reads : ch_fastq
+    cram  = SAMTOOLS_IMPORT.out.cram
+    crai  = SAMTOOLS_INDEX.out.crai
 }
