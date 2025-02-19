@@ -74,7 +74,7 @@ workflow {
     // Read in data
     PREPARE_INPUT (
         params.input,
-        params.ncbi.taxdb
+        // params.ncbi.taxdb
     )
 
     // Build necessary databases
@@ -240,7 +240,7 @@ workflow {
     } else {
         ch_curated_assemblies = ch_to_curate
     }
-    // TODO: output needs to be defined 
+    // TODO: output needs to be defined
     //ch_curated_assemblies = ch_curated_assemblies.mix(
     //    preassembledInput( PREPARE_INPUT.out.assemblies, 'curated' )
     //).dump(tag: 'Assemblies: Curated')
