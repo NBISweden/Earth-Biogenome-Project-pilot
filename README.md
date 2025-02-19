@@ -92,7 +92,7 @@ where:
     hifiasm: # Optional, default = no extra options: Key (e.g. 'opts01') is used in assembly build name (e.g., 'hifiasm-raw-opts01').
       opts01: "--opts A"
       opts02: "--opts B"
-    busco: # Optional, default: retrieved from GOAT
+    busco: # Optional, default: retrieved by GOAT_TAXONSEARCH
       lineages: 'auto' # comma separated string of lineages or auto.
     ```
 
@@ -132,11 +132,13 @@ Mandatory:
     ```yml
     sample:                          # Required: Meta data
       name: 'Laetiporus sulphureus'  # Required: Species name. Correct spelling is important to look up species information.
-      ploidy: 2                      # Optional: Estimated ploidy (default: retrieved from GOAT)
-      genome_size: 2345              # Optional: Estimated genome size (default: retrieved from GOAT)
-      haploid_number: 13             # Optional: Estimated haploid chromosome count (default: retrieved from GOAT)
-      taxid: 5630                    # Optional: Taxon ID (default: retrieved with Taxonkit)
-      kingdom: Eukaryota             # Optional: (default: retrived with Taxonkit)
+      ploidy: 2                      # Optional: Estimated ploidy (default: retrieved by GOAT_TAXONSEARCH)
+      genome_size: 2345              # Optional: Estimated genome size (default: retrieved by GOAT_TAXONSEARCH)
+      haploid_number: 13             # Optional: Estimated haploid chromosome count (default: retrieved by GOAT_TAXONSEARCH)
+      tax_id: 5630                   # Optional: Taxon ID (default: retrieved by ENA_TAXQUERY)
+      genetic_code: 1                # Optional: Genetic code (default: retrieved by ENA_TAXQUERY)
+      mito_code: 1                   # Optional: Mitochondrial genetic code (default: retrieved by ENA_TAXQUERY)
+      domain: Eukaryota              # Optional: (default: retrived by ENA_TAXQUERY)
     assembly:                        # Optional: List of assemblies to curate and validate.
       - assembler: hifiasm           # For each entry, the assembler,
         stage: raw                   # stage of assembly,
@@ -161,7 +163,6 @@ Mandatory:
     isoseq:                          # Optional: List of Isoseq reads to use for validation
       - reads: '/path/to/raw/data/isoseq/LS_ISOSEQ_R001.bam'
     ```
-
 
 Optional:
 
