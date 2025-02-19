@@ -20,6 +20,7 @@ workflow ASSEMBLE_ORGANELLES {
             input: [ meta, assembly.pri_fasta ]
             reference: mitofa
             genbank: mitogb
+            mito_code: meta.sample.mito_code
         }
     MITOHIFI_MITOHIFI(
         mitohifi_ch.input,
