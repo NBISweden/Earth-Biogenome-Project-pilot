@@ -24,8 +24,8 @@ Current implementation:
 flowchart TD
     input[/ Input file/] --> hifi
     input --> hic
-    input --> taxonkit[[ TaxonKit name2taxid/reformat ]]
-    taxonkit --> goat_taxon[[ GOAT taxon search ]]
+    input --> taxquery[[ ENA taxonomic query ]]
+    taxquery --> goat_taxon[[ GOAT taxon search ]]
     goat_taxon --> busco
     goat_taxon --> dtol[[ DToL lookup ]]
     hifi --> samtools_fa[[ Samtools fasta ]]
