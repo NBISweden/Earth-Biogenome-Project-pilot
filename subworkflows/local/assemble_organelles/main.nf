@@ -27,7 +27,7 @@ workflow ASSEMBLE_ORGANELLES {
         mitohifi_ch.reference,
         mitohifi_ch.genbank,
         'c',
-        params.mitohifi.code
+        mitohifi_ch.mito_code,
     )
 
     emit:

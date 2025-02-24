@@ -18,7 +18,7 @@ workflow ASSEMBLY_REPORT {
 
     main:
     // DTOL table
-    REPORT_DTOL( TOL_SEARCH( notebook.map{ meta, notebook -> meta.sample.taxid } ).json )
+    REPORT_DTOL( TOL_SEARCH( notebook.map{ meta, notebook -> meta.sample.tax_id } ).json )
 
     // Genome traits table
         // Expected vs Observed
