@@ -122,7 +122,7 @@ workflow {
     } else {
         // Nothing more than evaluate
     }
-    ch_raw_assemblies.dump(tag: 'Assemblies: Raw')
+    ch_raw_assemblies.dump(tag: 'Assemblies: Raw', pretty: true)
 
     // Organelle assembly
     if ( params.organelle_assembly_mode == 'reads' ) {
@@ -149,7 +149,7 @@ workflow {
     ch_to_screen = setAssemblyStage (
         ch_raw_assemblies,
         'decontaminated' // Set assembly stage now for filenaming
-    ).dump(tag: 'Assemblies: to screen')
+    ).dump(tag: 'Assemblies: to screen', pretty: true)
     if ( 'screen' in workflow_steps ) {
         DECONTAMINATE( ch_to_screen )
         ch_cleaned_assemblies = DECONTAMINATE.out.assemblies
@@ -158,13 +158,13 @@ workflow {
     }
     ch_cleaned_assemblies = ch_cleaned_assemblies.mix (
         preassembledInput( PREPARE_INPUT.out.assemblies, 'decontaminated' )
-    ).dump(tag: 'Assemblies: Cleaned')
+    ).dump(tag: 'Assemblies: Cleaned', pretty: true)
 
     // Purge duplicates
     ch_to_purge = setAssemblyStage (
         ch_cleaned_assemblies,
         'purged' // Set assembly stage now for filenaming
-    ).dump(tag: 'Assemblies: to purge')
+    ).dump(tag: 'Assemblies: to purge', pretty: true)
     if ( 'purge' in workflow_steps ) {
         PURGE_DUPLICATES (
             ch_to_purge,
@@ -178,7 +178,7 @@ workflow {
     }
     ch_purged_assemblies = ch_purged_assemblies.mix(
         preassembledInput( PREPARE_INPUT.out.assemblies, 'purged' )
-    ).dump(tag: 'Assemblies: Purged')
+    ).dump(tag: 'Assemblies: Purged', pretty: true)
     EVALUATE_PURGED_ASSEMBLY (
         ch_purged_assemblies,
         BUILD_FASTK_HIFI_DATABASE.out.fastk_hist_ktab,
@@ -191,7 +191,7 @@ workflow {
     ch_to_polish = setAssemblyStage (
         ch_purged_assemblies,
         'polished' // Set assembly stage now for filenaming
-    ).dump(tag: 'Assemblies: to polish')
+    ).dump(tag: 'Assemblies: to polish', pretty: true)
     if ( 'polish' in workflow_steps ) {
         // Run polishers
         ch_polished_assemblies = ch_to_polish
@@ -200,13 +200,13 @@ workflow {
     }
     ch_polished_assemblies = ch_polished_assemblies.mix(
         preassembledInput( PREPARE_INPUT.out.assemblies, 'polished' )
-    ).dump(tag: 'Assemblies: Polished')
+    ).dump(tag: 'Assemblies: Polished', pretty: true)
 
     // Scaffold
     ch_to_scaffold = setAssemblyStage (
         ch_polished_assemblies,
         'scaffolded' // Set assembly stage now for filenaming
-    ).dump(tag: 'Assemblies: to scaffold')
+    ).dump(tag: 'Assemblies: to scaffold', pretty: true)
     if ( 'scaffold' in workflow_steps ) {
         SCAFFOLD (
             ch_to_scaffold,
@@ -220,7 +220,7 @@ workflow {
     }
     ch_scaffolded_assemblies = ch_scaffolded_assemblies.mix(
         preassembledInput( PREPARE_INPUT.out.assemblies, 'scaffolded' )
-    ).dump(tag: 'Assemblies: Scaffolded')
+    ).dump(tag: 'Assemblies: Scaffolded', pretty: true)
     EVALUATE_SCAFFOLDED_ASSEMBLY (
         ch_scaffolded_assemblies,
         BUILD_FASTK_HIFI_DATABASE.out.fastk_hist_ktab,
@@ -233,7 +233,7 @@ workflow {
     ch_to_curate = setAssemblyStage (
         ch_scaffolded_assemblies,
         'curated' // Set assembly stage now for filenaming
-    ).dump(tag: 'Assemblies: to curate')
+    ).dump(tag: 'Assemblies: to curate', pretty: true)
     if ( 'curate' in workflow_steps ) {
         SCAFFOLD_CURATION (
             ch_scaffolded_assemblies,

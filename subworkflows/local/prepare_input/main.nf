@@ -190,12 +190,12 @@ workflow PREPARE_INPUT {
 
     emit:
     sample_meta = FETCH_SAMPLE_METADATA.out.metadata.map { data -> data.subMap('sample') }
-    assemblies  = assembly_ch.dump( tag: 'Input: Assemblies' )
-    hic         = hic_fastx_ch.dump( tag: 'Input: Hi-C' )
-    hifi        = hifi_fastx_ch.dump( tag: 'Input: PacBio HiFi' )
+    assemblies  = assembly_ch.dump( tag: 'Input: Assemblies', pretty: true )
+    hic         = hic_fastx_ch.dump( tag: 'Input: Hi-C', pretty: true )
+    hifi        = hifi_fastx_ch.dump( tag: 'Input: PacBio HiFi', pretty: true )
     hifi_merged = sample_fastx.single.mix( MERGE_PACBIO.out.file_out )
-    rnaseq      = rnaseq_fastx_ch.dump( tag: 'Input: Illumina RnaSeq' )
-    isoseq      = isoseq_fastx_ch.dump( tag: 'Input: PacBio IsoSeq' )
+    rnaseq      = rnaseq_fastx_ch.dump( tag: 'Input: Illumina RnaSeq', pretty: true )
+    isoseq      = isoseq_fastx_ch.dump( tag: 'Input: PacBio IsoSeq', pretty: true )
 }
 
 def readYAML( yamlfile ) {
