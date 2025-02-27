@@ -58,7 +58,7 @@ workflow ASSEMBLY_REPORT {
 
     QUARTO_NOTEBOOK(
         notebook.collect(),
-        mqc_files.collect().dump(tag:'MultiQC'),
+        mqc_files.collect().dump(tag:'MultiQC', pretty: true),
         Channel.value(executed_steps.collect{ k, v -> "$k: ${v}" }.join('\n')).collectFile(),
     )
     // MULTIQC(

@@ -52,7 +52,7 @@ workflow EVALUATE_ASSEMBLY {
                 [ [ meta, asm, 'auto' ] ]
             }
         }
-        .dump(tag: 'BUSCO')
+        .dump(tag: 'BUSCO', pretty: true)
         .multiMap { meta, asm, line ->
             assembly_ch: [ meta, asm ]
             lineage_ch: line
