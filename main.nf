@@ -11,6 +11,8 @@ include { BUILD_FASTK_DATABASE as BUILD_FASTK_HIC_DATABASE  } from "$projectDir/
 include { BUILD_MERYL_DATABASE as BUILD_MERYL_HIFI_DATABASE } from "$projectDir/subworkflows/local/build_meryl_database/main"
 include { BUILD_MERYL_DATABASE as BUILD_MERYL_HIC_DATABASE  } from "$projectDir/subworkflows/local/build_meryl_database/main"
 
+include { CONVERT_FASTQ_CRAM } from "$projectDir/subworkflows/local/convert_fastq_cram/main"
+
 include { INSPECT_DATA } from "$projectDir/subworkflows/local/inspect_data/main"
 
 include { ASSEMBLE                                   } from "$projectDir/subworkflows/local/assemble/main"
@@ -79,11 +81,13 @@ workflow {
 
     // Build necessary databases
     if ( ['inspect','preprocess','assemble','purge','polish','screen','scaffold','curate'].any{ it in workflow_steps}) {
+        // Create and trim
+        CONVERT_FASTQ_CRAM ( PREPARE_INPUT.out.hic, params.hic_type.startsWith('arima') )
         // TODO: Migrate back to Meryl. Genome inspection missing KATGC and PLOIDYPLOT for meryldb
         BUILD_FASTK_HIFI_DATABASE ( PREPARE_INPUT.out.hifi )
-        BUILD_FASTK_HIC_DATABASE ( PREPARE_INPUT.out.hic )
+        BUILD_FASTK_HIC_DATABASE ( CONVERT_FASTQ_CRAM.out.fastq )
         BUILD_MERYL_HIFI_DATABASE ( PREPARE_INPUT.out.hifi )
-        BUILD_MERYL_HIC_DATABASE ( PREPARE_INPUT.out.hic )
+        BUILD_MERYL_HIC_DATABASE ( CONVERT_FASTQ_CRAM.out.fastq )
     }
 
     // Data inspection
