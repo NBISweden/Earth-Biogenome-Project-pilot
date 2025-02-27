@@ -60,6 +60,12 @@ workflow FETCH_SAMPLE_METADATA {
                         settings: [ busco: [ lineages: params.busco.lineages?: busco_lineages ] ]
                     ]
                 )
+            } else {
+                updated_metadata = updated_metadata.deepMerge(
+                    [
+                        settings: [ busco: [ lineages: params.busco.lineages ] ]
+                    ]
+                )
             }
             updated_metadata
         }
