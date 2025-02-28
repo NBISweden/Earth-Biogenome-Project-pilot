@@ -11,5 +11,5 @@ process TOL_SEARCH {
     exec:
     def args = task.ext.args ?: ''
     def response = new URL("https://id.tol.sanger.ac.uk/api/v2/species?taxonomyId=$taxid").text
-    json = new HashMap(new groovy.json.JsonSlurper().parseText(response)) // Otherwise returns a LazyMap which causes caching problems.
+    json = new java.util.concurrent.ConcurrentHashMap(new groovy.json.JsonSlurper().parseText(response)) // Otherwise returns a LazyMap which causes caching problems.
 }
