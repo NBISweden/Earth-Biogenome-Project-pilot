@@ -12,7 +12,7 @@ process PAIRTOOLS_SPLIT {
     input:
     tuple val(meta), path(pairs)
     tuple val(meta), path(fasta)
-    val   sort_bam 
+    val   sort_bam
 
     output:
     tuple val(meta), path("*.split.pairs.gz"), emit:pairs
@@ -21,9 +21,6 @@ process PAIRTOOLS_SPLIT {
     tuple val(meta), path("*.crai")          , emit: crai, optional:true
     tuple val(meta), path("*.csi")           , emit: csi , optional:true
     path("versions.yml")                     , emit:versions
-
-    when:
-    task.ext.when == null || task.ext.when
 
     script:
     def args = task.ext.args ?: ''

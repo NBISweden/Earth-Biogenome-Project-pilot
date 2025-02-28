@@ -16,9 +16,6 @@ process FCSGX_CLEAN {
     tuple val(meta), path("*.contaminants.fasta"), emit: contaminants_fasta
     path "versions.yml"                          , emit: versions
 
-    when:
-    task.ext.when == null || task.ext.when
-
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"

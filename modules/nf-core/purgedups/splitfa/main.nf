@@ -15,9 +15,6 @@ process PURGEDUPS_SPLITFA {
     tuple val(meta), path("*.merged.fasta.gz"), emit: merged_fasta
     path "versions.yml"                       , emit: versions
 
-    when:
-    task.ext.when == null || task.ext.when
-
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"

@@ -26,9 +26,6 @@ process BUSCO {
     tuple val(meta), path("*-busco")                                  , emit: busco_dir
     path "versions.yml"                                               , emit: versions
 
-    when:
-    task.ext.when == null || task.ext.when
-
     script:
     if ( mode !in [ 'genome', 'proteins', 'transcriptome' ] ) {
         error "Mode must be one of 'genome', 'proteins', or 'transcriptome'."

@@ -34,9 +34,6 @@ process STAR_ALIGN {
     tuple val(meta), path('*.wig')                   , optional:true, emit: wig
     tuple val(meta), path('*.bg')                    , optional:true, emit: bedgraph
 
-    when:
-    task.ext.when == null || task.ext.when
-
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"

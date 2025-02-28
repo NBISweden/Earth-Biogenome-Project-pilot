@@ -8,9 +8,6 @@ process REPORT_DTOL {
     output:
     path "DToL.tsv", emit: tsv
 
-    when:
-    task.ext.when == null || task.ext.when
-
     exec:
     def tol_table = []
     tol_table << "ToL ID\tSpecies\tClass\tOrder"

@@ -14,9 +14,6 @@ process TIDK_PLOT {
     tuple val(meta), path("*.svg"), emit: svg
     path "versions.yml"           , emit: versions
 
-    when:
-    task.ext.when == null || task.ext.when
-
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"

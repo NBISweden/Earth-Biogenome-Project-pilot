@@ -12,16 +12,13 @@ process CREATE_TELOMER_BIGWIG_TRACK {
     tuple val(meta), path("*_telomer.bw"), emit: bw
     path "versions.yml"                  , emit: versions
 
-    when:
-    task.ext.when == null || task.ext.when
-
     script:
     def args   = task.ext.args ?: ''
     def args2  = task.ext.args2 ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    
+
     """
-    sort -k1,1V -k2,2n -k3,3n ${args} ${bedgraph} > ${bedgraph}_sorted.bedgraph 
+    sort -k1,1V -k2,2n -k3,3n ${args} ${bedgraph} > ${bedgraph}_sorted.bedgraph
     bedGraphToBigWig ${bedgraph}_sorted.bedgraph ${chrom_sizes} ${prefix}_telomer.bw;
 
 

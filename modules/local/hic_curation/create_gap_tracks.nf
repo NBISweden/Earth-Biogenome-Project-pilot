@@ -11,11 +11,7 @@ process CREATE_GAP_TRACKS {
     output:
     tuple val(meta), path("*_gaps.bedgraph")           , emit: bedgraph
     tuple val(meta), path("*_gaps.bedgraph.beddb")     , emit: beddb
-
-    path "versions.yml"              , emit: versions
-
-    when:
-    task.ext.when == null || task.ext.when
+    path "versions.yml"                                , emit: versions
 
     script:
     def args = task.ext.args ?: ''

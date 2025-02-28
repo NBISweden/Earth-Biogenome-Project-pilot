@@ -12,9 +12,6 @@ process FASTK_HISTEX {
     tuple val(meta), path("*.hist"), emit: hist
     path "versions.yml"            , emit: versions
 
-    when:
-    task.ext.when == null || task.ext.when
-
     script:
     // Exit if running this module with -profile conda / -profile mamba
     if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
