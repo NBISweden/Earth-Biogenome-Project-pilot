@@ -19,7 +19,6 @@ workflow ASSEMBLY_REPORT {
     main:
     // DTOL table
     REPORT_DTOL( TOL_SEARCH( notebook.map{ meta, notebook ->
-        println "In TOL_SEARCH map"
         meta.sample.tax_id
     } ).json )
 
