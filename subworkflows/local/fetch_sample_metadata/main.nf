@@ -79,11 +79,11 @@ workflow FETCH_SAMPLE_METADATA {
 
 def printClass( obj ){
     if ( obj instanceof Map ) {
-        obj.every { key, value ->
+        obj.each { key, value ->
             printClass(value)
         }
     } else if ( obj instanceof List ){
-        obj.every { value ->
+        obj.each { value ->
             printClass(value)
         }
     }
