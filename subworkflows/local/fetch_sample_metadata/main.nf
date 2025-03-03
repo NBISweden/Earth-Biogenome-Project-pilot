@@ -69,7 +69,19 @@ workflow FETCH_SAMPLE_METADATA {
             }
             updated_metadata
         }
+        .view { data ->
+            printClass(data)
+        }
 
     emit:
     metadata = ch_metadata
+}
+
+def printClass( obj ){
+    if ( obj instanceof Map || obj instanceof List ){
+        obj.every { element ->
+            printClass(element)
+        }
+    }
+    println "Check class: ${obj.getClass()} =|${obj}|"
 }
