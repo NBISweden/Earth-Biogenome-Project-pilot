@@ -78,9 +78,13 @@ workflow FETCH_SAMPLE_METADATA {
 }
 
 def printClass( obj ){
-    if ( obj instanceof Map || obj instanceof List ){
-        obj.every { element ->
-            printClass(element)
+    if ( obj instanceof Map ) {
+        obj.every { key, value ->
+            printClass(value)
+        }
+    } else if ( obj instanceof List ){
+        obj.every { value ->
+            printClass(value)
         }
     }
     println "Check class: ${obj.getClass()} =|${obj}|"
