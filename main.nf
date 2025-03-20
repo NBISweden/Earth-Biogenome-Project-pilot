@@ -210,7 +210,7 @@ workflow {
     if ( 'scaffold' in workflow_steps ) {
         SCAFFOLD (
             ch_to_scaffold,
-            PREPARE_INPUT.out.hic
+            CONVERT_FASTQ_CRAM.out.fastq
         )
         ch_scaffolded_assemblies = SCAFFOLD.out.assemblies
         ch_multiqc_files = ch_multiqc_files.mix( SCAFFOLD.out.logs )
@@ -237,7 +237,7 @@ workflow {
     if ( 'curate' in workflow_steps ) {
         SCAFFOLD_CURATION (
             ch_scaffolded_assemblies,
-            PREPARE_INPUT.out.hic,
+            CONVERT_FASTQ_CRAM.out.fastq,
             PREPARE_INPUT.out.hifi
         )
         ch_versions = ch_versions.mix( SCAFFOLD_CURATION.out.versions )
