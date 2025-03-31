@@ -1,5 +1,5 @@
 process REPORT_DTOL {
-    tag "${tol_search_json.species[0].scientificName}"
+    tag "${tol_search_json.species}"
     label 'process_single'
 
     input:
@@ -15,10 +15,10 @@ process REPORT_DTOL {
     def tol_table = []
     tol_table << "ToL ID\tSpecies\tClass\tOrder"
     tol_table << [
-        tol_search_json.species[0].tolIds[0]?.tolId?: "No ToL ID",
-        tol_search_json.species[0].scientificName,
-        tol_search_json.species[0].taxaClass,
-        tol_search_json.species[0].order
+        tol_search_json.tol_id,
+        tol_search_json.species,
+        tol_search_json.class,
+        tol_search_json.order
     ].join("\t")
     file("$task.workDir/DToL.tsv").text = tol_table.join('\n')
 }
