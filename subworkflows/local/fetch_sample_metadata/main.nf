@@ -50,7 +50,7 @@ workflow FETCH_SAMPLE_METADATA {
                     .findAll { row -> row.odb10_lineage }
                     .collect { row -> row.odb10_lineage }
                     .join(',')
-                updated_metadata = updated_metadata.deepMerge(
+                updated_metadata = input.deepMerge(
                     [
                         sample: [
                             genome_size: input.sample.genome_size ?: species.genome_size,
@@ -61,7 +61,7 @@ workflow FETCH_SAMPLE_METADATA {
                     ]
                 )
             } else {
-                updated_metadata = updated_metadata.deepMerge(
+                updated_metadata = input.deepMerge(
                     [
                         settings: [ busco: [ lineages: params.busco.lineages ] ]
                     ]
