@@ -148,7 +148,7 @@ if "fastqc" in multiqc.list_modules():
 * Do our libraries have similar data content?
 ```{python}
 if glob.glob(f"{log_path}/*_katcomp.st.png"):
-    Image(filename=glob.glob(f"{log_path}/*_katcomp.st.png")[0])
+    display(Image(filename=glob.glob(f"{log_path}/*_katcomp.st.png")[0]))
 else:
     print("Stacked Kat Comp plot not available")
 ```
@@ -234,7 +234,7 @@ Does the smudgeplot indicate the expected ploidy?
 
 ```{python}
 if glob.glob(f"{log_path}/*_ploidyplot.st.png"):
-    Image(filename=glob.glob(f"{log_path}/*_ploidyplot.st.png")[0])
+    display(Image(filename=glob.glob(f"{log_path}/*_ploidyplot.st.png")[0]))
 else:
     print("Ploidyplot not available")
 ```
@@ -416,7 +416,7 @@ else:
 # TODO account for multiple assemblers
 # TODO: Add ln plot too see the relative contribution
 if glob.glob(f"{log_path}/*-raw-default_merquryfk.*.spectra-cn.st.png"):
-    Image(filename=glob.glob(f"{log_path}/*-raw-default_merquryfk.*.spectra-cn.st.png")[0])
+    display(Image(filename=glob.glob(f"{log_path}/*-raw-default_merquryfk.*.spectra-cn.st.png")[0]))
 else:
     print("Raw Assembly MerquryFK copy number spectra not available")
 ```
@@ -426,7 +426,7 @@ else:
 ```{python}
 # TODO This path will be different depending on phased or not
 if glob.glob(f"{log_path}/*-raw-default_merqury.*.spectra-cn.st.png"):
-    Image(filename=glob.glob(f"{log_path}/*-raw-default_merqury.*.spectra-cn.st.png")[0])
+    display(Image(filename=glob.glob(f"{log_path}/*-raw-default_merqury.*.spectra-cn.st.png")[0]))
 else:
     print("Raw Assembly Merqury copy number spectra not available")
 ```
@@ -442,7 +442,7 @@ else:
 ```{python}
 # TODO account for multiple assemblers
 if glob.glob(f"{log_path}/*-raw-default_merquryfk.spectra-asm.st.png"):
-    Image(filename=glob.glob(f"{log_path}/*-raw-default_merquryfk.spectra-asm.st.png")[0])
+    display(Image(filename=glob.glob(f"{log_path}/*-raw-default_merquryfk.spectra-asm.st.png")[0]))
 else:
     print("Raw Assembly MerquryFK spectra not available")
 ```
@@ -451,7 +451,7 @@ else:
 
 ```{python}
 if glob.glob(f"{log_path}/*-raw-default_merqury.spectra-asm.st.png"):
-    Image(filename=glob.glob(f"{log_path}/*-raw-default_merqury.spectra-asm.st.png")[0])
+    display(Image(filename=glob.glob(f"{log_path}/*-raw-default_merqury.spectra-asm.st.png")[0]))
 else:
     print("Raw Merqury Assembly spectra not available")
 ```
@@ -534,7 +534,7 @@ Interpreting the Data
 
 ```{python}
 if glob.glob(f"{log_path}/*_purgedups_hist.png"):
-    Image(filename=glob.glob(f"{log_path}/*_purgedups_hist.png")[0])
+    display(Image(filename=glob.glob(f"{log_path}/*_purgedups_hist.png")[0]))
 else:
     print("Purge dups histogram not available")
 ```
@@ -631,7 +631,7 @@ else:
 ```{python}
 # TODO Do we need separate for each fasta? This is combined
 if glob.glob(f"{log_path}/*-purged-default_merquryfk.spectra-cn.st.png"):
-    Image(filename=glob.glob(f"{log_path}/*-purged-default_merquryfk.spectra-cn.st.png")[0])
+    display(Image(filename=glob.glob(f"{log_path}/*-purged-default_merquryfk.spectra-cn.st.png")[0]))
 else:
     print("Purged Assembly MerquryFK copy number plot not available")
 ```
@@ -640,7 +640,7 @@ else:
 
 ```{python}
 if glob.glob(f"{log_path}/*-purged-default_merqury.spectra-cn.st.png"):
-    Image(filename=glob.glob(f"{log_path}/*-purged-default_merqury.spectra-cn.st.png")[0])
+    display(Image(filename=glob.glob(f"{log_path}/*-purged-default_merqury.spectra-cn.st.png")[0]))
 else:
     print("Purged Assembly Merqury copy number plot not available")
 ```
@@ -656,7 +656,7 @@ else:
 ```{python}
 # TODO account for multiple assemblers
 if glob.glob(f"{log_path}/*-purged-default_merquryfk.spectra-asm.st.png"):
-    Image(filename=glob.glob(f"{log_path}/*-purged-default_merquryfk.spectra-asm.st.png")[0])
+    display(Image(filename=glob.glob(f"{log_path}/*-purged-default_merquryfk.spectra-asm.st.png")[0]))
 else:
     print("Purged Assembly MerquryFK assembly spectra not available")
 ```
@@ -665,7 +665,7 @@ else:
 
 ```{python}
 if glob.glob(f"{log_path}/*-purged-default_merqury.spectra-asm.st.png"):
-    Image(filename=glob.glob(f"{log_path}/*-purged-default_merqury.spectra-asm.st.png")[0])
+    display(Image(filename=glob.glob(f"{log_path}/*-purged-default_merqury.spectra-asm.st.png")[0]))
 else:
     print("Purged Assembly Merqury assembly spectra plot not available")
 ```
@@ -792,7 +792,7 @@ else:
 ```{python}
 # TODO Do we need for each fasta. This is combined fastas
 if glob.glob(f"{log_path}/*-scaffolded-default_merquryfk.spectra-cn.st.png"):
-    Image(filename=glob.glob(f"{log_path}/*-scaffolded-default_merquryfk.spectra-cn.st.png")[0])
+    display(Image(filename=glob.glob(f"{log_path}/*-scaffolded-default_merquryfk.spectra-cn.st.png")[0]))
 else:
     print("Scaffolded Assembly MerquryFK copy spectra not available")
 ```
@@ -801,7 +801,7 @@ else:
 
 ```{python}
 if glob.glob(f"{log_path}/*-scaffolded-default_merqury.spectra-cn.st.png"):
-    Image(filename=glob.glob(f"{log_path}/*-scaffolded-default_merqury.spectra-cn.st.png")[0])
+    display(Image(filename=glob.glob(f"{log_path}/*-scaffolded-default_merqury.spectra-cn.st.png")[0]))
 else:
     print("Scaffolded Assembly Merqury copy spectra not available")
 ```
@@ -817,7 +817,7 @@ else:
 ```{python}
 # TODO account for multiple assemblers
 if glob.glob(f"{log_path}/*-scaffolded-default_merquryfk.spectra-asm.st.png"):
-    Image(filename=glob.glob(f"{log_path}/*-scaffolded-default_merquryfk.spectra-asm.st.png")[0])
+    display(Image(filename=glob.glob(f"{log_path}/*-scaffolded-default_merquryfk.spectra-asm.st.png")[0]))
 else:
     print("Scaffold Assembly MerquryFK assembly spectra not available")
 ```
@@ -826,7 +826,7 @@ else:
 
 ```{python}
 if glob.glob(f"{log_path}/*-scaffolded-default_merqury.spectra-asm.st.png"):
-    Image(filename=glob.glob(f"{log_path}/*-scaffolded-default_merqury.spectra-asm.st.png")[0])
+    display(Image(filename=glob.glob(f"{log_path}/*-scaffolded-default_merqury.spectra-asm.st.png")[0]))
 else:
     print("Scaffolded Assembly Merqury assembly spectra not available")
 ```
