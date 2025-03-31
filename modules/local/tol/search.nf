@@ -5,9 +5,6 @@ process TOL_SEARCH {
     input:
     val taxid
 
-    when:
-    task.ext.when == null || task.ext.when
-
     exec:
     def args = task.ext.args ?: ''
     def response = new URL("https://id.tol.sanger.ac.uk/api/v2/species?taxonomyId=$taxid").text
@@ -18,7 +15,7 @@ process TOL_SEARCH {
         class:   lazy_json.species[0]['taxaClass'],
         order:   lazy_json.species[0]['order'],
     ]
-
+    
     output:
     val json, emit: json
 }

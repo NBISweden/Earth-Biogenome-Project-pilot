@@ -8,8 +8,6 @@ process REPORT_DTOL {
     output:
     path "DToL.tsv", emit: tsv
 
-
-
     exec:
     def tol_table = []
     tol_table << "ToL ID\tSpecies\tClass\tOrder"
