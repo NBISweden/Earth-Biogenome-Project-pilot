@@ -42,13 +42,13 @@ workflow ASSEMBLE_HIFI {
         }
         GFASTATS(
             fasta_ch.fasta,
-            "fasta",              // output format
+            [],                   // output format: none
             fasta_ch.genome_size, // genome size
             "",                   // target
-            [],                   // AGP file
-            [],                   // include bed
-            [],                   // exclude bed
-            []                    // SAK instructions
+            [[],[]],              // AGP file
+            [[],[]],              // include bed
+            [[],[]],              // exclude bed
+            [[],[]]               // SAK instructions
         )
 
     gfa_ch = params.use_phased ?
