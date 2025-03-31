@@ -14,8 +14,7 @@ process RACON {
     tuple val(meta), path('*_assembly_consensus.fasta.gz') , emit: improved_assembly
     path "versions.yml"          , emit: versions
 
-    when:
-    task.ext.when == null || task.ext.when
+
 
     script:
     def args = task.ext.args ?: ''

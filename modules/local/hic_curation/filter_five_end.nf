@@ -11,14 +11,13 @@ process FILTER_FIVE_END {
     tuple val(meta), path("*.bam")  , emit: bam
     path "versions.yml"             , emit: versions
 
-    when:
-    task.ext.when == null || task.ext.when
+
 
     script:
     def args = task.ext.args ?: ''
     def args2 = task.ext.args2 ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    
+
     """
     samtools view -h -@ $task.cpus ${bam} | \\
     perl ${projectDir}/bin/filter_five_end.pl | \\

@@ -17,8 +17,7 @@ process MERQURYFK_KATCOMP {
     tuple val(meta), path("*.st.pdf"), emit: stacked_pdf, optional: true
     path "versions.yml"              , emit: versions
 
-    when:
-    task.ext.when == null || task.ext.when
+
 
     script:
     // Exit if running this module with -profile conda / -profile mamba

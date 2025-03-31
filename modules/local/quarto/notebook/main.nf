@@ -18,8 +18,7 @@ process QUARTO_NOTEBOOK {
     path "multiqc*.html" , arity: '1', emit: multiqc_summary
     path "versions.yml"  , arity: '1', emit: versions
 
-    when:
-    task.ext.when == null || task.ext.when
+
 
     script:
     def args = task.ext.args ?: ''

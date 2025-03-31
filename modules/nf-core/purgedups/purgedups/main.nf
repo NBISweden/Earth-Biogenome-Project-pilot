@@ -15,8 +15,7 @@ process PURGEDUPS_PURGEDUPS {
     tuple val(meta), path("*.purge_dups.log"), emit: log
     path "versions.yml"                      , emit: versions
 
-    when:
-    task.ext.when == null || task.ext.when
+
 
     script:
     def args = task.ext.args ?: ''

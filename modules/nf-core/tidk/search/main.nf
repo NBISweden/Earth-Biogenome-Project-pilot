@@ -16,8 +16,7 @@ process TIDK_SEARCH {
     tuple val(meta), path("*.bedgraph")     , emit: bedgraph    , optional: true
     path "versions.yml"                     , emit: versions
 
-    when:
-    task.ext.when == null || task.ext.when
+
 
     script:
     def args = task.ext.args ?: ''

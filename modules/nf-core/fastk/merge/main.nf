@@ -14,8 +14,7 @@ process FASTK_MERGE {
     tuple val(meta), path("*.{prof,pidx}*", hidden: true), emit: prof, optional: true
     path "versions.yml"                                  , emit: versions
 
-    when:
-    task.ext.when == null || task.ext.when
+
 
     script:
     // Exit if running this module with -profile conda / -profile mamba

@@ -12,8 +12,7 @@ process CREATE_CHROMOSOME_SIZES_FILE {
     tuple val(meta), path("*.sizes")  , emit: sizes
     path "versions.yml"               , emit: versions
 
-    when:
-    task.ext.when == null || task.ext.when
+
 
     script:
     // def args = task.ext.args ?: ''

@@ -28,8 +28,7 @@ process MERQURY {
     tuple val(meta), path("*.hist.ploidy")       , emit: read_ploidy
     path "versions.yml"                          , emit: versions
 
-    when:
-    task.ext.when == null || task.ext.when
+
 
     script:
     // def args = task.ext.args ?: ''

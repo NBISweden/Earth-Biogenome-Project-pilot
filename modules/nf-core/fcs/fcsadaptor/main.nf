@@ -18,8 +18,7 @@ process FCS_FCSADAPTOR {
     tuple val(meta), path("*.skipped_trims.jsonl")    , emit: skipped_trims
     path "versions.yml"                               , emit: versions
 
-    when:
-    task.ext.when == null || task.ext.when
+
 
     script:
     // Exit if running this module with -profile conda / -profile mamba

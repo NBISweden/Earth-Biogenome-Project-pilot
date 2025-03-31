@@ -18,8 +18,7 @@ process GENESCOPEFK {
     tuple val(meta), env(KMERCOV)                                 , emit: kmer_cov
     path "versions.yml"                                           , emit: versions
 
-    when:
-    task.ext.when == null || task.ext.when
+
 
     script:
     // Exit if running this module with -profile conda / -profile mamba

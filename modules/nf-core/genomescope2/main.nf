@@ -21,8 +21,7 @@ process GENOMESCOPE2 {
     tuple val(meta), path("${prefix}_fitted_hist.png")            , emit: fitted_histogram_png, optional: true
     path "versions.yml"                                           , emit: versions
 
-    when:
-    task.ext.when == null || task.ext.when
+
 
     script:
     def args = task.ext.args ?: ''

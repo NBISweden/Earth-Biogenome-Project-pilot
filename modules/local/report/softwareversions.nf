@@ -8,8 +8,7 @@ process REPORT_SOFTWAREVERSIONS {
     output:
     path "versions_mqc.yml", emit: yml
 
-    when:
-    task.ext.when == null || task.ext.when
+
 
     exec:
     def versions_yml = versions_list.collect { vf ->

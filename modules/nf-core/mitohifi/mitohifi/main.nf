@@ -32,8 +32,7 @@ process MITOHIFI_MITOHIFI {
     tuple val(meta), path("*shared_genes.tsv")               , emit: shared_genes, optional: true
     path  "versions.yml"                                     , emit: versions
 
-    when:
-    task.ext.when == null || task.ext.when
+
 
     script:
     // Exit if running this module with -profile conda / -profile mamba
@@ -55,7 +54,7 @@ process MITOHIFI_MITOHIFI {
         -g ${ref_gb} \\
         -o ${mito_code} \\
         -t $task.cpus ${args}
-    
+
     # Rename files to include prefix
     find . -maxdepth 1 -type f ! -name '.*' -exec sh -c 'for f do mv "\$f" "${prefix}.\${f#./}"; done' sh {} +
 

@@ -21,8 +21,7 @@ process SALSA2 {
     tuple val(meta), path("*/*scaffolds_FINAL.original-coordinates.agp"), emit: agp_original_coordinates, optional: true
     path "versions.yml"                                                 , emit: versions
 
-    when:
-    task.ext.when == null || task.ext.when
+
 
     script:
     def args = task.ext.args ?: ''

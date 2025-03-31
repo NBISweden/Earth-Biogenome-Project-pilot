@@ -15,8 +15,7 @@ process FCS_FCSGX {
     tuple val(meta), path("out/*.taxonomy.rpt")     , emit: taxonomy_report
     path "versions.yml"                         , emit: versions
 
-    when:
-    task.ext.when == null || task.ext.when
+
 
     script:
     // Exit if running this module with -profile conda / -profile mamba

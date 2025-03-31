@@ -16,8 +16,7 @@ process PAIRTOOLS_MERGE {
     tuple val(meta), path("*pairs.gz"), emit:pairs
     path("versions.yml"), emit:versions
 
-    when:
-    task.ext.when == null || task.ext.when
+
 
     script:
     def args = task.ext.args ?: ''

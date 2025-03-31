@@ -15,8 +15,7 @@ process PURGEDUPS_GETSEQS {
     tuple val(meta), path("*.purged.fa"), emit: purged
     path "versions.yml"                 , emit: versions
 
-    when:
-    task.ext.when == null || task.ext.when
+
 
     script:
     def args = task.ext.args ?: ''

@@ -15,8 +15,7 @@ process MERYL_COUNT {
     tuple val(meta), path("*.meryl")    , emit: meryl_db
     path "versions.yml"                 , emit: versions
 
-    when:
-    task.ext.when == null || task.ext.when
+
 
     script:
     def args = task.ext.args ?: ''

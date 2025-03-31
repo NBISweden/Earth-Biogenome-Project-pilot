@@ -14,8 +14,7 @@ process BWAMEM2_INDEX {
     tuple val(meta), path("bwamem2"), emit: index
     path "versions.yml"             , emit: versions
 
-    when:
-    task.ext.when == null || task.ext.when
+
 
     script:
     def prefix = task.ext.prefix ?: "${fasta}"
