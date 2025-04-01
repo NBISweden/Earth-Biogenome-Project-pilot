@@ -173,19 +173,19 @@ workflow {
         ch_purged_assemblies = PURGE_DUPLICATES.out.assemblies
         ch_multiqc_files = ch_multiqc_files.mix( PURGE_DUPLICATES.out.logs )
         ch_versions = ch_versions.mix( PURGE_DUPLICATES.out.versions )
+        EVALUATE_PURGED_ASSEMBLY (
+            ch_purged_assemblies,
+            BUILD_FASTK_HIFI_DATABASE.out.fastk_hist_ktab,
+            BUILD_MERYL_HIFI_DATABASE.out.uniondb
+        )
+        ch_multiqc_files = ch_multiqc_files.mix( EVALUATE_PURGED_ASSEMBLY.out.logs )
+        ch_versions = ch_versions.mix( EVALUATE_PURGED_ASSEMBLY.out.versions )
     } else {
         ch_purged_assemblies = ch_to_purge
     }
     ch_purged_assemblies = ch_purged_assemblies.mix(
         preassembledInput( PREPARE_INPUT.out.assemblies, 'purged' )
     ).dump(tag: 'Assemblies: Purged', pretty: true)
-    EVALUATE_PURGED_ASSEMBLY (
-        ch_purged_assemblies,
-        BUILD_FASTK_HIFI_DATABASE.out.fastk_hist_ktab,
-        BUILD_MERYL_HIFI_DATABASE.out.uniondb
-    )
-    ch_multiqc_files = ch_multiqc_files.mix( EVALUATE_PURGED_ASSEMBLY.out.logs )
-    ch_versions = ch_versions.mix( EVALUATE_PURGED_ASSEMBLY.out.versions )
 
     // Polish
     ch_to_polish = setAssemblyStage (
@@ -215,19 +215,19 @@ workflow {
         ch_scaffolded_assemblies = SCAFFOLD.out.assemblies
         ch_multiqc_files = ch_multiqc_files.mix( SCAFFOLD.out.logs )
         ch_versions = ch_versions.mix( SCAFFOLD.out.versions )
+        EVALUATE_SCAFFOLDED_ASSEMBLY (
+            ch_scaffolded_assemblies,
+            BUILD_FASTK_HIFI_DATABASE.out.fastk_hist_ktab,
+            BUILD_MERYL_HIFI_DATABASE.out.uniondb
+        )
+        ch_multiqc_files = ch_multiqc_files.mix( EVALUATE_SCAFFOLDED_ASSEMBLY.out.logs )
+        ch_versions = ch_versions.mix( EVALUATE_SCAFFOLDED_ASSEMBLY.out.versions )
     } else {
         ch_scaffolded_assemblies = ch_to_scaffold
     }
     ch_scaffolded_assemblies = ch_scaffolded_assemblies.mix(
         preassembledInput( PREPARE_INPUT.out.assemblies, 'scaffolded' )
     ).dump(tag: 'Assemblies: Scaffolded', pretty: true)
-    EVALUATE_SCAFFOLDED_ASSEMBLY (
-        ch_scaffolded_assemblies,
-        BUILD_FASTK_HIFI_DATABASE.out.fastk_hist_ktab,
-        BUILD_MERYL_HIFI_DATABASE.out.uniondb
-    )
-    ch_multiqc_files = ch_multiqc_files.mix( EVALUATE_SCAFFOLDED_ASSEMBLY.out.logs )
-    ch_versions = ch_versions.mix( EVALUATE_SCAFFOLDED_ASSEMBLY.out.versions )
 
     // Curate
     ch_to_curate = setAssemblyStage (
