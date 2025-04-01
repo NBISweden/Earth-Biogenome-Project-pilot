@@ -1,3 +1,32 @@
+/* Custom record classes for meta data
+*/
+record SampleInfo (
+    String sampleName,
+    int taxId,
+    int geneticCode,
+    int mitoCode,
+    String domain,
+    int genomeSize,
+    int ploidy,
+    int haploidNumber
+) {
+    SampleInfo { assert !sampleName.blank }
+
+    boolean hasComponents(List<String> components) {
+        return components.every { this[it] }
+    }
+
+    boolean isEukaryota() {
+        return domain == 'Eukaryota'
+    }
+}
+
+record AssemblyInfo (
+    String assemblyId,
+    String assemblyTool,
+    String assemblyStage,
+    String assemblyBuild,
+)
 /*
 Custom method for Map class called deepMerge.
 
