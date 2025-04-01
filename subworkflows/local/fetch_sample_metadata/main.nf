@@ -6,16 +6,27 @@ workflow FETCH_SAMPLE_METADATA {
     ch_sample // Map: [ sample: [ name: species, ... ] ]
 
     main:
-    // Metadata to retrieve
-    def sample_keys_ena = [ 'tax_id', 'genetic_code', 'mito_code', 'domain' ]
-    def sample_keys_goat = [ 'genome_size', 'haploid_number', 'ploidy' ]
     // Prepare channel
-    ch_with_id = ch_sample.map { yaml -> yaml + [id: yaml.sample.name.replace(" ", "_") ] }
+    ch_with_id = ch_sample.map { yaml -> yaml +
+        [
+            id: yaml.sample.name.replace(" ", "_"),
+            sample: new SampleInfo(
+                sampleName: yaml.sample.name,
+                taxId: yaml.sample.tax_id,
+                geneticCode: yaml.sample.genetic_code,
+                mitoCode: yaml.sample.mito_code,
+                domain: yaml.sample.domain,
+                genomeSize: yaml.sample.genome_size,
+                haploidNumber: yaml.sample.haploid_number,
+                ploidy: yaml.sample.ploidy,
+            )
+        ]
+    }
     // Get species metadata from ENA
     ENA_TAXQUERY(
         ch_with_id
-            .filter { yaml -> !yaml.sample.keySet().containsAll( sample_keys_ena ) } // Skip process if all is user defined
-            .map { yaml -> yaml.sample.name }
+            .filter { meta -> !meta.sample.hasComponents(['taxId', 'geneticCode', 'mitoCode', 'domain']) } // Skip process if all is user defined
+            .map { yaml -> yaml.sample.sampleName() }
     )
     // ch_with_ena = [ sample: [ name: ... ] ] x [ taxid: ... , geneticCode: ..., ...  ]
     ch_with_ena = ch_with_id
@@ -23,20 +34,23 @@ workflow FETCH_SAMPLE_METADATA {
         .map { input, ena ->
             ena ? input.deepMerge(
                 [
-                    sample: [
-                        tax_id: input.sample.tax_id ?: ena.taxId,
-                        genetic_code: input.sample.genetic_code ?: ena.geneticCode,
-                        mito_code: input.sample.mito_code ?: ena.mitochondrialGeneticCode,
-                        domain: input.sample.domain ?: ena.lineage.tokenize(';').head(),
-                    ]
+                    sample: new SampleInfo(
+                        *: input.sample.toMap() + [
+                            taxId: input.sample.taxId() ?: ena.taxId.toInteger(),
+                            geneticCode: input.sample.geneticCode() ?: ena.geneticCode.toInteger(),
+                            mitoCode: input.sample.mitoCode() ?: ena.mitochondrialGeneticCode.toInteger(),
+                            domain: input.sample.domain() ?: ena.lineage.tokenize(';').head(),
+                        ]
+                    )
                 ]
             ) : input
         }
+    // def sample_keys_goat = [ 'genome_size', 'haploid_number', 'ploidy' ]
     GOAT_TAXONSEARCH(
         ch_with_ena
-            .filter { meta -> meta.sample.domain == "Eukaryota" } // Eukaryotes only
-            .filter { meta -> !meta.sample.keySet().containsAll( sample_keys_goat ) || !params.busco.lineages } // Skip if all is user defined
-            .map { meta -> tuple( meta, meta.sample.name, [] ) }
+            .filter { meta -> meta.sample.isEukaryota() } // Eukaryotes only
+            .filter { meta -> !meta.sample.hasComponents([ 'genomeSize', 'haploidNumber', 'ploidy' ]) || !params.busco.lineages } // Skip if all is user defined
+            .map { meta -> tuple( meta, meta.sample.sampleName(), [] ) }
     )
     // ch_metadata = [ sample: [ name: ..., tax_id: ... ] ] x [ [ sample: [ name: ... ] ], tsv ]
     ch_metadata = ch_with_ena
@@ -44,7 +58,7 @@ workflow FETCH_SAMPLE_METADATA {
         .map { input, _goat_meta, goat_tsv ->
             def updated_metadata = input
             if( goat_tsv ){
-                def species = goat_tsv.splitCsv( sep:"\t", header: true ).find { tsv -> tsv.scientific_name == input.sample.name }
+                def species = goat_tsv.splitCsv( sep:"\t", header: true ).find { tsv -> tsv.scientific_name == input.sample.sampleName() }
                 assert species != null : "GOAT_TAXONSEARCH failed to retrieve species information"
                 def busco_lineages = goat_tsv.splitCsv( sep:"\t", header: true )
                     .findAll { row -> row.odb10_lineage }
@@ -52,11 +66,13 @@ workflow FETCH_SAMPLE_METADATA {
                     .join(',')
                 updated_metadata = updated_metadata.deepMerge(
                     [
-                        sample: [
-                            genome_size: input.sample.genome_size ?: species.genome_size,
-                            haploid_number: input.sample.haploid_number ?: species.haploid_number,
-                            ploidy: input.sample.ploidy ?: species.ploidy,
-                        ],
+                        sample: new SampleInfo(
+                            *: input.sample.toMap() + [
+                                genomeSize: input.sample.genomeSize() ?: species.genome_size.toInteger(),
+                                haploidNumber: input.sample.haploidNumber() ?: species.haploid_number.toInteger(),
+                                ploidy: input.sample.ploidy() ?: species.ploidy.toInteger(),
+                            ]
+                        ),
                         settings: [ busco: [ lineages: params.busco.lineages?: busco_lineages ] ]
                     ]
                 )

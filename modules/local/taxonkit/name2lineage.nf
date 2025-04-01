@@ -1,5 +1,6 @@
+// TODO: Remove me
 process TAXONKIT_NAME2LINEAGE {
-    tag "$meta.sample.name"
+    tag "${meta.sample.sampleName()}"
     label 'process_low'
 
     conda "bioconda::taxonkit=0.15.1"
@@ -21,14 +22,14 @@ process TAXONKIT_NAME2LINEAGE {
     script:
     def args = task.ext.args ?: ''
     def args2 = task.ext.args2 ?: '-f "{k}"'
-    def prefix = task.ext.prefix ?: "${meta.sample.name.replace(" ","_")}"
+    def prefix = task.ext.prefix ?: "${meta.sample.sampleName().replace(" ","_")}"
     """
     taxonkit \\
         name2taxid \\
         $args \\
         --data-dir $taxdb \\
         --threads $task.cpus \\
-        <<< '${meta.sample.name}' \\
+        <<< '${meta.sample.sampleName()}' \\
     | taxonkit \\
         reformat \\
         --taxid-field 2 \\

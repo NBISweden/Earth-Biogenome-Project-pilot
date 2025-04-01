@@ -9,7 +9,7 @@ workflow ASSEMBLE_ORGANELLES {
     ch_versions = Channel.empty()
     // Find mitochondria
     // TODO: Need to check options to mitohifi modules.
-    MITOHIFI_FINDMITOREFERENCE( ch_raw_assemblies.map { meta, assemblies -> [ meta, meta.sample.name ] }.unique() )
+    MITOHIFI_FINDMITOREFERENCE( ch_raw_assemblies.map { meta, assemblies -> [ meta, meta.sample.sampleName() ] }.unique() )
     mitohifi_ch = ch_raw_assemblies
         .combine(
             MITOHIFI_FINDMITOREFERENCE.out.fasta
@@ -20,7 +20,7 @@ workflow ASSEMBLE_ORGANELLES {
             input: [ meta, assembly.pri_fasta ]
             reference: mitofa
             genbank: mitogb
-            mito_code: meta.sample.mito_code
+            mito_code: meta.sample.mitoCode()
         }
     MITOHIFI_MITOHIFI(
         mitohifi_ch.input,

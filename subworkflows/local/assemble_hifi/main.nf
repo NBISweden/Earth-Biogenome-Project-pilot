@@ -38,7 +38,7 @@ workflow ASSEMBLE_HIFI {
         GFATOOLS_GFA2FA( raw_assembly_ch )
         fasta_ch = GFATOOLS_GFA2FA.out.fasta.multiMap { meta, fasta ->
             fasta: [ meta, fasta ]
-            genome_size: meta.sample.genome_size
+            genome_size: meta.sample.genomeSize()
         }
         GFASTATS(
             fasta_ch.fasta,
