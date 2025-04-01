@@ -244,7 +244,7 @@ else:
 
 ```{python}
 if glob.glob(f"{log_path}/*_katgc.st.png"):
-    Image(filename=glob.glob(f"{log_path}/*_katgc.st.png")[0])
+    display(Image(filename=glob.glob(f"{log_path}/*_katgc.st.png")[0]))
 else:
     print("KAT GC not available")
 ```
