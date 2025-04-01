@@ -1,3 +1,6 @@
+import groovy.transform.RecordOptions
+
+@RecordOptions(components = true, copyWith = true)
 record SampleInfo (
     String sampleName,
     Integer taxId,

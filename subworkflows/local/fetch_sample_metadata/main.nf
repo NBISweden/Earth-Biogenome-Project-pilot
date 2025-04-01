@@ -34,13 +34,11 @@ workflow FETCH_SAMPLE_METADATA {
         .map { input, ena ->
             ena ? input.deepMerge(
                 [
-                    sample: new SampleInfo(
-                        *: input.sample.toMap() + [
+                    sample: input.sample.copyWith(
                             taxId: input.sample.taxId() ?: ena.taxId.toInteger(),
                             geneticCode: input.sample.geneticCode() ?: ena.geneticCode.toInteger(),
                             mitoCode: input.sample.mitoCode() ?: ena.mitochondrialGeneticCode.toInteger(),
                             domain: input.sample.domain() ?: ena.lineage.tokenize(';').head(),
-                        ]
                     )
                 ]
             ) : input
@@ -66,12 +64,10 @@ workflow FETCH_SAMPLE_METADATA {
                     .join(',')
                 updated_metadata = updated_metadata.deepMerge(
                     [
-                        sample: new SampleInfo(
-                            *: input.sample.toMap() + [
+                        sample: input.sample.copyWith(
                                 genomeSize: input.sample.genomeSize() ?: species.genome_size.toInteger(),
                                 haploidNumber: input.sample.haploidNumber() ?: species.haploid_number.toInteger(),
                                 ploidy: input.sample.ploidy() ?: species.ploidy.toInteger(),
-                            ]
                         ),
                         settings: [ busco: [ lineages: params.busco.lineages?: busco_lineages ] ]
                     ]
