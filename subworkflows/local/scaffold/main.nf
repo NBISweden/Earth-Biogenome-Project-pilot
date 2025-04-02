@@ -18,9 +18,9 @@ workflow SCAFFOLD {
             ch_assemblies,
             ch_hic
         )
-        ch_versions = ch_versions.mix(SCAFFOLD_OMNIC_BWA.out.versions)
-        ch_scaffolded_assemblies = ch_scaffolded_assemblies.mix(SCAFFOLD_OMNIC_BWA.out.assemblies)
-        ch_logs = ch_logs.mix(SCAFFOLD_OMNIC_BWA.out.logs)
+        ch_versions = SCAFFOLD_OMNIC_BWA.out.versions
+        ch_scaffolded_assemblies = SCAFFOLD_OMNIC_BWA.out.assemblies
+        ch_logs = SCAFFOLD_OMNIC_BWA.out.logs
     }
     else if (params.hic_pipeline == 'arima')
     {
