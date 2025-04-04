@@ -16,12 +16,12 @@ workflow INSPECT_DATA {
     ch_versions =  GENOME_PROPERTIES.out.versions.mix(
         COMPARE_LIBRARIES.out.versions)
     if ( 'screen' in params.steps.tokenize(",") ) {
-        SCREEN_READS (
-            hifi_reads,
-            // TODO:: Allow custom database ala nf-core/genomeassembler.
-            file( params.mash.screen_db, checkIfExists: true )
-        )
-        ch_versions = ch_versions.mix(SCREEN_READS.out.versions)
+//        SCREEN_READS (
+//            hifi_reads,
+//            // TODO:: Allow custom database ala nf-core/genomeassembler.
+//            file( params.mash.screen_db, checkIfExists: true )
+//        )
+//        ch_versions = ch_versions.mix(SCREEN_READS.out.versions)
     }
 
     ch_hifi_with_kmer_cov = combineByMetaKeys(
