@@ -711,33 +711,44 @@ if "busco" in multiqc.list_modules():
         display(multiqc.get_plot("busco", f"{lineage}").show())
 ```
 
-```{python}
-from IPython.display import display, HTML
-import multiqc
 
-def render_busco_plots():
+#### Assembly gene space completeness 2
+```{python}
+#from IPython.display import display, HTML
+#import multiqc
+
+def render_multiqc_plots(module_name, plot_type=None):
     """
-    Render BUSCO plots using MultiQC and display them in a structured format.
+    Render MultiQC plots for a specific module in a structured and visually appealing format.
+    
+    Parameters:
+    - module_name (str): The name of the MultiQC module (e.g., "busco", "quast").
+    - plot_type (str, optional): The specific plot type to render (e.g., "Assembly Statistics").
+                                 If None, all plots for the module will be rendered.
     """
     # Reset MultiQC to ensure a clean state
     multiqc.reset()
 
-    # Check if the "busco" module is available in MultiQC
-    if "busco" in multiqc.list_modules():
-        # Get the list of BUSCO lineages
-        busco_lineages = multiqc.list_plots()["busco"]
+    # Check if the specified module is available in MultiQC
+    if module_name in multiqc.list_modules():
+        # Get the list of plots for the module
+        module_plots = multiqc.list_plots().get(module_name, {})
 
         # Initialize an HTML container for the plots
         html_output = "<div style='display: flex; flex-wrap: wrap; gap: 20px;'>"
 
-        # Loop through each lineage and render the corresponding plot
-        for lineage in busco_lineages:
-            plot = multiqc.get_plot("busco", lineage)
+        # Loop through each plot in the module
+        for plot_name, plot_data in module_plots.items():
+            # If a specific plot type is provided, skip other plots
+            if plot_type and plot_name != plot_type:
+                continue
+
+            # Render the plot and add it to the HTML container
+            plot = multiqc.get_plot(module_name, plot_name)
             if plot:
-                # Render the plot and add it to the HTML container
                 html_output += f"""
                 <div style="flex: 1; min-width: 300px; max-width: 500px; text-align: center;">
-                    <h4>{lineage}</h4>
+                    <h4>{plot_name}</h4>
                     {plot.show()}
                 </div>
                 """
@@ -745,8 +756,8 @@ def render_busco_plots():
                 # Add a message if the plot is not available
                 html_output += f"""
                 <div style="flex: 1; min-width: 300px; max-width: 500px; text-align: center;">
-                    <h4>{lineage}</h4>
-                    <p>No plot available for this lineage.</p>
+                    <h4>{plot_name}</h4>
+                    <p>No plot available for this plot type.</p>
                 </div>
                 """
 
@@ -756,8 +767,8 @@ def render_busco_plots():
         # Display the HTML output
         display(HTML(html_output))
     else:
-        # Display a message if the "busco" module is not found
-        print("BUSCO module not found in MultiQC.")
+        # Display a message if the module is not found
+        print(f"Module '{module_name}' not found in MultiQC.")
 ```
 
 ### Other assemblies
