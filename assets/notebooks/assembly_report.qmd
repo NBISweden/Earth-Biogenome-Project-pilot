@@ -61,7 +61,6 @@ import glob
 import multiqc
 import os
 import pandas as pd
-import rpy2
 # Install rpy2
 import sys
 !{sys.executable} -m pip install rpy2
