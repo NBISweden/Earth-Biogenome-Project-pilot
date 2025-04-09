@@ -715,30 +715,33 @@ if "busco" in multiqc.list_modules():
 #### Assembly gene space completeness 2
 ```{python}
 from IPython.display import display, HTML
+import multiqc
+import plotly.io as pio
 
-def display_with_style(content, title=None):
+def render_busco_plots():
     """
-    Display content with custom HTML and CSS styling.
-    
-    Parameters:
-    - content: The content to display (e.g., a plot or text).
-    - title: Optional title to display above the content.
+    Render BUSCO plots using MultiQC and display them in a visually appealing format.
     """
-    html = """
-    <div style="border: 1px solid #ddd; border-radius: 8px; padding: 10px; margin: 10px 0; background-color: #f9f9f9; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
-    """
-    if title:
-        html += f"<h4 style='margin-top: 0; color: #333;'>{title}</h4>"
-    html += f"<div>{content}</div>"
-    html += "</div>"
-    display(HTML(html))
+    # Check if the "busco" module is available in MultiQC
+    if "busco" in multiqc.list_modules():
+        # Get the list of BUSCO lineages
+        busco_lineages = multiqc.list_plots()["busco"]
+
+        # Loop through each lineage and render the corresponding plot
+        for lineage in busco_lineages:
+            plot = multiqc.get_plot("busco", lineage)
+            if plot:
+                # Render the plot using Plotly's rendering engine
+                fig = plot.show()  # This returns a Plotly figure
+                pio.show(fig)  # Use Plotly's rendering engine to display the plot
+            else:
+                print(f"No plot available for lineage: {lineage}")
+    else:
+        print("BUSCO module not found in MultiQC.")
 ```
 
 ```{python}
-if "busco" in multiqc.list_modules():
-    for lineage in multiqc.list_plots()["busco"]:
-        plot = multiqc.get_plot("busco", f"{lineage}").show()
-        display_with_style(plot, title=f"BUSCO Plot: {lineage}")
+render_busco_plots()
 
 ```
 
