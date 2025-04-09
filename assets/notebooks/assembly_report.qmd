@@ -714,61 +714,30 @@ if "busco" in multiqc.list_modules():
 
 #### Assembly gene space completeness 2
 ```{python}
-#from IPython.display import display, HTML
-#import multiqc
+from IPython.display import display, HTML
 
-def render_multiqc_plots(module_name, plot_type=None):
+def display_with_style(content, title=None):
     """
-    Render MultiQC plots for a specific module in a structured and visually appealing format.
+    Display content with custom HTML and CSS styling.
     
     Parameters:
-    - module_name (str): The name of the MultiQC module (e.g., "busco", "quast").
-    - plot_type (str, optional): The specific plot type to render (e.g., "Assembly Statistics").
-                                 If None, all plots for the module will be rendered.
+    - content: The content to display (e.g., a plot or text).
+    - title: Optional title to display above the content.
     """
-    # Reset MultiQC to ensure a clean state
-    multiqc.reset()
+    html = """
+    <div style="border: 1px solid #ddd; border-radius: 8px; padding: 10px; margin: 10px 0; background-color: #f9f9f9; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+    """
+    if title:
+        html += f"<h4 style='margin-top: 0; color: #333;'>{title}</h4>"
+    html += f"<div>{content}</div>"
+    html += "</div>"
+    display(HTML(html))
 
-    # Check if the specified module is available in MultiQC
-    if module_name in multiqc.list_modules():
-        # Get the list of plots for the module
-        module_plots = multiqc.list_plots().get(module_name, {})
+if "busco" in multiqc.list_modules():
+    for lineage in multiqc.list_plots()["busco"]:
+        plot = multiqc.get_plot("busco", f"{lineage}").show()
+        display_with_style(plot, title=f"BUSCO Plot: {lineage}")
 
-        # Initialize an HTML container for the plots
-        html_output = "<div style='display: flex; flex-wrap: wrap; gap: 20px;'>"
-
-        # Loop through each plot in the module
-        for plot_name, plot_data in module_plots.items():
-            # If a specific plot type is provided, skip other plots
-            if plot_type and plot_name != plot_type:
-                continue
-
-            # Render the plot and add it to the HTML container
-            plot = multiqc.get_plot(module_name, plot_name)
-            if plot:
-                html_output += f"""
-                <div style="flex: 1; min-width: 300px; max-width: 500px; text-align: center;">
-                    <h4>{plot_name}</h4>
-                    {plot.show()}
-                </div>
-                """
-            else:
-                # Add a message if the plot is not available
-                html_output += f"""
-                <div style="flex: 1; min-width: 300px; max-width: 500px; text-align: center;">
-                    <h4>{plot_name}</h4>
-                    <p>No plot available for this plot type.</p>
-                </div>
-                """
-
-        # Close the HTML container
-        html_output += "</div>"
-
-        # Display the HTML output
-        display(HTML(html_output))
-    else:
-        # Display a message if the module is not found
-        print(f"Module '{module_name}' not found in MultiQC.")
 ```
 
 ### Other assemblies
