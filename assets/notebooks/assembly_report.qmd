@@ -61,11 +61,6 @@ import glob
 import multiqc
 import os
 import pandas as pd
-# Install rpy2
-import sys
-!{sys.executable} -m pip install rpy2
-from rpy2.robjects import r, pandas2ri
-import rpy2.robjects.packages as rpackages
 from itertools import groupby
 from pprint import pprint
 from IPython.display import display # MQCPlot.show() returns a HTML object which needs to be forced to render in a cell
@@ -717,41 +712,52 @@ if "busco" in multiqc.list_modules():
 ```
 
 ```{python}
-from rpy2.robjects import r, pandas2ri
-import rpy2.robjects.packages as rpackages
+from IPython.display import display, HTML
+import multiqc
 
-# Activate pandas-to-R data frame conversion
-pandas2ri.activate()
+def render_busco_plots():
+    """
+    Render BUSCO plots using MultiQC and display them in a structured format.
+    """
+    # Reset MultiQC to ensure a clean state
+    multiqc.reset()
 
-# Define the R function
-r('''
-library(reticulate)
-library(ggplot2)
-library(glue)
+    # Check if the "busco" module is available in MultiQC
+    if "busco" in multiqc.list_modules():
+        # Get the list of BUSCO lineages
+        busco_lineages = multiqc.list_plots()["busco"]
 
-display_busco_plots <- function() {
-  use_python("/usr/bin/python") # Adjust the Python path if necessary
-  multiqc <- import("multiqc")
-  display <- import("IPython.display")$display
+        # Initialize an HTML container for the plots
+        html_output = "<div style='display: flex; flex-wrap: wrap; gap: 20px;'>"
 
-  if ("busco" %in% multiqc$list_modules()) {
-    busco_lineages <- multiqc$list_plots()[["busco"]]
-    for (lineage in busco_lineages) {
-      plot <- multiqc$get_plot("busco", lineage)
-      if (!is.null(plot)) {
-        display(plot$show())
-      } else {
-        message(glue("No plot available for lineage: {lineage}"))
-      }
-    }
-  } else {
-    message("BUSCO module not found in MultiQC.")
-  }
-}
-''')
+        # Loop through each lineage and render the corresponding plot
+        for lineage in busco_lineages:
+            plot = multiqc.get_plot("busco", lineage)
+            if plot:
+                # Render the plot and add it to the HTML container
+                html_output += f"""
+                <div style="flex: 1; min-width: 300px; max-width: 500px; text-align: center;">
+                    <h4>{lineage}</h4>
+                    {plot.show()}
+                </div>
+                """
+            else:
+                # Add a message if the plot is not available
+                html_output += f"""
+                <div style="flex: 1; min-width: 300px; max-width: 500px; text-align: center;">
+                    <h4>{lineage}</h4>
+                    <p>No plot available for this lineage.</p>
+                </div>
+                """
 
-# Call the R function
-r['display_busco_plots']()
+        # Close the HTML container
+        html_output += "</div>"
+
+        # Display the HTML output
+        display(HTML(html_output))
+    else:
+        # Display a message if the "busco" module is not found
+        print("BUSCO module not found in MultiQC.")
 ```
 
 ### Other assemblies
