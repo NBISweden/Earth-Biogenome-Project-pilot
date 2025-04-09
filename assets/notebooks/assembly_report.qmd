@@ -714,6 +714,7 @@ if "busco" in multiqc.list_modules():
 
 #### Assembly gene space completeness 2
 
+
 ```{python}
 from IPython.display import display, HTML
 import multiqc
@@ -758,15 +759,24 @@ def render_busco_plots():
         for lineage in busco_lineages:
             plot = multiqc.get_plot("busco", lineage)
             if plot:
-                # Render the plot using Plotly's rendering engine
-                fig = plot.show()  # This returns a Plotly figure
-                plot_html = pio.to_html(fig, full_html=False)  # Convert the figure to HTML
-                html_output += f"""
-                <div class="busco-plot">
-                    <h4>BUSCO Plot: {lineage}</h4>
-                    {plot_html}
-                </div>
-                """
+                try:
+                    # Render the plot using Plotly's rendering engine
+                    fig = plot.show()  # This returns a Plotly figure
+                    plot_html = pio.to_html(fig, full_html=False)  # Convert the figure to HTML
+                    html_output += f"""
+                    <div class="busco-plot">
+                        <h4>BUSCO Plot: {lineage}</h4>
+                        {plot_html}
+                    </div>
+                    """
+                except Exception as e:
+                    # Handle any errors during rendering
+                    html_output += f"""
+                    <div class="busco-plot">
+                        <h4>BUSCO Plot: {lineage}</h4>
+                        <p>Error rendering plot: {e}</p>
+                    </div>
+                    """
             else:
                 # Add a message if the plot is not available
                 html_output += f"""
@@ -786,8 +796,8 @@ def render_busco_plots():
         print("BUSCO module not found in MultiQC.")
 ```
 
+
 ```{python}
-render_busco_plots()
 render_busco_plots()
 
 ```
