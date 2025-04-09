@@ -712,44 +712,39 @@ if "busco" in multiqc.list_modules():
 ```
 
 ```{python}
-from rpy2.robjects import r, pandas2ri
-import rpy2.robjects.packages as rpackages
-
-# Activate automatic conversion between pandas and R data frames
-pandas2ri.activate()
-
-# Import required R libraries
-r('''
+# Load required libraries
 library(reticulate)
 library(ggplot2)
 library(glue)
 
+# Initialize Python environment
+use_python("/usr/bin/python") # Adjust the Python path if necessary
+multiqc <- import("multiqc")  # Import the MultiQC Python module
+display <- import("IPython.display")$display
+
 # Function to display BUSCO plots
 display_busco_plots <- function() {
-    # Check if "busco" is in the list of MultiQC modules
-    multiqc <- import("multiqc")
-    display <- import("IPython.display")$display
-    if ("busco" %in% multiqc$list_modules()) {
-        # Get the list of BUSCO lineages
-        busco_lineages <- multiqc$list_plots()[["busco"]]
-        
-        # Loop through each lineage and display the corresponding plot
-        for (lineage in busco_lineages) {
-            plot <- multiqc$get_plot("busco", lineage)
-            if (!is.null(plot)) {
-                display(plot$show()) # Render the plot in the notebook
-            } else {
-                message(glue("No plot available for lineage: {lineage}"))
-            }
-        }
-    } else {
-        message("BUSCO module not found in MultiQC.")
+  # Check if "busco" is in the list of MultiQC modules
+  if ("busco" %in% multiqc$list_modules()) {
+    # Get the list of BUSCO lineages
+    busco_lineages <- multiqc$list_plots()[["busco"]]
+    
+    # Loop through each lineage and display the corresponding plot
+    for (lineage in busco_lineages) {
+      plot <- multiqc$get_plot("busco", lineage)
+      if (!is.null(plot)) {
+        display(plot$show()) # Render the plot in the notebook
+      } else {
+        message(glue("No plot available for lineage: {lineage}"))
+      }
     }
+  } else {
+    message("BUSCO module not found in MultiQC.")
+  }
 }
-''')
 
-# Call the R function from Python
-r['display_busco_plots']()
+# Call the function to display BUSCO plots
+display_busco_plots()
 ```
 
 ### Other assemblies
