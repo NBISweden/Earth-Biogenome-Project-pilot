@@ -714,7 +714,6 @@ if "busco" in multiqc.list_modules():
 
 #### Assembly gene space completeness 2
 
-
 ```{python}
 from IPython.display import display, HTML
 import multiqc
@@ -724,12 +723,9 @@ def render_busco_plots():
     """
     Render BUSCO plots using MultiQC and display them in a visually appealing grid layout.
     """
-    # Check if the "busco" module is available in MultiQC
     if "busco" in multiqc.list_modules():
-        # Get the list of BUSCO lineages
         busco_lineages = multiqc.list_plots()["busco"]
 
-        # Initialize an HTML container for the plots
         html_output = """
         <style>
             .busco-container {
@@ -755,14 +751,12 @@ def render_busco_plots():
         <div class="busco-container">
         """
 
-        # Loop through each lineage and render the corresponding plot
         for lineage in busco_lineages:
             plot = multiqc.get_plot("busco", lineage)
             if plot:
                 try:
-                    # Render the plot using Plotly's rendering engine
-                    fig = plot.show()  # This returns a Plotly figure
-                    plot_html = pio.to_html(fig, full_html=False)  # Convert the figure to HTML
+                    fig = plot.show()
+                    plot_html = pio.to_html(fig, full_html=False)
                     html_output += f"""
                     <div class="busco-plot">
                         <h4>BUSCO Plot: {lineage}</h4>
@@ -770,7 +764,6 @@ def render_busco_plots():
                     </div>
                     """
                 except Exception as e:
-                    # Handle any errors during rendering
                     html_output += f"""
                     <div class="busco-plot">
                         <h4>BUSCO Plot: {lineage}</h4>
@@ -778,7 +771,6 @@ def render_busco_plots():
                     </div>
                     """
             else:
-                # Add a message if the plot is not available
                 html_output += f"""
                 <div class="busco-plot">
                     <h4>BUSCO Plot: {lineage}</h4>
@@ -786,16 +778,11 @@ def render_busco_plots():
                 </div>
                 """
 
-        # Close the HTML container
         html_output += "</div>"
-
-        # Display the HTML output
         display(HTML(html_output))
     else:
-        # Display a message if the "busco" module is not found
         print("BUSCO module not found in MultiQC.")
 ```
-
 
 ```{python}
 render_busco_plots()
