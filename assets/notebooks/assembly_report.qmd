@@ -732,7 +732,9 @@ def display_with_style(content, title=None):
     html += f"<div>{content}</div>"
     html += "</div>"
     display(HTML(html))
+```
 
+```{python}
 if "busco" in multiqc.list_modules():
     for lineage in multiqc.list_plots()["busco"]:
         plot = multiqc.get_plot("busco", f"{lineage}").show()
