@@ -788,6 +788,7 @@ def render_busco_plots():
 
 ```{python}
 render_busco_plots()
+render_busco_plots()
 
 ```
 
