@@ -769,6 +769,10 @@ def render_multiqc_plots(module_name, plot_type=None):
     else:
         # Display a message if the module is not found
         print(f"Module '{module_name}' not found in MultiQC.")
+
+# Render all BUSCO plots
+render_multiqc_plots("busco")
+
 ```
 
 ### Other assemblies
