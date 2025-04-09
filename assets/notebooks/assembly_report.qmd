@@ -61,6 +61,9 @@ import glob
 import multiqc
 import os
 import pandas as pd
+import rpy2
+from rpy2.robjects import r, pandas2ri
+import rpy2.robjects.packages as rpackages
 from itertools import groupby
 from pprint import pprint
 from IPython.display import display # MQCPlot.show() returns a HTML object which needs to be forced to render in a cell
