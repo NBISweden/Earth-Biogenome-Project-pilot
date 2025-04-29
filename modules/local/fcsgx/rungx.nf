@@ -3,10 +3,10 @@ process FCSGX_RUNGX {
     label 'process_high'
 
     // WARN: Version information not provided by tool on CLI. Please update version string below when bumping container versions.
-    conda "${moduleDir}/environment.yml"
+    conda "bioconda::ncbi-fcs-gx=0.5.4"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/ncbi-fcs-gx:0.5.0--h4ac6f70_3':
-        'biocontainers/ncbi-fcs-gx:0.5.0--h4ac6f70_3' }"
+        'https://depot.galaxyproject.org/singularity/ncbi-fcs-gx:0.5.4--h4ac6f70_1':
+        'biocontainers/ncbi-fcs-gx:0.5.4--h4ac6f70_1' }"
 
     input:
     tuple val(meta), val(taxid), path(assembly)
@@ -27,7 +27,7 @@ process FCSGX_RUNGX {
     def prefix = task.ext.prefix ?: "${meta.id}"
     def mv_database_to_ram = ramdisk_path ? "rclone copy $gxdb $ramdisk_path/$task.index/" : ''
     def database = ramdisk_path ? "$ramdisk_path/$task.index/" : gxdb // Use task.hash to make memory location unique
-    def VERSION = '0.5.0' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
+    def VERSION = '0.5.4' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
     """
     export GX_NUM_CORES=$task.cpus
     $mv_database_to_ram
@@ -49,7 +49,7 @@ process FCSGX_RUNGX {
     stub:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    def VERSION = '0.5.0' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
+    def VERSION = '0.5.4' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
     """
     touch ${prefix}.fcs_gx_report.txt
     touch ${prefix}.taxonomy.rpt
