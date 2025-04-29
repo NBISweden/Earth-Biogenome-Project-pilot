@@ -25,13 +25,21 @@ process FCSGX_RUNGX {
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    def mv_database_to_ram = ramdisk_path ? "rclone copy $gxdb $ramdisk_path/$task.index/" : ''
     def database = ramdisk_path ? "$ramdisk_path/$task.index/" : gxdb // Use task.hash to make memory location unique
     def VERSION = '0.5.4' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
     """
     export GX_NUM_CORES=$task.cpus
-    $mv_database_to_ram
 
+    """
+    <<
+    ramdisk_path ?
+    """
+    rclone copy $gxdb ${database}
+    trap "rm -rf ${database}" EXIT
+
+    """ : ""
+    <<
+    """
     run_gx.py \\
         --fasta $assembly \\
         --gx-db $database \\
