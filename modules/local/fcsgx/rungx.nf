@@ -32,12 +32,12 @@ process FCSGX_RUNGX {
 
     """
     <<
-    ramdisk_path ?
+    (ramdisk_path ?
     """
     rclone copy $gxdb ${database}
     trap "rm -rf ${database}" EXIT
 
-    """ : ""
+    """ : "")
     <<
     """
     run_gx.py \\
