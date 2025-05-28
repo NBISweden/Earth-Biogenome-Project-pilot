@@ -29,7 +29,14 @@ process FCSGX_RUNGX {
     def VERSION = '0.5.4' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
     (ramdisk_path ?
     """
-    trap "rm -rf ${database}" EXIT
+    if test -d "${database}"; then
+        echo "ERROR: Database exists in memory, and may be in use by another process" >&2
+        ls -l ${database}
+        exit 1
+    fi
+    # Clean up shared memory on exit
+    trap "rm -rf "${database}" EXIT
+    # Copy DB to RAM-disk when supplied. Otherwise, rungx is very slow.
     rclone copy $gxdb ${database}
 
     """ : "")
