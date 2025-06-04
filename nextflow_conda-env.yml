@@ -1,8 +1,0 @@
-channels:
-    - conda-forge
-    - bioconda
-    - defaults
-dependencies:
-    - nextflow=22.04.0
-    - nf-core=2.4.1
-    - mamba=0.23.1
