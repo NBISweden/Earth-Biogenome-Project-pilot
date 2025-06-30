@@ -1,5 +1,6 @@
 include { ENA_TAXQUERY      } from "../../../modules/local/ena/taxquery/main"
 include { GOAT_TAXONSEARCH  } from "../../../modules/nf-core/goat/taxonsearch/main"
+include { deepMergeMaps     } from "../../../modules/local/functions"
 
 workflow FETCH_SAMPLE_METADATA {
     take:
@@ -21,7 +22,7 @@ workflow FETCH_SAMPLE_METADATA {
     ch_with_ena = ch_with_id
         .combine( ENA_TAXQUERY.out.json.ifEmpty( [[]] ) )
         .map { input, ena ->
-            ena ? input.deepMerge(
+            ena ? deepMergeMaps(input,
                 [
                     sample: [
                         tax_id: input.sample.tax_id ?: ena.taxId,
@@ -50,7 +51,7 @@ workflow FETCH_SAMPLE_METADATA {
                     .findAll { row -> row.odb10_lineage }
                     .collect { row -> row.odb10_lineage }
                     .join(',')
-                updated_metadata = updated_metadata.deepMerge(
+                updated_metadata = deepMergeMaps(updated_metadata,
                     [
                         sample: [
                             genome_size: input.sample.genome_size ?: species.genome_size,
@@ -61,7 +62,7 @@ workflow FETCH_SAMPLE_METADATA {
                     ]
                 )
             } else {
-                updated_metadata = updated_metadata.deepMerge(
+                updated_metadata = deepMergeMaps(updated_metadata,
                     [
                         settings: [ busco: [ lineages: params.busco.lineages ] ]
                     ]

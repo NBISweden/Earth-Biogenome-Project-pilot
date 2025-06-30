@@ -1,6 +1,7 @@
 include { HIFIASM         } from "$projectDir/modules/nf-core/hifiasm/main"
 include { GFATOOLS_GFA2FA } from "$projectDir/modules/local/gfatools/gfa2fa"
 include { GFASTATS        } from "$projectDir/modules/nf-core/gfastats/main"
+include { deepMergeMaps   } from "$projectDir/modules/local/functions"
 
 workflow ASSEMBLE_HIFI {
     take:
@@ -11,7 +12,7 @@ workflow ASSEMBLE_HIFI {
         reads_ch = hifi_reads
             .flatMap { meta, reads ->
                 if (params.hifiasm) {
-                    params.hifiasm.collect { key, value -> [ meta.deepMerge(
+                    params.hifiasm.collect { key, value -> [ deepMergeMaps(meta,
                         [
                             settings: [ hifiasm: [ id: key, args: value ] ],
                             assembly: [ assembler: 'hifiasm', stage: 'raw', id: key, build: "hifiasm-raw-$key" ]
@@ -20,7 +21,7 @@ workflow ASSEMBLE_HIFI {
                     }
                 } else {
                     def key = "default"
-                    [ [ meta.deepMerge(
+                    [ [ deepMergeMaps(meta,
                         [
                             settings: [ hifiasm: [ id: key, args: "" ] ],
                             assembly: [ assembler: 'hifiasm', stage: 'raw', id: key, build: "hifiasm-raw-$key" ]
