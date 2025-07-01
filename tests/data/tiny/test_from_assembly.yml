@@ -12,8 +12,10 @@ assembly:
   - assembler: hifiasm
     stage: raw # available stages: 'raw', 'decontaminated', 'polished', 'scaffolded', 'curated'
     id: 'hifi_v1'
-    pri_fasta: 'tests/data/tiny/hifiasm-raw-default.asm.bp.p_ctg.fasta.gz'
+    pri_fasta: 'https://raw.githubusercontent.com/NBISweden/Earth-Biogenome-Project-pilot/main/tests/data/tiny/hifiasm-raw-default.asm.bp.p_ctg.fasta.gz'
 
+hifi:
+  - reads: 'https://raw.githubusercontent.com/NBISweden/Earth-Biogenome-Project-pilot/main/tests/data/tiny/PB_HIFI/dmel_2Mb.fasta.gz'
 hic:
-  - read1: 'tests/data/tiny/HIC/dmel_2Mb_p1_R1.fastq.gz'
-    read2: 'tests/data/tiny/HIC/dmel_2Mb_p1_R2.fastq.gz'
+  - read1: 'https://raw.githubusercontent.com/NBISweden/Earth-Biogenome-Project-pilot/main/tests/data/tiny/HIC/dmel_2Mb_p1_R1.fastq.gz'
+    read2: 'https://raw.githubusercontent.com/NBISweden/Earth-Biogenome-Project-pilot/main/tests/data/tiny/HIC/dmel_2Mb_p1_R2.fastq.gz'

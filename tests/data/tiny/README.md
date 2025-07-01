@@ -8,8 +8,8 @@
 ## Provenance
 
 - species: _Drosophila melanogaster_
-- PacBio HiFi data was downloaded from NBCI´s SRA [SRR10238607](https://www.ncbi.nlm.nih.gov/sra/SRR10238607)
-- Illumina HiC data was downloaded from NBCI´s SRA [SRR10512944](https://www.ncbi.nlm.nih.gov/sra/SRR10512944)
+- PacBio HiFi data was downloaded from NBCI's SRA [SRR10238607](https://www.ncbi.nlm.nih.gov/sra/SRR10238607)
+- Illumina HiC data was downloaded from NBCI's SRA [SRR10512944](https://www.ncbi.nlm.nih.gov/sra/SRR10512944)
 
 - PacBio HiFi data were randomly subsampled to 15X read coverage and assembled with [hifiasm version 0.19.8](https://github.com/chhylp123/hifiasm)
 - PacBio reads were mapped back to the genome assembly with minimap2

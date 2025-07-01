@@ -31,7 +31,7 @@ def combineByMetaKeys( Map args = [:], lhs, rhs ){
                 .map { restructure(*it) }
         case 'merge':
             // Return merged meta map
-            def restructure = { key, clip, ... tail -> def list = tail.toList(); [ list.head().deepMerge(list.removeAt(clip)) ] + list.tail() }
+            def restructure = { key, clip, ... tail -> def list = tail.toList(); [ deepMergeMaps(list.head(),list.removeAt(clip)) ] + list.tail() }
             return lhs.map{ [ it[0].subMap(args.keySet), it.size() ] + it }
                 .combine( combine_args, rhs.map{ [ it[0].subMap(args.keySet) ] + it } )
                 .map { restructure(*it) }
@@ -76,7 +76,7 @@ def joinByMetaKeys( Map args = [:], lhs, rhs ) {
                 .map { restructure(*it) }
         case 'merge':
             // Return merged meta map
-            def restructure = { key, clip, ... tail -> def list = tail.toList(); [ list.head().deepMerge(list.removeAt(clip)) ] + list.tail() }
+            def restructure = { key, clip, ... tail -> def list = tail.toList(); [ deepMergeMaps(list.head(),list.removeAt(clip)) ] + list.tail() }
             return lhs.map{ [ it[0].subMap(args.keySet), it.size() ] + it }
                 .join( join_args, rhs.map{ [ it[0].subMap(args.keySet) ] + it } )
                 .map { restructure(*it) }
@@ -101,7 +101,7 @@ This function updates the meta data so meta.assembly.build, etc can
 be used for `ext.prefix` for example.
 */
 def setAssemblyStage( assemblies, String stage ) {
-    assemblies.map{ meta, assembly -> [ meta.deepMerge([ assembly: [ stage: stage, build: "${meta.assembly.assembler}-${stage}-${meta.assembly.id}" ] ]), assembly ] }
+    assemblies.map{ meta, assembly -> [ deepMergeMaps(meta,[ assembly: [ stage: stage, build: "${meta.assembly.assembler}-${stage}-${meta.assembly.id}" ] ]), assembly ] }
 }
 
 /* Assemblies are stored in a Map object.
@@ -151,4 +151,15 @@ def constructAssemblyRecord( assemblies, Boolean byName ) {
             def asm_meta = meta.assembly.subMap(['assembler','stage','id','build'])
             [ meta, asm_meta + (fasta.size() == 1 ? [ pri_fasta: fasta[0] ] : [ pri_fasta: fasta[0], alt_fasta: fasta[1] ] ) ]
         }
+}
+
+/*
+Returns a new Map with entries merged.
+For each key, if the value is a map, deep merge the subMaps
+If the key is not a map, see if it exists in rhs and replace current value in lhs (same behaviour as Map + Map )
+Add the missing keys from rhs to lhs map.
+*/
+
+def deepMergeMaps(Map lhs, Map rhs) {
+    lhs.collectEntries { k, v -> rhs[k] instanceof Map ? [ (k): deepMergeMaps(v, rhs[k] ) ] : [ (k): rhs[k]?:v ] } + rhs.subMap(rhs.keySet()-lhs.keySet())
 }

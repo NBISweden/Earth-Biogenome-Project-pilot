@@ -16,13 +16,13 @@ nftest-docker = "nf-test test tests/main.nf.test"
 nftest-singularity = "nf-test test tests/main.nf.test --profile singularity"
 # Clean up
 clean-work = "nextflow clean -f -before $(nextflow log -q | tail -n 1) && find work/ -type d -empty -delete"
-clean-nf = "rm -rf .nextflow* work/"
+clean-nf = "git clean -fX && rm -rf .nextflow/ work/"
 clean-results = "rm -rf results/"
 clean-nftest = "rm -rf .nf-test/"
 clean-all = { depends-on = [ "clean-nf", "clean-results", "clean-nftest" ] }
 
 [dependencies]
-nextflow = ">=24.10.4,<25"
-mamba = ">=2.0.5,<3"
-nf-core = ">=3.2.0,<4"
-gh = ">=2.67.0,<3"
+nextflow = ">=25.4.4,<26"
+mamba = ">=2.3.0,<3"
+nf-core = ">=3.3.1,<4"
+gh = ">=2.74.2,<3"
