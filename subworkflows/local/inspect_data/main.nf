@@ -1,7 +1,6 @@
 include { combineByMetaKeys } from "$projectDir/modules/local/functions"
 include { GENOME_PROPERTIES } from "$projectDir/subworkflows/local/genome_properties/main"
 include { COMPARE_LIBRARIES } from "$projectDir/subworkflows/local/compare_libraries/main"
-include { SCREEN_READS      } from "$projectDir/subworkflows/local/screen_read_contamination/main"
 
 workflow INSPECT_DATA {
     take:
@@ -15,14 +14,6 @@ workflow INSPECT_DATA {
     COMPARE_LIBRARIES ( hifi_histogram.join( hic_histogram ) )
     ch_versions =  GENOME_PROPERTIES.out.versions.mix(
         COMPARE_LIBRARIES.out.versions)
-    if ( 'screen' in params.steps.tokenize(",") ) {
-//        SCREEN_READS (
-//            hifi_reads,
-//            // TODO:: Allow custom database ala nf-core/genomeassembler.
-//            file( params.mash.screen_db, checkIfExists: true )
-//        )
-//        ch_versions = ch_versions.mix(SCREEN_READS.out.versions)
-    }
 
     ch_hifi_with_kmer_cov = combineByMetaKeys(
         hifi_reads,
