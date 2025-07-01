@@ -30,7 +30,6 @@ flowchart TD
     goat_taxon --> dtol[[ DToL lookup ]]
     hifi --> samtools_fa[[ Samtools fasta ]]
     samtools_fa --> fastk_hifi
-    samtools_fa --> mash_screen
     hifi[/ HiFi reads /] --> fastk_hifi[[ FastK - HiFi ]]
     hifi --> meryl_hifi[[ Meryl - HiFi ]]
     hic[/ Hi-C reads /] --> fastk_hic[[ FastK - Hi-C ]]
@@ -47,8 +46,6 @@ flowchart TD
     fastk_hifi --> katcomp[[ KatComp ]]
     fastk_hic --> katcomp
     assembly --> busco[[ Busco ]]
-    refseq_sketch[( RefSeq sketch )] --> mash_screen[[ Mash Screen ]]
-    hifi --> mash_screen
     fastk_hifi --> hifiasm[[ HiFiasm ]]
     hifiasm --> assembly
     assembly --> purgedups[[ Purgedups ]]
