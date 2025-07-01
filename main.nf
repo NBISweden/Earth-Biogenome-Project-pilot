@@ -85,6 +85,13 @@ workflow {
         BUILD_FASTK_HIC_DATABASE ( CONVERT_FASTQ_CRAM.out.fastq )
         BUILD_MERYL_HIFI_DATABASE ( PREPARE_INPUT.out.hifi )
         BUILD_MERYL_HIC_DATABASE ( CONVERT_FASTQ_CRAM.out.fastq )
+        ch_versions = ch_versions.mix(
+            CONVERT_FASTQ_CRAM.out.versions,
+            BUILD_FASTK_HIFI_DATABASE.out.versions,
+            BUILD_FASTK_HIC_DATABASE.out.versions,
+            BUILD_MERYL_HIFI_DATABASE.out.versions,
+            BUILD_MERYL_HIC_DATABASE.out.versions,
+        )
     }
 
     // Data inspection
@@ -126,6 +133,7 @@ workflow {
         // TODO: Add organelle assembly from reads
     } else if ( params.organelle_assembly_mode == 'contigs' ){
         ASSEMBLE_ORGANELLES ( ch_raw_assemblies )
+        ch_versions = ch_versions.mix(ASSEMBLE_ORGANELLES.out.versions)
         // TODO: filter organelles from assemblies
     } // else params.organelle_assembly_mode == 'none'
 
@@ -140,7 +148,10 @@ workflow {
         EVALUATE_RAW_ASSEMBLY.out.logs,
         COMPARE_ASSEMBLIES.out.logs
     )
-    ch_versions = ch_versions.mix( EVALUATE_RAW_ASSEMBLY.out.versions )
+    ch_versions = ch_versions.mix(
+        COMPARE_ASSEMBLIES.out.versions,
+        EVALUATE_RAW_ASSEMBLY.out.versions
+    )
 
     // Contamination screen
     ch_to_screen = setAssemblyStage (
@@ -150,6 +161,7 @@ workflow {
     if ( 'screen' in workflow_steps ) {
         DECONTAMINATE( ch_to_screen )
         ch_cleaned_assemblies = DECONTAMINATE.out.assemblies
+        ch_versions = ch_versions.mix(DECONTAMINATE.out.versions)
     } else {
         ch_cleaned_assemblies = ch_to_screen
     }

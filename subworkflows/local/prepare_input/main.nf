@@ -188,6 +188,12 @@ workflow PREPARE_INPUT {
         .transpose()
         .set { isoseq_fastx_ch }
 
+    // versions
+    FETCH_SAMPLE_METADATA.out.versions.mix(
+        SAMTOOLS_FASTA.out.versions.first(),
+        MERGE_PACBIO.out.versions.first(),
+    ).set { versions }
+
     emit:
     sample_meta = FETCH_SAMPLE_METADATA.out.metadata.map { data -> data.subMap('sample') }
     assemblies  = assembly_ch.dump( tag: 'Input: Assemblies', pretty: true )
@@ -196,6 +202,7 @@ workflow PREPARE_INPUT {
     hifi_merged = sample_fastx.single.mix( MERGE_PACBIO.out.file_out )
     rnaseq      = rnaseq_fastx_ch.dump( tag: 'Input: Illumina RnaSeq', pretty: true )
     isoseq      = isoseq_fastx_ch.dump( tag: 'Input: PacBio IsoSeq', pretty: true )
+    versions
 }
 
 def readYAML( yamlfile ) {

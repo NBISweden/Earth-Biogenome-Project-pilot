@@ -9,8 +9,6 @@ workflow DECONTAMINATE {
     ch_assemblies // [ meta, assembly ]
 
     main:
-    ch_versions = Channel.empty()
-
     FCSGX_FETCHDB ( params.fcs.database ? Channel.empty() : Channel.fromPath( params.fcs.manifest, checkIfExists: true ) )
     ch_fcs_database = params.fcs.database ? Channel.fromPath( params.fcs.database, checkIfExists: true, type: 'dir' ) : FCSGX_FETCHDB.out.database
     ch_to_screen = ch_assemblies.flatMap { meta, assembly ->
@@ -33,7 +31,12 @@ workflow DECONTAMINATE {
         true
     )
 
+    FCSGX_FETCHDB.out.versions.mix(
+        FCSGX_RUNGX.out.versions,
+        FCSGX_CLEAN.out.versions,
+    ).set { versions }
+
     emit:
     assemblies = ch_cleaned_assemblies
-    versions   = ch_versions
+    versions
 }
