@@ -41,9 +41,6 @@ include { ASSEMBLY_REPORT } from "$projectDir/subworkflows/local/assembly_report
  */
 
 workflow {
-    // Include Map.deepMerge() function
-    // new GroovyShell().evaluate(new File("$projectDir/lib/MapExtended.groovy"))
-
     // Define constants
     def workflow_permitted_stages = [
         'inspect',      // 01 - Read inspection
