@@ -33,8 +33,8 @@ process CREATE_CHROMOSOME_SIZES_FILE {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        sort:     \$(sort --version | sed '1!d; s/.* //')
-        awk:      \$(awk --version | sed '1!d; s/mawk //; s/ .*//')
+        sort: \$(sort --version | sed '1!d; s/.* //')
+        awk: \$(awk --version | sed '1!d; s/mawk //; s/ .*//')
     END_VERSIONS
     """
 }

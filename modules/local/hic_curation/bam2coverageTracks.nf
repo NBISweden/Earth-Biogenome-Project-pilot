@@ -44,8 +44,8 @@ process BAM2COVERAGE_TRACKS {
     "${task.process}":
         samtools: \$(samtools --version | sed '1!d; s/.* //')
         bedtools: \$(bedtools --version | sed 's/.*v//')
-        sort:     \$(sort --version | sed '1!d; s/.* //')
-        awk:      \$(awk --version | sed '1!d; s/mawk //; s/ .*//')
+        sort: \$(sort --version | sed '1!d; s/.* //')
+        awk: \$(awk --version | sed '1!d; s/mawk //; s/ .*//')
     END_VERSIONS
     """
 }

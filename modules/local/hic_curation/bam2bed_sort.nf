@@ -34,9 +34,9 @@ process BAM2BED_SORT {
     "${task.process}":
         samtools: \$(samtools --version | sed '1!d; s/.* //')
         bedtools: \$(bedtools --version | sed 's/.*v//')
-        sort:     \$(sort --version | sed '1!d; s/.* //')
-        awk:      \$(awk --version | sed '1!d; s/mawk //; s/ .*//')
-        paste:    \$(paste --version | sed '1!d; s/.* //')
+        sort: \$(sort --version | sed '1!d; s/.* //')
+        awk: \$(awk --version | sed '1!d; s/mawk //; s/ .*//')
+        paste: \$(paste --version | sed '1!d; s/.* //')
     END_VERSIONS
     """
 }
