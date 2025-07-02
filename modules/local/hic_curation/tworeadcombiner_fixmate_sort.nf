@@ -26,7 +26,9 @@ process TWOREADCOMBINER_FIXMATE_SORT {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
+        samtools: \$( samtools --version | sed '1!d; s/.* //' )
+        perl: \$( perl --version | sed '2!d; s/.*(v//; s/).*//' )
+        grep: \$( grep --version | sed '1!d; s/.* //' )
     END_VERSIONS
     """
 }
