@@ -14,6 +14,6 @@ process REPORT_SOFTWAREVERSIONS {
     exec:
     def versions_yml = versions_list.collect { vf ->
         vf.text
-    }.join('\n')
+    }.join('')
     file("$task.workDir/versions_mqc.yml").text = versions_yml
 }
