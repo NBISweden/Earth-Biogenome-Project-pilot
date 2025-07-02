@@ -21,7 +21,7 @@ process BAM2BED_SORT {
     def args2 = task.ext.args2 ?: ''
     def args3 = task.ext.args3 ?: '1'
     def prefix = task.ext.prefix ?: "${meta.id}"
-    
+
     """
     samtools view -@$task.cpus $args ${bam} | \\
     bamToBed | \\
@@ -32,11 +32,11 @@ process BAM2BED_SORT {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
-        bedtools: \$(echo \$(bedtools --version 2>&1) | sed 's/^.*bedtools //')        
-        paste:    \$(echo \$(paste --version 2>&1) | head -n 1 | sed 's/^.*paste //; s/Copyright.*\$//')        
-        sort:     \$(echo \$(sort --version 2>&1) | head -n 1 | sed 's/^.*sort //; s/Copyright.*\$//')
-        awk:      \$(echo \$(awk --version 2>&1) | head -n 1 | sed 's/Copyright.*\$//')
+        samtools: \$(samtools --version | sed '1!d; s/.* //')
+        bedtools: \$(bedtools --version | sed 's/.*v//')
+        sort:     \$(sort --version | sed '1!d; s/.* //')
+        awk:      \$(awk --version | sed '1!d; s/mawk //; s/ .*//')
+        paste:    \$(paste --version | sed '1!d; s/.* //')
     END_VERSIONS
     """
 }
