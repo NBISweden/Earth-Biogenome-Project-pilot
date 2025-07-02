@@ -76,7 +76,7 @@ workflow SCAFFOLD_CURATION {
     .set { combine_input }
 
     TWOREADCOMBINER_FIXMATE_SORT(combine_input)
-    ch_versions  = ch_versions.mix( TWOREADCOMBINER_FIXMATE_SORT.out.versions )
+    ch_versions  = ch_versions.mix( TWOREADCOMBINER_FIXMATE_SORT.out.versions.first() )
 
     // merge bam files in case multiple HIC paired-end libraries are present
     TWOREADCOMBINER_FIXMATE_SORT.out.bam
