@@ -63,7 +63,7 @@ workflow SCAFFOLD_CURATION {
     }.set{ bwamem2_input }
 
     BWAMEM2_MEM_CURATION (bwamem2_input.reads, bwamem2_input.index, bwamem2_input.fasta, false)
-    ch_versions  = ch_versions.mix( BWAMEM2_MEM_CURATION.out.versions )
+    ch_versions  = ch_versions.mix( BWAMEM2_MEM_CURATION.out.versions.first() )
 
     // filter alignments
     FILTER_FIVE_END(BWAMEM2_MEM_CURATION.out.bam)
