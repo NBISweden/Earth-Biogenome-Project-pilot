@@ -6,7 +6,7 @@ process REPORT_SOFTWAREVERSIONS {
     val versions_list // List of filenames containing versions
 
     output:
-    path "versions_mqc.yml", emit: yml
+    path "assembly_mqc_versions.yml", emit: yml
 
     when:
     task.ext.when == null || task.ext.when
@@ -15,5 +15,5 @@ process REPORT_SOFTWAREVERSIONS {
     def versions_yml = versions_list.collect { vf ->
         vf.text
     }.join('')
-    file("$task.workDir/versions_mqc.yml").text = versions_yml
+    file("$task.workDir/assembly_mqc_versions.yml").text = versions_yml
 }
