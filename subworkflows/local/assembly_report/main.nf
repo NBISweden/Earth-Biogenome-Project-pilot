@@ -47,13 +47,11 @@ workflow ASSEMBLY_REPORT {
 
     // Blobtools
 
+    REPORT_SOFTWAREVERSIONS( versions.collect() )
     def mqc_files = logs.mix(
         REPORT_DTOL.out.tsv,
         REPORT_GENOMETRAITS.out.tsv,
-        REPORT_SOFTWAREVERSIONS(
-            versions
-                .collect()
-        ).yml,
+        REPORT_SOFTWAREVERSIONS.out.yml,
     )
 
     QUARTO_NOTEBOOK(
