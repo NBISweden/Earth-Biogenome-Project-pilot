@@ -2,12 +2,7 @@ include { TOL_SEARCH                 } from "$projectDir/modules/local/tol/searc
 include { REPORT_DTOL                } from "$projectDir/modules/local/report/dtol"
 include { REPORT_GENOMETRAITS        } from "$projectDir/modules/local/report/genometraits"
 include { REPORT_SOFTWAREVERSIONS    } from "$projectDir/modules/local/report/softwareversions"
-// include { QUARTO as QUARTO_DTOL      } from "$projectDir/modules/local/quarto"
-// include { QUARTO as QUARTO_GENESCOPE } from "$projectDir/modules/local/quarto"
-include { QUARTO_NOTEBOOK } from "$projectDir/modules/local/quarto/notebook/main.nf"
-// include { MULTIQC as MULTIQC_FULL    } from "$projectDir/modules/nf-core/multiqc/main"
-// include { MULTIQC as MULTIQC_SUMMARY } from "$projectDir/modules/nf-core/multiqc/main"
-// include { MULTIQC } from "$projectDir/modules/nf-core/multiqc/main"
+include { QUARTO_NOTEBOOK            } from "$projectDir/modules/local/quarto/notebook/main.nf"
 
 workflow ASSEMBLY_REPORT {
     take:
@@ -28,25 +23,6 @@ workflow ASSEMBLY_REPORT {
         // Sample Sex     // GOAT vs HiC
     REPORT_GENOMETRAITS( notebook.map{ meta, notebook -> meta } )
 
-    // MultiQC panels from Quarto
-    // QUARTO( quarto_files )
-    // Data profile
-    // Input
-    // GenomeScope jsons // plots?
-
-    // Quality metrics // MQC summary stats
-        // GC // Quast?
-        // NG50
-        // QV
-        // Kmer completeness
-        // Busco
-
-    // Contact map
-
-    // Merqury
-
-    // Blobtools
-
     REPORT_SOFTWAREVERSIONS( versions.collect() )
     def mqc_files = logs.mix(
         REPORT_DTOL.out.tsv,
@@ -59,12 +35,6 @@ workflow ASSEMBLY_REPORT {
         mqc_files.collect().dump(tag:'MultiQC', pretty: true),
         Channel.value(executed_steps.collect{ k, v -> "$k: ${v}" }.join('\n')).collectFile(),
     )
-    // MULTIQC(
-    //     mqc_files.collect().dump(tag:'MultiQC'),
-    //     file("$projectDir/configs/multiqc_summary_report_config.yml", checkIfExists: true),
-    //     params.multiqc.summary_report_extra_config ? file(params.multiqc.summary_report_extra_config, checkIfExists: true) : [],
-    //     []
-    // )
 
     emit:
     report = QUARTO_NOTEBOOK.out.html
