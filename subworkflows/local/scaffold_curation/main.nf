@@ -1,4 +1,3 @@
-include { constructAssemblyRecord               } from "$projectDir/modules/local/functions"
 include { getPrimaryAssembly                    } from "$projectDir/modules/local/functions"
 include { combineByMetaKeys                     } from "$projectDir/modules/local/functions"
 include { joinByMetaKeys                        } from "$projectDir/modules/local/functions"
