@@ -22,8 +22,7 @@ workflow ASSEMBLY_REPORT {
         // Ploidy         // GOAT vs HiC
         // Sample Sex     // GOAT vs HiC
     REPORT_GENOMETRAITS( notebook.map{ meta, notebook -> meta } )
-
-    REPORT_SOFTWAREVERSIONS( versions.collect() )
+    REPORT_SOFTWAREVERSIONS( versions.toSortedList().dump(tag:'versions', pretty: true) )
     def mqc_files = logs.mix(
         REPORT_DTOL.out.tsv,
         REPORT_GENOMETRAITS.out.tsv,
