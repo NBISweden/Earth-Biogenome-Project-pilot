@@ -146,6 +146,7 @@ The output is the map:
     ]
 */
 def constructAssemblyRecord( assemblies, Boolean byName ) {
+    // assemblies: Channel: [ meta, fasta ]
     assemblies.groupTuple( sort: byName? { a, b -> a.name <=> b.name }: { a, b -> b.name <=> a.name } )
         .map { meta, fasta ->
             def asm_meta = meta.assembly.subMap(['assembler','stage','id','build'])
