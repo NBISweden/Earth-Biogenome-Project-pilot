@@ -58,9 +58,16 @@ workflow SCAFFOLD {
         }.collectFile()
         .set { chrom_sizes }
 
+    // Combine hi-c alignment with chrom sizes for each assembly
+    BWAMEM2_MEM_SCAFFOLD.out.bam.combine(chrom_sizes)
+        .multiMap{ meta, hic_bam, chr_lengths ->
+            hicbams: [ meta, hic_bam ]
+            lengths: chr_lengths
+        }.set{ pairtools_parse_input }
+
     PAIRTOOLS_PARSE (
-        BWAMEM2_MEM_SCAFFOLD.out.bam,
-        chrom_sizes.collect()
+        pairtools_parse_input.hicbams,
+        pairtools_parse_input.lengths
     )
     PAIRTOOLS_SORT(PAIRTOOLS_PARSE.out.pairsam)
     PAIRTOOLS_SORT.out.sorted.groupTuple()
