@@ -31,8 +31,8 @@ process CREATE_GAP_TRACKS {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        sort:     \$(echo \$(sort --version 2>&1) | head -n 1 | sed 's/^.*sort //; s/Copyright.*\$//')
-        awk:      \$(echo \$(awk --version 2>&1) | head -n 1 | sed 's/Copyright.*\$//')
+        sort: \$(sort --version | sed '1!d; s/.* //')
+        awk: \$(awk --version | sed '1!d; s/mawk //; s/ .*//')
     END_VERSIONS
     """
 }

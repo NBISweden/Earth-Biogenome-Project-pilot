@@ -29,6 +29,10 @@ workflow ASSEMBLE_ORGANELLES {
         'c',
         mitohifi_ch.mito_code,
     )
+    ch_versions = ch_versions.mix(
+        MITOHIFI_FINDMITOREFERENCE.out.versions.first(),
+        MITOHIFI_MITOHIFI.out.versions.first()
+    )
 
     emit:
     // TODO: emit filtered assembly, or contig list to purge

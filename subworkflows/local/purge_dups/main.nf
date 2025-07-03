@@ -131,7 +131,8 @@ workflow PURGE_DUPLICATES {
         PURGEDUPS_SPLITFA_PRIMARY.out.versions.first(),
         MINIMAP2_ALIGN_ASSEMBLY_PRIMARY.out.versions.first(),
         PURGEDUPS_PURGEDUPS_PRIMARY.out.versions.first(),
-        PURGEDUPS_GETSEQS_PRIMARY.out.versions.first()
+        PURGEDUPS_GETSEQS_PRIMARY.out.versions.first(),
+        SEQKIT_SEQ.out.versions.first(),
     ).set { versions }
 
     emit:

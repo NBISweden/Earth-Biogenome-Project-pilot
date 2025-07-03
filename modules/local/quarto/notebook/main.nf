@@ -50,6 +50,7 @@ process QUARTO_NOTEBOOK {
     "${task.process}":
         quarto: \$(quarto --version)
         multiqc: \$(multiqc --version | sed '1!d; s/.*version //')
+    \$(cat log_files/versions_mqc.yml)
     END_VERSIONS
     """
 }

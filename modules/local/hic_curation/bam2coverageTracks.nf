@@ -42,10 +42,10 @@ process BAM2COVERAGE_TRACKS {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
-        bedtools: \$(echo \$(bedtools --version 2>&1) | sed 's/^.*bedtools //')
-        sort:     \$(echo \$(sort --version 2>&1) | head -n 1 | sed 's/^.*sort //; s/Copyright.*\$//')
-        awk:      \$(echo \$(awk --version 2>&1) | head -n 1 | sed 's/Copyright.*\$//')
+        samtools: \$(samtools --version | sed '1!d; s/.* //')
+        bedtools: \$(bedtools --version | sed 's/.*v//')
+        sort: \$(sort --version | sed '1!d; s/.* //')
+        awk: \$(awk --version | sed '1!d; s/mawk //; s/ .*//')
     END_VERSIONS
     """
 }

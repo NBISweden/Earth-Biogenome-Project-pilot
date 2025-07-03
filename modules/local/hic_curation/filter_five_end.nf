@@ -18,7 +18,7 @@ process FILTER_FIVE_END {
     def args = task.ext.args ?: ''
     def args2 = task.ext.args2 ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    
+
     """
     samtools view -h -@ $task.cpus ${bam} | \\
     perl ${projectDir}/bin/filter_five_end.pl | \\
@@ -26,7 +26,7 @@ process FILTER_FIVE_END {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
+        samtools: \$(samtools --version | sed '1!d; s/.* //')
     END_VERSIONS
     """
 }
