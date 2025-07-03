@@ -1,4 +1,5 @@
 # Nextflow files
+.lineage/
 .nextflow*
 work/
 
