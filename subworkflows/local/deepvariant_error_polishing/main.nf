@@ -302,7 +302,7 @@ workflow DVPOLISH {
     // 3. publish result
 
     ch_polished_assemblies = constructAssemblyRecord(
-    DVPOLISH_CREATE_FINALASM.out.fasta_gz
+    DVPOLISH_CREATE_FINALASM.out.fasta_gz, false
     )
 
     emit:
