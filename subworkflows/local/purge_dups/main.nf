@@ -7,7 +7,6 @@ include { getPrimaryAssembly                                   } from "$projectD
 include { joinByMetaKeys                                       } from "$projectDir/modules/local/functions"
 include { combineByMetaKeys                                    } from "$projectDir/modules/local/functions"
 include { constructAssemblyRecord                              } from "$projectDir/modules/local/functions"
-include { getPrimaryAssembly                                   } from "$projectDir/modules/local/functions"
 include { MINIMAP2_ALIGN as MINIMAP2_ALIGN_READS               } from "$projectDir/modules/nf-core/minimap2/align/main"
 include { MINIMAP2_ALIGN as MINIMAP2_ALIGN_ASSEMBLY_PRIMARY    } from "$projectDir/modules/nf-core/minimap2/align/main"
 include { MINIMAP2_ALIGN as MINIMAP2_ALIGN_ASSEMBLY_ALTERNATE  } from "$projectDir/modules/nf-core/minimap2/align/main"
