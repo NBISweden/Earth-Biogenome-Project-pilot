@@ -116,14 +116,12 @@ workflow SCAFFOLD_CURATION {
     // tuple val(meta), path(pairs), path(index), val(cool_bin)
     // path chromsizes
     BAM2BED_SORT.out.pairs
-        .map { meta, pairs  -> [ meta, pairs, [ ] ] }
-        .combine(
-            Channel.value(params.cooler_bin_size)
-        )
+        .map { meta, pairs  -> [ meta, pairs, [ ], params.cooler_bin_size ] }
         .set { pairs_idx_binsize_ch }
 
     combineByMetaKeys( // Combine Hi-C reads with BWA index
-        pairs_idx_binsize_ch, CREATE_CHROMOSOME_SIZES_FILE.out.sizes,
+        pairs_idx_binsize_ch,
+        CREATE_CHROMOSOME_SIZES_FILE.out.sizes,
         keySet: ['id','sample'],
         meta: 'rhs'
     )
@@ -149,7 +147,7 @@ workflow SCAFFOLD_CURATION {
     joinByMetaKeys(joinByMetaKeys(
             getPrimaryAssembly(ch_assemblies),
             SAMTOOLS_FAIDX.out.fai,
-            keySet: ['id','sample'],
+            keySet: ['id','sample','assembly'],
             meta: 'rhs'
         ), BIOBAMBAM_BAMMARKDUPLICATES2.out.bam,
         keySet: ['id','sample'],
