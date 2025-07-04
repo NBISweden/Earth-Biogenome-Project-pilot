@@ -45,13 +45,14 @@ workflow SCAFFOLD_CURATION {
     )
     ch_versions  = ch_versions.mix( SAMTOOLS_FAIDX.out.versions )
 
-    combineByMetaKeys( // Combine (Hi-C + index) with Assembly
-        combineByMetaKeys( // Combine Hi-C reads with BWA index
-            ch_hic, BWAMEM2_INDEX.out.index,
-            keySet: ['id','sample'],
+    combineByMetaKeys( // Combine (Hi-C + index) with ( BWA index + Assembly )
+        ch_hic,
+        joinByMetaKeys( // Join BWA index with Assembly
+            BWAMEM2_INDEX.out.index,
+            getPrimaryAssembly( ch_assemblies ),
+            keySet: ['id','sample','assembly'],
             meta: 'merge'
         ),
-        getPrimaryAssembly( ch_assemblies ),
         keySet: ['id','sample'],
         meta: 'merge'
     ).transpose(by:1)       // by meta info: [id, sample, settings, single_end, pair_id, assembly]
