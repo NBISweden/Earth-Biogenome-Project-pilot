@@ -101,7 +101,7 @@ workflow SCAFFOLD {
         true    // sort_bam
     )
 
-    combineByMetaKeys( // Combine (bam + assembly) with fai
+    combineByMetaKeys( // Combine bam with (assembly + fai)
         PAIRTOOLS_SPLIT.out.bam,
         joinByMetaKeys( // join assembly + fai
             getPrimaryAssembly(ch_assemblies),
