@@ -6,7 +6,8 @@ process TOL_SEARCH {
     val taxid
 
     output:
-    val json, emit: json
+    val json                     , emit: json
+    path "${taxid}_tol_info.json", emit: json_file
 
     when:
     task.ext.when == null || task.ext.when
