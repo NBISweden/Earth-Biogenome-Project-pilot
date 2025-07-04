@@ -1,6 +1,7 @@
 include { combineByMetaKeys                 } from "../../../modules/local/functions"
 include { SEQKIT_STATS as SEQKIT_HIFI_STATS } from "../../../modules/nf-core/seqkit/stats/main"
 include { SEQKIT_STATS as SEQKIT_HIC_STATS  } from "../../../modules/nf-core/seqkit/stats/main"
+include { FASTQC                            } from "../../../modules/nf-core/fastqc/main"
 include { GENOME_PROPERTIES                 } from "../../../subworkflows/local/genome_properties/main"
 include { COMPARE_LIBRARIES                 } from "../../../subworkflows/local/compare_libraries/main"
 
@@ -15,14 +16,16 @@ workflow INSPECT_DATA {
     // Quantify data
     SEQKIT_HIFI_STATS( hifi_reads )
     SEQKIT_HIC_STATS( hic_reads )
+    FASTQC( hic_reads )
 
     // Generate K-mer histogram
     GENOME_PROPERTIES ( hifi_histogram )
     COMPARE_LIBRARIES ( hifi_histogram.join( hic_histogram ) )
     ch_versions =  GENOME_PROPERTIES.out.versions.mix(
         COMPARE_LIBRARIES.out.versions,
-        SEQKIT_HIFI_STATS.out.versions,
-        SEQKIT_HIC_STATS.out.versions
+        SEQKIT_HIFI_STATS.out.versions.first(),
+        SEQKIT_HIC_STATS.out.versions.first(),
+        FASTQC.out.versions.first()
     )
 
     ch_hifi_with_kmer_cov = combineByMetaKeys(
@@ -34,7 +37,12 @@ workflow INSPECT_DATA {
     .map { meta, reads, kmer_cov -> [ meta + [ kmercov: kmer_cov ], reads ] }
 
     GENOME_PROPERTIES.out.logs
-        .mix( COMPARE_LIBRARIES.out.logs )
+        .mix(
+            COMPARE_LIBRARIES.out.logs,
+            SEQKIT_HIFI_STATS.out.stats,
+            SEQKIT_HIC_STATS.out.stats,
+            FASTQC.out.zip
+        )
         .set { logs }
 
     emit:
