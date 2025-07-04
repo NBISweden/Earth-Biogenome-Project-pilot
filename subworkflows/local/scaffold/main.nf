@@ -27,14 +27,14 @@ workflow SCAFFOLD {
         [ [ ], [ ] ]
     )
 
-    combineByMetaKeys( // Combine (Hi-C + index) with Assembly
-        combineByMetaKeys( // Combine Hi-C reads with BWA index
-            ch_hic,
+    combineByMetaKeys( // Combine (Hi-C + index) with (BWA_INDEX + Assembly)
+        ch_hic,
+        joinByMetaKeys( // Join BWA index with Assembly
             BWAMEM2_INDEX_SCAFFOLD.out.index,
-            keySet: ['id','sample'],
+            getPrimaryAssembly( ch_assemblies ),
+            keySet: ['id','sample','assembly'],
             meta: 'rhs'
         ),
-        getPrimaryAssembly( ch_assemblies ),
         keySet: ['id','sample'],
         meta: 'rhs'
     ).multiMap{ meta, hic_reads, index, fasta ->
@@ -88,7 +88,7 @@ workflow SCAFFOLD {
     joinByMetaKeys(
         PAIRTOOLS_DEDUP.out.pairs,
         getPrimaryAssembly(ch_assemblies),
-        keySet: ['id','sample'],
+        keySet: ['id','sample','assembly'],
         meta: 'rhs'
     ).multiMap{ meta, pairs, fasta ->
         pairs: [ meta, pairs ]
@@ -102,14 +102,14 @@ workflow SCAFFOLD {
     )
 
     combineByMetaKeys( // Combine (bam + assembly) with fai
-        combineByMetaKeys( // Combine bams with assembly
-            PAIRTOOLS_SPLIT.out.bam,
+        PAIRTOOLS_SPLIT.out.bam,
+        joinByMetaKeys( // join assembly + fai
             getPrimaryAssembly(ch_assemblies),
-            keySet: ['id','sample'],
+            SAMTOOLS_FAIDX.out.fai,
+            keySet: ['id','sample','assembly'],
             meta: 'rhs'
         ),
-        SAMTOOLS_FAIDX.out.fai,
-        keySet: ['id','sample'],
+        keySet: ['id','sample','assembly'],
         meta: 'rhs'
     ).multiMap{ meta, bam, fasta, fai ->
         bam:   [ meta, bam ]
