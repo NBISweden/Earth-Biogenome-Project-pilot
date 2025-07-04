@@ -122,8 +122,8 @@ workflow SCAFFOLD_CURATION {
     combineByMetaKeys( // Combine Hi-C reads with BWA index
         pairs_idx_binsize_ch,
         CREATE_CHROMOSOME_SIZES_FILE.out.sizes,
-        keySet: ['id','sample'],
-        meta: 'rhs'
+        keySet: ['id','sample','assembly'],
+        meta: 'lhs'
     )
     .multiMap { meta, pairs, fake_index, cool_bin, chrom_sizes ->
         cload_in     : [ meta, pairs, fake_index, cool_bin ]
@@ -148,9 +148,10 @@ workflow SCAFFOLD_CURATION {
             getPrimaryAssembly(ch_assemblies),
             SAMTOOLS_FAIDX.out.fai,
             keySet: ['id','sample','assembly'],
-            meta: 'rhs'
-        ), BIOBAMBAM_BAMMARKDUPLICATES2.out.bam,
-        keySet: ['id','sample'],
+            meta: 'lhs'
+        ),
+        BIOBAMBAM_BAMMARKDUPLICATES2.out.bam,
+        keySet: ['id','sample','assembly'],
         meta: 'rhs'
     )
     .multiMap { meta, fasta, fai, bam ->
@@ -168,7 +169,7 @@ workflow SCAFFOLD_CURATION {
     // create tracks for PretextMap:
     // coverage, gap, telomer
 
-    joinByMetaKeys(
+    combineByMetaKeys(
         ch_hifi,
         getPrimaryAssembly( ch_assemblies ),
         keySet: ['id','sample'],
@@ -210,7 +211,7 @@ workflow SCAFFOLD_CURATION {
     )
     ch_versions  = ch_versions.mix( SAMTOOLS_MERGE_HIFI.out.versions )
 
-    joinByMetaKeys(
+    combineByMetaKeys(
         ch_hifi,
         getPrimaryAssembly( ch_assemblies ),
         keySet: ['id','sample'],
@@ -227,7 +228,7 @@ workflow SCAFFOLD_CURATION {
             .map { meta, bam -> [ meta, *bam ] } // the spread operator (*) flattens the bam list
             .mix( SAMTOOLS_MERGE_HIFI.out.bam),
         CREATE_CHROMOSOME_SIZES_FILE.out.sizes,
-        keySet: ['id','sample'],
+        keySet: ['id','sample','assembly'],
         meta: 'rhs'
     )
     .multiMap { meta, bam, chrom_sizes ->
@@ -252,7 +253,7 @@ workflow SCAFFOLD_CURATION {
     joinByMetaKeys(
         SEQTK_CUTN.out.bed,
         CREATE_CHROMOSOME_SIZES_FILE.out.sizes,
-        keySet: ['id','sample'],
+        keySet: ['id','sample','assembly'],
         meta: 'rhs'
     )
     .multiMap { meta, bed, chrom_sizes ->
@@ -288,7 +289,7 @@ workflow SCAFFOLD_CURATION {
     joinByMetaKeys(
         TIDK_SEARCH_BEDGRAPH.out.bedgraph,
         CREATE_CHROMOSOME_SIZES_FILE.out.sizes,
-        keySet: ['id','sample'],
+        keySet: ['id','sample','assembly'],
         meta: 'rhs'
     )
     .multiMap { meta, bedgraph, chrom_sizes ->
