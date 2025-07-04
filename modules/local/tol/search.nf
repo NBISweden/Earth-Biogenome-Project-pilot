@@ -20,4 +20,6 @@ process TOL_SEARCH {
         taxClass:   lazy_json.species[0]['taxaClass'],
         order:   lazy_json.species[0]['order'],
     ]
+    def jsonBuilder = new groovy.json.JsonBuilder(lazy_json)
+    file("${task.workDir}/${taxid}_tol_info.json").text = jsonBuilder.toPrettyString()
 }
