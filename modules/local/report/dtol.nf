@@ -17,7 +17,7 @@ process REPORT_DTOL {
     tol_table << [
         tol_search_json.tol_id,
         tol_search_json.species,
-        tol_search_json.class,
+        tol_search_json.taxClass,
         tol_search_json.order
     ].join("\t")
     file("$task.workDir/DToL.tsv").text = tol_table.join('\n')
