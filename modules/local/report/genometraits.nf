@@ -1,5 +1,5 @@
 process REPORT_GENOMETRAITS {
-    tag ""
+    tag "${meta.sample.name}"
     label 'process_single'
 
     input:
@@ -18,5 +18,5 @@ process REPORT_GENOMETRAITS {
         Haploid Number\t${meta.sample.haploid_number}\tunknown
         Ploidy\t${meta.sample.ploidy}\tunknown
         """.stripIndent()
-    file("$task.workDir/Genome_traits.tsv").text = trait_table
+    file("${task.workDir}/Genome_traits.tsv").text = trait_table
 }

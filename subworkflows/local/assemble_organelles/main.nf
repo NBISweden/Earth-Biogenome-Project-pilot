@@ -20,13 +20,18 @@ workflow ASSEMBLE_ORGANELLES {
             input: [ meta, assembly.pri_fasta ]
             reference: mitofa
             genbank: mitogb
+            mito_code: meta.sample.mito_code
         }
     MITOHIFI_MITOHIFI(
         mitohifi_ch.input,
         mitohifi_ch.reference,
         mitohifi_ch.genbank,
         'c',
-        params.mitohifi.code
+        mitohifi_ch.mito_code,
+    )
+    ch_versions = ch_versions.mix(
+        MITOHIFI_FINDMITOREFERENCE.out.versions.first(),
+        MITOHIFI_MITOHIFI.out.versions.first()
     )
 
     emit:

@@ -1,0 +1,19 @@
+Changes in component 'nf-core/gfastats'
+'modules/nf-core/gfastats/environment.yml' is unchanged
+'modules/nf-core/gfastats/meta.yml' is unchanged
+Changes in 'gfastats/main.nf':
+--- modules/nf-core/gfastats/main.nf
++++ modules/nf-core/gfastats/main.nf
+@@ -42,7 +42,7 @@
+         $ebed \\
+         $sak \\
+         $output_sequences \\
+-        --input-sequence $assembly \\
++        $assembly \\
+         $genome_size \\
+         $target \\
+         > ${prefix}.assembly_summary
+
+'modules/nf-core/gfastats/tests/main.nf.test.snap' is unchanged
+'modules/nf-core/gfastats/tests/main.nf.test' is unchanged
+************************************************************

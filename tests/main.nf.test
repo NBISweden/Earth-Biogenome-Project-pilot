@@ -1,0 +1,69 @@
+nextflow_pipeline {
+
+    name "Test Workflow main.nf - Tiny"
+    script "main.nf"
+
+    test("Tiny dataset - inspect,preprocess,assemble,purge,polish,scaffold,curate") {
+        tag "01"
+        when {
+            params {
+                input                   = "$projectDir/tests/data/tiny/test_ci_Dmelanogaster.yml"
+                steps                   = 'inspect,preprocess,assemble,purge,polish,scaffold,curate'
+                outdir                  = "results"
+                fastk {
+                    kmer_size           = 14
+                }
+                meryl {
+                    kmer_size           = 14
+                }
+                genescopefk {
+                    kmer_size           = 14
+                }
+                busco {
+                    lineages            = 'bacteria_odb10' // eukaryota_odb10'
+                }
+                fcs {
+                    manifest           = "https://ftp.ncbi.nlm.nih.gov/genomes/TOOLS/FCS/database/test-only/test-only.manifest"
+                }
+                organelle_assembly_mode = 'none'
+            }
+        }
+
+        then {
+            assert workflow.success
+        }
+
+    }
+
+    test("Tiny dataset - purge,polish,scaffold,curate") {
+        tag "02"
+        when {
+            params {
+                input                   = "$projectDir/tests/data/tiny/test_from_assembly.yml"
+                steps                   = 'purge,polish,scaffold,curate'
+                outdir                  = "results"
+                fastk {
+                    kmer_size           = 14
+                }
+                meryl {
+                    kmer_size           = 14
+                }
+                genescopefk {
+                    kmer_size           = 14
+                }
+                busco {
+                    lineages            = 'bacteria_odb10' // eukaryota_odb10'
+                }
+                fcs {
+                    manifest           = "https://ftp.ncbi.nlm.nih.gov/genomes/TOOLS/FCS/database/test-only/test-only.manifest"
+                }
+                organelle_assembly_mode = 'none'
+            }
+        }
+
+        then {
+            assert workflow.success
+        }
+
+    }
+}

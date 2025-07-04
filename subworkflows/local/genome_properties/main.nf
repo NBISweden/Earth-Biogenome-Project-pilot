@@ -20,41 +20,21 @@ workflow GENOME_PROPERTIES {
     FASTK_HISTEX ( fastk_hist_ktab.map { meta, hist, ktab -> [ meta, hist ] } )
     GENESCOPEFK ( FASTK_HISTEX.out.hist )
 
-    // Print warning if genome size estimate is outside predicted range.
-    GENESCOPEFK.out.summary
-        .subscribe { meta, summary ->
-            def genome_size_estimates = summary.readLines().find { it.startsWith("Genome Haploid Length") } =~ /[0-9,]+/
-            def nf = java.text.NumberFormat.getInstance(Locale.US)
-            if ( genome_size_estimates.size() == 1 ) {
-                if ( nf.parse(meta.sample.genome_size).intValue() < 0.9 * nf.parse(genome_size_estimates[0]).intValue() ||
-                    nf.parse(meta.sample.genome_size).intValue() > 1.1 * nf.parse(genome_size_estimates[0]).intValue() ) {
-                        log.warn "GeneScopeFK genome size estimate differs from GOAT estimate"
-                }
-            } else {
-                // Min and Max estimate
-                if ( nf.parse(meta.sample.genome_size).intValue() < nf.parse(genome_size_estimates[0]).intValue() ||
-                    nf.parse(meta.sample.genome_size).intValue() > nf.parse(genome_size_estimates[1]).intValue() ) {
-                        log.warn "GeneScopeFK genome size estimate differs from GOAT estimate"
-                }
-            }
-        }
-    GENESCOPEFK.out.linear_plot
-        .join( GENESCOPEFK.out.log_plot )
-        .join( GENESCOPEFK.out.transformed_linear_plot )
-        .join( GENESCOPEFK.out.transformed_log_plot )
-        .map { meta, linplot, logplot, tlinplot, tlogplot -> [ meta, file("$projectDir/assets/notebooks/genescope.qmd", checkIfExists: true), [ linplot, logplot, tlinplot, tlogplot ] ] }
-        .set { quarto_files }
-
     // Generate Smudgeplot
     MERQURYFK_PLOIDYPLOT ( fastk_hist_ktab )
 
     // Generage GC plot
     MERQURYFK_KATGC ( fastk_hist_ktab )
 
-    MERQURYFK_PLOIDYPLOT.out.stacked_ploidy_plot_png
-        .mix( MERQURYFK_KATGC.out.stacked_gc_plot_png )
-        .map { it[1] } // Remove meta
-        .set { logs }
+    GENESCOPEFK.out.linear_plot.mix (
+        GENESCOPEFK.out.log_plot,
+        GENESCOPEFK.out.transformed_linear_plot,
+        GENESCOPEFK.out.transformed_log_plot,
+        MERQURYFK_PLOIDYPLOT.out.stacked_ploidy_plot_png,
+        MERQURYFK_KATGC.out.stacked_gc_plot_png
+    )
+    .map { meta, img -> img }
+    .set { logs }
 
     FASTK_HISTEX.out.versions.first().mix(
         GENESCOPEFK.out.versions.first(),
@@ -63,8 +43,7 @@ workflow GENOME_PROPERTIES {
     ).set { versions }
 
     emit:
-    kmer_cov      = GENESCOPEFK.out.kmer_cov
-    quarto_files
+    kmer_cov = GENESCOPEFK.out.kmer_cov
     logs
     versions
 }

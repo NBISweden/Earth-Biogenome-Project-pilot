@@ -1,0 +1,16 @@
+sample:
+  name: 'Drosophila melanogaster'
+  ploidy: 2
+  genome_size: 176040000
+  haploid_number: 4
+  tax_id: 7227
+  genetic_code: 1
+  mito_code: 5
+  domain: Eukaryota
+hifi:
+  - reads: 'https://raw.githubusercontent.com/NBISweden/Earth-Biogenome-Project-pilot/main/tests/data/tiny/PB_HIFI/dmel_2Mb.fasta.gz'
+hic:
+  - read1: 'https://raw.githubusercontent.com/NBISweden/Earth-Biogenome-Project-pilot/main/tests/data/tiny/HIC/dmel_2Mb_p1_R1.fastq.gz'
+    read2: 'https://raw.githubusercontent.com/NBISweden/Earth-Biogenome-Project-pilot/main/tests/data/tiny/HIC/dmel_2Mb_p1_R2.fastq.gz'
+  - read1: 'https://raw.githubusercontent.com/NBISweden/Earth-Biogenome-Project-pilot/main/tests/data/tiny/HIC/dmel_2Mb_p2_R1.fastq.gz'
+    read2: 'https://raw.githubusercontent.com/NBISweden/Earth-Biogenome-Project-pilot/main/tests/data/tiny/HIC/dmel_2Mb_p2_R2.fastq.gz'

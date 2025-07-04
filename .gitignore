@@ -1,3 +1,20 @@
+# Nextflow files
+.lineage/
 .nextflow*
 work/
+
+# Pipeline files
 results/
+*_cache/
+
+# Pixi environments
+.pixi/
+*.egg-info
+
+# nf-test files
+.nf-test.log
+.nf-test/
+
+# misc
+.DS_Store
+.screenrc
