@@ -9,6 +9,7 @@ workflow COMPARE_ASSEMBLIES {
     main:
     QUAST (
         getPrimaryAssembly( assembly_ch )
+            .map{ meta, assembly -> tuple(meta.subMap(['id','sample']), assembly) }
             .groupTuple(),
         params.reference ? file( params.reference, checkIfExists: true ) : [],
         []              // No GFF
