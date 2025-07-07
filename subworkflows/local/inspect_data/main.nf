@@ -39,9 +39,9 @@ workflow INSPECT_DATA {
     GENOME_PROPERTIES.out.logs
         .mix(
             COMPARE_LIBRARIES.out.logs,
-            SEQKIT_HIFI_STATS.out.stats,
-            SEQKIT_HIC_STATS.out.stats,
-            FASTQC.out.zip
+            SEQKIT_HIFI_STATS.out.stats.map { _meta, stats -> stats },
+            SEQKIT_HIC_STATS.out.stats.map { _meta, stats -> stats},
+            FASTQC.out.zip.map { _meta, zip -> zip }
         )
         .set { logs }
 
