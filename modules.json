@@ -59,7 +59,8 @@
                         "git_sha": "29e87a37ae1887fc8289f2f56775604a71715cb9",
                         "installed_by": [
                             "modules"
-                        ]
+                        ],
+                        "patch": "modules/nf-core/fastk/fastk/fastk-fastk.diff"
                     },
                     "fastk/histex": {
                         "branch": "master",
