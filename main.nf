@@ -100,6 +100,7 @@ workflow {
         // QC Steps
         INSPECT_DATA(
             PREPARE_INPUT.out.hifi,
+            PREPARE_INPUT.out.hic,
             BUILD_FASTK_HIFI_DATABASE.out.fastk_hist_ktab,
             BUILD_FASTK_HIC_DATABASE.out.fastk_hist_ktab
         )
