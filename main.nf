@@ -1,39 +1,38 @@
 #! /usr/bin/env nextflow
 
-include { combineByMetaKeys                        } from "$projectDir/modules/local/functions"
-include { assembliesFromStage as preassembledInput } from "$projectDir/modules/local/functions"
-include { setAssemblyStage                         } from "$projectDir/modules/local/functions"
-
-include { PREPARE_INPUT } from "$projectDir/subworkflows/local/prepare_input/main"
-
-include { BUILD_FASTK_DATABASE as BUILD_FASTK_HIFI_DATABASE } from "$projectDir/subworkflows/local/build_fastk_database/main"
-include { BUILD_FASTK_DATABASE as BUILD_FASTK_HIC_DATABASE  } from "$projectDir/subworkflows/local/build_fastk_database/main"
-include { BUILD_MERYL_DATABASE as BUILD_MERYL_HIFI_DATABASE } from "$projectDir/subworkflows/local/build_meryl_database/main"
-include { BUILD_MERYL_DATABASE as BUILD_MERYL_HIC_DATABASE  } from "$projectDir/subworkflows/local/build_meryl_database/main"
-
-include { CONVERT_FASTQ_CRAM } from "$projectDir/subworkflows/local/convert_fastq_cram/main"
-
-include { INSPECT_DATA } from "$projectDir/subworkflows/local/inspect_data/main"
-
-include { ASSEMBLE                                   } from "$projectDir/subworkflows/local/assemble/main"
-include { ASSEMBLE_ORGANELLES                        } from "$projectDir/subworkflows/local/assemble_organelles/main"
-include { COMPARE_ASSEMBLIES                         } from "$projectDir/subworkflows/local/compare_assemblies/main"
-include { EVALUATE_ASSEMBLY as EVALUATE_RAW_ASSEMBLY } from "$projectDir/subworkflows/local/evaluate_assembly/main"
-
-include { DECONTAMINATE } from "$projectDir/subworkflows/local/decontaminate/main"
-
-include { PURGE_DUPLICATES } from "$projectDir/subworkflows/local/purge_dups/main"
-
-include { EVALUATE_ASSEMBLY as EVALUATE_PURGED_ASSEMBLY } from "$projectDir/subworkflows/local/evaluate_assembly/main"
-
-include { SCAFFOLD } from "$projectDir/subworkflows/local/scaffold/main.nf"
-include { EVALUATE_ASSEMBLY as EVALUATE_SCAFFOLDED_ASSEMBLY } from "$projectDir/subworkflows/local/evaluate_assembly/main"
-
-include { SCAFFOLD_CURATION } from "$projectDir/subworkflows/local/scaffold_curation/main.nf"
-
-include { ALIGN_RNASEQ       } from "$projectDir/subworkflows/local/align_rnaseq/main"
-
-include { ASSEMBLY_REPORT } from "$projectDir/subworkflows/local/assembly_report/main"
+// Functions
+include { combineByMetaKeys                                 } from "./modules/local/functions"
+include { assembliesFromStage as preassembledInput          } from "./modules/local/functions"
+include { setAssemblyStage                                  } from "./modules/local/functions"
+// Data import
+include { PREPARE_INPUT                                     } from "./subworkflows/local/prepare_input/main"
+// Database preparation
+include { BUILD_FASTK_DATABASE as BUILD_FASTK_HIFI_DATABASE } from "./subworkflows/local/build_fastk_database/main"
+include { BUILD_FASTK_DATABASE as BUILD_FASTK_HIC_DATABASE  } from "./subworkflows/local/build_fastk_database/main"
+include { BUILD_MERYL_DATABASE as BUILD_MERYL_HIFI_DATABASE } from "./subworkflows/local/build_meryl_database/main"
+include { BUILD_MERYL_DATABASE as BUILD_MERYL_HIC_DATABASE  } from "./subworkflows/local/build_meryl_database/main"
+// Data conversion
+include { CONVERT_FASTQ_CRAM                                } from "./subworkflows/local/convert_fastq_cram/main"
+// Data inspection
+include { INSPECT_DATA                                      } from "./subworkflows/local/inspect_data/main"
+// Assembly
+include { ASSEMBLE                                          } from "./subworkflows/local/assemble/main"
+include { ASSEMBLE_ORGANELLES                               } from "./subworkflows/local/assemble_organelles/main"
+// Decontamination
+include { DECONTAMINATE                                     } from "./subworkflows/local/decontaminate/main"
+// Purge duplicates
+include { PURGE_DUPLICATES                                  } from "./subworkflows/local/purge_dups/main"
+// Scaffold
+include { SCAFFOLD                                          } from "./subworkflows/local/scaffold/main.nf"
+// Curation
+include { SCAFFOLD_CURATION                                 } from "./subworkflows/local/scaffold_curation/main.nf"
+// Evaluate assemblies
+include { COMPARE_ASSEMBLIES                                } from "./subworkflows/local/compare_assemblies/main"
+include { EVALUATE_ASSEMBLY                                 } from "./subworkflows/local/evaluate_assembly/main"
+// Align RNAseq
+include { ALIGN_RNASEQ                                      } from "./subworkflows/local/align_rnaseq/main"
+// Report
+include { ASSEMBLY_REPORT                                   } from "./subworkflows/local/assembly_report/main"
 
 /*
  * Development: See docs/development to understand the workflow programming model and
@@ -75,6 +74,7 @@ workflow {
         params.input,
         // params.ncbi.taxdb
     )
+    ch_evaluate_assemblies = PREPARE_INPUT.out.assemblies
 
     // Build necessary databases
     if ( ['inspect','preprocess','assemble','purge','polish','screen','scaffold','curate'].any{ it in workflow_steps}) {
@@ -117,17 +117,19 @@ workflow {
     }
 
     // Assemble
-    ch_raw_assemblies = preassembledInput( PREPARE_INPUT.out.assemblies, 'raw' )
     if ( 'assemble' in workflow_steps ) {
         // Run assemblers
         ASSEMBLE ( PREPARE_INPUT.out.hifi_merged )
-        ch_raw_assemblies = ch_raw_assemblies.mix( ASSEMBLE.out.raw_assemblies )
+        ch_evaluate_assemblies = ch_evaluate_assemblies.mix( ASSEMBLE.out.raw_assemblies )
+        ch_raw_assemblies = ASSEMBLE.out.raw_assemblies
         ch_multiqc_files = ch_multiqc_files.mix( ASSEMBLE.out.logs )
         ch_versions = ch_versions.mix( ASSEMBLE.out.versions )
     } else {
-        // Nothing more than evaluate
+        ch_raw_assemblies = Channel.empty() // No assemblies from a previous stage
     }
-    ch_raw_assemblies.dump(tag: 'Assemblies: Raw', pretty: true)
+    ch_raw_assemblies = ch_raw_assemblies.mix(
+        preassembledInput( PREPARE_INPUT.out.assemblies, 'raw' )
+    ).dump(tag: 'Assemblies: Raw', pretty: true)
 
     // Organelle assembly
     if ( params.organelle_assembly_mode == 'reads' ) {
@@ -138,22 +140,6 @@ workflow {
         // TODO: filter organelles from assemblies
     } // else params.organelle_assembly_mode == 'none'
 
-    // Assess assemblies
-    COMPARE_ASSEMBLIES ( ch_raw_assemblies )
-    EVALUATE_RAW_ASSEMBLY (
-        ch_raw_assemblies,
-        BUILD_FASTK_HIFI_DATABASE.out.fastk_hist_ktab,
-        BUILD_MERYL_HIFI_DATABASE.out.uniondb
-    )
-    ch_multiqc_files = ch_multiqc_files.mix(
-        EVALUATE_RAW_ASSEMBLY.out.logs,
-        COMPARE_ASSEMBLIES.out.logs
-    )
-    ch_versions = ch_versions.mix(
-        COMPARE_ASSEMBLIES.out.versions,
-        EVALUATE_RAW_ASSEMBLY.out.versions
-    )
-
     // Contamination screen
     ch_to_screen = setAssemblyStage (
         ch_raw_assemblies,
@@ -161,6 +147,7 @@ workflow {
     ).dump(tag: 'Assemblies: to screen', pretty: true)
     if ( 'screen' in workflow_steps ) {
         DECONTAMINATE( ch_to_screen )
+        ch_evaluate_assemblies = ch_evaluate_assemblies.mix( DECONTAMINATE.out.assemblies )
         ch_cleaned_assemblies = DECONTAMINATE.out.assemblies
         ch_versions = ch_versions.mix(DECONTAMINATE.out.versions)
     } else {
@@ -180,16 +167,10 @@ workflow {
             ch_to_purge,
             ch_hifi
         )
+        ch_evaluate_assemblies = ch_evaluate_assemblies.mix( PURGE_DUPLICATES.out.assemblies )
         ch_purged_assemblies = PURGE_DUPLICATES.out.assemblies
         ch_multiqc_files = ch_multiqc_files.mix( PURGE_DUPLICATES.out.logs )
         ch_versions = ch_versions.mix( PURGE_DUPLICATES.out.versions )
-        EVALUATE_PURGED_ASSEMBLY (
-            ch_purged_assemblies,
-            BUILD_FASTK_HIFI_DATABASE.out.fastk_hist_ktab,
-            BUILD_MERYL_HIFI_DATABASE.out.uniondb
-        )
-        ch_multiqc_files = ch_multiqc_files.mix( EVALUATE_PURGED_ASSEMBLY.out.logs )
-        ch_versions = ch_versions.mix( EVALUATE_PURGED_ASSEMBLY.out.versions )
     } else {
         ch_purged_assemblies = ch_to_purge
     }
@@ -222,16 +203,10 @@ workflow {
             ch_to_scaffold,
             CONVERT_FASTQ_CRAM.out.fastq
         )
+        ch_evaluate_assemblies = ch_evaluate_assemblies.mix( SCAFFOLD.out.assemblies )
         ch_scaffolded_assemblies = SCAFFOLD.out.assemblies
         ch_multiqc_files = ch_multiqc_files.mix( SCAFFOLD.out.logs )
         ch_versions = ch_versions.mix( SCAFFOLD.out.versions )
-        EVALUATE_SCAFFOLDED_ASSEMBLY (
-            ch_scaffolded_assemblies,
-            BUILD_FASTK_HIFI_DATABASE.out.fastk_hist_ktab,
-            BUILD_MERYL_HIFI_DATABASE.out.uniondb
-        )
-        ch_multiqc_files = ch_multiqc_files.mix( EVALUATE_SCAFFOLDED_ASSEMBLY.out.logs )
-        ch_versions = ch_versions.mix( EVALUATE_SCAFFOLDED_ASSEMBLY.out.versions )
     } else {
         ch_scaffolded_assemblies = ch_to_scaffold
     }
@@ -246,18 +221,20 @@ workflow {
     ).dump(tag: 'Assemblies: to curate', pretty: true)
     if ( 'curate' in workflow_steps ) {
         SCAFFOLD_CURATION (
-            ch_scaffolded_assemblies,
+            ch_to_curate,
             CONVERT_FASTQ_CRAM.out.fastq,
             PREPARE_INPUT.out.hifi
         )
+        ch_evaluate_assemblies = ch_evaluate_assemblies.mix( SCAFFOLD_CURATION.out.assemblies )
+        ch_curated_assemblies = SCAFFOLD_CURATION.out.assemblies
         ch_versions = ch_versions.mix( SCAFFOLD_CURATION.out.versions )
     } else {
         ch_curated_assemblies = ch_to_curate
+        // Nothing to pass forward
     }
-    // TODO: output needs to be defined
-    //ch_curated_assemblies = ch_curated_assemblies.mix(
-    //    preassembledInput( PREPARE_INPUT.out.assemblies, 'curated' )
-    //).dump(tag: 'Assemblies: Curated')
+    ch_curated_assemblies = ch_curated_assemblies.mix(
+        preassembledInput( PREPARE_INPUT.out.assemblies, 'curated' )
+    ).dump(tag: 'Assemblies: Curated')
 
     // Align RNAseq
     if( 'alignRNA' in workflow_steps ) {
@@ -267,6 +244,23 @@ workflow {
                 .map { meta, assembly -> [ meta, assembly.pri_fasta ] }
         )
     }
+
+    // Evaluate assemblies
+    COMPARE_ASSEMBLIES ( ch_evaluate_assemblies )
+    EVALUATE_ASSEMBLY (
+        ch_evaluate_assemblies
+            .toList().flatMap(), // Introduce bottleneck to delay evaluation until previous steps are performed
+        BUILD_FASTK_HIFI_DATABASE.out.fastk_hist_ktab,
+        BUILD_MERYL_HIFI_DATABASE.out.uniondb
+    )
+    ch_multiqc_files = ch_multiqc_files.mix(
+        COMPARE_ASSEMBLIES.out.logs,
+        EVALUATE_ASSEMBLY.out.logs
+    )
+    ch_versions = ch_versions.mix(
+        COMPARE_ASSEMBLIES.out.versions,
+        EVALUATE_ASSEMBLY.out.versions
+    )
 
     ASSEMBLY_REPORT(
         PREPARE_INPUT.out.sample_meta.map{ meta -> [ meta, file(params.quarto_assembly_report, checkIfExists: true) ] },
