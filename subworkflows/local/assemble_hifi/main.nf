@@ -1,56 +1,41 @@
-include { HIFIASM         } from "$projectDir/modules/nf-core/hifiasm/main"
-include { GFATOOLS_GFA2FA } from "$projectDir/modules/local/gfatools/gfa2fa"
-include { GFASTATS        } from "$projectDir/modules/nf-core/gfastats/main"
-include { deepMergeMaps   } from "$projectDir/modules/local/functions"
+include { HIFIASM         } from "../../../modules/nf-core/hifiasm/main"
+include { GFATOOLS_GFA2FA } from "../../../modules/local/gfatools/gfa2fa"
+include { deepMergeMaps   } from "../../../modules/local/functions"
 
 workflow ASSEMBLE_HIFI {
     take:
     hifi_reads     // [ meta, fastx ]
 
     main:
-        // Add build ID.
-        reads_ch = hifi_reads
-            .flatMap { meta, reads ->
-                if (params.hifiasm) {
-                    params.hifiasm.collect { key, value -> [ deepMergeMaps(meta,
-                        [
-                            settings: [ hifiasm: [ id: key, args: value ] ],
-                            assembly: [ assembler: 'hifiasm', stage: 'raw', id: key, build: "hifiasm-raw-$key" ]
-                        ]
-                        ), reads ]
-                    }
-                } else {
-                    def key = "default"
-                    [ [ deepMergeMaps(meta,
-                        [
-                            settings: [ hifiasm: [ id: key, args: "" ] ],
-                            assembly: [ assembler: 'hifiasm', stage: 'raw', id: key, build: "hifiasm-raw-$key" ]
-                        ]
-                        ), reads ]
+    // Add build ID.
+    reads_ch = hifi_reads
+        .flatMap { meta, reads ->
+            if (params.hifiasm) {
+                params.hifiasm.collect { key, value -> [ deepMergeMaps(meta,
+                    [
+                        settings: [ hifiasm: [ id: key, args: value ] ],
+                        assembly: [ assembler: 'hifiasm', stage: 'raw', id: key, build: "hifiasm-raw-$key" ]
                     ]
+                    ), reads ]
                 }
+            } else {
+                def key = "default"
+                [ [ deepMergeMaps(meta,
+                    [
+                        settings: [ hifiasm: [ id: key, args: "" ] ],
+                        assembly: [ assembler: 'hifiasm', stage: 'raw', id: key, build: "hifiasm-raw-$key" ]
+                    ]
+                    ), reads ]
+                ]
             }
-        HIFIASM(
-            reads_ch,
-            [[],[],[]], // meta, paternal k-mers, maternal k-mers
-            [[],[],[]], // meta, Hi-C r1, Hi-C r2
-        )
-        raw_assembly_ch = params.use_phased ? HIFIASM.out.paternal_contigs.mix( HIFIASM.out.maternal_contigs ) : HIFIASM.out.processed_contigs
-        GFATOOLS_GFA2FA( raw_assembly_ch )
-        fasta_ch = GFATOOLS_GFA2FA.out.fasta.multiMap { meta, fasta ->
-            fasta: [ meta, fasta ]
-            genome_size: meta.sample.genome_size
         }
-        GFASTATS(
-            fasta_ch.fasta,
-            [],                   // output format: none
-            fasta_ch.genome_size, // genome size
-            "",                   // target
-            [[],[]],              // AGP file
-            [[],[]],              // include bed
-            [[],[]],              // exclude bed
-            [[],[]]               // SAK instructions
-        )
+    HIFIASM(
+        reads_ch,
+        [[],[],[]], // meta, paternal k-mers, maternal k-mers
+        [[],[],[]], // meta, Hi-C r1, Hi-C r2
+    )
+    raw_assembly_ch = params.use_phased ? HIFIASM.out.paternal_contigs.mix( HIFIASM.out.maternal_contigs ) : HIFIASM.out.processed_contigs
+    GFATOOLS_GFA2FA( raw_assembly_ch )
 
     gfa_ch = params.use_phased ?
         HIFIASM.out.paternal_contigs
@@ -79,11 +64,9 @@ workflow ASSEMBLE_HIFI {
         .dump( tag: "Assemblies: Pre-purge", pretty: true )
 
     HIFIASM.out.log
-        .mix( GFASTATS.out.assembly_summary )
-        .map { meta, log -> log }
+        .map { _meta, log -> log }
         .set { logs }
     versions_ch = HIFIASM.out.versions.first()
-        .mix( GFASTATS.out.versions.first() )
         .mix( GFATOOLS_GFA2FA.out.versions.first() )
 
     emit:
