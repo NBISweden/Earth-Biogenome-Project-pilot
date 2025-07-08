@@ -225,16 +225,9 @@ workflow {
             CONVERT_FASTQ_CRAM.out.fastq,
             PREPARE_INPUT.out.hifi
         )
-        ch_evaluate_assemblies = ch_evaluate_assemblies.mix( SCAFFOLD_CURATION.out.assemblies )
-        ch_curated_assemblies = SCAFFOLD_CURATION.out.assemblies
         ch_versions = ch_versions.mix( SCAFFOLD_CURATION.out.versions )
-    } else {
-        ch_curated_assemblies = ch_to_curate
-        // Nothing to pass forward
     }
-    ch_curated_assemblies = ch_curated_assemblies.mix(
-        preassembledInput( PREPARE_INPUT.out.assemblies, 'curated' )
-    ).dump(tag: 'Assemblies: Curated')
+    preassembledInput( PREPARE_INPUT.out.assemblies, 'curated' ).dump(tag: 'Assemblies: Curated')
 
     // Align RNAseq
     if( 'alignRNA' in workflow_steps ) {

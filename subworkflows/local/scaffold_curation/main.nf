@@ -329,6 +329,5 @@ workflow SCAFFOLD_CURATION {
     ch_versions  = ch_versions.mix( PRETEXT_TRACKS_INGESTION.out.versions )
 
     emit:
-    assemblies = Channel.empty()
     versions   = ch_versions
 }
