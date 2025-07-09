@@ -209,9 +209,403 @@ Uppmax and PDC cluster specific:
 
 ### Workflow outputs
 
-All results are published to the path assigned to the workflow parameter `results`.
+All results are published to the path assigned to the workflow parameter `outdir`.
 
-TODO:: List folder contents in results file
+<details>
+<summary>Expand for example results directory structure</summary>
+```
+results
+├── 01_read_inspection
+│   ├── dtol_search
+│   │   └── 7227_tol_info.json
+│   ├── fastqc_hic
+│   │   ├── dmel_2Mb_p1_R1_1_fastqc.html
+│   │   ├── dmel_2Mb_p1_R1_1_fastqc.zip
+│   │   ├── dmel_2Mb_p1_R1_2_fastqc.html
+│   │   ├── dmel_2Mb_p1_R1_2_fastqc.zip
+│   │   ├── dmel_2Mb_p2_R1_1_fastqc.html
+│   │   ├── dmel_2Mb_p2_R1_1_fastqc.zip
+│   │   ├── dmel_2Mb_p2_R1_2_fastqc.html
+│   │   └── dmel_2Mb_p2_R1_2_fastqc.zip
+│   ├── genescopefk
+│   │   ├── Drosophila_melanogaster_linear_plot.png
+│   │   ├── Drosophila_melanogaster_log_plot.png
+│   │   ├── Drosophila_melanogaster_model.txt
+│   │   ├── Drosophila_melanogaster_summary.txt
+│   │   ├── Drosophila_melanogaster_transformed_linear_plot.png
+│   │   └── Drosophila_melanogaster_transformed_log_plot.png
+│   ├── kat_comp
+│   │   ├── Drosophila_melanogaster_katcomp.fi.png
+│   │   ├── Drosophila_melanogaster_katcomp.ln.png
+│   │   └── Drosophila_melanogaster_katcomp.st.png
+│   ├── katgc
+│   │   ├── Drosophila_melanogaster_katgc.fi.png
+│   │   ├── Drosophila_melanogaster_katgc.ln.png
+│   │   └── Drosophila_melanogaster_katgc.st.png
+│   ├── ploidyplot
+│   │   ├── Drosophila_melanogaster_ploidyplot.fi.png
+│   │   ├── Drosophila_melanogaster_ploidyplot.ln.png
+│   │   └── Drosophila_melanogaster_ploidyplot.st.png
+│   ├── seqkit_hic_stats
+│   │   ├── dmel_2Mb_p1_R1_hic.tsv
+│   │   └── dmel_2Mb_p2_R1_hic.tsv
+│   └── seqkit_hifi_stats
+│       └── dmel_2Mb_hifi.tsv
+├── 02_read_preprocessing
+│   ├── hi-c_cram
+│   │   ├── dmel_2Mb_p1.cram
+│   │   ├── dmel_2Mb_p1.cram.crai
+│   │   ├── dmel_2Mb_p2.cram
+│   │   └── dmel_2Mb_p2.cram.crai
+│   └── hi-c_trimmed_fastq
+│       ├── dmel_2Mb_p1_1.fastp.fastq.gz
+│       ├── dmel_2Mb_p1_2.fastp.fastq.gz
+│       ├── dmel_2Mb_p1.fastp.html
+│       ├── dmel_2Mb_p1.fastp.json
+│       ├── dmel_2Mb_p1.fastp.log
+│       ├── dmel_2Mb_p2_1.fastp.fastq.gz
+│       ├── dmel_2Mb_p2_2.fastp.fastq.gz
+│       ├── dmel_2Mb_p2.fastp.html
+│       ├── dmel_2Mb_p2.fastp.json
+│       └── dmel_2Mb_p2.fastp.log
+├── 03_assembly
+│   ├── busco
+│   │   └── hifiasm-raw-default
+│   │       ├── hifiasm-raw-default-bacteria_odb10-busco
+│   │       │   ├── hifiasm-raw-default.asm.bp.p_ctg.fasta
+│   │       │   │   ├── logs
+│   │       │   │   │   ├── bbtools_err.log
+│   │       │   │   │   ├── bbtools_out.log
+│   │       │   │   │   ├── hmmsearch_err.log
+│   │       │   │   │   ├── hmmsearch_out.log
+│   │       │   │   │   ├── prodigal_err.log
+│   │       │   │   │   └── prodigal_out.log
+│   │       │   │   ├── prodigal_output
+│   │       │   │   │   └── predicted_genes
+│   │       │   │   │       ├── predicted.faa
+│   │       │   │   │       ├── predicted.fna
+│   │       │   │   │       └── tmp
+│   │       │   │   │           ├── prodigal_mode_single_code_11_err.log
+│   │       │   │   │           ├── prodigal_mode_single_code_11_out.log
+│   │       │   │   │           ├── prodigal_mode_single_code_11.faa
+│   │       │   │   │           ├── prodigal_mode_single_code_11.fna
+│   │       │   │   │           ├── prodigal_mode_single_code_4_err.log
+│   │       │   │   │           ├── prodigal_mode_single_code_4_out.log
+│   │       │   │   │           ├── prodigal_mode_single_code_4.faa
+│   │       │   │   │           └── prodigal_mode_single_code_4.fna
+│   │       │   │   └── run_bacteria_odb10
+│   │       │   │       ├── busco_sequences
+│   │       │   │       │   ├── fragmented_busco_sequences.tar.gz
+│   │       │   │       │   ├── multi_copy_busco_sequences.tar.gz
+│   │       │   │       │   └── single_copy_busco_sequences.tar.gz
+│   │       │   │       ├── full_table.tsv
+│   │       │   │       ├── hmmer_output.tar.gz
+│   │       │   │       ├── missing_busco_list.tsv
+│   │       │   │       ├── short_summary.json
+│   │       │   │       └── short_summary.txt
+│   │       │   └── logs
+│   │       │       └── busco.log
+│   │       ├── hifiasm-raw-default-bacteria_odb10-busco.batch_summary.txt
+│   │       ├── short_summary.specific.bacteria_odb10.hifiasm-raw-default.asm.bp.p_ctg.fasta.json
+│   │       └── short_summary.specific.bacteria_odb10.hifiasm-raw-default.asm.bp.p_ctg.fasta.txt
+│   ├── gfastats
+│   │   └── hifiasm-raw-default
+│   │       └── hifiasm-raw-default.asm.bp.p_ctg.fasta.assembly_summary
+│   ├── hifiasm-raw-default
+│   │   ├── hifiasm-raw-default.asm.bp.hap1.p_ctg.gfa
+│   │   ├── hifiasm-raw-default.asm.bp.hap2.p_ctg.gfa
+│   │   ├── hifiasm-raw-default.asm.bp.p_ctg.fasta.gz
+│   │   ├── hifiasm-raw-default.asm.bp.p_ctg.gfa
+│   │   ├── hifiasm-raw-default.asm.bp.p_utg.gfa
+│   │   ├── hifiasm-raw-default.asm.bp.r_utg.gfa
+│   │   ├── hifiasm-raw-default.asm.ec.bin
+│   │   ├── hifiasm-raw-default.asm.ovlp.reverse.bin
+│   │   ├── hifiasm-raw-default.asm.ovlp.source.bin
+│   │   └── hifiasm-raw-default.stderr.log
+│   ├── merqury
+│   │   └── hifiasm-raw-default
+│   │       ├── Drosophila_melanogaster_hifi.unionsumdb.hist.ploidy
+│   │       ├── hifiasm-raw-default_merqury.completeness.stats
+│   │       ├── hifiasm-raw-default_merqury.dist_only.hist
+│   │       ├── hifiasm-raw-default_merqury.hifiasm-raw-default.asm.bp.p_ctg.qv
+│   │       ├── hifiasm-raw-default_merqury.hifiasm-raw-default.asm.bp.p_ctg.spectra-cn.fl.png
+│   │       ├── hifiasm-raw-default_merqury.hifiasm-raw-default.asm.bp.p_ctg.spectra-cn.hist
+│   │       ├── hifiasm-raw-default_merqury.hifiasm-raw-default.asm.bp.p_ctg.spectra-cn.ln.png
+│   │       ├── hifiasm-raw-default_merqury.hifiasm-raw-default.asm.bp.p_ctg.spectra-cn.st.png
+│   │       ├── hifiasm-raw-default_merqury.qv
+│   │       ├── hifiasm-raw-default_merqury.spectra-asm.fl.png
+│   │       ├── hifiasm-raw-default_merqury.spectra-asm.hist
+│   │       ├── hifiasm-raw-default_merqury.spectra-asm.ln.png
+│   │       ├── hifiasm-raw-default_merqury.spectra-asm.st.png
+│   │       ├── hifiasm-raw-default.asm.bp.p_ctg_only.bed
+│   │       └── hifiasm-raw-default.asm.bp.p_ctg_only.wig
+│   └── merquryfk
+│       └── hifiasm-raw-default
+│           ├── hifiasm-raw-default_merquryfk.cni.gz
+│           ├── hifiasm-raw-default_merquryfk.completeness.stats
+│           ├── hifiasm-raw-default_merquryfk.false_duplications.tsv
+│           ├── hifiasm-raw-default_merquryfk.hifiasm-raw-default.asm.bp.p_ctg_only.bed
+│           ├── hifiasm-raw-default_merquryfk.hifiasm-raw-default.asm.bp.p_ctg.qv
+│           ├── hifiasm-raw-default_merquryfk.hifiasm-raw-default.asm.bp.p_ctg.spectra-cn.fl.png
+│           ├── hifiasm-raw-default_merquryfk.hifiasm-raw-default.asm.bp.p_ctg.spectra-cn.ln.png
+│           ├── hifiasm-raw-default_merquryfk.hifiasm-raw-default.asm.bp.p_ctg.spectra-cn.st.png
+│           ├── hifiasm-raw-default_merquryfk.qv
+│           ├── hifiasm-raw-default_merquryfk.spectra-asm.fl.png
+│           ├── hifiasm-raw-default_merquryfk.spectra-asm.ln.png
+│           └── hifiasm-raw-default_merquryfk.spectra-asm.st.png
+├── 05_duplicate_purging
+│   ├── busco
+│   │   └── hifiasm-purged-default
+│   │       ├── hifiasm-purged-default-bacteria_odb10-busco
+│   │       │   ├── Drosophila_melanogaster_hifiasm-purged-default_hap0.purged_fold.fasta
+│   │       │   │   ├── logs
+│   │       │   │   │   ├── bbtools_err.log
+│   │       │   │   │   ├── bbtools_out.log
+│   │       │   │   │   ├── hmmsearch_err.log
+│   │       │   │   │   ├── hmmsearch_out.log
+│   │       │   │   │   ├── prodigal_err.log
+│   │       │   │   │   └── prodigal_out.log
+│   │       │   │   ├── prodigal_output
+│   │       │   │   │   └── predicted_genes
+│   │       │   │   │       ├── predicted.faa
+│   │       │   │   │       ├── predicted.fna
+│   │       │   │   │       └── tmp
+│   │       │   │   │           ├── prodigal_mode_single_code_11_err.log
+│   │       │   │   │           ├── prodigal_mode_single_code_11_out.log
+│   │       │   │   │           ├── prodigal_mode_single_code_11.faa
+│   │       │   │   │           ├── prodigal_mode_single_code_11.fna
+│   │       │   │   │           ├── prodigal_mode_single_code_4_err.log
+│   │       │   │   │           ├── prodigal_mode_single_code_4_out.log
+│   │       │   │   │           ├── prodigal_mode_single_code_4.faa
+│   │       │   │   │           └── prodigal_mode_single_code_4.fna
+│   │       │   │   └── run_bacteria_odb10
+│   │       │   │       ├── busco_sequences
+│   │       │   │       │   ├── fragmented_busco_sequences.tar.gz
+│   │       │   │       │   ├── multi_copy_busco_sequences.tar.gz
+│   │       │   │       │   └── single_copy_busco_sequences.tar.gz
+│   │       │   │       ├── full_table.tsv
+│   │       │   │       ├── hmmer_output.tar.gz
+│   │       │   │       ├── missing_busco_list.tsv
+│   │       │   │       ├── short_summary.json
+│   │       │   │       └── short_summary.txt
+│   │       │   └── logs
+│   │       │       └── busco.log
+│   │       ├── hifiasm-purged-default-bacteria_odb10-busco.batch_summary.txt
+│   │       ├── short_summary.specific.bacteria_odb10.Drosophila_melanogaster_hifiasm-purged-default_hap0.purged_fold.fasta.json
+│   │       └── short_summary.specific.bacteria_odb10.Drosophila_melanogaster_hifiasm-purged-default_hap0.purged_fold.fasta.txt
+│   ├── gfastats
+│   │   └── hifiasm-purged-default
+│   │       └── Drosophila_melanogaster_hifiasm-purged-default_hap0.purged_fold.assembly_summary
+│   ├── merqury
+│   │   └── hifiasm-purged-default
+│   │       ├── Drosophila_melanogaster_hifi.unionsumdb.hist.ploidy
+│   │       ├── Drosophila_melanogaster_hifiasm-purged-default_hap0.hap_fold_only.bed
+│   │       ├── Drosophila_melanogaster_hifiasm-purged-default_hap0.hap_fold_only.wig
+│   │       ├── Drosophila_melanogaster_hifiasm-purged-default_hap0.purged_fold_only.bed
+│   │       ├── Drosophila_melanogaster_hifiasm-purged-default_hap0.purged_fold_only.wig
+│   │       ├── hifiasm-purged-default_merqury.completeness.stats
+│   │       ├── hifiasm-purged-default_merqury.dist_only.hist
+│   │       ├── hifiasm-purged-default_merqury.Drosophila_melanogaster_hifiasm-purged-default_hap0.hap_fold.qv
+│   │       ├── hifiasm-purged-default_merqury.Drosophila_melanogaster_hifiasm-purged-default_hap0.hap_fold.spectra-cn.fl.png
+│   │       ├── hifiasm-purged-default_merqury.Drosophila_melanogaster_hifiasm-purged-default_hap0.hap_fold.spectra-cn.hist
+│   │       ├── hifiasm-purged-default_merqury.Drosophila_melanogaster_hifiasm-purged-default_hap0.hap_fold.spectra-cn.ln.png
+│   │       ├── hifiasm-purged-default_merqury.Drosophila_melanogaster_hifiasm-purged-default_hap0.hap_fold.spectra-cn.st.png
+│   │       ├── hifiasm-purged-default_merqury.Drosophila_melanogaster_hifiasm-purged-default_hap0.purged_fold.qv
+│   │       ├── hifiasm-purged-default_merqury.Drosophila_melanogaster_hifiasm-purged-default_hap0.purged_fold.spectra-cn.fl.png
+│   │       ├── hifiasm-purged-default_merqury.Drosophila_melanogaster_hifiasm-purged-default_hap0.purged_fold.spectra-cn.hist
+│   │       ├── hifiasm-purged-default_merqury.Drosophila_melanogaster_hifiasm-purged-default_hap0.purged_fold.spectra-cn.ln.png
+│   │       ├── hifiasm-purged-default_merqury.Drosophila_melanogaster_hifiasm-purged-default_hap0.purged_fold.spectra-cn.st.png
+│   │       ├── hifiasm-purged-default_merqury.qv
+│   │       ├── hifiasm-purged-default_merqury.spectra-asm.fl.png
+│   │       ├── hifiasm-purged-default_merqury.spectra-asm.hist
+│   │       ├── hifiasm-purged-default_merqury.spectra-asm.ln.png
+│   │       ├── hifiasm-purged-default_merqury.spectra-asm.st.png
+│   │       ├── hifiasm-purged-default_merqury.spectra-cn.fl.png
+│   │       ├── hifiasm-purged-default_merqury.spectra-cn.hist
+│   │       ├── hifiasm-purged-default_merqury.spectra-cn.ln.png
+│   │       └── hifiasm-purged-default_merqury.spectra-cn.st.png
+│   ├── merquryfk
+│   │   └── hifiasm-purged-default
+│   │       ├── hifiasm-purged-default_merquryfk.cni.gz
+│   │       ├── hifiasm-purged-default_merquryfk.completeness.stats
+│   │       ├── hifiasm-purged-default_merquryfk.Drosophila_melanogaster_hifiasm-purged-default_hap0.hap_fold_only.bed
+│   │       ├── hifiasm-purged-default_merquryfk.Drosophila_melanogaster_hifiasm-purged-default_hap0.hap_fold.qv
+│   │       ├── hifiasm-purged-default_merquryfk.Drosophila_melanogaster_hifiasm-purged-default_hap0.hap_fold.spectra-cn.fl.png
+│   │       ├── hifiasm-purged-default_merquryfk.Drosophila_melanogaster_hifiasm-purged-default_hap0.hap_fold.spectra-cn.ln.png
+│   │       ├── hifiasm-purged-default_merquryfk.Drosophila_melanogaster_hifiasm-purged-default_hap0.hap_fold.spectra-cn.st.png
+│   │       ├── hifiasm-purged-default_merquryfk.Drosophila_melanogaster_hifiasm-purged-default_hap0.purged_fold_only.bed
+│   │       ├── hifiasm-purged-default_merquryfk.Drosophila_melanogaster_hifiasm-purged-default_hap0.purged_fold.qv
+│   │       ├── hifiasm-purged-default_merquryfk.Drosophila_melanogaster_hifiasm-purged-default_hap0.purged_fold.spectra-cn.fl.png
+│   │       ├── hifiasm-purged-default_merquryfk.Drosophila_melanogaster_hifiasm-purged-default_hap0.purged_fold.spectra-cn.ln.png
+│   │       ├── hifiasm-purged-default_merquryfk.Drosophila_melanogaster_hifiasm-purged-default_hap0.purged_fold.spectra-cn.st.png
+│   │       ├── hifiasm-purged-default_merquryfk.false_duplications.tsv
+│   │       ├── hifiasm-purged-default_merquryfk.qv
+│   │       ├── hifiasm-purged-default_merquryfk.spectra-asm.fl.png
+│   │       ├── hifiasm-purged-default_merquryfk.spectra-asm.ln.png
+│   │       ├── hifiasm-purged-default_merquryfk.spectra-asm.st.png
+│   │       ├── hifiasm-purged-default_merquryfk.spectra-cn.fl.png
+│   │       ├── hifiasm-purged-default_merquryfk.spectra-cn.ln.png
+│   │       └── hifiasm-purged-default_merquryfk.spectra-cn.st.png
+│   └── purge_dups
+│       ├── Drosophila_melanogaster_hifiasm-purged-default_hap0.dups.bed
+│       ├── Drosophila_melanogaster_hifiasm-purged-default_hap0.hap.fa
+│       ├── Drosophila_melanogaster_hifiasm-purged-default_hap0.merged.fasta.gz
+│       ├── Drosophila_melanogaster_hifiasm-purged-default_hap0.purge_dups.log
+│       ├── Drosophila_melanogaster_hifiasm-purged-default_hap0.purged.fa
+│       ├── Drosophila_melanogaster_hifiasm-purged-default_hap0.split.fasta.gz
+│       ├── Drosophila_melanogaster_hifiasm-purged-default_purgedups_hist.png
+│       ├── Drosophila_melanogaster.calcuts.log
+│       ├── Drosophila_melanogaster.cutoffs
+│       ├── Drosophila_melanogaster.PB.base.cov
+│       └── Drosophila_melanogaster.PB.stat
+├── 07_scaffolding
+│   ├── busco
+│   │   └── hifiasm-scaffolded-default
+│   │       ├── hifiasm-scaffolded-default-bacteria_odb10-busco
+│   │       │   ├── Drosophila_melanogaster_hifiasm-scaffolded-default_scaffolds_final.fa
+│   │       │   │   ├── logs
+│   │       │   │   │   ├── bbtools_err.log
+│   │       │   │   │   ├── bbtools_out.log
+│   │       │   │   │   ├── hmmsearch_err.log
+│   │       │   │   │   ├── hmmsearch_out.log
+│   │       │   │   │   ├── prodigal_err.log
+│   │       │   │   │   └── prodigal_out.log
+│   │       │   │   ├── prodigal_output
+│   │       │   │   │   └── predicted_genes
+│   │       │   │   │       ├── predicted.faa
+│   │       │   │   │       ├── predicted.fna
+│   │       │   │   │       └── tmp
+│   │       │   │   │           ├── prodigal_mode_single_code_11_err.log
+│   │       │   │   │           ├── prodigal_mode_single_code_11_out.log
+│   │       │   │   │           ├── prodigal_mode_single_code_11.faa
+│   │       │   │   │           ├── prodigal_mode_single_code_11.fna
+│   │       │   │   │           ├── prodigal_mode_single_code_4_err.log
+│   │       │   │   │           ├── prodigal_mode_single_code_4_out.log
+│   │       │   │   │           ├── prodigal_mode_single_code_4.faa
+│   │       │   │   │           └── prodigal_mode_single_code_4.fna
+│   │       │   │   └── run_bacteria_odb10
+│   │       │   │       ├── busco_sequences
+│   │       │   │       │   ├── fragmented_busco_sequences.tar.gz
+│   │       │   │       │   ├── multi_copy_busco_sequences.tar.gz
+│   │       │   │       │   └── single_copy_busco_sequences.tar.gz
+│   │       │   │       ├── full_table.tsv
+│   │       │   │       ├── hmmer_output.tar.gz
+│   │       │   │       ├── missing_busco_list.tsv
+│   │       │   │       ├── short_summary.json
+│   │       │   │       └── short_summary.txt
+│   │       │   └── logs
+│   │       │       └── busco.log
+│   │       ├── hifiasm-scaffolded-default-bacteria_odb10-busco.batch_summary.txt
+│   │       ├── short_summary.specific.bacteria_odb10.Drosophila_melanogaster_hifiasm-scaffolded-default_scaffolds_final.fa.json
+│   │       └── short_summary.specific.bacteria_odb10.Drosophila_melanogaster_hifiasm-scaffolded-default_scaffolds_final.fa.txt
+│   ├── gfastats
+│   │   └── hifiasm-scaffolded-default
+│   │       └── Drosophila_melanogaster_hifiasm-scaffolded-default_scaffolds_final.assembly_summary
+│   ├── merqury
+│   │   └── hifiasm-scaffolded-default
+│   │       ├── Drosophila_melanogaster_hifi.unionsumdb.hist.ploidy
+│   │       ├── Drosophila_melanogaster_hifiasm-purged-default_hap0.hap_fold_only.bed
+│   │       ├── Drosophila_melanogaster_hifiasm-purged-default_hap0.hap_fold_only.wig
+│   │       ├── Drosophila_melanogaster_hifiasm-scaffolded-default_scaffolds_final_only.bed
+│   │       ├── Drosophila_melanogaster_hifiasm-scaffolded-default_scaffolds_final_only.wig
+│   │       ├── hifiasm-scaffolded-default_merqury.completeness.stats
+│   │       ├── hifiasm-scaffolded-default_merqury.dist_only.hist
+│   │       ├── hifiasm-scaffolded-default_merqury.Drosophila_melanogaster_hifiasm-purged-default_hap0.hap_fold.qv
+│   │       ├── hifiasm-scaffolded-default_merqury.Drosophila_melanogaster_hifiasm-purged-default_hap0.hap_fold.spectra-cn.fl.png
+│   │       ├── hifiasm-scaffolded-default_merqury.Drosophila_melanogaster_hifiasm-purged-default_hap0.hap_fold.spectra-cn.hist
+│   │       ├── hifiasm-scaffolded-default_merqury.Drosophila_melanogaster_hifiasm-purged-default_hap0.hap_fold.spectra-cn.ln.png
+│   │       ├── hifiasm-scaffolded-default_merqury.Drosophila_melanogaster_hifiasm-purged-default_hap0.hap_fold.spectra-cn.st.png
+│   │       ├── hifiasm-scaffolded-default_merqury.Drosophila_melanogaster_hifiasm-scaffolded-default_scaffolds_final.qv
+│   │       ├── hifiasm-scaffolded-default_merqury.Drosophila_melanogaster_hifiasm-scaffolded-default_scaffolds_final.spectra-cn.fl.png
+│   │       ├── hifiasm-scaffolded-default_merqury.Drosophila_melanogaster_hifiasm-scaffolded-default_scaffolds_final.spectra-cn.hist
+│   │       ├── hifiasm-scaffolded-default_merqury.Drosophila_melanogaster_hifiasm-scaffolded-default_scaffolds_final.spectra-cn.ln.png
+│   │       ├── hifiasm-scaffolded-default_merqury.Drosophila_melanogaster_hifiasm-scaffolded-default_scaffolds_final.spectra-cn.st.png
+│   │       ├── hifiasm-scaffolded-default_merqury.qv
+│   │       ├── hifiasm-scaffolded-default_merqury.spectra-asm.fl.png
+│   │       ├── hifiasm-scaffolded-default_merqury.spectra-asm.hist
+│   │       ├── hifiasm-scaffolded-default_merqury.spectra-asm.ln.png
+│   │       ├── hifiasm-scaffolded-default_merqury.spectra-asm.st.png
+│   │       ├── hifiasm-scaffolded-default_merqury.spectra-cn.fl.png
+│   │       ├── hifiasm-scaffolded-default_merqury.spectra-cn.hist
+│   │       ├── hifiasm-scaffolded-default_merqury.spectra-cn.ln.png
+│   │       └── hifiasm-scaffolded-default_merqury.spectra-cn.st.png
+│   ├── merquryfk
+│   │   └── hifiasm-scaffolded-default
+│   │       ├── hifiasm-scaffolded-default_merquryfk.cni.gz
+│   │       ├── hifiasm-scaffolded-default_merquryfk.completeness.stats
+│   │       ├── hifiasm-scaffolded-default_merquryfk.Drosophila_melanogaster_hifiasm-purged-default_hap0.hap_fold_only.bed
+│   │       ├── hifiasm-scaffolded-default_merquryfk.Drosophila_melanogaster_hifiasm-purged-default_hap0.hap_fold.qv
+│   │       ├── hifiasm-scaffolded-default_merquryfk.Drosophila_melanogaster_hifiasm-purged-default_hap0.hap_fold.spectra-cn.fl.png
+│   │       ├── hifiasm-scaffolded-default_merquryfk.Drosophila_melanogaster_hifiasm-purged-default_hap0.hap_fold.spectra-cn.ln.png
+│   │       ├── hifiasm-scaffolded-default_merquryfk.Drosophila_melanogaster_hifiasm-purged-default_hap0.hap_fold.spectra-cn.st.png
+│   │       ├── hifiasm-scaffolded-default_merquryfk.Drosophila_melanogaster_hifiasm-scaffolded-default_scaffolds_final_only.bed
+│   │       ├── hifiasm-scaffolded-default_merquryfk.Drosophila_melanogaster_hifiasm-scaffolded-default_scaffolds_final.qv
+│   │       ├── hifiasm-scaffolded-default_merquryfk.Drosophila_melanogaster_hifiasm-scaffolded-default_scaffolds_final.spectra-cn.fl.png
+│   │       ├── hifiasm-scaffolded-default_merquryfk.Drosophila_melanogaster_hifiasm-scaffolded-default_scaffolds_final.spectra-cn.ln.png
+│   │       ├── hifiasm-scaffolded-default_merquryfk.Drosophila_melanogaster_hifiasm-scaffolded-default_scaffolds_final.spectra-cn.st.png
+│   │       ├── hifiasm-scaffolded-default_merquryfk.false_duplications.tsv
+│   │       ├── hifiasm-scaffolded-default_merquryfk.qv
+│   │       ├── hifiasm-scaffolded-default_merquryfk.spectra-asm.fl.png
+│   │       ├── hifiasm-scaffolded-default_merquryfk.spectra-asm.ln.png
+│   │       ├── hifiasm-scaffolded-default_merquryfk.spectra-asm.st.png
+│   │       ├── hifiasm-scaffolded-default_merquryfk.spectra-cn.fl.png
+│   │       ├── hifiasm-scaffolded-default_merquryfk.spectra-cn.ln.png
+│   │       └── hifiasm-scaffolded-default_merquryfk.spectra-cn.st.png
+│   ├── pairtools_dedup
+│   │   └── hifiasm-scaffolded-default
+│   │       └── Drosophila_melanogaster_hifiasm-scaffolded-default_dedup.pairs.stat
+│   ├── pairtools_parse
+│   │   └── hifiasm-scaffolded-default
+│   │       ├── Drosophila_melanogaster_hifiasm-scaffolded-default_dmel_2Mb_p1_1.fastp.pairsam.stat
+│   │       └── Drosophila_melanogaster_hifiasm-scaffolded-default_dmel_2Mb_p2_1.fastp.pairsam.stat
+│   └── yahs
+│       └── hifiasm-scaffolded-default
+│           ├── Drosophila_melanogaster_hifiasm-scaffolded-default_scaffolds_final.agp
+│           ├── Drosophila_melanogaster_hifiasm-scaffolded-default_scaffolds_final.fa
+│           └── Drosophila_melanogaster_hifiasm-scaffolded-default.bin
+├── 08_rapid_curation
+│   ├── higlass
+│   │   └── hifiasm-curated-default
+│   │       ├── hifiasm-curated-default_gaps.bedgraph.beddb
+│   │       ├── hifiasm-curated-default_merged_dupMarked.mcool
+│   │       └── hifiasm-curated-default_telomer.bw
+│   └── pretext
+│       └── hifiasm-curated-default
+│           └── hifiasm-curated-default_wTracks.pretext
+├── 10_report
+│   ├── assembly_report.html
+│   ├── assembly_report.md
+│   ├── multiqc-summary.html
+│   ├── quast
+│   │   ├── Drosophila_melanogaster_quast_report
+│   │   │   ├── basic_stats
+│   │   │   │   ├── cumulative_plot.pdf
+│   │   │   │   ├── Drosophila_melanogaster_hifiasm-purged-default_hap0.purged_fold_GC_content_plot.pdf
+│   │   │   │   ├── Drosophila_melanogaster_hifiasm-scaffolded-default_scaffolds_final_GC_content_plot.pdf
+│   │   │   │   ├── GC_content_plot.pdf
+│   │   │   │   ├── hifiasm-raw-default.asm.bp.p_ctg_GC_content_plot.pdf
+│   │   │   │   └── Nx_plot.pdf
+│   │   │   ├── icarus_viewers
+│   │   │   │   └── contig_size_viewer.html
+│   │   │   ├── icarus.html
+│   │   │   ├── quast.log
+│   │   │   ├── report.html
+│   │   │   ├── report.pdf
+│   │   │   ├── report.tex
+│   │   │   ├── report.tsv
+│   │   │   ├── report.txt
+│   │   │   ├── transposed_report.tex
+│   │   │   ├── transposed_report.tsv
+│   │   │   └── transposed_report.txt
+│   │   └── Drosophila_melanogaster_quast_report.tsv
+│   └── versions.yml
+└── pipeline_info
+    ├── execution_report_2025-07-09_10-31-54.html
+    ├── execution_timeline_2025-07-09_10-31-54.html
+    ├── execution_trace_2025-07-09_10-31-54.txt
+    └── pipeline_dag_2025-07-09_10-31-54.mmd
+```
+</details>
 
 ### Examples
 
