@@ -141,7 +141,7 @@ Mandatory:
       domain: Eukaryota              # Optional: (default: retrived by ENA_TAXQUERY)
     assembly:                        # Optional: List of assemblies to curate and validate.
       - assembler: hifiasm           # For each entry, the assembler,
-        stage: raw                   # stage of assembly,
+        stage: raw                   # stage of assembly (raw, decontaminated, purged, polished, scaffolded, curated),
         id: uuid                     # unique id,
         pri_fasta: /path/to/primary_asm.fasta # and paths to sequences are required.
         alt_fasta: /path/to/alternate_asm.fasta
@@ -175,9 +175,9 @@ publishing method from the intermediate results folders
     - `inspect`: 01 - Read inspection
     - `preprocess`: 02 - Read preprocessing
     - `assemble`: 03 - Assembly
-    - `purge`: 04 - Duplicate purging
-    - `polish`: 05 - Error polishing
-    - `screen`: 06 - Contamination screening
+    - `screen`: 04 - Contamination screening
+    - `purge`: 05 - Duplicate purging
+    - `polish`: 06 - Error polishing (TODO: In development)
     - `scaffold`: 07 - Scaffolding
     - `curate`: 08 - Rapid curation
     - `alignRNA`: 09 - Align RNAseq data
