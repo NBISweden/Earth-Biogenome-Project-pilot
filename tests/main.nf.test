@@ -99,4 +99,35 @@ nextflow_pipeline {
 
     }
 
+    test("Tiny dataset - evaluate only") {
+        tag "04"
+        when {
+            params {
+                input                   = "$projectDir/tests/data/tiny/test_from_assembly.yml"
+                steps                   = ''
+                outdir                  = "results"
+                fastk {
+                    kmer_size           = 14
+                }
+                meryl {
+                    kmer_size           = 14
+                }
+                genescopefk {
+                    kmer_size           = 14
+                }
+                busco {
+                    lineages            = 'bacteria_odb10' // eukaryota_odb10'
+                }
+                fcs {
+                    manifest           = "https://ftp.ncbi.nlm.nih.gov/genomes/TOOLS/FCS/database/test-only/test-only.manifest"
+                }
+                organelle_assembly_mode = 'none'
+            }
+        }
+
+        then {
+            assert workflow.success
+        }
+
+    }
 }

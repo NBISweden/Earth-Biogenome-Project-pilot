@@ -272,16 +272,15 @@ TODO:: List folder contents in results file
   ```yml
   sample:
     name: 'Laetiporus sulphureus'
+  # Assembly to evaluate
   assembly:
     - assembler: hifiasm
       stage: curated
       id: uuid
       pri_fasta: '/path/to/primary_asm-hifiasm-curated-uuid.fasta'
+  # Include HiFi reads for Merqury
   hifi:
     - reads: '/path/to/raw/data/hifi/LS_HIFI_R001.bam'
-  hic:
-    - read1: '/path/to/raw/data/hic/LS_HIC_R001_1.fastq.gz'
-      read2: '/path/to/raw/data/hic/LS_HIC_R001_2.fastq.gz'
   ```
 
 ### Customization for Uppmax
