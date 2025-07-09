@@ -4,7 +4,7 @@ intro_text: |
   An assembly summary report for the BGE project.
 
 ignore_images: false
-# disable_version_detection: true
+disable_version_detection: true
 
 module_order:
   - "dtol"
