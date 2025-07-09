@@ -548,8 +548,19 @@ else:
 
 ```{python}
 #| output: asis
-assemblies = [ asm for asm in multiqc.list_samples() if asm.startswith("hifiasm-raw-default.asm.bp") ]
-assembly_size_mb = [ multiqc.get_module_data(module="quast",sample=f"{asm}")['Total length'] for asm in assemblies ]
+assembly_size_bp = 0
+if glob.glob(f"{log_path}/*-raw-*.assembly_summary"):
+    raw_asm_stats = pd.read_csv(
+        glob.glob(f"{log_path}/*-raw-*.assembly_summary")[0],
+        sep="\t",
+        skiprows=[0, 1],  # Skip the first two lines
+        nrows=1,          # Read only "Total scaffold length"
+        header=None,
+        names=['key', 'value']
+    )
+    assembly_size_bp = int(raw_asm_stats['value'].iloc[0])
+if assembly_size_bp == 0:
+    raise ValueError("Unable to determine assembly size")
 for bed in glob.glob(f"{log_path}/*-purged-*.dups.bed"):
     dup_bed = pd.read_csv(
         bed,
@@ -558,7 +569,7 @@ for bed in glob.glob(f"{log_path}/*-purged-*.dups.bed"):
     )
     dup_bed['Length'] = dup_bed['End'] - dup_bed['Start']
     summary = dup_bed.groupby('Type')['Length'].sum().reset_index() # TODO Fix for multiple assemblies
-    summary['Percentage'] = summary['Length'].apply(lambda x: x * 100 / (assembly_size_mb[0] * 1000000) ).apply(lambda x: f"{x:.2f}%")
+    summary['Percentage'] = summary['Length'].apply(lambda x: x * 100 / assembly_size_bp ).apply(lambda x: f"{x:.2f}%")
     print(summary.to_markdown(index=False))
 ```
 
