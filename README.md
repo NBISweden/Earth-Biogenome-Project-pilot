@@ -212,6 +212,78 @@ Uppmax and PDC cluster specific:
 All results are published to the path assigned to the workflow parameter `results`.
 
 TODO:: List folder contents in results file
+
+### Examples
+
+- Run the workflow with the default parameters and all steps:
+
+  ```bash
+  nextflow run NBISweden/Earth-Biogenome-Project-pilot -params-file params.yml
+  ```
+  where `params.yml` is a YAML file containing the workflow parameters:
+  ```yml
+  input: 'assembly_spec.yml'
+  ```
+  and `assembly_spec.yml` is a YAML file containing the assembly specification
+  ```yml
+  sample:
+    name: 'Laetiporus sulphureus'
+  hifi:
+    - reads: '/path/to/raw/data/hifi/LS_HIFI_R001.bam'
+  hic:
+    - read1: '/path/to/raw/data/hic/LS_HIC_R001_1.fastq.gz'
+      read2: '/path/to/raw/data/hic/LS_HIC_R001_2.fastq.gz'
+  ```
+
+- Run purging to curation on an existing assembly:
+  ```bash
+  nextflow run NBISweden/Earth-Biogenome-Project-pilot -params-file params.yml
+  ```
+  where `params.yml` is a YAML file containing the workflow parameters:
+  ```yml
+  input: 'assembly_spec.yml'
+  steps: 'purge,scaffold,curate'
+  ```
+  and `assembly_spec.yml` is a YAML file containing the assembly specification
+  ```yml
+  sample:
+    name: 'Laetiporus sulphureus'
+  assembly:
+    - assembler: hifiasm
+      stage: decontaminated
+      id: uuid
+      pri_fasta: '/path/to/primary_asm-hifiasm-decontaminated-uuid.fasta'
+  hifi:
+    - reads: '/path/to/raw/data/hifi/LS_HIFI_R001.bam'
+  hic:
+    - read1: '/path/to/raw/data/hic/LS_HIC_R001_1.fastq.gz'
+      read2: '/path/to/raw/data/hic/LS_HIC_R001_2.fastq.gz'
+  ```
+
+- Run the workflow to only run assembly evaluation.
+  ```bash
+  nextflow run NBISweden/Earth-Biogenome-Project-pilot -params-file params.yml
+  ```
+  where `params.yml` is a YAML file containing the workflow parameters:
+  ```yml
+  input: 'assembly_spec.yml'
+  ```
+  and `assembly_spec.yml` is a YAML file containing the assembly specification
+  ```yml
+  sample:
+    name: 'Laetiporus sulphureus'
+  assembly:
+    - assembler: hifiasm
+      stage: curated
+      id: uuid
+      pri_fasta: '/path/to/primary_asm-hifiasm-curated-uuid.fasta'
+  hifi:
+    - reads: '/path/to/raw/data/hifi/LS_HIFI_R001.bam'
+  hic:
+    - read1: '/path/to/raw/data/hic/LS_HIC_R001_1.fastq.gz'
+      read2: '/path/to/raw/data/hic/LS_HIC_R001_2.fastq.gz'
+  ```
+
 ### Customization for Uppmax
 
 A custom profile named `uppmax` is available to run this workflow specifically
