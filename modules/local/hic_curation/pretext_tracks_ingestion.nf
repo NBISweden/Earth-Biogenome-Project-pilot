@@ -8,16 +8,14 @@ process PRETEXT_TRACKS_INGESTION {
     tuple val(meta), path(pretext_in), path(cov_bedgraph), path(telomer_bedgraph), path(gap_bedgraph)
 
     output:
-    tuple val(meta), path("*_wTracks.pretext") , emit: hitile
-    path "versions.yml"              , emit: versions
+    tuple val(meta), path("*_wTracks.pretext"), emit: hitile
+    path "versions.yml"                       , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
 
     script:
-    def args   = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-
     """
     cat ${cov_bedgraph} | PretextGraph -i ${pretext_in} -n coverage -o ${prefix}_cov.pretext
     if [[ ${telomer_bedgraph.size()} -gt 0 && ${gap_bedgraph.size()} -gt 0  ]]
