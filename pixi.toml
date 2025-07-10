@@ -12,8 +12,8 @@ test-docker = "nextflow run main.nf -profile docker,test"
 test-singularity = "nextflow run main.nf -profile singularity,test"
 dev = "nextflow run main.nf -profile docker,test,debug"
 # Run nf-tests
-nftest-docker = "nf-test test tests/main.nf.test"
-nftest-singularity = "nf-test test tests/main.nf.test --profile singularity"
+nftest-docker = "nf-test test tests/main.nf.test --verbose"
+nftest-singularity = "nf-test test tests/main.nf.test --verbose --profile singularity"
 # Clean up
 clean-work = "nextflow clean -f -before $(nextflow log -q | tail -n 1) && find work/ -type d -empty -delete"
 clean-nf = "git clean -fX && rm -rf .nextflow/ work/ .lineage/"
@@ -22,7 +22,7 @@ clean-nftest = "rm -rf .nf-test/"
 clean-all = { depends-on = [ "clean-nf", "clean-results", "clean-nftest" ] }
 
 [dependencies]
-nextflow = ">=25.4.4,<26"
+nextflow = ">=25.4.6,<26"
 mamba = ">=2.3.0,<3"
-nf-core = ">=3.3.1,<4"
+nf-core = ">=3.3.2,<4"
 gh = ">=2.74.2,<3"
