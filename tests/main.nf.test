@@ -35,8 +35,10 @@ nextflow_pipeline {
             assert path("${params.outdir}/10_report/assembly_report.html").exists()
             assert snapshot(
                 workflow.trace.tasks().size(),
-                // Snapshot all files in results directory
-                path("${params.outdir}").list().sort()
+                getAllFilesFromDir(params.outdir,
+                    relative: true,
+                    ignore: ['pipeline_info/*.{html,txt,mmd}']
+                )
             ).match()
         }
     }
@@ -73,8 +75,10 @@ nextflow_pipeline {
             assert path("${params.outdir}/10_report/assembly_report.html").exists()
             assert snapshot(
                 workflow.trace.tasks().size(),
-                // Snapshot all files in results directory
-                path("${params.outdir}").list().sort()
+                getAllFilesFromDir(params.outdir,
+                    relative: true,
+                    ignore: ['pipeline_info/*.{html,txt,mmd}']
+                )
             ).match()
         }
 
@@ -112,8 +116,10 @@ nextflow_pipeline {
             assert path("${params.outdir}/10_report/assembly_report.html").exists()
             assert snapshot(
                 workflow.trace.tasks().size(),
-                // Snapshot all files in results directory
-                path("${params.outdir}").list().sort()
+                getAllFilesFromDir(params.outdir,
+                    relative: true,
+                    ignore: ['pipeline_info/*.{html,txt,mmd}']
+                )
             ).match()
         }
 
@@ -151,8 +157,10 @@ nextflow_pipeline {
             assert path("${params.outdir}/10_report/assembly_report.html").exists()
             assert snapshot(
                 workflow.trace.tasks().size(),
-                // Snapshot all files in results directory
-                path("${params.outdir}").list().sort()
+                getAllFilesFromDir(params.outdir,
+                    relative: true,
+                    ignore: ['pipeline_info/*.{html,txt,mmd}']
+                )
             ).match()
         }
     }
