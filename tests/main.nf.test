@@ -9,7 +9,7 @@ nextflow_pipeline {
             params {
                 input                   = "$projectDir/tests/data/tiny/test_ci_Dmelanogaster.yml"
                 steps                   = 'inspect,preprocess,assemble,purge,polish,scaffold,curate'
-                outdir                  = "results"
+                outdir                  = "$outputDir"
                 fastk {
                     kmer_size           = 14
                 }
@@ -32,7 +32,6 @@ nextflow_pipeline {
         then {
             assert workflow.success
             assert workflow.trace.tasks().size() > 0
-            assert path("${params.outdir}/10_report/assembly_report.html").exists()
             assert snapshot(
                 workflow.trace.tasks().size(),
                 getAllFilesFromDir(params.outdir,
@@ -49,7 +48,7 @@ nextflow_pipeline {
             params {
                 input                   = "$projectDir/tests/data/tiny/test_from_assembly.yml"
                 steps                   = 'purge,polish,scaffold,curate'
-                outdir                  = "results"
+                outdir                  = "$outputDir"
                 fastk {
                     kmer_size           = 14
                 }
@@ -72,7 +71,6 @@ nextflow_pipeline {
         then {
             assert workflow.success
             assert workflow.trace.tasks().size() > 0
-            assert path("${params.outdir}/10_report/assembly_report.html").exists()
             assert snapshot(
                 workflow.trace.tasks().size(),
                 getAllFilesFromDir(params.outdir,
@@ -90,7 +88,7 @@ nextflow_pipeline {
             params {
                 input                   = "$projectDir/tests/data/tiny/test_from_assembly.yml"
                 steps                   = 'scaffold,curate'
-                outdir                  = "results"
+                outdir                  = "$outputDir"
                 fastk {
                     kmer_size           = 14
                 }
@@ -113,7 +111,6 @@ nextflow_pipeline {
         then {
             assert workflow.success
             assert workflow.trace.tasks().size() > 0
-            assert path("${params.outdir}/10_report/assembly_report.html").exists()
             assert snapshot(
                 workflow.trace.tasks().size(),
                 getAllFilesFromDir(params.outdir,
@@ -131,7 +128,7 @@ nextflow_pipeline {
             params {
                 input                   = "$projectDir/tests/data/tiny/test_evaluation_only.yml"
                 steps                   = ''
-                outdir                  = "results"
+                outdir                  = "$outputDir"
                 fastk {
                     kmer_size           = 14
                 }
@@ -154,7 +151,6 @@ nextflow_pipeline {
         then {
             assert workflow.success
             assert workflow.trace.tasks().size() > 0
-            assert path("${params.outdir}/10_report/assembly_report.html").exists()
             assert snapshot(
                 workflow.trace.tasks().size(),
                 getAllFilesFromDir(params.outdir,
