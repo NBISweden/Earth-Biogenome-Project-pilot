@@ -123,7 +123,7 @@ nextflow_pipeline {
         tag "04"
         when {
             params {
-                input                   = "$projectDir/tests/data/tiny/test_from_assembly.yml"
+                input                   = "$projectDir/tests/data/tiny/test_evaluation_only.yml"
                 steps                   = ''
                 outdir                  = "results"
                 fastk {
