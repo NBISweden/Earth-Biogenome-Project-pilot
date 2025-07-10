@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#! /usr/bin/env perl
 
 # Portions of this code adapted from Sanger Institute's "curationpretext" (https://github.com/sanger-tol/curationpretext)
 # and Arima Genomics' "mapping_pipeline" (https://github.com/ArimaGenomics/mapping_pipeline)
@@ -34,7 +34,7 @@ MAIN : {
 
         if ($line1 =~ /^(\@)SQ/ || $line1 =~ /^(\@)RG/){
                 if ($line1 ne $line2){print $line1;print $line2; die ("Inconsistent BAM headers. BAM files must be aligned to same reference.");}
-                else{   
+                else{
                         print $line1;
                 }
                 $line1 = <FILE1>;
@@ -70,7 +70,7 @@ MAIN : {
         }
         if (($binary2[2]== 1) || ($mapq2 < $mq)) {
             $trouble = 1;
-    }   
+    }
 
         my $proper_pair1;
         my $proper_pair2;
