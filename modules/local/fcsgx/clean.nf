@@ -20,7 +20,6 @@ process FCSGX_CLEAN {
     task.ext.when == null || task.ext.when
 
     script:
-    def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     def infile = assembly.name.endsWith('.gz') ? "<( gzip -dc $assembly )" : assembly
     def VERSION = '0.5.4' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
@@ -31,20 +30,6 @@ process FCSGX_CLEAN {
         --action-report $action_report \\
         --output ${prefix}.clean.fasta \\
         --contam-fasta-out ${prefix}.contaminants.fasta
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        fcs_gx: $VERSION
-    END_VERSIONS
-    """
-
-    stub:
-    def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
-    def VERSION = '0.5.0' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
-    """
-    touch ${prefix}.clean.fasta
-    touch ${prefix}.contaminants.fasta
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
