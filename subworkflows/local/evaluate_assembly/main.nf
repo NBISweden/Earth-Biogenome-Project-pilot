@@ -1,10 +1,10 @@
-include { combineByMetaKeys   } from "$projectDir/modules/local/functions"
-include { getEachAssembly     } from "$projectDir/modules/local/functions"
-include { getPrimaryAssembly  } from "$projectDir/modules/local/functions"
-include { BUSCO               } from "$projectDir/modules/nf-core/busco/main"
-include { MERQURYFK_MERQURYFK } from "$projectDir/modules/nf-core/merquryfk/merquryfk"
-include { MERQURY             } from "$projectDir/modules/nf-core/merqury/main"
-// include { INSPECTOR           } from "$projectDir/modules/local/inspector/inspector"
+include { combineByMetaKeys   } from "../../../modules/local/functions"
+include { getEachAssembly     } from "../../../modules/local/functions"
+include { getPrimaryAssembly  } from "../../../modules/local/functions"
+include { BUSCO               } from "../../../modules/nf-core/busco/main"
+include { MERQURYFK_MERQURYFK } from "../../../modules/nf-core/merquryfk/merquryfk"
+include { MERQURY             } from "../../../modules/nf-core/merqury/main"
+include { GFASTATS            } from "../../../modules/nf-core/gfastats/main"
 
 workflow EVALUATE_ASSEMBLY {
 
@@ -65,6 +65,22 @@ workflow EVALUATE_ASSEMBLY {
         []
     )
 
+    // Calculate contiguity stats
+    fasta_ch = assembly_ch.multiMap { meta, assembly ->
+        fasta: [ meta, assembly.pri_fasta ]
+        genome_size: meta.sample.genome_size
+    }
+    GFASTATS(
+        fasta_ch.fasta,
+        [],                   // output format: none
+        fasta_ch.genome_size, // genome size
+        "",                   // target
+        [[],[]],              // AGP file
+        [[],[]],              // include bed
+        [[],[]],              // exclude bed
+        [[],[]]               // SAK instructions
+    )
+
     BUSCO.out.short_summaries_txt
         .mix(
             MERQURYFK_MERQURYFK.out.stats,
@@ -78,10 +94,12 @@ workflow EVALUATE_ASSEMBLY {
             MERQURY.out.scaffold_qv,
             MERQURY.out.spectra_cn_st_png,
             MERQURY.out.spectra_asm_st_png,
+            GFASTATS.out.assembly_summary,
         )
-        .map { meta, file -> file }
+        .map { _meta, file -> file }
         .set { logs }
     MERQURYFK_MERQURYFK.out.versions.first().mix(
+        GFASTATS.out.versions.first(),
         MERQURY.out.versions.first(),
         BUSCO.out.versions.first()
     ).set { versions }

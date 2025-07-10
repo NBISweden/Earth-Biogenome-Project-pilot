@@ -31,8 +31,16 @@ nextflow_pipeline {
 
         then {
             assert workflow.success
+            assert workflow.trace.tasks().size() > 0
+            assert path("${params.outdir}/10_report/assembly_report.html").exists()
+            assert snapshot(
+                workflow.trace.tasks().size(),
+                getAllFilesFromDir(params.outdir,
+                    relative: true,
+                    ignore: ['pipeline_info/*.{html,txt,mmd}']
+                )
+            ).match()
         }
-
     }
 
     test("Tiny dataset - purge,polish,scaffold,curate") {
@@ -63,6 +71,15 @@ nextflow_pipeline {
 
         then {
             assert workflow.success
+            assert workflow.trace.tasks().size() > 0
+            assert path("${params.outdir}/10_report/assembly_report.html").exists()
+            assert snapshot(
+                workflow.trace.tasks().size(),
+                getAllFilesFromDir(params.outdir,
+                    relative: true,
+                    ignore: ['pipeline_info/*.{html,txt,mmd}']
+                )
+            ).match()
         }
 
     }
@@ -95,8 +112,56 @@ nextflow_pipeline {
 
         then {
             assert workflow.success
+            assert workflow.trace.tasks().size() > 0
+            assert path("${params.outdir}/10_report/assembly_report.html").exists()
+            assert snapshot(
+                workflow.trace.tasks().size(),
+                getAllFilesFromDir(params.outdir,
+                    relative: true,
+                    ignore: ['pipeline_info/*.{html,txt,mmd}']
+                )
+            ).match()
         }
 
     }
 
+    test("Tiny dataset - evaluate only") {
+        tag "04"
+        when {
+            params {
+                input                   = "$projectDir/tests/data/tiny/test_evaluation_only.yml"
+                steps                   = ''
+                outdir                  = "results"
+                fastk {
+                    kmer_size           = 14
+                }
+                meryl {
+                    kmer_size           = 14
+                }
+                genescopefk {
+                    kmer_size           = 14
+                }
+                busco {
+                    lineages            = 'bacteria_odb10' // eukaryota_odb10'
+                }
+                fcs {
+                    manifest           = "https://ftp.ncbi.nlm.nih.gov/genomes/TOOLS/FCS/database/test-only/test-only.manifest"
+                }
+                organelle_assembly_mode = 'none'
+            }
+        }
+
+        then {
+            assert workflow.success
+            assert workflow.trace.tasks().size() > 0
+            assert path("${params.outdir}/10_report/assembly_report.html").exists()
+            assert snapshot(
+                workflow.trace.tasks().size(),
+                getAllFilesFromDir(params.outdir,
+                    relative: true,
+                    ignore: ['pipeline_info/*.{html,txt,mmd}']
+                )
+            ).match()
+        }
+    }
 }
