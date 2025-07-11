@@ -11,12 +11,12 @@ process PAIRTOOLS_SPLIT {
 
     input:
     tuple val(meta), path(pairs)
-    tuple val(meta), path(fasta)
-    val   sort_bam 
+    tuple val(meta2), path(fasta)
+    val   sort_bam
 
     output:
     tuple val(meta), path("*.split.pairs.gz"), emit:pairs
-    tuple val(meta), path("*.bam")           , emit:bam  , optional:true
+    tuple val(meta), path("*.bam")           , emit: bam , optional:true
     tuple val(meta), path("*.cram")          , emit: cram, optional:true
     tuple val(meta), path("*.crai")          , emit: crai, optional:true
     tuple val(meta), path("*.csi")           , emit: csi , optional:true
@@ -53,6 +53,7 @@ process PAIRTOOLS_SPLIT {
         samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
     END_VERSIONS
     """
+    
     stub:
     def prefix = task.ext.prefix ?: "${meta.id}"
     """

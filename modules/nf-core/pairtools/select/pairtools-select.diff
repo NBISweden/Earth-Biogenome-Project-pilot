@@ -1,7 +1,7 @@
-Changes in component 'nf-core/pairtools/parse'
-Changes in 'pairtools/parse/environment.yml':
---- modules/nf-core/pairtools/parse/environment.yml
-+++ modules/nf-core/pairtools/parse/environment.yml
+Changes in component 'nf-core/pairtools/select'
+Changes in 'pairtools/select/environment.yml':
+--- modules/nf-core/pairtools/select/environment.yml
++++ modules/nf-core/pairtools/select/environment.yml
 @@ -4,5 +4,5 @@
    - conda-forge
    - bioconda
@@ -10,10 +10,10 @@ Changes in 'pairtools/parse/environment.yml':
 +  - bioconda::pairtools=1.1.0
    - conda-forge::numpy=1.23
 
-'modules/nf-core/pairtools/parse/meta.yml' is unchanged
-Changes in 'pairtools/parse/main.nf':
---- modules/nf-core/pairtools/parse/main.nf
-+++ modules/nf-core/pairtools/parse/main.nf
+'modules/nf-core/pairtools/select/meta.yml' is unchanged
+Changes in 'pairtools/select/main.nf':
+--- modules/nf-core/pairtools/select/main.nf
++++ modules/nf-core/pairtools/select/main.nf
 @@ -4,10 +4,10 @@
  
      // Pinning numpy to 1.23 until https://github.com/open2c/pairtools/issues/170 is resolved
@@ -27,9 +27,9 @@ Changes in 'pairtools/parse/main.nf':
 +        'biocontainers/pairtools:1.1.0--py39hd5a99d8_2' }"
  
      input:
-     tuple val(meta), path(bam)
+     tuple val(meta), path(input)
 
-'modules/nf-core/pairtools/parse/tests/main.nf.test.snap' is unchanged
-'modules/nf-core/pairtools/parse/tests/nextflow.config' is unchanged
-'modules/nf-core/pairtools/parse/tests/main.nf.test' is unchanged
+'modules/nf-core/pairtools/select/tests/main.nf.test.snap' is unchanged
+'modules/nf-core/pairtools/select/tests/nextflow.config' is unchanged
+'modules/nf-core/pairtools/select/tests/main.nf.test' is unchanged
 ************************************************************
