@@ -116,11 +116,10 @@ where:
     }
     ```
 - `<profile>` is one of the preconfigured execution profiles
-    (`uppmax`, `singularity_local`, `docker_local`, etc: see nextflow.config). Alternatively,
+    (`<cluster_specific_profile>`, `singularity`, `docker`, etc: see nextflow.config). Alternatively,
     you can provide a custom configuration to configure this workflow
     to your execution environment. See [Nextflow Configuration](https://www.nextflow.io/docs/latest/config.html#scope-executor)
     for more details.
-
 
 ### Workflow parameter inputs
 
@@ -202,10 +201,6 @@ busco:
 ```
 
 - `multiqc_config`: Path to MultiQC configuration file (default: `configs/multiqc_conf.yaml`).
-
-Uppmax and PDC cluster specific:
-
-- `project`: NAISS Compute allocation number.
 
 ### Workflow outputs
 
@@ -676,49 +671,6 @@ results
   hifi:
     - reads: '/path/to/raw/data/hifi/LS_HIFI_R001.bam'
   ```
-
-### Customization for Uppmax
-
-A custom profile named `uppmax` is available to run this workflow specifically
-on UPPMAX clusters. The process `executor` is `slurm` so jobs are
-submitted to the Slurm Queue Manager. All jobs submitted to slurm
-must have a project allocation. This is automatically added to the `clusterOptions`
-in the `uppmax` profile. All Uppmax clusters have node local disk space to do
-computations, and prevent heavy input/output over the network (which
-slows down the cluster for all).
-The path to this disk space is provided by the `$SNIC_TMP` variable, used by
-the `process.scratch` directive in the `uppmax` profile. Lastly
-the profile enables the use of Singularity so that all processes must be
-executed within Singularity containers. See [nextflow.config](nextflow.config)
-for the profile specification.
-
-The profile is enabled using the `-profile` parameter to nextflow:
-```bash
-nextflow run -profile uppmax <nextflow_script>
-```
-
-A NAISS compute allocation should also be supplied using the `--project` parameter.
-
-### Customization for PDC
-
-A custom profile named `dardel` is available to run this workflow specifically
-on the PDC cluster *Dardel*. The process `executor` is `slurm` so jobs are
-submitted to the Slurm Queue Manager. All jobs submitted to slurm
-must have a project allocation. This is automatically added to the `clusterOptions`
-in the `dardel` profile. Calculations are performed in the scratch space allocated
-by `PDC_TMP` which is also on the lustre file system and is not node local storage.
-The path to this disk space is provided by the `$PDC_TMP` variable, used by
-the `process.scratch` directive in the `dardel` profile. Lastly
-the profile enables the use of Singularity so that all processes must be
-executed within Singularity containers. See [nextflow.config](nextflow.config)
-for the profile specification.
-
-The profile is enabled using the `-profile` parameter to nextflow:
-```bash
-nextflow run -profile dardel <nextflow_script>
-```
-
-A NAISS compute allocation should also be supplied using the `--project` parameter.
 
 ## Workflow organization
 
