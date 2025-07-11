@@ -1,6 +1,6 @@
-include { MERYL_COUNT     } from "$projectDir/modules/nf-core/meryl/count/main"
-include { MERYL_UNIONSUM  } from "$projectDir/modules/nf-core/meryl/unionsum/main"
-include { MERYL_HISTOGRAM } from "$projectDir/modules/nf-core/meryl/histogram/main"
+include { MERYL_COUNT     } from "../../../modules/nf-core/meryl/count/main"
+include { MERYL_UNIONSUM  } from "../../../modules/nf-core/meryl/unionsum/main"
+include { MERYL_HISTOGRAM } from "../../../modules/nf-core/meryl/histogram/main"
 
 workflow BUILD_MERYL_DATABASE {
 

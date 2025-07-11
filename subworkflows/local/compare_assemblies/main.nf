@@ -1,5 +1,5 @@
-include { getPrimaryAssembly } from "$projectDir/modules/local/functions"
-include { QUAST              } from "$projectDir/modules/nf-core/quast/main"
+include { getPrimaryAssembly } from "../../../modules/local/functions"
+include { QUAST              } from "../../../modules/nf-core/quast/main"
 
 workflow COMPARE_ASSEMBLIES {
 

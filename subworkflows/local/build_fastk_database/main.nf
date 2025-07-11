@@ -1,5 +1,5 @@
-include { FASTK_FASTK     } from "$projectDir/modules/nf-core/fastk/fastk/main"
-include { FASTK_MERGE     } from "$projectDir/modules/nf-core/fastk/merge/main"
+include { FASTK_FASTK     } from "../../../modules/nf-core/fastk/fastk/main"
+include { FASTK_MERGE     } from "../../../modules/nf-core/fastk/merge/main"
 
 workflow BUILD_FASTK_DATABASE {
 

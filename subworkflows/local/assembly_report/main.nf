@@ -1,8 +1,8 @@
-include { TOL_SEARCH                 } from "$projectDir/modules/local/tol/search"
-include { REPORT_DTOL                } from "$projectDir/modules/local/report/dtol"
-include { REPORT_GENOMETRAITS        } from "$projectDir/modules/local/report/genometraits"
-include { REPORT_SOFTWAREVERSIONS    } from "$projectDir/modules/local/report/softwareversions"
-include { QUARTO_NOTEBOOK            } from "$projectDir/modules/local/quarto/notebook/main.nf"
+include { TOL_SEARCH                 } from "../../../modules/local/tol/search"
+include { REPORT_DTOL                } from "../../../modules/local/report/dtol"
+include { REPORT_GENOMETRAITS        } from "../../../modules/local/report/genometraits"
+include { REPORT_SOFTWAREVERSIONS    } from "../../../modules/local/report/softwareversions"
+include { QUARTO_NOTEBOOK            } from "../../../modules/local/quarto/notebook/main.nf"
 
 workflow ASSEMBLY_REPORT {
     take:
