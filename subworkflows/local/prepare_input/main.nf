@@ -161,7 +161,7 @@ workflow PREPARE_INPUT {
     input.hifi_ch
         .filter { !it.isEmpty() }
         .transpose()   // Transform to [ [ id: 'sample_name'], file('/path/to/read')  ]
-        .branch { meta, filename ->
+        .branch { _meta, filename ->
             bam_ch: filename.toString().endsWith(".bam")
             fastx_ch: true // assume everything else is fastx
         }.set { hifi }
@@ -171,7 +171,7 @@ workflow PREPARE_INPUT {
     sample_fastx = hifi_fastx_ch.groupTuple()
         .branch { meta, fastx ->
             single: fastx.size() == 1
-                return [ meta, *fastx ]
+                return [ meta ] + fastx
             multi: true
                 return [ meta, fastx ]
         }

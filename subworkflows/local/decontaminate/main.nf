@@ -23,7 +23,7 @@ workflow DECONTAMINATE {
     FCSGX_RUNGX( ch_to_screen, ch_fcs_database.collect(), params.fcs.ramdisk_path )
     FCSGX_CLEAN(
         ch_to_screen.join( FCSGX_RUNGX.out.fcs_gx_report, by: 0 )
-            .map { meta, taxid, asm, rpt -> [ meta, asm, rpt ] }
+            .map { meta, _taxid, asm, rpt -> [ meta, asm, rpt ] }
     )
     ch_cleaned_assemblies = constructAssemblyRecord(
         FCSGX_CLEAN.out.clean_fasta

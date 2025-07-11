@@ -14,7 +14,7 @@ workflow BUILD_FASTK_DATABASE {
         .map { meta, hist, ktab, prof -> [ meta.subMap(meta.keySet()-['single_end', 'pair_id'] ) , hist, ktab , prof ] }
         .groupTuple()
         .map { meta, hist, ktab, prof -> [ meta , hist, ktab.head() ? ktab.flatten() : [] , prof.head() ? prof.flatten() : [] ] }
-        .branch { meta, hist, ktab, prof ->
+        .branch { _meta, hist, _ktab, _prof ->
             single_hist: hist.size() == 1
             multi_hist : hist.size() > 1
         }

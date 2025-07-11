@@ -82,7 +82,7 @@ workflow SCAFFOLD_CURATION {
     TWOREADCOMBINER_FIXMATE_SORT.out.bam
         .map { meta, bam_list -> [ meta - meta.subMap( 'pair_id' ), bam_list ] }
         .groupTuple()
-        .branch { meta, bam_list ->
+        .branch { _meta, bam_list ->
             multiples: bam_list.size() > 1
             singleton: true
         }
@@ -96,7 +96,7 @@ workflow SCAFFOLD_CURATION {
     ch_versions  = ch_versions.mix( SAMTOOLS_MERGE_HIC.out.versions )
 
     merge_bam.singleton
-        .map { meta, bam -> [ meta, *bam ] } // the spread operator (*) flattens the bam list
+        .map { meta, bam -> [ meta ] + bam }
         .mix( SAMTOOLS_MERGE_HIC.out.bam)
         .set { dedup_bam }
 
@@ -137,7 +137,7 @@ workflow SCAFFOLD_CURATION {
     )
     ch_versions  = ch_versions.mix( COOLER_CLOAD.out.versions )
 
-    COOLER_CLOAD.out.cool.map { meta, cool, cool_bin ->  [ meta, cool ] }
+    COOLER_CLOAD.out.cool.map { meta, cool, _cool_bin ->  [ meta, cool ] }
     .set { cooler_zoomify_ch }
 
     COOLER_ZOOMIFY(cooler_zoomify_ch)
@@ -198,7 +198,7 @@ workflow SCAFFOLD_CURATION {
     // Coverage-track: merge hifi-bam files (if multiple hifi reads are present)
     MINIMAP2_ALIGN.out.bam
         .groupTuple()
-        .branch { meta, bam_list ->
+        .branch { _meta, bam_list ->
             multiples: bam_list.size() > 1
             singleton: true
         }
@@ -225,7 +225,7 @@ workflow SCAFFOLD_CURATION {
 
     joinByMetaKeys(
         merge_hifi_bam.singleton
-            .map { meta, bam -> [ meta, *bam ] } // the spread operator (*) flattens the bam list
+            .map { meta, bam -> [ meta ] + bam }
             .mix( SAMTOOLS_MERGE_HIFI.out.bam),
         CREATE_CHROMOSOME_SIZES_FILE.out.sizes,
         keySet: ['id','sample','assembly'],

@@ -13,7 +13,7 @@ workflow ASSEMBLY_REPORT {
 
     main:
     // DTOL table
-    REPORT_DTOL( TOL_SEARCH( notebook.map{ meta, notebook -> meta.sample.tax_id } ).json )
+    REPORT_DTOL( TOL_SEARCH( notebook.map{ meta, _notebook -> meta.sample.tax_id } ).json )
 
     // Genome traits table
         // Expected vs Observed
@@ -21,7 +21,7 @@ workflow ASSEMBLY_REPORT {
         // Haploid Number // GOAT vs HiC
         // Ploidy         // GOAT vs HiC
         // Sample Sex     // GOAT vs HiC
-    REPORT_GENOMETRAITS( notebook.map{ meta, notebook -> meta } )
+    REPORT_GENOMETRAITS( notebook.map{ meta, _notebook -> meta } )
     REPORT_SOFTWAREVERSIONS( versions.toSortedList().dump(tag:'versions', pretty: true) )
     def mqc_files = logs.mix(
         REPORT_DTOL.out.tsv,
@@ -37,5 +37,4 @@ workflow ASSEMBLY_REPORT {
 
     emit:
     report = QUARTO_NOTEBOOK.out.html
-
 }

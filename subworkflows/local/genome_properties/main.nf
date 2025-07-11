@@ -17,7 +17,7 @@ workflow GENOME_PROPERTIES {
     */
     main:
     // Generate GenomeScope Profile
-    FASTK_HISTEX ( fastk_hist_ktab.map { meta, hist, ktab -> [ meta, hist ] } )
+    FASTK_HISTEX ( fastk_hist_ktab.map { meta, hist, _ktab -> [ meta, hist ] } )
     GENESCOPEFK ( FASTK_HISTEX.out.hist )
 
     // Generate Smudgeplot
@@ -33,7 +33,7 @@ workflow GENOME_PROPERTIES {
         MERQURYFK_PLOIDYPLOT.out.stacked_ploidy_plot_png,
         MERQURYFK_KATGC.out.stacked_gc_plot_png
     )
-    .map { meta, img -> img }
+    .map { _meta, img -> img }
     .set { logs }
 
     FASTK_HISTEX.out.versions.first().mix(

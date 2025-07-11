@@ -51,7 +51,7 @@ workflow SCAFFOLD {
     )
 
     SAMTOOLS_FAIDX.out.fai
-        .map{ meta, fai ->
+        .map{ _meta, fai ->
             fai.splitCsv( sep: '\t', header: false )
                 .collect{ row -> row[ 0..1 ].join('\t') }
                 .join('\n')
@@ -73,7 +73,7 @@ workflow SCAFFOLD {
     PAIRTOOLS_SORT.out.sorted.groupTuple()
         .branch { meta, pairsam ->
             single: pairsam.size() == 1
-                return [ meta, *pairsam ]
+                return [ meta ] + pairsam
             multi: true
                 return [ meta, pairsam ]
         }
@@ -126,7 +126,7 @@ workflow SCAFFOLD {
     // Consensus case:
     // Preserve haplotigs from purge dups
     ch_scaff_and_alt = ch_assemblies
-        .filter { meta, assembly -> assembly.alt_fasta }
+        .filter { _meta, assembly -> assembly.alt_fasta }
         .map { meta, assembly -> [ meta, assembly.alt_fasta ] }
         .mix( YAHS.out.scaffolds_fasta )
     ch_scaffolded_assemblies = constructAssemblyRecord( ch_scaff_and_alt, false )
@@ -135,7 +135,7 @@ workflow SCAFFOLD {
         .mix (
             PAIRTOOLS_DEDUP.out.stat
         )
-        .map { meta, stats -> stats }
+        .map { _meta, stats -> stats }
         .set { logs }
 
     ch_versions = BWAMEM2_INDEX_SCAFFOLD.out.versions.first().mix(

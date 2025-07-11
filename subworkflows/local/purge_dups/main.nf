@@ -28,7 +28,6 @@ workflow PURGE_DUPLICATES {
     ch_hifi       // [ meta, hifi ]
 
     main:
-    ch_versions = Channel.empty()
     reads_plus_assembly_ch = combineByMetaKeys (
             ch_hifi,
             ch_assemblies,
@@ -85,8 +84,8 @@ workflow PURGE_DUPLICATES {
     if( params.use_phased ){
         // Purge alternate contigs.
         reads_plus_assembly_ch
-            .filter { meta, reads, assembly -> assembly.alt_fasta != null }
-            .map { meta, reads, assembly -> [ meta, assembly.alt_fasta ] }
+            .filter { _meta, _reads, assembly -> assembly.alt_fasta != null }
+            .map { meta, _reads, assembly -> [ meta, assembly.alt_fasta ] }
             //! WARN Purges only primary haplotigs when using consensus
             .mix( PURGEDUPS_GETSEQS_PRIMARY.out.haplotigs )
             .groupTuple()  // TODO Find size to prevent blocking
@@ -121,7 +120,7 @@ workflow PURGE_DUPLICATES {
 
     PURGEDUPS_HISTPLOT.out.png
         .mix( PURGEDUPS_PURGEDUPS_PRIMARY.out.bed )
-        .map { meta, file -> file }
+        .map { _meta, file -> file }
         .set { logs }
 
     MINIMAP2_ALIGN_READS.out.versions.first().mix(

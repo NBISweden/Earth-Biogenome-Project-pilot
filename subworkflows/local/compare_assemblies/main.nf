@@ -16,7 +16,7 @@ workflow COMPARE_ASSEMBLIES {
     )
     versions_ch = QUAST.out.versions
     QUAST.out.tsv
-        .map { meta, tsv -> tsv }
+        .map { _meta, tsv -> tsv }
         .set { logs }
 
     emit:
