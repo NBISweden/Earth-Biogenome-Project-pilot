@@ -15,7 +15,7 @@ process GENESCOPEFK {
     tuple val(meta), path("${prefix}_summary.txt")                , emit: summary
     tuple val(meta), path("${prefix}_transformed_linear_plot.png"), emit: transformed_linear_plot
     tuple val(meta), path("${prefix}_transformed_log_plot.png")   , emit: transformed_log_plot
-    tuple val(meta), env(KMERCOV)                                 , emit: kmer_cov
+    tuple val(meta), env('KMERCOV')                               , emit: kmer_cov
     path "versions.yml"                                           , emit: versions
 
     when:
