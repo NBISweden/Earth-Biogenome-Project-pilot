@@ -1,7 +1,8 @@
-Changes in module 'nf-core/pairtools/split'
+Changes in component 'nf-core/pairtools/split'
+Changes in 'pairtools/split/environment.yml':
 --- modules/nf-core/pairtools/split/environment.yml
 +++ modules/nf-core/pairtools/split/environment.yml
-@@ -2,5 +2,5 @@
+@@ -4,5 +4,5 @@
    - conda-forge
    - bioconda
  dependencies:
@@ -9,6 +10,8 @@ Changes in module 'nf-core/pairtools/split'
 +  - bioconda::pairtools=1.1.0
    - conda-forge::numpy=1.23
 
+'modules/nf-core/pairtools/split/meta.yml' is unchanged
+Changes in 'pairtools/split/main.nf':
 --- modules/nf-core/pairtools/split/main.nf
 +++ modules/nf-core/pairtools/split/main.nf
 @@ -4,17 +4,22 @@
@@ -25,20 +28,20 @@ Changes in module 'nf-core/pairtools/split'
  
      input:
      tuple val(meta), path(pairs)
-+    tuple val(meta), path(fasta)
-+    val   sort_bam 
++    tuple val(meta2), path(fasta)
++    val   sort_bam
  
      output:
      tuple val(meta), path("*.split.pairs.gz"), emit:pairs
 -    tuple val(meta), path("*.bam")           , emit:bam   , optional:true
-+    tuple val(meta), path("*.bam")           , emit:bam  , optional:true
++    tuple val(meta), path("*.bam")           , emit: bam , optional:true
 +    tuple val(meta), path("*.cram")          , emit: cram, optional:true
 +    tuple val(meta), path("*.crai")          , emit: crai, optional:true
 +    tuple val(meta), path("*.csi")           , emit: csi , optional:true
      path("versions.yml")                     , emit:versions
  
      when:
-@@ -22,18 +27,30 @@
+@@ -22,20 +27,33 @@
  
      script:
      def args = task.ext.args ?: ''
@@ -69,8 +72,11 @@ Changes in module 'nf-core/pairtools/split'
 +        samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
      END_VERSIONS
      """
++    
      stub:
-@@ -45,6 +62,7 @@
+     def prefix = task.ext.prefix ?: "${meta.id}"
+     """
+@@ -45,6 +63,7 @@
      cat <<-END_VERSIONS > versions.yml
      "${task.process}":
          pairtools: \$(pairtools --version | sed 's/pairtools, version //')
@@ -79,4 +85,6 @@ Changes in module 'nf-core/pairtools/split'
      """
  
 
+'modules/nf-core/pairtools/split/tests/main.nf.test.snap' is unchanged
+'modules/nf-core/pairtools/split/tests/main.nf.test' is unchanged
 ************************************************************

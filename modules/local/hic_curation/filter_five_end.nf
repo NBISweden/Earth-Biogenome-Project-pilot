@@ -15,13 +15,11 @@ process FILTER_FIVE_END {
     task.ext.when == null || task.ext.when
 
     script:
-    def args = task.ext.args ?: ''
-    def args2 = task.ext.args2 ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
 
     """
     samtools view -h -@ $task.cpus ${bam} | \\
-    perl ${projectDir}/bin/filter_five_end.pl | \\
+    filter_five_end.pl | \\
     samtools view -@ $task.cpus -Sb - > ${prefix}.bam
 
     cat <<-END_VERSIONS > versions.yml

@@ -1,5 +1,5 @@
-include { STAR_ALIGN          } from "$projectDir/modules/nf-core/star/align/main"
-include { STAR_GENOMEGENERATE } from "$projectDir/modules/nf-core/star/genomegenerate/main"
+include { STAR_ALIGN          } from "../../../modules/nf-core/star/align/main"
+include { STAR_GENOMEGENERATE } from "../../../modules/nf-core/star/genomegenerate/main"
 
 workflow ALIGN_RNASEQ {
 

@@ -18,9 +18,8 @@ process TWOREADCOMBINER_FIXMATE_SORT {
     def args = task.ext.args ?: ''
     def args2 = task.ext.args2 ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-
     """
-    perl ${projectDir}/bin/two_read_bam_combiner_sanger.pl ${bam} samtools ${args} | \\
+    two_read_bam_combiner_sanger.pl ${bam} samtools ${args} | \\
     grep -v -e "^@HD" | \\
     samtools sort ${args2} -@${task.cpus} -T sort_tmp -o ${prefix}_comb.bam -
 

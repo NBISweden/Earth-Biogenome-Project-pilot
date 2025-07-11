@@ -3,23 +3,23 @@
  * https://github.com/dfguan/purge_dups
  */
 
-include { joinByMetaKeys                                       } from "$projectDir/modules/local/functions"
-include { combineByMetaKeys                                    } from "$projectDir/modules/local/functions"
-include { constructAssemblyRecord                              } from "$projectDir/modules/local/functions"
-include { getPrimaryAssembly                                   } from "$projectDir/modules/local/functions"
-include { MINIMAP2_ALIGN as MINIMAP2_ALIGN_READS               } from "$projectDir/modules/nf-core/minimap2/align/main"
-include { MINIMAP2_ALIGN as MINIMAP2_ALIGN_ASSEMBLY_PRIMARY    } from "$projectDir/modules/nf-core/minimap2/align/main"
-include { MINIMAP2_ALIGN as MINIMAP2_ALIGN_ASSEMBLY_ALTERNATE  } from "$projectDir/modules/nf-core/minimap2/align/main"
-include { PURGEDUPS_PBCSTAT                                    } from "$projectDir/modules/nf-core/purgedups/pbcstat"
-include { PURGEDUPS_CALCUTS                                    } from "$projectDir/modules/nf-core/purgedups/calcuts"
-include { PURGEDUPS_HISTPLOT                                   } from "$projectDir/modules/nf-core/purgedups/histplot"
-include { PURGEDUPS_SPLITFA as PURGEDUPS_SPLITFA_PRIMARY       } from "$projectDir/modules/nf-core/purgedups/splitfa"
-include { PURGEDUPS_SPLITFA as PURGEDUPS_SPLITFA_ALTERNATE     } from "$projectDir/modules/nf-core/purgedups/splitfa"
-include { PURGEDUPS_PURGEDUPS as PURGEDUPS_PURGEDUPS_PRIMARY   } from "$projectDir/modules/nf-core/purgedups/purgedups"
-include { PURGEDUPS_PURGEDUPS as PURGEDUPS_PURGEDUPS_ALTERNATE } from "$projectDir/modules/nf-core/purgedups/purgedups"
-include { PURGEDUPS_GETSEQS as PURGEDUPS_GETSEQS_PRIMARY       } from "$projectDir/modules/nf-core/purgedups/getseqs"
-include { PURGEDUPS_GETSEQS as PURGEDUPS_GETSEQS_ALTERNATE     } from "$projectDir/modules/nf-core/purgedups/getseqs"
-include { SEQKIT_SEQ                                           } from "$projectDir/modules/nf-core/seqkit/seq/main"
+include { joinByMetaKeys                                       } from "../../../modules/local/functions"
+include { combineByMetaKeys                                    } from "../../../modules/local/functions"
+include { constructAssemblyRecord                              } from "../../../modules/local/functions"
+include { getPrimaryAssembly                                   } from "../../../modules/local/functions"
+include { MINIMAP2_ALIGN as MINIMAP2_ALIGN_READS               } from "../../../modules/nf-core/minimap2/align/main"
+include { MINIMAP2_ALIGN as MINIMAP2_ALIGN_ASSEMBLY_PRIMARY    } from "../../../modules/nf-core/minimap2/align/main"
+include { MINIMAP2_ALIGN as MINIMAP2_ALIGN_ASSEMBLY_ALTERNATE  } from "../../../modules/nf-core/minimap2/align/main"
+include { PURGEDUPS_PBCSTAT                                    } from "../../../modules/nf-core/purgedups/pbcstat"
+include { PURGEDUPS_CALCUTS                                    } from "../../../modules/nf-core/purgedups/calcuts"
+include { PURGEDUPS_HISTPLOT                                   } from "../../../modules/nf-core/purgedups/histplot"
+include { PURGEDUPS_SPLITFA as PURGEDUPS_SPLITFA_PRIMARY       } from "../../../modules/nf-core/purgedups/splitfa"
+include { PURGEDUPS_SPLITFA as PURGEDUPS_SPLITFA_ALTERNATE     } from "../../../modules/nf-core/purgedups/splitfa"
+include { PURGEDUPS_PURGEDUPS as PURGEDUPS_PURGEDUPS_PRIMARY   } from "../../../modules/nf-core/purgedups/purgedups"
+include { PURGEDUPS_PURGEDUPS as PURGEDUPS_PURGEDUPS_ALTERNATE } from "../../../modules/nf-core/purgedups/purgedups"
+include { PURGEDUPS_GETSEQS as PURGEDUPS_GETSEQS_PRIMARY       } from "../../../modules/nf-core/purgedups/getseqs"
+include { PURGEDUPS_GETSEQS as PURGEDUPS_GETSEQS_ALTERNATE     } from "../../../modules/nf-core/purgedups/getseqs"
+include { SEQKIT_SEQ                                           } from "../../../modules/nf-core/seqkit/seq/main"
 
 workflow PURGE_DUPLICATES {
 
@@ -28,7 +28,6 @@ workflow PURGE_DUPLICATES {
     ch_hifi       // [ meta, hifi ]
 
     main:
-    ch_versions = Channel.empty()
     reads_plus_assembly_ch = combineByMetaKeys (
             ch_hifi,
             ch_assemblies,
@@ -85,8 +84,8 @@ workflow PURGE_DUPLICATES {
     if( params.use_phased ){
         // Purge alternate contigs.
         reads_plus_assembly_ch
-            .filter { meta, reads, assembly -> assembly.alt_fasta != null }
-            .map { meta, reads, assembly -> [ meta, assembly.alt_fasta ] }
+            .filter { _meta, _reads, assembly -> assembly.alt_fasta != null }
+            .map { meta, _reads, assembly -> [ meta, assembly.alt_fasta ] }
             //! WARN Purges only primary haplotigs when using consensus
             .mix( PURGEDUPS_GETSEQS_PRIMARY.out.haplotigs )
             .groupTuple()  // TODO Find size to prevent blocking
@@ -121,7 +120,7 @@ workflow PURGE_DUPLICATES {
 
     PURGEDUPS_HISTPLOT.out.png
         .mix( PURGEDUPS_PURGEDUPS_PRIMARY.out.bed )
-        .map { meta, file -> file }
+        .map { _meta, file -> file }
         .set { logs }
 
     MINIMAP2_ALIGN_READS.out.versions.first().mix(

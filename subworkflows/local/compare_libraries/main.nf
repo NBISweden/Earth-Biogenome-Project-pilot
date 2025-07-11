@@ -1,4 +1,4 @@
-include { MERQURYFK_KATCOMP } from "$projectDir/modules/nf-core/merquryfk/katcomp/main"
+include { MERQURYFK_KATCOMP } from "../../../modules/nf-core/merquryfk/katcomp/main"
 
 workflow COMPARE_LIBRARIES {
 
@@ -11,5 +11,5 @@ workflow COMPARE_LIBRARIES {
 
     emit:
     versions = versions_ch
-    logs = MERQURYFK_KATCOMP.out.stacked_png.map{ meta, img -> img }
+    logs = MERQURYFK_KATCOMP.out.stacked_png.map{ _meta, img -> img }
 }

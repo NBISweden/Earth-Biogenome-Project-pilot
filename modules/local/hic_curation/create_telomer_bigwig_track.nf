@@ -17,13 +17,10 @@ process CREATE_TELOMER_BIGWIG_TRACK {
 
     script:
     def args   = task.ext.args ?: ''
-    def args2  = task.ext.args2 ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-
     """
     sort -k1,1V -k2,2n -k3,3n ${args} ${bedgraph} > ${bedgraph}_sorted.bedgraph
     bedGraphToBigWig ${bedgraph}_sorted.bedgraph ${chrom_sizes} ${prefix}_telomer.bw;
-
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

@@ -1,30 +1,30 @@
-include { getPrimaryAssembly                    } from "$projectDir/modules/local/functions"
-include { combineByMetaKeys                     } from "$projectDir/modules/local/functions"
-include { joinByMetaKeys                        } from "$projectDir/modules/local/functions"
-include { BWAMEM2_INDEX                         } from "$projectDir/modules/nf-core/bwamem2/index/main"
-include { BWAMEM2_MEM as BWAMEM2_MEM_CURATION   } from "$projectDir/modules/nf-core/bwamem2/mem/main"
-include { FILTER_FIVE_END                       } from "$projectDir/modules/local/hic_curation/filter_five_end"
-include { TWOREADCOMBINER_FIXMATE_SORT          } from "$projectDir/modules/local/hic_curation/tworeadcombiner_fixmate_sort"
-include { BIOBAMBAM_BAMMARKDUPLICATES2          } from "$projectDir/modules/nf-core/biobambam/bammarkduplicates2/main"
-include { SAMTOOLS_FAIDX                        } from "$projectDir/modules/nf-core/samtools/faidx/main"
-include { SAMTOOLS_MERGE as SAMTOOLS_MERGE_HIC  } from "$projectDir/modules/nf-core/samtools/merge/main"
-include { SAMTOOLS_MERGE as SAMTOOLS_MERGE_HIFI } from "$projectDir/modules/nf-core/samtools/merge/main"
-include { SAMTOOLS_SORT                         } from "$projectDir/modules/nf-core/samtools/sort/main"
-include { BAM2BED_SORT                          } from "$projectDir/modules/local/hic_curation/bam2bed_sort"
-include { COOLER_CLOAD                          } from "$projectDir/modules/nf-core/cooler/cload/main"
-include { COOLER_ZOOMIFY                        } from "$projectDir/modules/nf-core/cooler/zoomify/main"
-include { CREATE_CHROMOSOME_SIZES_FILE          } from "$projectDir/modules/local/hic_curation/create_chromosome_sizes"
-include { PRETEXTMAP                            } from "$projectDir/modules/nf-core/pretextmap/main"
-include { MINIMAP2_INDEX                        } from "$projectDir/modules/nf-core/minimap2/index/main"
-include { MINIMAP2_ALIGN                        } from "$projectDir/modules/nf-core/minimap2/align/main"
-include { BAM2COVERAGE_TRACKS                   } from "$projectDir/modules/local/hic_curation/bam2coverageTracks"
-include { SEQTK_CUTN                            } from "$projectDir/modules/nf-core/seqtk/cutn/main"
-include { CREATE_GAP_TRACKS                     } from "$projectDir/modules/local/hic_curation/create_gap_tracks"
-include { TIDK_SEARCH as TIDK_SEARCH_BEDGRAPH   } from "$projectDir/modules/nf-core/tidk/search/main"
-include { TIDK_SEARCH as TIDK_SEARCH_TSV        } from "$projectDir/modules/nf-core/tidk/search/main"
-include { TIDK_PLOT                             } from "$projectDir/modules/nf-core/tidk/plot/main"
-include { CREATE_TELOMER_BIGWIG_TRACK           } from "$projectDir/modules/local/hic_curation/create_telomer_bigwig_track"
-include { PRETEXT_TRACKS_INGESTION              } from "$projectDir/modules/local/hic_curation/pretext_tracks_ingestion"
+include { getPrimaryAssembly                    } from "../../../modules/local/functions"
+include { combineByMetaKeys                     } from "../../../modules/local/functions"
+include { joinByMetaKeys                        } from "../../../modules/local/functions"
+include { BWAMEM2_INDEX                         } from "../../../modules/nf-core/bwamem2/index/main"
+include { BWAMEM2_MEM as BWAMEM2_MEM_CURATION   } from "../../../modules/nf-core/bwamem2/mem/main"
+include { FILTER_FIVE_END                       } from "../../../modules/local/hic_curation/filter_five_end"
+include { TWOREADCOMBINER_FIXMATE_SORT          } from "../../../modules/local/hic_curation/tworeadcombiner_fixmate_sort"
+include { BIOBAMBAM_BAMMARKDUPLICATES2          } from "../../../modules/nf-core/biobambam/bammarkduplicates2/main"
+include { SAMTOOLS_FAIDX                        } from "../../../modules/nf-core/samtools/faidx/main"
+include { SAMTOOLS_MERGE as SAMTOOLS_MERGE_HIC  } from "../../../modules/nf-core/samtools/merge/main"
+include { SAMTOOLS_MERGE as SAMTOOLS_MERGE_HIFI } from "../../../modules/nf-core/samtools/merge/main"
+include { SAMTOOLS_SORT                         } from "../../../modules/nf-core/samtools/sort/main"
+include { BAM2BED_SORT                          } from "../../../modules/local/hic_curation/bam2bed_sort"
+include { COOLER_CLOAD                          } from "../../../modules/nf-core/cooler/cload/main"
+include { COOLER_ZOOMIFY                        } from "../../../modules/nf-core/cooler/zoomify/main"
+include { CREATE_CHROMOSOME_SIZES_FILE          } from "../../../modules/local/hic_curation/create_chromosome_sizes"
+include { PRETEXTMAP                            } from "../../../modules/nf-core/pretextmap/main"
+include { MINIMAP2_INDEX                        } from "../../../modules/nf-core/minimap2/index/main"
+include { MINIMAP2_ALIGN                        } from "../../../modules/nf-core/minimap2/align/main"
+include { BAM2COVERAGE_TRACKS                   } from "../../../modules/local/hic_curation/bam2coverageTracks"
+include { SEQTK_CUTN                            } from "../../../modules/nf-core/seqtk/cutn/main"
+include { CREATE_GAP_TRACKS                     } from "../../../modules/local/hic_curation/create_gap_tracks"
+include { TIDK_SEARCH as TIDK_SEARCH_BEDGRAPH   } from "../../../modules/nf-core/tidk/search/main"
+include { TIDK_SEARCH as TIDK_SEARCH_TSV        } from "../../../modules/nf-core/tidk/search/main"
+include { TIDK_PLOT                             } from "../../../modules/nf-core/tidk/plot/main"
+include { CREATE_TELOMER_BIGWIG_TRACK           } from "../../../modules/local/hic_curation/create_telomer_bigwig_track"
+include { PRETEXT_TRACKS_INGESTION              } from "../../../modules/local/hic_curation/pretext_tracks_ingestion"
 
 workflow SCAFFOLD_CURATION {
     take:
@@ -82,7 +82,7 @@ workflow SCAFFOLD_CURATION {
     TWOREADCOMBINER_FIXMATE_SORT.out.bam
         .map { meta, bam_list -> [ meta - meta.subMap( 'pair_id' ), bam_list ] }
         .groupTuple()
-        .branch { meta, bam_list ->
+        .branch { _meta, bam_list ->
             multiples: bam_list.size() > 1
             singleton: true
         }
@@ -96,7 +96,7 @@ workflow SCAFFOLD_CURATION {
     ch_versions  = ch_versions.mix( SAMTOOLS_MERGE_HIC.out.versions )
 
     merge_bam.singleton
-        .map { meta, bam -> [ meta, *bam ] } // the spread operator (*) flattens the bam list
+        .map { meta, bam -> [ meta ] + bam }
         .mix( SAMTOOLS_MERGE_HIC.out.bam)
         .set { dedup_bam }
 
@@ -137,7 +137,7 @@ workflow SCAFFOLD_CURATION {
     )
     ch_versions  = ch_versions.mix( COOLER_CLOAD.out.versions )
 
-    COOLER_CLOAD.out.cool.map { meta, cool, cool_bin ->  [ meta, cool ] }
+    COOLER_CLOAD.out.cool.map { meta, cool, _cool_bin ->  [ meta, cool ] }
     .set { cooler_zoomify_ch }
 
     COOLER_ZOOMIFY(cooler_zoomify_ch)
@@ -198,7 +198,7 @@ workflow SCAFFOLD_CURATION {
     // Coverage-track: merge hifi-bam files (if multiple hifi reads are present)
     MINIMAP2_ALIGN.out.bam
         .groupTuple()
-        .branch { meta, bam_list ->
+        .branch { _meta, bam_list ->
             multiples: bam_list.size() > 1
             singleton: true
         }
@@ -225,7 +225,7 @@ workflow SCAFFOLD_CURATION {
 
     joinByMetaKeys(
         merge_hifi_bam.singleton
-            .map { meta, bam -> [ meta, *bam ] } // the spread operator (*) flattens the bam list
+            .map { meta, bam -> [ meta ] + bam }
             .mix( SAMTOOLS_MERGE_HIFI.out.bam),
         CREATE_CHROMOSOME_SIZES_FILE.out.sizes,
         keySet: ['id','sample','assembly'],

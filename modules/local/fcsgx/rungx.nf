@@ -56,18 +56,4 @@ process FCSGX_RUNGX {
         fcs_gx: $VERSION
     END_VERSIONS
     """
-
-    stub:
-    def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
-    def VERSION = '0.5.4' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
-    """
-    touch ${prefix}.fcs_gx_report.txt
-    touch ${prefix}.taxonomy.rpt
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        fcs_gx: $VERSION
-    END_VERSIONS
-    """
 }

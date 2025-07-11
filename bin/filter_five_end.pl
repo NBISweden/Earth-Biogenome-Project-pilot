@@ -1,4 +1,4 @@
-#!/usr/bin/perl
+#! /usr/bin/env perl
 
 # Portions of this code adapted from Sanger Institute's "curationpretext" (https://github.com/sanger-tol/curationpretext)
 # and Arima Genomics' "mapping_pipeline" (https://github.com/ArimaGenomics/mapping_pipeline)

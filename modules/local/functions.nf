@@ -17,30 +17,29 @@ MYPROCESS (
 def combineByMetaKeys( Map args = [:], lhs, rhs ){
     assert args.keySet != null
     def combine_args = [ by: 0 ]
-    switch(args.meta) {
-        case 'lhs':
-            // Return meta map from lhs
-            return lhs.map{ [ it[0].subMap(args.keySet) ] + it }
-                .combine( combine_args, rhs.map{ [ it[0].subMap(args.keySet) ] + it.tail() } )
-                .map { it.tail() }
-        case 'rhs':
-            // Return meta map from rhs
-            def restructure = { key, clip, ... tail -> def list = tail.toList(); [ list.removeAt(clip) ] + list }
-            return lhs.map{ [ it[0].subMap(args.keySet), it.size()-1 ] + it.tail() }
-                .combine( combine_args, rhs.map{ [ it[0].subMap(args.keySet) ] + it } )
-                .map { restructure(*it) }
-        case 'merge':
-            // Return merged meta map
-            def restructure = { key, clip, ... tail -> def list = tail.toList(); [ deepMergeMaps(list.head(),list.removeAt(clip)) ] + list.tail() }
-            return lhs.map{ [ it[0].subMap(args.keySet), it.size() ] + it }
-                .combine( combine_args, rhs.map{ [ it[0].subMap(args.keySet) ] + it } )
-                .map { restructure(*it) }
-        case 'subset':
-            // Return meta keys subset
-            return lhs.map{ [ it[0].subMap(args.keySet) ] + it.tail() }
-                .combine( combine_args, rhs.map{ [ it[0].subMap(args.keySet) ] + it.tail() } )
-        default:
-            assert args.meta in ['lhs','rhs','merge','subset']
+    if ( args.meta == 'lhs') {
+        // Return meta map from lhs
+        return lhs.map{ [ it[0].subMap(args.keySet) ] + it }
+            .combine( combine_args, rhs.map{ [ it[0].subMap(args.keySet) ] + it.tail() } )
+            .map { it.tail() }
+    } else if ( args.meta == 'rhs' ) {
+        // Return meta map from rhs
+        def restructure = { _key, clip, tail -> [ tail.removeAt(clip) ] + tail }
+        return lhs.map{ [ it[0].subMap(args.keySet), it.size()-1 ] + it.tail() }
+            .combine( combine_args, rhs.map{ [ it[0].subMap(args.keySet) ] + it } )
+            .map { tuple -> restructure.call(tuple[0], tuple[1], tuple[2..-1]) }
+    } else if ( args.meta == 'merge') {
+        // Return merged meta map
+        def restructure = { _key, clip, tail -> [ deepMergeMaps(tail.head(), tail.removeAt(clip)) ] + tail.tail() }
+        return lhs.map{ [ it[0].subMap(args.keySet), it.size() ] + it }
+            .combine( combine_args, rhs.map{ [ it[0].subMap(args.keySet) ] + it } )
+            .map { tuple -> restructure.call(tuple[0], tuple[1], tuple[2..-1]) }
+    } else if ( args.meta == 'subset') {
+        // Return meta keys subset
+        return lhs.map{ [ it[0].subMap(args.keySet) ] + it.tail() }
+            .combine( combine_args, rhs.map{ [ it[0].subMap(args.keySet) ] + it.tail() } )
+    } else {
+        assert args.meta in ['lhs','rhs','merge','subset']
     }
 }
 
@@ -62,30 +61,29 @@ MYPROCESS (
 def joinByMetaKeys( Map args = [:], lhs, rhs ) {
     assert args.keySet != null
     def join_args = args.subMap(['remainder', 'failOnMismatch', 'failOnDuplicate']) + [ by: 0 ]
-    switch(args.meta) {
-        case 'lhs':
-            // Return meta map from lhs
-            return lhs.map{ [ it[0].subMap(args.keySet) ] + it }
-                .join( join_args, rhs.map{ [ it[0].subMap(args.keySet) ] + it.tail() } )
-                .map { it.tail() }
-        case 'rhs':
-            // Return meta map from rhs
-            def restructure = { key, clip, ... tail -> def list = tail.toList(); [ list.removeAt(clip) ] + list }
-            return lhs.map{ [ it[0].subMap(args.keySet), it.size()-1 ] + it.tail() }
-                .join( join_args, rhs.map{ [ it[0].subMap(args.keySet) ] + it } )
-                .map { restructure(*it) }
-        case 'merge':
-            // Return merged meta map
-            def restructure = { key, clip, ... tail -> def list = tail.toList(); [ deepMergeMaps(list.head(),list.removeAt(clip)) ] + list.tail() }
-            return lhs.map{ [ it[0].subMap(args.keySet), it.size() ] + it }
-                .join( join_args, rhs.map{ [ it[0].subMap(args.keySet) ] + it } )
-                .map { restructure(*it) }
-        case 'subset':
-            // Return meta keys subset
-            return lhs.map{ [ it[0].subMap(args.keySet) ] + it.tail() }
-                .join( join_args, rhs.map{ [ it[0].subMap(args.keySet) ] + it.tail() } )
-        default:
-            assert args.meta in ['lhs','rhs','merge','subset']
+    if ( args.meta == 'lhs' ) {
+        // Return meta map from lhs
+        return lhs.map{ [ it[0].subMap(args.keySet) ] + it }
+            .join( join_args, rhs.map{ [ it[0].subMap(args.keySet) ] + it.tail() } )
+            .map { it.tail() }
+    } else if ( args.meta == 'rhs' ) {
+        // Return meta map from rhs
+        def restructure = { _key, clip, tail -> [ tail.removeAt(clip) ] + tail }
+        return lhs.map{ [ it[0].subMap(args.keySet), it.size()-1 ] + it.tail() }
+            .join( join_args, rhs.map{ [ it[0].subMap(args.keySet) ] + it } )
+            .map { tuple -> restructure.call(tuple[0], tuple[1], tuple[2..-1]) }
+    } else if ( args.meta == 'merge' ){
+        // Return merged meta map
+        def restructure = { _key, clip, tail -> [ deepMergeMaps(tail.head(), tail.removeAt(clip)) ] + tail.tail() }
+        return lhs.map{ [ it[0].subMap(args.keySet), it.size() ] + it }
+            .join( join_args, rhs.map{ [ it[0].subMap(args.keySet) ] + it } )
+            .map { tuple -> restructure.call(tuple[0], tuple[1], tuple[2..-1]) }
+    } else if ( args.meta == 'subset' ) {
+        // Return meta keys subset
+        return lhs.map{ [ it[0].subMap(args.keySet) ] + it.tail() }
+            .join( join_args, rhs.map{ [ it[0].subMap(args.keySet) ] + it.tail() } )
+    } else {
+        assert args.meta in ['lhs','rhs','merge','subset']
     }
 }
 
@@ -93,7 +91,7 @@ def joinByMetaKeys( Map args = [:], lhs, rhs ) {
 This function filters assemblies for a particular stage of analysis.
 */
 def assembliesFromStage( assemblies, String stage ) {
-    assemblies.filter { meta, assembly -> meta.assembly?.stage == stage }
+    assemblies.filter { meta, _assembly -> meta.assembly?.stage == stage }
 }
 
 /* Assemblies need to have meta data updated to use in filenames.

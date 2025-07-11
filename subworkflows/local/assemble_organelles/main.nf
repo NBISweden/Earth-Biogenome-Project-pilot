@@ -1,5 +1,5 @@
-include { MITOHIFI_FINDMITOREFERENCE } from "$projectDir/modules/nf-core/mitohifi/findmitoreference/main"
-include { MITOHIFI_MITOHIFI          } from "$projectDir/modules/nf-core/mitohifi/mitohifi/main"
+include { MITOHIFI_FINDMITOREFERENCE } from "../../../modules/nf-core/mitohifi/findmitoreference/main"
+include { MITOHIFI_MITOHIFI          } from "../../../modules/nf-core/mitohifi/mitohifi/main"
 
 workflow ASSEMBLE_ORGANELLES {
     take:
@@ -9,7 +9,7 @@ workflow ASSEMBLE_ORGANELLES {
     ch_versions = Channel.empty()
     // Find mitochondria
     // TODO: Need to check options to mitohifi modules.
-    MITOHIFI_FINDMITOREFERENCE( ch_raw_assemblies.map { meta, assemblies -> [ meta, meta.sample.name ] }.unique() )
+    MITOHIFI_FINDMITOREFERENCE( ch_raw_assemblies.map { meta, _assemblies -> [ meta, meta.sample.name ] }.unique() )
     mitohifi_ch = ch_raw_assemblies
         .combine(
             MITOHIFI_FINDMITOREFERENCE.out.fasta

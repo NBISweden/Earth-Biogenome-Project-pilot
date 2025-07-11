@@ -1,10 +1,10 @@
-include { combineByMetaKeys   } from "../../../modules/local/functions"
-include { getEachAssembly     } from "../../../modules/local/functions"
-include { getPrimaryAssembly  } from "../../../modules/local/functions"
-include { BUSCO               } from "../../../modules/nf-core/busco/main"
-include { MERQURYFK_MERQURYFK } from "../../../modules/nf-core/merquryfk/merquryfk"
-include { MERQURY             } from "../../../modules/nf-core/merqury/main"
-include { GFASTATS            } from "../../../modules/nf-core/gfastats/main"
+include { combineByMetaKeys    } from "../../../modules/local/functions"
+include { getEachAssembly      } from "../../../modules/local/functions"
+include { getPrimaryAssembly   } from "../../../modules/local/functions"
+include { BUSCO_BUSCO as BUSCO } from "../../../modules/nf-core/busco/busco/main"
+include { MERQURYFK_MERQURYFK  } from "../../../modules/nf-core/merquryfk/merquryfk"
+include { MERQURY              } from "../../../modules/nf-core/merqury/main"
+include { GFASTATS             } from "../../../modules/nf-core/gfastats/main"
 
 workflow EVALUATE_ASSEMBLY {
 
@@ -62,7 +62,8 @@ workflow EVALUATE_ASSEMBLY {
         'genome',
         busco_input.lineage_ch,
         params.busco.lineages_db_path ? file( params.busco.lineages_db_path, checkIfExists: true ) : [],
-        []
+        [],
+        true
     )
 
     // Calculate contiguity stats

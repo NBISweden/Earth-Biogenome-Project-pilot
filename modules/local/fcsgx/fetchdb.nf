@@ -19,7 +19,6 @@ process FCSGX_FETCHDB {
     task.ext.when == null || task.ext.when
 
     script:
-    def args = task.ext.args ?: ''
     prefix = task.ext.prefix ?: "gxdb_$manifest.baseName"
     def VERSION = '0.5.4' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
     """
@@ -27,18 +26,6 @@ process FCSGX_FETCHDB {
         get \\
         --mft "${manifest.toUriString()}" \\
         --dir "$prefix"
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        fcs_gx: $VERSION
-    END_VERSIONS
-    """
-
-    stub:
-    def args = task.ext.args ?: ''
-    def VERSION = '0.5.0' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
-    """
-    mkdir $prefix
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

@@ -1,8 +1,8 @@
-include { TOL_SEARCH                 } from "$projectDir/modules/local/tol/search"
-include { REPORT_DTOL                } from "$projectDir/modules/local/report/dtol"
-include { REPORT_GENOMETRAITS        } from "$projectDir/modules/local/report/genometraits"
-include { REPORT_SOFTWAREVERSIONS    } from "$projectDir/modules/local/report/softwareversions"
-include { QUARTO_NOTEBOOK            } from "$projectDir/modules/local/quarto/notebook/main.nf"
+include { TOL_SEARCH                 } from "../../../modules/local/tol/search"
+include { REPORT_DTOL                } from "../../../modules/local/report/dtol"
+include { REPORT_GENOMETRAITS        } from "../../../modules/local/report/genometraits"
+include { REPORT_SOFTWAREVERSIONS    } from "../../../modules/local/report/softwareversions"
+include { QUARTO_NOTEBOOK            } from "../../../modules/local/quarto/notebook/main.nf"
 
 workflow ASSEMBLY_REPORT {
     take:
@@ -13,7 +13,7 @@ workflow ASSEMBLY_REPORT {
 
     main:
     // DTOL table
-    REPORT_DTOL( TOL_SEARCH( notebook.map{ meta, notebook -> meta.sample.tax_id } ).json )
+    REPORT_DTOL( TOL_SEARCH( notebook.map{ meta, _notebook -> meta.sample.tax_id } ).json )
 
     // Genome traits table
         // Expected vs Observed
@@ -21,7 +21,7 @@ workflow ASSEMBLY_REPORT {
         // Haploid Number // GOAT vs HiC
         // Ploidy         // GOAT vs HiC
         // Sample Sex     // GOAT vs HiC
-    REPORT_GENOMETRAITS( notebook.map{ meta, notebook -> meta } )
+    REPORT_GENOMETRAITS( notebook.map{ meta, _notebook -> meta } )
     REPORT_SOFTWAREVERSIONS( versions.toSortedList().dump(tag:'versions', pretty: true) )
     def mqc_files = logs.mix(
         REPORT_DTOL.out.tsv,
@@ -37,5 +37,4 @@ workflow ASSEMBLY_REPORT {
 
     emit:
     report = QUARTO_NOTEBOOK.out.html
-
 }

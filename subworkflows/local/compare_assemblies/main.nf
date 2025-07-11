@@ -1,5 +1,5 @@
-include { getPrimaryAssembly } from "$projectDir/modules/local/functions"
-include { QUAST              } from "$projectDir/modules/nf-core/quast/main"
+include { getPrimaryAssembly } from "../../../modules/local/functions"
+include { QUAST              } from "../../../modules/nf-core/quast/main"
 
 workflow COMPARE_ASSEMBLIES {
 
@@ -16,7 +16,7 @@ workflow COMPARE_ASSEMBLIES {
     )
     versions_ch = QUAST.out.versions
     QUAST.out.tsv
-        .map { meta, tsv -> tsv }
+        .map { _meta, tsv -> tsv }
         .set { logs }
 
     emit:

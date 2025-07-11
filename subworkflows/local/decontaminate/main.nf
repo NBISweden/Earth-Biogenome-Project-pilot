@@ -1,8 +1,8 @@
-include { constructAssemblyRecord } from "$projectDir/modules/local/functions"
-include { FCSGX_FETCHDB           } from "$projectDir/modules/local/fcsgx/fetchdb"
-include { FCSGX_RUNGX             } from "$projectDir/modules/local/fcsgx/rungx"
-include { FCSGX_CLEAN             } from "$projectDir/modules/local/fcsgx/clean"
-include { deepMergeMaps           } from "$projectDir/modules/local/functions"
+include { constructAssemblyRecord } from "../../../modules/local/functions"
+include { FCSGX_FETCHDB           } from "../../../modules/local/fcsgx/fetchdb"
+include { FCSGX_RUNGX             } from "../../../modules/local/fcsgx/rungx"
+include { FCSGX_CLEAN             } from "../../../modules/local/fcsgx/clean"
+include { deepMergeMaps           } from "../../../modules/local/functions"
 
 workflow DECONTAMINATE {
     take:
@@ -23,7 +23,7 @@ workflow DECONTAMINATE {
     FCSGX_RUNGX( ch_to_screen, ch_fcs_database.collect(), params.fcs.ramdisk_path )
     FCSGX_CLEAN(
         ch_to_screen.join( FCSGX_RUNGX.out.fcs_gx_report, by: 0 )
-            .map { meta, taxid, asm, rpt -> [ meta, asm, rpt ] }
+            .map { meta, _taxid, asm, rpt -> [ meta, asm, rpt ] }
     )
     ch_cleaned_assemblies = constructAssemblyRecord(
         FCSGX_CLEAN.out.clean_fasta
