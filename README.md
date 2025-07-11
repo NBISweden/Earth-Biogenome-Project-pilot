@@ -208,7 +208,7 @@ All results are published to the path assigned to the workflow parameter `outdir
 
 <details>
 <summary>Expand for example results directory structure</summary>
-```
+<pre>
 results
 ├── 01_read_inspection
 │   ├── dtol_search
@@ -599,7 +599,7 @@ results
     ├── execution_timeline_2025-07-09_10-31-54.html
     ├── execution_trace_2025-07-09_10-31-54.txt
     └── pipeline_dag_2025-07-09_10-31-54.mmd
-```
+</pre>
 </details>
 
 ### Examples
