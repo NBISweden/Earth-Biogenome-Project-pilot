@@ -8,7 +8,7 @@ process QUARTO_NOTEBOOK {
         'community.wave.seqera.io/library/quarto_pip_jupyter_multiqc_pruned:a0afd98904fa925c' }"
 
     input:
-    tuple val(meta), path(notebook, arity: '1')
+    tuple val(meta), path(notebook, arity: '1'), path(_aux_files)
     path (log_files, stageAs: 'log_files/*', arity: '1..*')
     path 'params.yml'
 

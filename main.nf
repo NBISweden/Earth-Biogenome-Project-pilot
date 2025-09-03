@@ -254,7 +254,13 @@ workflow {
     )
 
     ASSEMBLY_REPORT(
-        PREPARE_INPUT.out.sample_meta.map{ meta -> [ meta, file(params.quarto_assembly_report, checkIfExists: true) ] },
+        PREPARE_INPUT.out.sample_meta.map{ meta ->
+            [
+                meta,
+                file(params.quarto_assembly_report, checkIfExists: true),
+                files(params.quarto_assembly_report_aux_files, checkIfExists: true)
+            ]
+        },
         ch_multiqc_files,
         ch_versions,
         [ diagnostics: "debug" in workflow.profile.tokenize(",") ] +
