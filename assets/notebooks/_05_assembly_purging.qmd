@@ -48,9 +48,9 @@ else:
 #| output: asis
 if purge:
     assembly_size_bp = 0
-    if glob.glob(f"{log_path}/*-raw-*.assembly_summary"):
+    if glob.glob(f"{log_path}/*-purged-*.assembly_summary"):
         raw_asm_stats = pd.read_csv(
-            glob.glob(f"{log_path}/*-raw-*.assembly_summary")[0],
+            glob.glob(f"{log_path}/*-purged-*.assembly_summary")[0],
             sep="\t",
             skiprows=[0, 1],  # Skip the first two lines
             nrows=1,          # Read only "Total scaffold length"
@@ -76,10 +76,10 @@ if purge:
 
 ```{python}
 #| output: asis
-if purge and glob.glob(f"{log_path}/*-purged-default_merquryfk.completeness.stats"):
+if purge and glob.glob(f"{log_path}/*-purged-*_merquryfk.completeness.stats"):
     print(
         pd.read_csv(
-            glob.glob(f"{log_path}/*-purged-default_merquryfk.completeness.stats")[0], sep="\t"
+            glob.glob(f"{log_path}/*-purged-*_merquryfk.completeness.stats")[0], sep="\t"
         ).to_markdown(index=False)
     )
 else:
@@ -90,10 +90,10 @@ else:
 
 ```{python}
 #| output: asis
-if purge and glob.glob(f"{log_path}/*-purged-default_merquryfk.qv"):
+if purge and glob.glob(f"{log_path}/*-purged-*_merquryfk.qv"):
     print(
         pd.read_csv(
-            glob.glob(f"{log_path}/*-purged-default_merquryfk.qv")[0], sep="\t"
+            glob.glob(f"{log_path}/*-purged-*_merquryfk.qv")[0], sep="\t"
         ).to_markdown(index=False)
     )
 else:
@@ -107,7 +107,7 @@ else:
 #| output: asis
 if purge:
     qvs = []
-    for qv_file in glob.glob(f"{log_path}/*-purged-default_merqury.*.qv"):
+    for qv_file in glob.glob(f"{log_path}/*-purged-*_merqury.*.qv"):
         if os.path.getsize(qv_file) > 0:
             qvs.append(
                 pd.read_csv(
@@ -148,8 +148,8 @@ if purge:
 
 ```{python}
 # TODO Do we need separate for each fasta? This is combined
-if purge and glob.glob(f"{log_path}/*-purged-default_merquryfk.spectra-cn.st.png"):
-    display(Image(filename=glob.glob(f"{log_path}/*-purged-default_merquryfk.spectra-cn.st.png")[0]))
+if purge and glob.glob(f"{log_path}/*-purged-*_merquryfk.spectra-cn.st.png"):
+    display(Image(filename=glob.glob(f"{log_path}/*-purged-*_merquryfk.spectra-cn.st.png")[0]))
 else:
     print("Purged Assembly MerquryFK copy number plot not available")
 ```
@@ -157,8 +157,8 @@ else:
 ## Merqury
 
 ```{python}
-if purge and glob.glob(f"{log_path}/*-purged-default_merqury.spectra-cn.st.png"):
-    display(Image(filename=glob.glob(f"{log_path}/*-purged-default_merqury.spectra-cn.st.png")[0]))
+if purge and glob.glob(f"{log_path}/*-purged-*_merqury.spectra-cn.st.png"):
+    display(Image(filename=glob.glob(f"{log_path}/*-purged-*_merqury.spectra-cn.st.png")[0]))
 else:
     print("Purged Assembly Merqury copy number plot not available")
 ```
@@ -173,8 +173,8 @@ else:
 
 ```{python}
 # TODO account for multiple assemblers
-if purge and glob.glob(f"{log_path}/*-purged-default_merquryfk.spectra-asm.st.png"):
-    display(Image(filename=glob.glob(f"{log_path}/*-purged-default_merquryfk.spectra-asm.st.png")[0]))
+if purge and glob.glob(f"{log_path}/*-purged-*_merquryfk.spectra-asm.st.png"):
+    display(Image(filename=glob.glob(f"{log_path}/*-purged-*_merquryfk.spectra-asm.st.png")[0]))
 else:
     print("Purged Assembly MerquryFK assembly spectra not available")
 ```
@@ -182,8 +182,8 @@ else:
 ## Merqury
 
 ```{python}
-if purge and glob.glob(f"{log_path}/*-purged-default_merqury.spectra-asm.st.png"):
-    display(Image(filename=glob.glob(f"{log_path}/*-purged-default_merqury.spectra-asm.st.png")[0]))
+if purge and glob.glob(f"{log_path}/*-purged-*_merqury.spectra-asm.st.png"):
+    display(Image(filename=glob.glob(f"{log_path}/*-purged-*_merqury.spectra-asm.st.png")[0]))
 else:
     print("Purged Assembly Merqury assembly spectra plot not available")
 ```
@@ -194,10 +194,10 @@ else:
 
 ```{python}
 #| output: asis
-if purge and glob.glob(f"{log_path}/*-purged-default_merquryfk.false_duplications.tsv"):
+if purge and glob.glob(f"{log_path}/*-purged-*_merquryfk.false_duplications.tsv"):
     print(
         pd.read_csv(
-            glob.glob(f"{log_path}/*-purged-default_merquryfk.false_duplications.tsv")[0], sep="\t"
+            glob.glob(f"{log_path}/*-purged-*_merquryfk.false_duplications.tsv")[0], sep="\t"
         ).to_markdown(index=False)
     )
 else:
