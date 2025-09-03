@@ -1,14 +1,23 @@
 ## Species information
 
-To begin our analysis, let's explore the available species information. The following
-details are sourced from [Genomes on a Tree (GOAT)](https://goat.genomehubs.org/).
-
 ```{python}
 if "dtol" in multiqc.list_modules():
     display(multiqc.get_plot("dtol", "dtol-section").show())
 ```
 
-### Genome Traits
+### GOAT genome traits estimate
+
+[Genomes on a Tree (GOAT)](https://goat.genomehubs.org/) is a data aggregation service
+that collects and provides information on the genome properties of eukaryotic species.
+It also generates estimates of these properties by interpolating data from other species
+within a lineage, if direct measurements are not available.
+
+::: {.callout-warning}
+While GOAT's estimates can be valuable, they should be used with caution, as their accuracy
+can be compromised by poor or incomplete data for related species. When a GOAT estimate
+conflicts with other sources and sufficient sequencing reads are available, it is best
+practice to rely on a value calculated directly from the read data.
+:::
 
 ```{python}
 if "traits" in multiqc.list_modules():
