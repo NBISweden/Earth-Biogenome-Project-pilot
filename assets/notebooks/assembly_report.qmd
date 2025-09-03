@@ -59,21 +59,3 @@ welcome your feedback; please submit any suggestions or feature requests at
 
 <!-- 08 Assembly Curation -->
 {{< include _08_assembly_curation.qmd >}}
-
-## Summary
-
-### EBP Metrics and curation notes
-
-- Table of Assembly standards
-    - Metrics flagged as red ( below EBP standards )
-- Curator notes
-- Contaminants detected
-- Other observations
-
-### Assembly pipeline
-
-- Tool version table ( Hifiasm, purge_dups, bionano, YaHS )
-
-## Curation pipeline
-
-- Tool version table ( GRIT_rapid, HiGlass )
