@@ -2,7 +2,8 @@
 
 ## Data inspection
 
-Let's ensure the quality of our input data.
+It's important to ensure we have enough sequencing reads with sufficient information
+to accurately assemble the species' genome.
 
 ### Sequence data quantity
 
