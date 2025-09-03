@@ -1,0 +1,180 @@
+::::: {.content-visible when-meta="inspect"}
+
+## Data inspection
+
+Let's ensure the quality of our input data.
+
+### Sequence data quantity
+
+* Do we have enough total sequence data?
+* Do we have enough long reads?
+
+#### HiFi
+
+::: {.callout-note title="Expectation" collapse="true"}
+For long read data (PacBio, ONT) we expect to see 15-20x coverage per haplotype, for a good assembly.
+:::
+
+```{python}
+# TODO data quantity table
+```
+#### Hi-C
+
+```{python}
+if inspect and "fastqc" in multiqc.list_modules():
+    display(multiqc.get_plot("fastqc", "Sequence Counts").show())
+else:
+    print("No Hi-C data available")
+```
+
+::: {.callout-note title="Expectation" collapse="true"}
+Arima-HiC (Arima Genomics)
+: Duplication levels expected to be ~10-30%.
+
+Dovetail Omni-C (Cantata Bio)
+: Duplication levels expected to be ~30-80%.
+:::
+
+```{python}
+if inspect and "fastqc" in multiqc.list_modules():
+    display(multiqc.get_plot("fastqc", "Sequence Duplication Levels").show())
+```
+
+#### HiFi vs Hi-C
+
+* Do our libraries have similar data content?
+```{python}
+if inspect and glob.glob(f"{log_path}/*_katcomp.st.png"):
+    display(Image(filename=glob.glob(f"{log_path}/*_katcomp.st.png")[0]))
+else:
+    print("Stacked Kat Comp plot not available")
+```
+
+### Genomic screen
+
+* Do the libraries contain our expected organism.
+
+### Genomic characteristics
+
+We can glean a good amount of information about the sequenced species from the k-mer content of the data.
+
+#### Ploidy
+Does it show the correct ploidy?
+
+::: {.callout-note title="Interpretation" collapse="true"}
+A Kmer histogram counts the frequency of k-mers in the data. Some parts of the genome are unique, and
+there are expected to be *coverage* times copies of these k-mers in the data. If the organism is diploid,
+the regions unique to a haplotype should have *coverage* times copies of these k-mers, and regions shared
+between both haplotypes should have *coverage* times two copies of these k-mers. This leads to formations
+of peaks in the k-mer histogram. A haploid organism should have one peak, while a diploid should have two peaks.
+:::
+
+```{python}
+#| output: asis
+if inspect:
+    images = [
+        img
+        for pattern in ["log_plot", "linear_plot"]
+        for img in glob.glob(f"{log_path}/*_{pattern}.png")
+    ]
+
+    # There are no genomescope plots if going straight from assembly to scaffolding
+    # if len(images) == 0:
+    #     raise ValueError("No files found")
+
+    # Ensure we have multiples of 4 images
+    if len(images) % 4 != 0:
+        raise ValueError("There should be 4 images per GenomeScope2 process")
+
+    # Function to sort filenames
+    def sort_key(filename):
+        filename = os.path.basename(filename)
+        parts = filename.split("_")
+        # Order: linear < log, non-transformed < transformed
+        order = {"linear": 0, "log": 1}
+        transformed = 1 if "transformed" in parts else 0
+        return (" ".join(parts[:2]), transformed, order[parts[-2]])
+
+    # Sort filenames first
+    sorted_filenames = sorted(images, key=sort_key)
+
+    # Group by sample
+    grouped_filenames = {}
+    for key, group in groupby(
+        sorted_filenames, key=lambda x: " ".join(os.path.basename(x).split("_")[:2])
+    ):
+        grouped_filenames[key] = list(group)
+
+
+    # Function to format filenames
+    def format_filename(filename):
+        # return os.path.basename(filename).replace(".png", "").replace("_", " ")
+        return " ".join(os.path.basename(filename).split("_")[2:-1])
+
+    # Print grouped and sorted filenames
+    tabs = []  # tabbed panels
+    for sample, files in grouped_filenames.items():
+        # tabs.append(f"### {sample}")
+        tabs.append("::: {.panel-tabset}")
+        for image in files:
+            formatted_filename = format_filename(image)
+            tabs.append(f"## {formatted_filename}")
+            tabs.append(f"![{formatted_filename}]({image})")
+        tabs.append(":::")
+
+    markdown = "\n\n".join(tabs)
+    print(markdown)
+```
+
+#### SmudgePlot
+
+Does the smudgeplot indicate the expected ploidy?
+
+```{python}
+if inspect and glob.glob(f"{log_path}/*_ploidyplot.st.png"):
+    display(Image(filename=glob.glob(f"{log_path}/*_ploidyplot.st.png")[0]))
+else:
+    print("Ploidyplot not available")
+```
+
+#### GC content
+
+```{python}
+if inspect and glob.glob(f"{log_path}/*_katgc.st.png"):
+    display(Image(filename=glob.glob(f"{log_path}/*_katgc.st.png")[0]))
+else:
+    print("KAT GC not available")
+```
+
+::: {.callout-note title="Expectation" collapse="true"}
+* Unexpected GC content value can indicate contamination.
+* Unexpected blobs(?) in the plot can indicate contamination.
+:::
+
+#### Hi-C
+
+```{python}
+if inspect and "fastqc" in multiqc.list_modules():
+    display(multiqc.get_plot("fastqc", "Per Sequence GC Content").show())
+```
+
+::: {.callout-note title="Expectation" collapse="true"}
+The peak GC content on the x-axis should be the same value
+as the peak on the HiFi KatGC plot on the y-axis.
+:::
+
+### Synthetic sequence content
+
+Do we see indications of synthetic sequences such as adaptors?
+
+#### HiFi
+
+TODO: FCS
+
+#### Hi-C
+```{python}
+if inspect and "fastqc" in multiqc.list_modules():
+    display(multiqc.get_plot("fastqc", "Adapter Content").show())
+```
+
+:::::

@@ -1,0 +1,207 @@
+::::: {.content-visible when-meta="purge"}
+
+## Duplication purging
+
+### Purge dups
+
+::: {.callout-note title="Interpretation" collapse="true"}
+
+X-axis (Read Depth)
+: This axis represents the read depth, which is the number of times a particular base is covered by reads. It typically starts from 0 and increases to the maximum read depth observed.
+
+Y-axis (Number of Positions)
+: This axis shows the number of positions in the assembly that have a specific read depth. Higher values indicate more positions with that particular read depth.
+
+Histogram Peaks
+: For a diploid organism, there should be a heterozgyous peak and a homozygous peak.
+
+  - **Heterozygous Peak**: The first major peak from the left usually represents the expected read depth for the heterozgyous portion of the genome, i.e., a haplotype.
+  - **Homozygous Peak**: The second major peak from the left usually represents the expected read depth for the homozygous portion, i.e.,
+  where the both alleles are the same.
+
+Cutoff Lines
+: The plot includes three vertical lines indicating coverage cutoffs. These cutoffs help distinguish between primary contigs, haplotigs, and potential contaminants or low-quality regions.
+
+  - **Low Coverage Cutoff**: Positions below this line are considered low coverage and might be errors or low-quality regions.
+  - **Haploid-Diploid Transition**: Marks the transition where average coverage denotes a heterozygous or homozygous region.
+  - **High Coverage Cutoff**: Positions above this line are considered high coverage and might indicate duplicated regions or haplotigs.
+
+Interpreting the Data
+:
+
+  - **JUNK**: Contigs with an average coverage below the low-coverage threshold.
+  - **HAPLOTIG**: Contigs with an average coverage between low coverage cutoff and the transition, that overlap with another region.
+  - **HIGHCOV**: Contigs with an average coverage above the high coverage cutoff.
+  - **REPEAT**: Repeat contig.
+  - **OVLP**: Overlap.
+
+:::
+
+```{python}
+if purge and glob.glob(f"{log_path}/*_purgedups_hist.png"):
+    display(Image(filename=glob.glob(f"{log_path}/*_purgedups_hist.png")[0]))
+else:
+    print("Purge dups histogram not available")
+```
+
+```{python}
+#| output: asis
+if purge:
+    assembly_size_bp = 0
+    if glob.glob(f"{log_path}/*-raw-*.assembly_summary"):
+        raw_asm_stats = pd.read_csv(
+            glob.glob(f"{log_path}/*-raw-*.assembly_summary")[0],
+            sep="\t",
+            skiprows=[0, 1],  # Skip the first two lines
+            nrows=1,          # Read only "Total scaffold length"
+            header=None,
+            names=['key', 'value']
+        )
+        assembly_size_bp = int(raw_asm_stats['value'].iloc[0])
+    if assembly_size_bp == 0:
+        raise ValueError("Unable to determine assembly size")
+    for bed in glob.glob(f"{log_path}/*-purged-*.dups.bed"):
+        dup_bed = pd.read_csv(
+            bed,
+            sep="\t",
+            names=['Contig','Start','End','Type','Partner']
+        )
+        dup_bed['Length'] = dup_bed['End'] - dup_bed['Start']
+        summary = dup_bed.groupby('Type')['Length'].sum().reset_index() # TODO Fix for multiple assemblies
+        summary['Percentage'] = summary['Length'].apply(lambda x: x * 100 / assembly_size_bp ).apply(lambda x: f"{x:.2f}%")
+        print(summary.to_markdown(index=False))
+```
+
+#### Assembly k-mer completeness
+
+```{python}
+#| output: asis
+if purge and glob.glob(f"{log_path}/*-purged-default_merquryfk.completeness.stats"):
+    print(
+        pd.read_csv(
+            glob.glob(f"{log_path}/*-purged-default_merquryfk.completeness.stats")[0], sep="\t"
+        ).to_markdown(index=False)
+    )
+else:
+    print("Purged Assembly MerquryFK completeness not available")
+```
+
+##### Assembly quality value
+
+```{python}
+#| output: asis
+if purge and glob.glob(f"{log_path}/*-purged-default_merquryfk.qv"):
+    print(
+        pd.read_csv(
+            glob.glob(f"{log_path}/*-purged-default_merquryfk.qv")[0], sep="\t"
+        ).to_markdown(index=False)
+    )
+else:
+    print("Purged Assembly MerquryFK QV not available")
+```
+
+<details>
+<summary>QV per scaffold</summary>
+
+```{python}
+#| output: asis
+if purge:
+    qvs = []
+    for qv_file in glob.glob(f"{log_path}/*-purged-default_merqury.*.qv"):
+        if os.path.getsize(qv_file) > 0:
+            qvs.append(
+                pd.read_csv(
+                    qv_file,
+                    sep="\t",
+                    header=None,
+                    names=[
+                        "Scaffold",
+                        "No support k-mers",
+                        "Total k-mers",
+                        "QV",
+                        "Error rate",
+                    ],
+                    dtype={
+                        "Scaffold": str,
+                        "No support k-mers": int,
+                        "Total k-mers": int,
+                        "QV": float,
+                        "Error rate": float,
+                    },
+                    na_values=["", "inf"],
+                )
+            )
+    if qvs:
+        per_scaffold_qv_raw = pd.concat(qvs, ignore_index=True)
+        print(per_scaffold_qv_raw.to_markdown(index=False))
+    else:
+        print("No per scaffold qv found")
+```
+
+</details>
+
+##### Copy number spectra
+
+:::: {.panel-tabset}
+
+## MerquryFK
+
+```{python}
+# TODO Do we need separate for each fasta? This is combined
+if purge and glob.glob(f"{log_path}/*-purged-default_merquryfk.spectra-cn.st.png"):
+    display(Image(filename=glob.glob(f"{log_path}/*-purged-default_merquryfk.spectra-cn.st.png")[0]))
+else:
+    print("Purged Assembly MerquryFK copy number plot not available")
+```
+
+## Merqury
+
+```{python}
+if purge and glob.glob(f"{log_path}/*-purged-default_merqury.spectra-cn.st.png"):
+    display(Image(filename=glob.glob(f"{log_path}/*-purged-default_merqury.spectra-cn.st.png")[0]))
+else:
+    print("Purged Assembly Merqury copy number plot not available")
+```
+
+::::
+
+##### Assembly spectra
+
+:::: {.panel-tabset}
+
+## MerquryFK
+
+```{python}
+# TODO account for multiple assemblers
+if purge and glob.glob(f"{log_path}/*-purged-default_merquryfk.spectra-asm.st.png"):
+    display(Image(filename=glob.glob(f"{log_path}/*-purged-default_merquryfk.spectra-asm.st.png")[0]))
+else:
+    print("Purged Assembly MerquryFK assembly spectra not available")
+```
+
+## Merqury
+
+```{python}
+if purge and glob.glob(f"{log_path}/*-purged-default_merqury.spectra-asm.st.png"):
+    display(Image(filename=glob.glob(f"{log_path}/*-purged-default_merqury.spectra-asm.st.png")[0]))
+else:
+    print("Purged Assembly Merqury assembly spectra plot not available")
+```
+
+::::
+
+##### False duplications
+
+```{python}
+#| output: asis
+if purge and glob.glob(f"{log_path}/*-purged-default_merquryfk.false_duplications.tsv"):
+    print(
+        pd.read_csv(
+            glob.glob(f"{log_path}/*-purged-default_merquryfk.false_duplications.tsv")[0], sep="\t"
+        ).to_markdown(index=False)
+    )
+else:
+    print("Purged Assembly false duplications not available")
+```
+
+:::::

@@ -1,0 +1,53 @@
+::::: {.content-visible when-meta="diagnostics"}
+
+### Setup
+
+This [Quarto notebook](https://quarto.org/) establishes default parameters
+in this section and utilizes the MultiQC Python package to locate log files
+from tools executed within the workflow.
+
+```{python}
+#| tags: [parameters]
+
+log_path = 'log_files'
+inspect = True
+preprocess = True
+assemble = True
+screen = True
+purge = True
+polish = True
+scaffold = True
+curate = True
+alignRNA = False
+diagnostics = False
+```
+
+#### MultiQC
+
+```{python}
+import glob
+import multiqc
+import os
+import pandas as pd
+from itertools import groupby
+from pprint import pprint
+from IPython.display import display # MQCPlot.show() returns a HTML object which needs to be forced to render in a cell
+from IPython.display import Image
+
+multiqc.reset() # Important for Quarto preview
+# Load a custom config
+multiqc.load_config(f"{log_path}/multiqc_assembly_report_config.yml")
+multiqc.parse_logs(log_path)
+
+# pprint pretty prints the dictionary
+pprint(multiqc.list_plots())
+pprint(multiqc.list_modules())
+
+# Write out report (If other parts error, we should at least have the summary)
+multiqc.write_report(
+    force=True,
+    output_dir=".",
+)
+```
+
+:::::

@@ -1,0 +1,204 @@
+::::: {.content-visible when-meta="assemble"}
+
+## Assembly
+
+### General comparison
+
+```{python}
+if assemble and "quast" in multiqc.list_modules():
+    display(multiqc.get_plot("quast", "Assembly Statistics").show())
+```
+
+```{python}
+if assemble and "quast" in multiqc.list_modules():
+    display(multiqc.get_plot("quast", "Number of Contigs").show())
+```
+
+### Best ranked assembly
+
+#### Assembly statistics
+
+```{python}
+#| output: asis
+if assemble and glob.glob(f"{log_path}/*-raw-*.fasta.assembly_summary"):
+    raw_asm_stats = pd.read_csv(
+        glob.glob(f"{log_path}/*-raw-*.fasta.assembly_summary")[0],
+        sep="\t",
+        header=None,
+        names=["Metric","Value"]
+    )
+    raw_asm_t1=raw_asm_stats.iloc[[1, 31, 32]]
+    print(raw_asm_t1.to_markdown(index=False))
+else:
+    print("Raw assembly stats unavailable")
+```
+```{python}
+#| output: asis
+if assemble and glob.glob(f"{log_path}/*-raw-*.fasta.assembly_summary"):
+    raw_asm_t2=raw_asm_stats.iloc[1:12] # TODO Add conversion
+    print(raw_asm_t2.to_markdown(index=False))
+```
+```{python}
+#| output: asis
+if assemble and glob.glob(f"{log_path}/*-raw-*.fasta.assembly_summary"):
+    raw_asm_t3=raw_asm_stats.iloc[12:23] # TODO Add conversion
+    print(raw_asm_t3.to_markdown(index=False))
+```
+```{python}
+#| output: asis
+if assemble and glob.glob(f"{log_path}/*-raw-*.fasta.assembly_summary"):
+    raw_asm_t4=raw_asm_stats.iloc[24:31] # TODO Add conversion
+    print(raw_asm_t4.to_markdown(index=False))
+```
+
+#### Assembly k-mer completeness
+
+```{python}
+#| output: asis
+if assemble and glob.glob(f"{log_path}/*-raw-default_merquryfk.completeness.stats"):
+    print(
+        pd.read_csv(
+            glob.glob(f"{log_path}/*-raw-default_merquryfk.completeness.stats")[0], sep="\t"
+        ).to_markdown(index=False)
+    )
+else:
+    print("Raw assembly MerquryFK completeness not available")
+```
+
+```{python}
+if assemble and "hifiasm" in multiqc.list_modules():
+    display(multiqc.get_plot("hifiasm", "HiFiasm kmer graph").show())
+```
+
+##### Assembly quality value
+
+```{python}
+#| output: asis
+if assemble and glob.glob(f"{log_path}/*-raw-default_merquryfk.qv"):
+    print(
+        pd.read_csv(
+            glob.glob(f"{log_path}/*-raw-default_merquryfk.qv")[0], sep="\t"
+        ).to_markdown(index=False)
+    )
+else:
+    print("Raw assembly MerquryFK QV not available")
+```
+
+<details>
+<summary>QV per scaffold</summary>
+
+```{python}
+#| output: asis
+if assemble:
+    qvs = []
+    for qv_file in glob.glob(f"{log_path}/*-raw-default_merqury.*.qv"):
+        if os.path.getsize(qv_file) > 0:
+            qvs.append(
+                pd.read_csv(
+                    qv_file,
+                    sep="\t",
+                    header=None,
+                    names=[
+                        "Scaffold",
+                        "No support k-mers",
+                        "Total k-mers",
+                        "QV",
+                        "Error rate",
+                    ],
+                    dtype={
+                        "Scaffold": str,
+                        "No support k-mers": int,
+                        "Total k-mers": int,
+                        "QV": float,
+                        "Error rate": float,
+                    },
+                    na_values=["", "inf"],
+                )
+            )
+    if qvs:
+        per_scaffold_qv_raw = pd.concat(qvs, ignore_index=True)
+        print(per_scaffold_qv_raw.to_markdown(index=False))
+    else:
+        print("No per scaffold qv found")
+```
+
+</details>
+
+##### Copy number spectra
+
+:::: {.panel-tabset}
+
+## MerquryFK
+
+```{python}
+# TODO account for multiple assemblers
+# TODO: Add ln plot too see the relative contribution
+if assemble and glob.glob(f"{log_path}/*-raw-default_merquryfk.*.spectra-cn.st.png"):
+    display(Image(filename=glob.glob(f"{log_path}/*-raw-default_merquryfk.*.spectra-cn.st.png")[0]))
+else:
+    print("Raw Assembly MerquryFK copy number spectra not available")
+```
+
+## Merqury
+
+```{python}
+# TODO This path will be different depending on phased or not
+if assemble and glob.glob(f"{log_path}/*-raw-default_merqury.*.spectra-cn.st.png"):
+    display(Image(filename=glob.glob(f"{log_path}/*-raw-default_merqury.*.spectra-cn.st.png")[0]))
+else:
+    print("Raw Assembly Merqury copy number spectra not available")
+```
+
+::::
+
+##### Assembly spectra
+
+:::: {.panel-tabset}
+
+## MerquryFK
+
+```{python}
+# TODO account for multiple assemblers
+if assemble and glob.glob(f"{log_path}/*-raw-default_merquryfk.spectra-asm.st.png"):
+    display(Image(filename=glob.glob(f"{log_path}/*-raw-default_merquryfk.spectra-asm.st.png")[0]))
+else:
+    print("Raw Assembly MerquryFK spectra not available")
+```
+
+## Merqury
+
+```{python}
+if assemble and glob.glob(f"{log_path}/*-raw-default_merqury.spectra-asm.st.png"):
+    display(Image(filename=glob.glob(f"{log_path}/*-raw-default_merqury.spectra-asm.st.png")[0]))
+else:
+    print("Raw Merqury Assembly spectra not available")
+```
+
+::::
+
+##### False duplications
+
+```{python}
+#| output: asis
+if assemble and glob.glob(f"{log_path}/*-raw-default_merquryfk.false_duplications.tsv"):
+    print(
+        pd.read_csv(
+            glob.glob(f"{log_path}/*-raw-default_merquryfk.false_duplications.tsv")[0], sep="\t"
+        ).to_markdown(index=False)
+    )
+else:
+    print("Merqury FK false duplications not available")
+```
+
+#### Assembly gene space completeness
+
+```{python}
+if assemble and "busco" in multiqc.list_modules():
+    for lineage in multiqc.list_plots()["busco"]:
+        display(multiqc.get_plot("busco", f"{lineage}").show())
+```
+
+### Other assemblies
+TODO for each assembly output a stats section (expandable).
+
+:::::

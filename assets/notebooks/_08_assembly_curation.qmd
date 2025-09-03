@@ -1,0 +1,5 @@
+::::: {.content-visible when-meta="curate"}
+
+## Curation
+
+:::::

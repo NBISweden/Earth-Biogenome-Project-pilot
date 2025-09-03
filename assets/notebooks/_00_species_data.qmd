@@ -1,0 +1,16 @@
+## Species information
+
+To begin our analysis, let's explore the available species information. The following
+details are sourced from [Genomes on a Tree (GOAT)](https://goat.genomehubs.org/).
+
+```{python}
+if "dtol" in multiqc.list_modules():
+    display(multiqc.get_plot("dtol", "dtol-section").show())
+```
+
+### Genome Traits
+
+```{python}
+if "traits" in multiqc.list_modules():
+    display(multiqc.get_plot("traits", "traits-section").show())
+```
