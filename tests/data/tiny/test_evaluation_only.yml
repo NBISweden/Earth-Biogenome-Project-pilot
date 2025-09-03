@@ -1,12 +1,5 @@
 sample:
   name: 'Drosophila melanogaster'
-  ploidy: 2
-  genome_size: 176040000
-  haploid_number: 4
-  tax_id: 7227
-  genetic_code: 1
-  mito_code: 5
-  domain: Eukaryota
 # Assembly to QC
 assembly:
   - assembler: hifiasm
