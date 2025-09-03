@@ -55,10 +55,10 @@ if assemble and glob.glob(f"{log_path}/*-raw-*.fasta.assembly_summary"):
 
 ```{python}
 #| output: asis
-if assemble and glob.glob(f"{log_path}/*-raw-default_merquryfk.completeness.stats"):
+if assemble and glob.glob(f"{log_path}/*-raw-*_merquryfk.completeness.stats"):
     print(
         pd.read_csv(
-            glob.glob(f"{log_path}/*-raw-default_merquryfk.completeness.stats")[0], sep="\t"
+            glob.glob(f"{log_path}/*-raw-*_merquryfk.completeness.stats")[0], sep="\t"
         ).to_markdown(index=False)
     )
 else:
@@ -74,10 +74,10 @@ if assemble and "hifiasm" in multiqc.list_modules():
 
 ```{python}
 #| output: asis
-if assemble and glob.glob(f"{log_path}/*-raw-default_merquryfk.qv"):
+if assemble and glob.glob(f"{log_path}/*-raw-*_merquryfk.qv"):
     print(
         pd.read_csv(
-            glob.glob(f"{log_path}/*-raw-default_merquryfk.qv")[0], sep="\t"
+            glob.glob(f"{log_path}/*-raw-*_merquryfk.qv")[0], sep="\t"
         ).to_markdown(index=False)
     )
 else:
@@ -91,7 +91,7 @@ else:
 #| output: asis
 if assemble:
     qvs = []
-    for qv_file in glob.glob(f"{log_path}/*-raw-default_merqury.*.qv"):
+    for qv_file in glob.glob(f"{log_path}/*-raw-*_merqury.*.qv"):
         if os.path.getsize(qv_file) > 0:
             qvs.append(
                 pd.read_csv(
@@ -133,8 +133,8 @@ if assemble:
 ```{python}
 # TODO account for multiple assemblers
 # TODO: Add ln plot too see the relative contribution
-if assemble and glob.glob(f"{log_path}/*-raw-default_merquryfk.*.spectra-cn.st.png"):
-    display(Image(filename=glob.glob(f"{log_path}/*-raw-default_merquryfk.*.spectra-cn.st.png")[0]))
+if assemble and glob.glob(f"{log_path}/*-raw-*_merquryfk.*.spectra-cn.st.png"):
+    display(Image(filename=glob.glob(f"{log_path}/*-raw-*_merquryfk.*.spectra-cn.st.png")[0]))
 else:
     print("Raw Assembly MerquryFK copy number spectra not available")
 ```
@@ -143,8 +143,8 @@ else:
 
 ```{python}
 # TODO This path will be different depending on phased or not
-if assemble and glob.glob(f"{log_path}/*-raw-default_merqury.*.spectra-cn.st.png"):
-    display(Image(filename=glob.glob(f"{log_path}/*-raw-default_merqury.*.spectra-cn.st.png")[0]))
+if assemble and glob.glob(f"{log_path}/*-raw-*_merqury.*.spectra-cn.st.png"):
+    display(Image(filename=glob.glob(f"{log_path}/*-raw-*_merqury.*.spectra-cn.st.png")[0]))
 else:
     print("Raw Assembly Merqury copy number spectra not available")
 ```
@@ -159,8 +159,8 @@ else:
 
 ```{python}
 # TODO account for multiple assemblers
-if assemble and glob.glob(f"{log_path}/*-raw-default_merquryfk.spectra-asm.st.png"):
-    display(Image(filename=glob.glob(f"{log_path}/*-raw-default_merquryfk.spectra-asm.st.png")[0]))
+if assemble and glob.glob(f"{log_path}/*-raw-*_merquryfk.spectra-asm.st.png"):
+    display(Image(filename=glob.glob(f"{log_path}/*-raw-*_merquryfk.spectra-asm.st.png")[0]))
 else:
     print("Raw Assembly MerquryFK spectra not available")
 ```
@@ -168,8 +168,8 @@ else:
 ## Merqury
 
 ```{python}
-if assemble and glob.glob(f"{log_path}/*-raw-default_merqury.spectra-asm.st.png"):
-    display(Image(filename=glob.glob(f"{log_path}/*-raw-default_merqury.spectra-asm.st.png")[0]))
+if assemble and glob.glob(f"{log_path}/*-raw-*_merqury.spectra-asm.st.png"):
+    display(Image(filename=glob.glob(f"{log_path}/*-raw-*_merqury.spectra-asm.st.png")[0]))
 else:
     print("Raw Merqury Assembly spectra not available")
 ```
@@ -180,10 +180,10 @@ else:
 
 ```{python}
 #| output: asis
-if assemble and glob.glob(f"{log_path}/*-raw-default_merquryfk.false_duplications.tsv"):
+if assemble and glob.glob(f"{log_path}/*-raw-*_merquryfk.false_duplications.tsv"):
     print(
         pd.read_csv(
-            glob.glob(f"{log_path}/*-raw-default_merquryfk.false_duplications.tsv")[0], sep="\t"
+            glob.glob(f"{log_path}/*-raw-*_merquryfk.false_duplications.tsv")[0], sep="\t"
         ).to_markdown(index=False)
     )
 else:
