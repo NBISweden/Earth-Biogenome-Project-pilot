@@ -656,7 +656,7 @@ results
   where `params.yml` is a YAML file containing the workflow parameters:
   ```yml
   input: 'assembly_spec.yml'
-  steps: '' # We don't want to run any assembly steps, only evaluation
+  steps: 'curate'
   ```
   and `assembly_spec.yml` is a YAML file containing the assembly specification
   ```yml

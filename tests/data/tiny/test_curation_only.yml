@@ -1,18 +1,11 @@
 sample:
   name: 'Drosophila melanogaster'
-  ploidy: 2
-  genome_size: 176040000
-  haploid_number: 4
-  tax_id: 7227
-  genetic_code: 1
-  mito_code: 5
-  domain: Eukaryota
 # Assembly to QC
 assembly:
   - assembler: hifiasm
     stage: curated # available stages: 'raw', 'decontaminated', 'polished', 'scaffolded', 'curated'
     id: 'hifi_v1'
-    pri_fasta: 'https://raw.githubusercontent.com/NBISweden/Earth-Biogenome-Project-pilot/main/tests/data/tiny/assembly/hifiasm-raw-hifi_v1.asm.bp.p_ctg.fasta'
+    pri_fasta: 'https://raw.githubusercontent.com/NBISweden/Earth-Biogenome-Project-pilot/main/tests/data/tiny/assembly/hifiasm-curated-hifi_v1.asm.bp.p_ctg.fasta'
 # HiFi reads for Merqury
 hifi:
   - reads: 'https://raw.githubusercontent.com/NBISweden/Earth-Biogenome-Project-pilot/main/tests/data/tiny/PB_HIFI/dmel_2Mb.fasta.gz'

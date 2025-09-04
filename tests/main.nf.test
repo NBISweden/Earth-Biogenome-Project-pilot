@@ -122,12 +122,12 @@ nextflow_pipeline {
 
     }
 
-    test("Tiny dataset - evaluate only") {
+    test("Tiny dataset - curation only") {
         tag "04"
         when {
             params {
-                input                   = "$projectDir/tests/data/tiny/test_evaluation_only.yml"
-                steps                   = ''
+                input                   = "$projectDir/tests/data/tiny/test_curation_only.yml"
+                steps                   = 'curate'
                 outdir                  = "$outputDir"
                 fastk {
                     kmer_size           = 14
