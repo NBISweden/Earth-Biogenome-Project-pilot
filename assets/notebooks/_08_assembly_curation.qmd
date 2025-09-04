@@ -2,4 +2,140 @@
 
 ## Curation
 
+```{python}
+#| output: asis
+if curate and glob.glob(f"{log_path}/*-curated-*.assembly_summary"):
+    assembly_size_bp = 0
+    if glob.glob(f"{log_path}/*-curated-*.assembly_summary"):
+        raw_asm_stats = pd.read_csv(
+            glob.glob(f"{log_path}/*-curated-*.assembly_summary")[0],
+            sep="\t",
+            skiprows=[0, 1],  # Skip the first two lines
+            nrows=1,          # Read only "Total scaffold length"
+            header=None,
+            names=['key', 'value']
+        )
+        assembly_size_bp = int(raw_asm_stats['value'].iloc[0])
+    if assembly_size_bp == 0:
+        raise ValueError("Unable to determine assembly size")
+    for bed in glob.glob(f"{log_path}/*-curated-*.dups.bed"):
+        dup_bed = pd.read_csv(
+            bed,
+            sep="\t",
+            names=['Contig','Start','End','Type','Partner']
+        )
+        dup_bed['Length'] = dup_bed['End'] - dup_bed['Start']
+        summary = dup_bed.groupby('Type')['Length'].sum().reset_index() # TODO Fix for multiple assemblies
+        summary['Percentage'] = summary['Length'].apply(lambda x: x * 100 / assembly_size_bp ).apply(lambda x: f"{x:.2f}%")
+        print(summary.to_markdown(index=False))
+```
+
+```{python}
+#| output: asis
+if curate and glob.glob(f"{log_path}/*-curated-*_merquryfk.completeness.stats"):
+    print("#### Assembly k-mer completeness")
+    print(
+        pd.read_csv(
+            glob.glob(f"{log_path}/*-curated-*_merquryfk.completeness.stats")[0], sep="\t"
+        ).to_markdown(index=False)
+    )
+```
+
+```{python}
+#| output: asis
+if curate and glob.glob(f"{log_path}/*-curated-*_merquryfk.qv"):
+    print("##### Assembly quality value")
+    print(
+        pd.read_csv(
+            glob.glob(f"{log_path}/*-curated-*_merquryfk.qv")[0], sep="\t"
+        ).to_markdown(index=False)
+    )
+```
+
+```{python}
+#| output: asis
+if curate and glob.glob(f"{log_path}/*-curated-*_merqury.*.qv"):
+    qvs = []
+    for qv_file in glob.glob(f"{log_path}/*-curated-*_merqury.*.qv"):
+        if os.path.getsize(qv_file) > 0:
+            qvs.append(
+                pd.read_csv(
+                    qv_file,
+                    sep="\t",
+                    header=None,
+                    names=[
+                        "Scaffold",
+                        "No support k-mers",
+                        "Total k-mers",
+                        "QV",
+                        "Error rate",
+                    ],
+                    dtype={
+                        "Scaffold": str,
+                        "No support k-mers": int,
+                        "Total k-mers": int,
+                        "QV": float,
+                        "Error rate": float,
+                    },
+                    na_values=["", "inf"],
+                )
+            )
+    if qvs:
+        print("<details><summary>QV per scaffold</summary>")
+        per_scaffold_qv_raw = pd.concat(qvs, ignore_index=True)
+        print(per_scaffold_qv_raw.to_markdown(index=False))
+        print("</details>")
+    else:
+        print("No per scaffold qv found")
+```
+
+```{python}
+#| output: asis
+if curate and (glob.glob(f"{log_path}/*-curated-*_merquryfk*.spectra-cn.st.png") or glob.glob(f"{log_path}/*-curated-*_merqury*.spectra-cn.st.png") ):
+    print("##### Copy number spectra\n")
+    print(":::: {.panel-tabset}\n")
+    if glob.glob(f"{log_path}/*-curated-*_merquryfk*.spectra-cn.st.png"):
+        print("## MerquryFK\n")
+        display(Image(filename=glob.glob(f"{log_path}/*-curated-*_merquryfk*.spectra-cn.st.png")[0]))
+    else:
+        print("Curated Assembly MerquryFK copy number plot not available")
+    print("\n")
+    if glob.glob(f"{log_path}/*-curated-*_merqury*.spectra-cn.st.png"):
+        print("## Merqury\n")
+        display(Image(filename=glob.glob(f"{log_path}/*-curated-*_merqury*.spectra-cn.st.png")[0]))
+    else:
+        print("Curated Assembly Merqury copy number plot not available")
+    print("::::\n")
+```
+
+```{python}
+#| output: asis
+if curate and (glob.glob(f"{log_path}/*-curated-*_merquryfk.spectra-asm.st.png") or glob.glob(f"{log_path}/*-curated-*_merqury.spectra-asm.st.png")):
+    print("##### Assembly spectra\n")
+    print(":::: {.panel-tabset}\n")
+    if glob.glob(f"{log_path}/*-curated-*_merquryfk.spectra-asm.st.png"):
+        print("## MerquryFK\n")
+        display(Image(filename=glob.glob(f"{log_path}/*-curated-*_merquryfk.spectra-asm.st.png")[0]))
+    else:
+        print("Curated Assembly MerquryFK assembly spectra not available")
+    print("\n")
+    if glob.glob(f"{log_path}/*-curated-*_merqury.spectra-asm.st.png"):
+        print("## Merqury\n")
+        display(Image(filename=glob.glob(f"{log_path}/*-curated-*_merqury.spectra-asm.st.png")[0]))
+    else:
+        print("Curated Assembly Merqury assembly spectra plot not available")
+    print("::::\n")
+```
+
+```{python}
+#| output: asis
+if curate and glob.glob(f"{log_path}/*-curated-*_merquryfk.false_duplications.tsv"):
+    print("##### False duplications")
+    print(
+        pd.read_csv(
+            glob.glob(f"{log_path}/*-curated-*_merquryfk.false_duplications.tsv")[0], sep="\t"
+        ).to_markdown(index=False)
+    )
+```
+
 :::::
