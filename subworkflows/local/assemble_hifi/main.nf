@@ -16,7 +16,7 @@ workflow ASSEMBLE_HIFI {
                         settings: [ hifiasm: [ id: key, args: value ] ],
                         assembly: [ assembler: 'hifiasm', stage: 'raw', id: key, build: "hifiasm-raw-$key" ]
                     ]
-                    ), reads ]
+                    ), reads, [] ]
                 }
             } else {
                 def key = "default"
@@ -25,7 +25,7 @@ workflow ASSEMBLE_HIFI {
                         settings: [ hifiasm: [ id: key, args: "" ] ],
                         assembly: [ assembler: 'hifiasm', stage: 'raw', id: key, build: "hifiasm-raw-$key" ]
                     ]
-                    ), reads ]
+                    ), reads, [] ]
                 ]
             }
         }
@@ -33,15 +33,16 @@ workflow ASSEMBLE_HIFI {
         reads_ch,
         [[],[],[]], // meta, paternal k-mers, maternal k-mers
         [[],[],[]], // meta, Hi-C r1, Hi-C r2
+        [[], []],   // meta, bin files
     )
-    raw_assembly_ch = params.use_phased ? HIFIASM.out.paternal_contigs.mix( HIFIASM.out.maternal_contigs ) : HIFIASM.out.processed_contigs
+    raw_assembly_ch = params.use_phased ? HIFIASM.out.hap1_contigs.mix( HIFIASM.out.hap2_contigs ) : HIFIASM.out.primary_contigs
     GFATOOLS_GFA2FA( raw_assembly_ch )
 
     gfa_ch = params.use_phased ?
-        HIFIASM.out.paternal_contigs
-            .join( HIFIASM.out.maternal_contigs )
+        HIFIASM.out.hap1_contigs
+            .join( HIFIASM.out.hap2_contigs )
             .map { meta, pgfa, mgfa -> [ meta, [ pgfa, mgfa ] ] } :
-        HIFIASM.out.processed_contigs
+        HIFIASM.out.primary_contigs
     assemblies_ch = GFATOOLS_GFA2FA.out.fasta.groupTuple( sort: { it.name } )
         .join( gfa_ch )
         .map { meta, fasta, gfa ->
