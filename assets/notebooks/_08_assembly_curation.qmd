@@ -58,7 +58,7 @@ if curate and glob.glob(f"{log_path}/*-curated-*_merqury.*.qv"):
         print(per_scaffold_qv_raw.to_markdown(index=False))
         print("</details>")
     else:
-        print("No per scaffold qv found")
+        print("No per scaffold qv data")
 ```
 
 ```{python}
