@@ -22,28 +22,6 @@ alignRNA = False
 diagnostics = False
 ```
 
-```{python}
-def displayTsvAsTable(glob_path):
-    # Get a list of all TSV files in the directory
-    tsvs = glob.glob(glob_path)
-
-    # Read and concatenate the files
-    list_of_dfs = []
-    for filename in tsvs:
-        df = pd.read_csv(filename, sep='\t')
-        list_of_dfs.append(df)
-
-    combined_df = pd.concat(list_of_dfs, ignore_index=True)
-    # Transpose the combined DataFrame
-    transposed_df = combined_df.set_index('file').transpose().reset_index()
-    transposed_df.rename(columns={'index': 'metric'}, inplace=True)
-
-    # Convert the combined DataFrame to a markdown table
-    markdown_table = transposed_df.to_markdown(index=False)
-    print("##### Seqkit stats\n")
-    print(markdown_table)
-```
-
 #### MultiQC
 
 ```{python}
@@ -71,5 +49,66 @@ multiqc.write_report(
     output_dir=".",
 )
 ```
+
+#### Define functions
+
+```{python}
+def displayTsvAsTable(glob_path):
+    # Get a list of all TSV files in the directory
+    tsvs = glob.glob(glob_path)
+
+    # Read and concatenate the files
+    list_of_dfs = []
+    for filename in tsvs:
+        df = pd.read_csv(filename, sep='\t')
+        list_of_dfs.append(df)
+
+    combined_df = pd.concat(list_of_dfs, ignore_index=True)
+    # Transpose the combined DataFrame
+    transposed_df = combined_df.set_index('file').transpose().reset_index()
+    transposed_df.rename(columns={'index': 'metric'}, inplace=True)
+
+    # Convert the combined DataFrame to a markdown table
+    markdown_table = transposed_df.to_markdown(index=False)
+    print("##### Seqkit stats\n")
+    print(markdown_table)
+
+def displayGfastatsAssemblySummary(glob_path):
+    print("#### GFAstats assembly summary")
+
+    # Read the TSV file
+    raw_asm_stats = pd.read_csv(
+        glob.glob(glob_path)[0],
+        sep="\t",
+        header=None,
+        names=["Metric", "Value"]
+    )
+
+    raw_asm_t1 = raw_asm_stats.iloc[[31, 32]].copy()
+    print(raw_asm_t1.to_markdown(index=False))
+    print("\n")
+
+    # Table 2: Rows 1-11
+    raw_asm_t2 = raw_asm_stats.iloc[1:12].copy()
+    raw_asm_t2['Value'] = pd.to_numeric(raw_asm_t2['Value'], errors='coerce').astype(int)
+    print(raw_asm_t2.to_markdown(index=False))
+    print("\n")
+
+    print("<details><summary>Contig and Gap stats</summary>\n")
+    # Table 3: Rows 12-22
+    raw_asm_t3 = raw_asm_stats.iloc[12:23].copy()
+    raw_asm_t3['Value'] = pd.to_numeric(raw_asm_t3['Value'], errors='coerce').astype(int)
+    print(raw_asm_t3.to_markdown(index=False))
+    print("\n")
+
+    # Table 4: Rows 24-30
+    raw_asm_t4 = raw_asm_stats.iloc[24:31].copy()
+    raw_asm_t4['Value'] = pd.to_numeric(raw_asm_t4['Value'], errors='coerce').astype(int)
+    print(raw_asm_t4.to_markdown(index=False))
+    print("\n")
+    print("</details>")
+
+```
+
 
 :::::

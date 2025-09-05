@@ -14,41 +14,10 @@ if assemble and "quast" in multiqc.list_modules():
     display(multiqc.get_plot("quast", "Number of Contigs").show())
 ```
 
-### Best ranked assembly
-
-#### Assembly statistics
-
 ```{python}
 #| output: asis
 if assemble and glob.glob(f"{log_path}/*-raw-*.fasta.assembly_summary"):
-    raw_asm_stats = pd.read_csv(
-        glob.glob(f"{log_path}/*-raw-*.fasta.assembly_summary")[0],
-        sep="\t",
-        header=None,
-        names=["Metric","Value"]
-    )
-    raw_asm_t1=raw_asm_stats.iloc[[1, 31, 32]]
-    print(raw_asm_t1.to_markdown(index=False))
-else:
-    print("Raw assembly stats unavailable")
-```
-```{python}
-#| output: asis
-if assemble and glob.glob(f"{log_path}/*-raw-*.fasta.assembly_summary"):
-    raw_asm_t2=raw_asm_stats.iloc[1:12] # TODO Add conversion
-    print(raw_asm_t2.to_markdown(index=False))
-```
-```{python}
-#| output: asis
-if assemble and glob.glob(f"{log_path}/*-raw-*.fasta.assembly_summary"):
-    raw_asm_t3=raw_asm_stats.iloc[12:23] # TODO Add conversion
-    print(raw_asm_t3.to_markdown(index=False))
-```
-```{python}
-#| output: asis
-if assemble and glob.glob(f"{log_path}/*-raw-*.fasta.assembly_summary"):
-    raw_asm_t4=raw_asm_stats.iloc[24:31] # TODO Add conversion
-    print(raw_asm_t4.to_markdown(index=False))
+    displayGfastatsAssemblySummary(f"{log_path}/*-raw-*.fasta.assembly_summary")
 ```
 
 #### Assembly k-mer completeness
