@@ -22,6 +22,28 @@ alignRNA = False
 diagnostics = False
 ```
 
+```{python}
+def displayTsvAsTable(glob_path):
+    # Get a list of all TSV files in the directory
+    tsvs = glob.glob(glob_path)
+
+    # Read and concatenate the files
+    list_of_dfs = []
+    for filename in tsvs:
+        df = pd.read_csv(filename, sep='\t')
+        list_of_dfs.append(df)
+
+    combined_df = pd.concat(list_of_dfs, ignore_index=True)
+    # Transpose the combined DataFrame
+    transposed_df = combined_df.set_index('file').transpose().reset_index()
+    transposed_df.rename(columns={'index': 'metric'}, inplace=True)
+
+    # Convert the combined DataFrame to a markdown table
+    markdown_table = transposed_df.to_markdown(index=False)
+    print("##### Seqkit stats\n")
+    print(markdown_table)
+```
+
 #### MultiQC
 
 ```{python}

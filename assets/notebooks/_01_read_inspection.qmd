@@ -12,14 +12,23 @@ to accurately assemble the species' genome.
 
 #### HiFi
 
+```{python}
+#| output: asis
+if inspect and glob.glob(f"{log_path}/*_hifi.tsv"):
+    displayTsvAsTable(f"{log_path}/*_hifi.tsv")
+```
+
 ::: {.callout-note title="Expectation" collapse="true"}
 For long read data (PacBio, ONT) we expect to see 15-20x coverage per haplotype, for a good assembly.
 :::
 
-```{python}
-# TODO data quantity table
-```
 #### Hi-C
+
+```{python}
+#| output: asis
+if inspect and glob.glob(f"{log_path}/*_hic.tsv"):
+    displayTsvAsTable(f"{log_path}/*_hic.tsv")
+```
 
 ```{python}
 if inspect and "fastqc" in multiqc.list_modules():
