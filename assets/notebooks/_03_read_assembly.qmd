@@ -46,15 +46,4 @@ if assemble and glob.glob(f"{log_path}/*-raw-*_merquryfk.false_duplications.tsv"
     displayMerquryFalseDuplicationEstimate(f"{log_path}/*-raw-*_merquryfk.false_duplications.tsv")
 ```
 
-#### Assembly gene space completeness
-
-```{python}
-if assemble and "busco" in multiqc.list_modules():
-    for lineage in multiqc.list_plots()["busco"]:
-        display(multiqc.get_plot("busco", f"{lineage}").show())
-```
-
-### Other assemblies
-TODO for each assembly output a stats section (expandable).
-
 :::::

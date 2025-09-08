@@ -61,10 +61,20 @@ welcome your feedback; please submit any suggestions or feature requests at
 {{< include _08_assembly_curation.qmd >}}
 
 ## Summary
+
+```{python}
+#| output: asis
+if "busco" in multiqc.list_modules():
+    print("### Busco core gene space completeness\n")
+    for lineage in multiqc.list_plots()["busco"]:
+        display(multiqc.get_plot("busco", f"{lineage}").show())
+# ! Busco not appearing in curated output !
+```
+
 ```{python}
 #| output: asis
 if "quast" in multiqc.list_modules():
-    print("### Quast\n")
+    print("### Quast contiguity statistics\n")
     display(multiqc.get_plot("quast", "Assembly Statistics").show())
     display(multiqc.get_plot("quast", "Number of Contigs").show())
 ```
