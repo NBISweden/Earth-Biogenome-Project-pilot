@@ -59,3 +59,13 @@ welcome your feedback; please submit any suggestions or feature requests at
 
 <!-- 08 Assembly Curation -->
 {{< include _08_assembly_curation.qmd >}}
+
+## Summary
+```{python}
+#| output: asis
+if "quast" in multiqc.list_modules():
+    print("### Quast\n")
+    display(multiqc.get_plot("quast", "Assembly Statistics").show())
+    display(multiqc.get_plot("quast", "Number of Contigs").show())
+```
+

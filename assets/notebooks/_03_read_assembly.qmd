@@ -2,18 +2,6 @@
 
 ## Assembly
 
-### General comparison
-
-```{python}
-if assemble and "quast" in multiqc.list_modules():
-    display(multiqc.get_plot("quast", "Assembly Statistics").show())
-```
-
-```{python}
-if assemble and "quast" in multiqc.list_modules():
-    display(multiqc.get_plot("quast", "Number of Contigs").show())
-```
-
 ```{python}
 #| output: asis
 if assemble and glob.glob(f"{log_path}/*-raw-*.fasta.assembly_summary"):
