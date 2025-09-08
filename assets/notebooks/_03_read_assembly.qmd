@@ -22,70 +22,28 @@ if assemble and glob.glob(f"{log_path}/*-raw-*_merquryfk.completeness.stats"):
         displayScaffoldQualityValue(f"{log_path}/*-raw-*_merqury.*.qv")
 ```
 
-##### Copy number spectra
-
-:::: {.panel-tabset}
-
-## MerquryFK
-
-```{python}
-# TODO account for multiple assemblers
-# TODO: Add ln plot too see the relative contribution
-if assemble and glob.glob(f"{log_path}/*-raw-*_merquryfk.*.spectra-cn.st.png"):
-    display(Image(filename=glob.glob(f"{log_path}/*-raw-*_merquryfk.*.spectra-cn.st.png")[0]))
-else:
-    print("Raw Assembly MerquryFK copy number spectra not available")
-```
-
-## Merqury
-
-```{python}
-# TODO This path will be different depending on phased or not
-if assemble and glob.glob(f"{log_path}/*-raw-*_merqury.*.spectra-cn.st.png"):
-    display(Image(filename=glob.glob(f"{log_path}/*-raw-*_merqury.*.spectra-cn.st.png")[0]))
-else:
-    print("Raw Assembly Merqury copy number spectra not available")
-```
-
-::::
-
-##### Assembly spectra
-
-:::: {.panel-tabset}
-
-## MerquryFK
-
-```{python}
-# TODO account for multiple assemblers
-if assemble and glob.glob(f"{log_path}/*-raw-*_merquryfk.spectra-asm.st.png"):
-    display(Image(filename=glob.glob(f"{log_path}/*-raw-*_merquryfk.spectra-asm.st.png")[0]))
-else:
-    print("Raw Assembly MerquryFK spectra not available")
-```
-
-## Merqury
-
-```{python}
-if assemble and glob.glob(f"{log_path}/*-raw-*_merqury.spectra-asm.st.png"):
-    display(Image(filename=glob.glob(f"{log_path}/*-raw-*_merqury.spectra-asm.st.png")[0]))
-else:
-    print("Raw Merqury Assembly spectra not available")
-```
-
-::::
-
-##### False duplications
-
 ```{python}
 #| output: asis
-if assemble and glob.glob(f"{log_path}/*-raw-*_merquryfk.false_duplications.tsv"):
-    print(
-        pd.read_csv(
-            glob.glob(f"{log_path}/*-raw-*_merquryfk.false_duplications.tsv")[0], sep="\t"
-        ).to_markdown(index=False)
+if assemble and (
+    glob.glob(f"{log_path}/*-raw-*_merquryfk*.spectra-cn.st.png")
+    or glob.glob(f"{log_path}/*-raw-*_merqury.*.spectra-cn.st.png")
+):
+    displayMerquryCopyNumberSpectra(
+        f"{log_path}/*-raw-*_merquryfk*.spectra-cn.st.png",
+        f"{log_path}/*-raw-*_merqury.*.spectra-cn.st.png"
     )
-else:
-    print("Merqury FK false duplications not available")
+
+if assemble and (
+    glob.glob(f"{log_path}/*-raw-*_merquryfk.spectra-asm.st.png")
+    or glob.glob(f"{log_path}/*-raw-*_merqury.spectra-asm.st.png")
+):
+    displayMerquryAssemblySpectra(
+        f"{log_path}/*-raw-*_merquryfk.spectra-asm.st.png",
+        f"{log_path}/*-raw-*_merqury.spectra-asm.st.png"
+    )
+
+if assemble and glob.glob(f"{log_path}/*-raw-*_merquryfk.false_duplications.tsv"):
+    displayMerquryFalseDuplicationEstimate(f"{log_path}/*-raw-*_merquryfk.false_duplications.tsv")
 ```
 
 #### Assembly gene space completeness

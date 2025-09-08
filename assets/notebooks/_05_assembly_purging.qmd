@@ -97,81 +97,41 @@ if purge and glob.glob(f"{log_path}/*-purged-*.assembly_summary"):
 
 ```{python}
 #| output: asis
-if assemble and glob.glob(f"{log_path}/*-purged-*.assembly_summary"):
+if purge and glob.glob(f"{log_path}/*-purged-*.assembly_summary"):
     displayGfastatsAssemblySummary(f"{log_path}/*-purged-*.assembly_summary")
 ```
 
 ```{python}
 #| output: asis
-if assemble and glob.glob(f"{log_path}/*-purged-*_merquryfk.completeness.stats"):
+if purge and glob.glob(f"{log_path}/*-purged-*_merquryfk.completeness.stats"):
     displayAssemblyCompleteness(f"{log_path}/*-purged-*_merquryfk.completeness.stats")
     displayAssemblyQualityValue(f"{log_path}/*-purged-*_merquryfk.qv")
     if(glob.glob(f"{log_path}/*-purged-*_merqury.*.qv")):
         displayScaffoldQualityValue(f"{log_path}/*-purged-*_merqury.*.qv")
 ```
 
-##### Copy number spectra
-
-:::: {.panel-tabset}
-
-## MerquryFK
-
-```{python}
-# TODO Do we need separate for each fasta? This is combined
-if purge and glob.glob(f"{log_path}/*-purged-*_merquryfk.spectra-cn.st.png"):
-    display(Image(filename=glob.glob(f"{log_path}/*-purged-*_merquryfk.spectra-cn.st.png")[0]))
-else:
-    print("Purged Assembly MerquryFK copy number plot not available")
-```
-
-## Merqury
-
-```{python}
-if purge and glob.glob(f"{log_path}/*-purged-*_merqury.spectra-cn.st.png"):
-    display(Image(filename=glob.glob(f"{log_path}/*-purged-*_merqury.spectra-cn.st.png")[0]))
-else:
-    print("Purged Assembly Merqury copy number plot not available")
-```
-
-::::
-
-##### Assembly spectra
-
-:::: {.panel-tabset}
-
-## MerquryFK
-
-```{python}
-# TODO account for multiple assemblers
-if purge and glob.glob(f"{log_path}/*-purged-*_merquryfk.spectra-asm.st.png"):
-    display(Image(filename=glob.glob(f"{log_path}/*-purged-*_merquryfk.spectra-asm.st.png")[0]))
-else:
-    print("Purged Assembly MerquryFK assembly spectra not available")
-```
-
-## Merqury
-
-```{python}
-if purge and glob.glob(f"{log_path}/*-purged-*_merqury.spectra-asm.st.png"):
-    display(Image(filename=glob.glob(f"{log_path}/*-purged-*_merqury.spectra-asm.st.png")[0]))
-else:
-    print("Purged Assembly Merqury assembly spectra plot not available")
-```
-
-::::
-
-##### False duplications
-
 ```{python}
 #| output: asis
-if purge and glob.glob(f"{log_path}/*-purged-*_merquryfk.false_duplications.tsv"):
-    print(
-        pd.read_csv(
-            glob.glob(f"{log_path}/*-purged-*_merquryfk.false_duplications.tsv")[0], sep="\t"
-        ).to_markdown(index=False)
+if purge and (
+    glob.glob(f"{log_path}/*-purged-*_merquryfk*.spectra-cn.st.png")
+    or glob.glob(f"{log_path}/*-purged-*_merqury.*.spectra-cn.st.png")
+):
+    displayMerquryCopyNumberSpectra(
+        f"{log_path}/*-purged-*_merquryfk*.spectra-cn.st.png",
+        f"{log_path}/*-purged-*_merqury.*.spectra-cn.st.png"
     )
-else:
-    print("Purged Assembly false duplications not available")
+
+if purge and (
+    glob.glob(f"{log_path}/*-purged-*_merquryfk.spectra-asm.st.png")
+    or glob.glob(f"{log_path}/*-purged-*_merqury.spectra-asm.st.png")
+):
+    displayMerquryAssemblySpectra(
+        f"{log_path}/*-purged-*_merquryfk.spectra-asm.st.png",
+        f"{log_path}/*-purged-*_merqury.spectra-asm.st.png"
+    )
+
+if purge and glob.glob(f"{log_path}/*-purged-*_merquryfk.false_duplications.tsv"):
+    displayMerquryFalseDuplicationEstimate(f"{log_path}/*-purged-*_merquryfk.false_duplications.tsv")
 ```
 
 :::::

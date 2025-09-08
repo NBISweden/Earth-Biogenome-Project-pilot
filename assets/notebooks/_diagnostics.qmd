@@ -209,6 +209,43 @@ def displayGfastatsAssemblySummary(glob_path):
     print("\n")
     print("</details>")
 
+def displayMerquryCopyNumberSpectra(merquryfk_cn_glob_path, merqury_cn_glob_path):
+    print("#### Merqury Copy number spectra\n")
+    print("\n:::: {.panel-tabset}\n")
+    print("## MerquryFK\n")
+    if glob.glob(merquryfk_cn_glob_path):
+        display(Image(filename=glob.glob(merquryfk_cn_glob_path)[0]))
+    else:
+        print("MerquryFK copy number plot not available")
+    print("\n## Merqury\n")
+    if glob.glob(merqury_cn_glob_path):
+        display(Image(filename=glob.glob(merqury_cn_glob_path)[0]))
+    else:
+        print("Merqury copy number plot not available")
+    print("\n::::\n")
+
+def displayMerquryAssemblySpectra(merquryfk_asm_glob_path, merqury_asm_glob_path):
+    print("#### Merqury Assembly spectra\n")
+    print("\n:::: {.panel-tabset}\n")
+    print("## MerquryFK\n")
+    if glob.glob(merquryfk_asm_glob_path):
+        display(Image(filename=glob.glob(merquryfk_asm_glob_path)[0]))
+    else:
+        print("MerquryFK assembly spectra not available")
+    print("\n## Merqury\n")
+    if glob.glob(merqury_asm_glob_path):
+        display(Image(filename=glob.glob(merqury_asm_glob_path)[0]))
+    else:
+        print("Merqury assembly spectra plot not available")
+    print("\n::::\n")
+
+def displayMerquryFalseDuplicationEstimate(glob_path):
+    print("#### Merqury False duplication estimate")
+    print(
+        pd.read_csv(
+            glob.glob(glob_path)[0], sep="\t"
+        ).to_markdown(index=False)
+    )
 ```
 
 :::::

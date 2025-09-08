@@ -4,13 +4,13 @@
 
 ```{python}
 #| output: asis
-if assemble and glob.glob(f"{log_path}/*-curated-*.assembly_summary"):
+if curate and glob.glob(f"{log_path}/*-curated-*.assembly_summary"):
     displayGfastatsAssemblySummary(f"{log_path}/*-curated-*.assembly_summary")
 ```
 
 ```{python}
 #| output: asis
-if assemble and glob.glob(f"{log_path}/*-curated-*_merquryfk.completeness.stats"):
+if curate and glob.glob(f"{log_path}/*-curated-*_merquryfk.completeness.stats"):
     displayAssemblyCompleteness(f"{log_path}/*-curated-*_merquryfk.completeness.stats")
     displayAssemblyQualityValue(f"{log_path}/*-curated-*_merquryfk.qv")
     if(glob.glob(f"{log_path}/*-curated-*_merqury.*.qv")):
@@ -19,51 +19,26 @@ if assemble and glob.glob(f"{log_path}/*-curated-*_merquryfk.completeness.stats"
 
 ```{python}
 #| output: asis
-if curate and (glob.glob(f"{log_path}/*-curated-*_merquryfk*.spectra-cn.st.png") or glob.glob(f"{log_path}/*-curated-*_merqury*.spectra-cn.st.png") ):
-    print("##### Copy number spectra\n")
-    print(":::: {.panel-tabset}\n")
-    if glob.glob(f"{log_path}/*-curated-*_merquryfk*.spectra-cn.st.png"):
-        print("## MerquryFK\n")
-        display(Image(filename=glob.glob(f"{log_path}/*-curated-*_merquryfk*.spectra-cn.st.png")[0]))
-    else:
-        print("Curated Assembly MerquryFK copy number plot not available")
-    print("\n")
-    if glob.glob(f"{log_path}/*-curated-*_merqury*.spectra-cn.st.png"):
-        print("## Merqury\n")
-        display(Image(filename=glob.glob(f"{log_path}/*-curated-*_merqury*.spectra-cn.st.png")[0]))
-    else:
-        print("Curated Assembly Merqury copy number plot not available")
-    print("::::\n")
-```
-
-```{python}
-#| output: asis
-if curate and (glob.glob(f"{log_path}/*-curated-*_merquryfk.spectra-asm.st.png") or glob.glob(f"{log_path}/*-curated-*_merqury.spectra-asm.st.png")):
-    print("##### Assembly spectra\n")
-    print(":::: {.panel-tabset}\n")
-    if glob.glob(f"{log_path}/*-curated-*_merquryfk.spectra-asm.st.png"):
-        print("## MerquryFK\n")
-        display(Image(filename=glob.glob(f"{log_path}/*-curated-*_merquryfk.spectra-asm.st.png")[0]))
-    else:
-        print("Curated Assembly MerquryFK assembly spectra not available")
-    print("\n")
-    if glob.glob(f"{log_path}/*-curated-*_merqury.spectra-asm.st.png"):
-        print("## Merqury\n")
-        display(Image(filename=glob.glob(f"{log_path}/*-curated-*_merqury.spectra-asm.st.png")[0]))
-    else:
-        print("Curated Assembly Merqury assembly spectra plot not available")
-    print("::::\n")
-```
-
-```{python}
-#| output: asis
-if curate and glob.glob(f"{log_path}/*-curated-*_merquryfk.false_duplications.tsv"):
-    print("##### False duplications")
-    print(
-        pd.read_csv(
-            glob.glob(f"{log_path}/*-curated-*_merquryfk.false_duplications.tsv")[0], sep="\t"
-        ).to_markdown(index=False)
+if curate and (
+    glob.glob(f"{log_path}/*-curated-*_merquryfk*.spectra-cn.st.png")
+    or glob.glob(f"{log_path}/*-curated-*_merqury.*.spectra-cn.st.png")
+):
+    displayMerquryCopyNumberSpectra(
+        f"{log_path}/*-curated-*_merquryfk*.spectra-cn.st.png",
+        f"{log_path}/*-curated-*_merqury.*.spectra-cn.st.png"
     )
+
+if curate and (
+    glob.glob(f"{log_path}/*-curated-*_merquryfk.spectra-asm.st.png")
+    or glob.glob(f"{log_path}/*-curated-*_merqury.spectra-asm.st.png")
+):
+    displayMerquryAssemblySpectra(
+        f"{log_path}/*-curated-*_merquryfk.spectra-asm.st.png",
+        f"{log_path}/*-curated-*_merqury.spectra-asm.st.png"
+    )
+
+if curate and glob.glob(f"{log_path}/*-curated-*_merquryfk.false_duplications.tsv"):
+    displayMerquryFalseDuplicationEstimate(f"{log_path}/*-curated-*_merquryfk.false_duplications.tsv")
 ```
 
 :::::

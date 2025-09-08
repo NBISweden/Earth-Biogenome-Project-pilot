@@ -21,81 +21,41 @@ if scaffold and "pairtools" in multiqc.list_modules():
 
 ```{python}
 #| output: asis
-if assemble and glob.glob(f"{log_path}/*-scaffolded-*.assembly_summary"):
+if scaffold and glob.glob(f"{log_path}/*-scaffolded-*.assembly_summary"):
     displayGfastatsAssemblySummary(f"{log_path}/*-scaffolded-*.assembly_summary")
 ```
 
 ```{python}
 #| output: asis
-if assemble and glob.glob(f"{log_path}/*-scaffolded-*_merquryfk.completeness.stats"):
+if scaffold and glob.glob(f"{log_path}/*-scaffolded-*_merquryfk.completeness.stats"):
     displayAssemblyCompleteness(f"{log_path}/*-scaffolded-*_merquryfk.completeness.stats")
     displayAssemblyQualityValue(f"{log_path}/*-scaffolded-*_merquryfk.qv")
     if(glob.glob(f"{log_path}/*-scaffolded-*_merqury.*.qv")):
         displayScaffoldQualityValue(f"{log_path}/*-scaffolded-*_merqury.*.qv")
 ```
 
-##### Copy number spectra
-
-:::: {.panel-tabset}
-
-## MerquryFK
-
-```{python}
-# TODO Do we need for each fasta. This is combined fastas
-if scaffold and glob.glob(f"{log_path}/*-scaffolded-*_merquryfk.spectra-cn.st.png"):
-    display(Image(filename=glob.glob(f"{log_path}/*-scaffolded-*_merquryfk.spectra-cn.st.png")[0]))
-else:
-    print("Scaffolded Assembly MerquryFK copy spectra not available")
-```
-
-## Merqury
-
-```{python}
-if scaffold and glob.glob(f"{log_path}/*-scaffolded-*_merqury.spectra-cn.st.png"):
-    display(Image(filename=glob.glob(f"{log_path}/*-scaffolded-*_merqury.spectra-cn.st.png")[0]))
-else:
-    print("Scaffolded Assembly Merqury copy spectra not available")
-```
-
-::::
-
-##### Assembly spectra
-
-:::: {.panel-tabset}
-
-## MerquryFK
-
-```{python}
-# TODO account for multiple assemblers
-if scaffold and glob.glob(f"{log_path}/*-scaffolded-*_merquryfk.spectra-asm.st.png"):
-    display(Image(filename=glob.glob(f"{log_path}/*-scaffolded-*_merquryfk.spectra-asm.st.png")[0]))
-else:
-    print("Scaffold Assembly MerquryFK assembly spectra not available")
-```
-
-## Merqury
-
-```{python}
-if scaffold and glob.glob(f"{log_path}/*-scaffolded-*_merqury.spectra-asm.st.png"):
-    display(Image(filename=glob.glob(f"{log_path}/*-scaffolded-*_merqury.spectra-asm.st.png")[0]))
-else:
-    print("Scaffolded Assembly Merqury assembly spectra not available")
-```
-
-::::
-
-##### False duplications
-
 ```{python}
 #| output: asis
-if scaffold and glob.glob(f"{log_path}/*-scaffolded-*_merquryfk.false_duplications.tsv"):
-    print(
-        pd.read_csv(
-            glob.glob(f"{log_path}/*-scaffolded-*_merquryfk.false_duplications.tsv")[0], sep="\t"
-        ).to_markdown(index=False)
+if scaffold and (
+    glob.glob(f"{log_path}/*-scaffolded-*_merquryfk*.spectra-cn.st.png")
+    or glob.glob(f"{log_path}/*-scaffolded-*_merqury.*.spectra-cn.st.png")
+):
+    displayMerquryCopyNumberSpectra(
+        f"{log_path}/*-scaffolded-*_merquryfk*.spectra-cn.st.png",
+        f"{log_path}/*-scaffolded-*_merqury.*.spectra-cn.st.png"
     )
-else:
-    print("Scaffold Assembly false duplications not available")
+
+if scaffold and (
+    glob.glob(f"{log_path}/*-scaffolded-*_merquryfk.spectra-asm.st.png")
+    or glob.glob(f"{log_path}/*-scaffolded-*_merqury.spectra-asm.st.png")
+):
+    displayMerquryAssemblySpectra(
+        f"{log_path}/*-scaffolded-*_merquryfk.spectra-asm.st.png",
+        f"{log_path}/*-scaffolded-*_merqury.spectra-asm.st.png"
+    )
+
+if scaffold and glob.glob(f"{log_path}/*-scaffolded-*_merquryfk.false_duplications.tsv"):
+    displayMerquryFalseDuplicationEstimate(f"{log_path}/*-scaffolded-*_merquryfk.false_duplications.tsv")
 ```
 
 :::::
