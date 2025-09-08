@@ -19,19 +19,16 @@ if scaffold and "pairtools" in multiqc.list_modules():
     display(multiqc.get_plot("pairtools", "Pre-filtered pairs as a function of genomic separation (in detail)").show())
 ```
 
-
-#### Assembly k-mer completeness
+```{python}
+#| output: asis
+if assemble and glob.glob(f"{log_path}/*-scaffolded-*.assembly_summary"):
+    displayGfastatsAssemblySummary(f"{log_path}/*-scaffolded-*.assembly_summary")
+```
 
 ```{python}
 #| output: asis
-if scaffold and glob.glob(f"{log_path}/*-scaffolded-*_merquryfk.completeness.stats"):
-    print(
-        pd.read_csv(
-            glob.glob(f"{log_path}/*-scaffolded-*_merquryfk.completeness.stats")[0], sep="\t"
-        ).to_markdown(index=False)
-    )
-else:
-    print("Scaffolded Assembly Completeness not available")
+if assemble and glob.glob(f"{log_path}/*-scaffolded-*_merquryfk.completeness.stats"):
+    displayAssemblyCompleteness(f"{log_path}/*-scaffolded-*_merquryfk.completeness.stats")
 ```
 
 ##### Assembly quality value

@@ -95,18 +95,16 @@ if purge and glob.glob(f"{log_path}/*-purged-*.assembly_summary"):
         print("Unable to calculate purged content percentage.")
 ```
 
-#### Assembly k-mer completeness
+```{python}
+#| output: asis
+if assemble and glob.glob(f"{log_path}/*-purged-*.assembly_summary"):
+    displayGfastatsAssemblySummary(f"{log_path}/*-purged-*.assembly_summary")
+```
 
 ```{python}
 #| output: asis
-if purge and glob.glob(f"{log_path}/*-purged-*_merquryfk.completeness.stats"):
-    print(
-        pd.read_csv(
-            glob.glob(f"{log_path}/*-purged-*_merquryfk.completeness.stats")[0], sep="\t"
-        ).to_markdown(index=False)
-    )
-else:
-    print("Purged Assembly MerquryFK completeness not available")
+if assemble and glob.glob(f"{log_path}/*-purged-*_merquryfk.completeness.stats"):
+    displayAssemblyCompleteness(f"{log_path}/*-purged-*_merquryfk.completeness.stats")
 ```
 
 ##### Assembly quality value

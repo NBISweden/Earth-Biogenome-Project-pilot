@@ -4,13 +4,14 @@
 
 ```{python}
 #| output: asis
-if curate and glob.glob(f"{log_path}/*-curated-*_merquryfk.completeness.stats"):
-    print("#### Assembly k-mer completeness")
-    print(
-        pd.read_csv(
-            glob.glob(f"{log_path}/*-curated-*_merquryfk.completeness.stats")[0], sep="\t"
-        ).to_markdown(index=False)
-    )
+if assemble and glob.glob(f"{log_path}/*-curated-*.assembly_summary"):
+    displayGfastatsAssemblySummary(f"{log_path}/*-curated-*.assembly_summary")
+```
+
+```{python}
+#| output: asis
+if assemble and glob.glob(f"{log_path}/*-curated-*_merquryfk.completeness.stats"):
+    displayAssemblyCompleteness(f"{log_path}/*-curated-*_merquryfk.completeness.stats")
 ```
 
 ```{python}

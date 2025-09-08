@@ -123,6 +123,14 @@ def displayGenomeScopePlots():
     markdown = "\n\n".join(tabs)
     print(markdown)
 
+def displayAssemblyCompleteness(glob_path):
+    print("#### Assembly k-mer completeness\n")
+    print(
+        pd.read_csv(
+            glob.glob(glob_path)[0], sep="\t"
+        ).to_markdown(index=False)
+    )
+
 def displayGfastatsAssemblySummary(glob_path):
     print("#### GFAstats assembly summary")
 
@@ -159,6 +167,5 @@ def displayGfastatsAssemblySummary(glob_path):
     print("</details>")
 
 ```
-
 
 :::::
