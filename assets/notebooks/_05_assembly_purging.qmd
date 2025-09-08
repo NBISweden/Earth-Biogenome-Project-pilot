@@ -105,61 +105,10 @@ if assemble and glob.glob(f"{log_path}/*-purged-*.assembly_summary"):
 #| output: asis
 if assemble and glob.glob(f"{log_path}/*-purged-*_merquryfk.completeness.stats"):
     displayAssemblyCompleteness(f"{log_path}/*-purged-*_merquryfk.completeness.stats")
+    displayAssemblyQualityValue(f"{log_path}/*-purged-*_merquryfk.qv")
+    if(glob.glob(f"{log_path}/*-purged-*_merqury.*.qv")):
+        displayScaffoldQualityValue(f"{log_path}/*-purged-*_merqury.*.qv")
 ```
-
-##### Assembly quality value
-
-```{python}
-#| output: asis
-if purge and glob.glob(f"{log_path}/*-purged-*_merquryfk.qv"):
-    print(
-        pd.read_csv(
-            glob.glob(f"{log_path}/*-purged-*_merquryfk.qv")[0], sep="\t"
-        ).to_markdown(index=False)
-    )
-else:
-    print("Purged Assembly MerquryFK QV not available")
-```
-
-<details>
-<summary>QV per scaffold</summary>
-
-```{python}
-#| output: asis
-if purge:
-    qvs = []
-    for qv_file in glob.glob(f"{log_path}/*-purged-*_merqury.*.qv"):
-        if os.path.getsize(qv_file) > 0:
-            qvs.append(
-                pd.read_csv(
-                    qv_file,
-                    sep="\t",
-                    header=None,
-                    names=[
-                        "Scaffold",
-                        "No support k-mers",
-                        "Total k-mers",
-                        "QV",
-                        "Error rate",
-                    ],
-                    dtype={
-                        "Scaffold": str,
-                        "No support k-mers": int,
-                        "Total k-mers": int,
-                        "QV": float,
-                        "Error rate": float,
-                    },
-                    na_values=["", "inf"],
-                )
-            )
-    if qvs:
-        per_scaffold_qv_raw = pd.concat(qvs, ignore_index=True)
-        print(per_scaffold_qv_raw.to_markdown(index=False))
-    else:
-        print("No per scaffold qv found")
-```
-
-</details>
 
 ##### Copy number spectra
 
