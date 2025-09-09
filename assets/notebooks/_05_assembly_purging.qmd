@@ -47,52 +47,7 @@ else:
 ```{python}
 #| output: asis
 if purge and glob.glob(f"{log_path}/*-purged-*.assembly_summary"):
-    assembly_summary_file = glob.glob(f"{log_path}/*-purged-*.assembly_summary")[0]
-    try:
-        # Read the assembly summary to get the assembly size
-        # Use 'header=None' and 'names' to directly assign column names
-        raw_asm_stats = pd.read_csv(
-            assembly_summary_file,
-            sep="\t",
-            skiprows=2,
-            nrows=1,
-            header=None,
-            names=['key', 'value']
-        )
-        # Convert the 'value' to an integer
-        assembly_size_bp = int(raw_asm_stats['value'].iloc[0])
-    except (FileNotFoundError, IndexError, ValueError) as e:
-        raise ValueError(f"Unable to determine assembly size from '{assembly_summary_file}': {e}") from e
-    if assembly_size_bp <= 0:
-        raise ValueError(f"Invalid assembly size found: {assembly_size_bp}")
-
-    # Use a single DataFrame to aggregate results from all BED files
-    all_bed_data = pd.DataFrame()
-    for bed_file in glob.glob(f"{log_path}/*-purged-*.dups.bed"):
-        try:
-            dup_bed = pd.read_csv(
-                bed_file,
-                sep="\t",
-                header=None,
-                names=['Contig', 'Start', 'End', 'Type', 'Partner']
-            )
-            dup_bed['Length'] = dup_bed['End'] - dup_bed['Start']
-            all_bed_data = pd.concat([all_bed_data, dup_bed], ignore_index=True)
-        except pd.errors.EmptyDataError:
-            continue # continue to next iteration of loop
-        except Exception as e:
-            print(f"Error processing {bed_file}: {e}")
-
-    # Check if any data was processed
-    if not all_bed_data.empty:
-        # Group by 'Type' and sum 'Length' for all processed files
-        summary = all_bed_data.groupby('Type')['Length'].sum().reset_index()
-        summary['Percentage'] = (summary['Length'] * 100 / assembly_size_bp).round(2).astype(str) + '%'
-        # Print the final summary in Markdown format
-        print("#### Purged content")
-        print(summary.to_markdown(index=False))
-    else:
-        print("Unable to calculate purged content percentage.")
+    displayPurgeDupsBinPercentages(f"{log_path}/*-purged-*.assembly_summary")
 ```
 
 ```{python}
