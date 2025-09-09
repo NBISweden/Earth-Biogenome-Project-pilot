@@ -22,28 +22,6 @@ alignRNA = False
 diagnostics = False
 ```
 
-```{python}
-def displayTsvAsTable(glob_path):
-    # Get a list of all TSV files in the directory
-    tsvs = glob.glob(glob_path)
-
-    # Read and concatenate the files
-    list_of_dfs = []
-    for filename in tsvs:
-        df = pd.read_csv(filename, sep='\t')
-        list_of_dfs.append(df)
-
-    combined_df = pd.concat(list_of_dfs, ignore_index=True)
-    # Transpose the combined DataFrame
-    transposed_df = combined_df.set_index('file').transpose().reset_index()
-    transposed_df.rename(columns={'index': 'metric'}, inplace=True)
-
-    # Convert the combined DataFrame to a markdown table
-    markdown_table = transposed_df.to_markdown(index=False)
-    print("##### Seqkit stats\n")
-    print(markdown_table)
-```
-
 #### MultiQC
 
 ```{python}
@@ -70,6 +48,253 @@ multiqc.write_report(
     force=True,
     output_dir=".",
 )
+```
+
+#### Define utility functions
+
+```{python}
+#| echo: true
+def displayTsvAsTable(glob_path):
+    # Get a list of all TSV files in the directory
+    tsvs = glob.glob(glob_path)
+
+    # Read and concatenate the files
+    list_of_dfs = []
+    for filename in tsvs:
+        df = pd.read_csv(filename, sep='\t')
+        list_of_dfs.append(df)
+
+    combined_df = pd.concat(list_of_dfs, ignore_index=True)
+    # Transpose the combined DataFrame
+    transposed_df = combined_df.set_index('file').transpose().reset_index()
+    transposed_df.rename(columns={'index': 'metric'}, inplace=True)
+
+    # Convert the combined DataFrame to a markdown table
+    markdown_table = transposed_df.to_markdown(index=False)
+    print("##### Seqkit stats\n")
+    print(markdown_table)
+
+def displayGenomeScopePlots():
+    print("#### GenomeScope2 / GeneScopeFK\n")
+    images = [
+        img
+        for pattern in ["log_plot", "linear_plot"]
+        for img in glob.glob(f"{log_path}/*_{pattern}.png")
+    ]
+
+    # Ensure we have multiples of 4 images
+    if len(images) % 4 != 0:
+        raise ValueError("There should be 4 images per GenomeScope2 process")
+
+    # Function to sort filenames
+    def sort_key(filename):
+        filename = os.path.basename(filename)
+        parts = filename.split("_")
+        # Order: linear < log, non-transformed < transformed
+        order = {"linear": 0, "log": 1}
+        transformed = 1 if "transformed" in parts else 0
+        return (" ".join(parts[:2]), transformed, order[parts[-2]])
+
+    # Sort filenames first
+    sorted_filenames = sorted(images, key=sort_key)
+
+    # Group by sample
+    grouped_filenames = {}
+    for key, group in groupby(
+        sorted_filenames, key=lambda x: " ".join(os.path.basename(x).split("_")[:2])
+    ):
+        grouped_filenames[key] = list(group)
+
+    # Function to format filenames
+    def format_filename(filename):
+        # return os.path.basename(filename).replace(".png", "").replace("_", " ")
+        return " ".join(os.path.basename(filename).split("_")[2:-1])
+
+    # Print grouped and sorted filenames
+    tabs = []  # tabbed panels
+    for sample, files in grouped_filenames.items():
+        # tabs.append(f"### {sample}")
+        tabs.append("::: {.panel-tabset}")
+        for image in files:
+            formatted_filename = format_filename(image)
+            tabs.append(f"## {formatted_filename}")
+            tabs.append(f"![{formatted_filename}]({image})")
+        tabs.append(":::")
+
+    markdown = "\n\n".join(tabs)
+    print(markdown)
+
+def displayAssemblyCompleteness(glob_path):
+    print("#### Merqury Assembly k-mer completeness\n")
+    print(
+        pd.read_csv(
+            glob.glob(glob_path)[0], sep="\t"
+        ).to_markdown(index=False)
+    )
+    print("\n")
+
+def displayAssemblyQualityValue(glob_path):
+    print("#### Merqury Assembly quality value\n")
+    print(
+        pd.read_csv(
+            glob.glob(glob_path)[0], sep="\t"
+        ).to_markdown(index=False)
+    )
+
+def displayScaffoldQualityValue(glob_path):
+    qvs = []
+    for qv_file in glob.glob(glob_path):
+        if os.path.getsize(qv_file) > 0:
+            qvs.append(
+                pd.read_csv(
+                    qv_file,
+                    sep="\t",
+                    header=None,
+                    names=[
+                        "Scaffold",
+                        "No support k-mers",
+                        "Total k-mers",
+                        "QV",
+                        "Error rate",
+                    ],
+                    dtype={
+                        "Scaffold": str,
+                        "No support k-mers": int,
+                        "Total k-mers": int,
+                        "QV": float,
+                        "Error rate": float,
+                    },
+                    na_values=["", "inf"],
+                )
+            )
+    if qvs:
+        print("<details><summary>QV per scaffold</summary>")
+        per_scaffold_qv_raw = pd.concat(qvs, ignore_index=True)
+        print(per_scaffold_qv_raw.to_markdown(index=False))
+        print("</details>")
+    else:
+        print("No per scaffold qv data")
+
+def displayGfastatsAssemblySummary(glob_path):
+    print("#### GFAstats assembly summary")
+
+    # Read the TSV file
+    raw_asm_stats = pd.read_csv(
+        glob.glob(glob_path)[0],
+        sep="\t",
+        header=None,
+        names=["Metric", "Value"]
+    )
+
+    raw_asm_t1 = raw_asm_stats.iloc[[31, 32]].copy()
+    print(raw_asm_t1.to_markdown(index=False))
+    print("\n")
+
+    # Table 2: Rows 1-11
+    raw_asm_t2 = raw_asm_stats.iloc[1:12].copy()
+    raw_asm_t2['Value'] = pd.to_numeric(raw_asm_t2['Value'], errors='coerce').astype(int)
+    print(raw_asm_t2.to_markdown(index=False))
+    print("\n")
+
+    print("<details><summary>Contig and Gap stats</summary>\n")
+    # Table 3: Rows 12-22
+    raw_asm_t3 = raw_asm_stats.iloc[12:23].copy()
+    raw_asm_t3['Value'] = pd.to_numeric(raw_asm_t3['Value'], errors='coerce').astype(int)
+    print(raw_asm_t3.to_markdown(index=False))
+    print("\n")
+
+    # Table 4: Rows 24-30
+    raw_asm_t4 = raw_asm_stats.iloc[24:31].copy()
+    raw_asm_t4['Value'] = pd.to_numeric(raw_asm_t4['Value'], errors='coerce').astype(int)
+    print(raw_asm_t4.to_markdown(index=False))
+    print("\n")
+    print("</details>")
+
+def displayMerquryCopyNumberSpectra(merquryfk_cn_glob_path, merqury_cn_glob_path):
+    print("#### Merqury Copy number spectra\n")
+    print("\n:::: {.panel-tabset}\n")
+    print("## MerquryFK\n")
+    if glob.glob(merquryfk_cn_glob_path):
+        display(Image(filename=glob.glob(merquryfk_cn_glob_path)[0]))
+    else:
+        print("MerquryFK copy number plot not available")
+    print("\n## Merqury\n")
+    if glob.glob(merqury_cn_glob_path):
+        display(Image(filename=glob.glob(merqury_cn_glob_path)[0]))
+    else:
+        print("Merqury copy number plot not available")
+    print("\n::::\n")
+
+def displayMerquryAssemblySpectra(merquryfk_asm_glob_path, merqury_asm_glob_path):
+    print("#### Merqury Assembly spectra\n")
+    print("\n:::: {.panel-tabset}\n")
+    print("## MerquryFK\n")
+    if glob.glob(merquryfk_asm_glob_path):
+        display(Image(filename=glob.glob(merquryfk_asm_glob_path)[0]))
+    else:
+        print("MerquryFK assembly spectra not available")
+    print("\n## Merqury\n")
+    if glob.glob(merqury_asm_glob_path):
+        display(Image(filename=glob.glob(merqury_asm_glob_path)[0]))
+    else:
+        print("Merqury assembly spectra plot not available")
+    print("\n::::\n")
+
+def displayMerquryFalseDuplicationEstimate(glob_path):
+    print("#### Merqury False duplication estimate")
+    print(
+        pd.read_csv(
+            glob.glob(glob_path)[0], sep="\t"
+        ).to_markdown(index=False)
+    )
+
+def displayPurgeDupsBinPercentages(glob_path):
+    assembly_summary_file = glob.glob(f"{log_path}/*-purged-*.assembly_summary")[0]
+    try:
+        # Read the assembly summary to get the assembly size
+        # Use 'header=None' and 'names' to directly assign column names
+        raw_asm_stats = pd.read_csv(
+            assembly_summary_file,
+            sep="\t",
+            skiprows=2,
+            nrows=1,
+            header=None,
+            names=['key', 'value']
+        )
+        # Convert the 'value' to an integer
+        assembly_size_bp = int(raw_asm_stats['value'].iloc[0])
+    except (FileNotFoundError, IndexError, ValueError) as e:
+        raise ValueError(f"Unable to determine assembly size from '{assembly_summary_file}': {e}") from e
+    if assembly_size_bp <= 0:
+        raise ValueError(f"Invalid assembly size found: {assembly_size_bp}")
+
+    # Use a single DataFrame to aggregate results from all BED files
+    all_bed_data = pd.DataFrame()
+    for bed_file in glob.glob(f"{log_path}/*-purged-*.dups.bed"):
+        try:
+            dup_bed = pd.read_csv(
+                bed_file,
+                sep="\t",
+                header=None,
+                names=['Contig', 'Start', 'End', 'Type', 'Partner']
+            )
+            dup_bed['Length'] = dup_bed['End'] - dup_bed['Start']
+            all_bed_data = pd.concat([all_bed_data, dup_bed], ignore_index=True)
+        except pd.errors.EmptyDataError:
+            continue # continue to next iteration of loop
+        except Exception as e:
+            print(f"Error processing {bed_file}: {e}")
+
+    # Check if any data was processed
+    if not all_bed_data.empty:
+        # Group by 'Type' and sum 'Length' for all processed files
+        summary = all_bed_data.groupby('Type')['Length'].sum().reset_index()
+        summary['Percentage'] = (summary['Length'] * 100 / assembly_size_bp).round(2).astype(str) + '%'
+        # Print the final summary in Markdown format
+        print("#### Purged content")
+        print(summary.to_markdown(index=False))
+    else:
+        print("Unable to calculate purged content percentage.")
 ```
 
 :::::

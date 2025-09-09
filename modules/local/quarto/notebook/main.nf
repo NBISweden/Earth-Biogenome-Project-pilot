@@ -4,8 +4,8 @@ process QUARTO_NOTEBOOK {
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/27/27ad4fe625a7c22fb1c8c3ee83dda7276f0e27f68385991df88b330e46e1d930/data':
-        'community.wave.seqera.io/library/quarto_pip_jupyter_multiqc_pruned:a0afd98904fa925c' }"
+        'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/ca/ca05bf35df4f90442c46f9a54f8b99aebe136608d7c78dd56fde39520b3bd620/data':
+        'community.wave.seqera.io/library/multiqc_jupyter_pandas_papermill_pruned:c3a45031dd77805d' }"
 
     input:
     tuple val(meta), path(notebook, arity: '1'), path(_aux_files)
