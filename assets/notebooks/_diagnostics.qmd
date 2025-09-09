@@ -53,6 +53,7 @@ multiqc.write_report(
 #### Define utility functions
 
 ```{python}
+#| echo: true
 def displayTsvAsTable(glob_path):
     # Get a list of all TSV files in the directory
     tsvs = glob.glob(glob_path)
