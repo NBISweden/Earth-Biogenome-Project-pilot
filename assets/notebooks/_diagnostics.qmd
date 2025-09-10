@@ -248,8 +248,26 @@ def displayMerquryFalseDuplicationEstimate(glob_path):
         ).to_markdown(index=False)
     )
 
+def displayFcsgxContaminationReport(glob_path):
+    contamination_report = glob.glob(glob_path)[0]
+    try:
+        contamination_table = pd.read_csv(
+            contamination_report,
+            sep="\t",
+            skiprows=2,
+            header=None,
+            names=['Seq ID', 'Start', 'End', 'Sequence Length', 'Action', 'Division', 'Coverage', 'Top Tax Name']
+        )
+    except (FileNotFoundError, ValueError) as e:
+        raise ValueError(f"Unable to read contamination from '{contamination_report}': {e}") from e
+
+    if not contamination_table.empty:
+        print(summary.to_markdown(index=False))
+    else:
+        print("No contamination found")
+
 def displayPurgeDupsBinPercentages(glob_path):
-    assembly_summary_file = glob.glob(f"{log_path}/*-purged-*.assembly_summary")[0]
+    assembly_summary_file = glob.glob(glob_path)[0]
     try:
         # Read the assembly summary to get the assembly size
         # Use 'header=None' and 'names' to directly assign column names
