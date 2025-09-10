@@ -32,6 +32,7 @@ workflow DECONTAMINATE {
     )
 
     FCSGX_RUNGX.out.fcs_gx_report
+        .map{ _meta, log -> log }
         .set{ logs }
 
     FCSGX_FETCHDB.out.versions.mix(
