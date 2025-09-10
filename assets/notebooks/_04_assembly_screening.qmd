@@ -2,4 +2,51 @@
 
 ## Contamination Screen
 
+### FCSGX
+
+```{python}
+#| output: asis
+if screen and glob.glob(f"{log_path}/*-decontaminated-*.fcs_gx_report.txt"):
+    displayFcsgxContaminationReport(f"{log_path}/*-decontaminated-*.fcs_gx_report.txt")
+```
+
+```{python}
+#| output: asis
+if screen and glob.glob(f"{log_path}/*-decontaminated-*.assembly_summary"):
+    displayGfastatsAssemblySummary(f"{log_path}/*-decontaminated-*.assembly_summary")
+```
+
+```{python}
+#| output: asis
+if screen and glob.glob(f"{log_path}/*-decontaminated-*_merquryfk.completeness.stats"):
+    displayAssemblyCompleteness(f"{log_path}/*-decontaminated-*_merquryfk.completeness.stats")
+    displayAssemblyQualityValue(f"{log_path}/*-decontaminated-*_merquryfk.qv")
+    if(glob.glob(f"{log_path}/*-decontaminated-*_merqury.*.qv")):
+        displayScaffoldQualityValue(f"{log_path}/*-decontaminated-*_merqury.*.qv")
+```
+
+```{python}
+#| output: asis
+if screen and (
+    glob.glob(f"{log_path}/*-decontaminated-*_merquryfk*.spectra-cn.st.png")
+    or glob.glob(f"{log_path}/*-decontaminated-*_merqury.*.spectra-cn.st.png")
+):
+    displayMerquryCopyNumberSpectra(
+        f"{log_path}/*-decontaminated-*_merquryfk*.spectra-cn.st.png",
+        f"{log_path}/*-decontaminated-*_merqury.*.spectra-cn.st.png"
+    )
+
+if screen and (
+    glob.glob(f"{log_path}/*-decontaminated-*_merquryfk.spectra-asm.st.png")
+    or glob.glob(f"{log_path}/*-decontaminated-*_merqury.spectra-asm.st.png")
+):
+    displayMerquryAssemblySpectra(
+        f"{log_path}/*-decontaminated-*_merquryfk.spectra-asm.st.png",
+        f"{log_path}/*-decontaminated-*_merqury.spectra-asm.st.png"
+    )
+
+if screen and glob.glob(f"{log_path}/*-decontaminated-*_merquryfk.false_duplications.tsv"):
+    displayMerquryFalseDuplicationEstimate(f"{log_path}/*-decontaminated-*_merquryfk.false_duplications.tsv")
+```
+
 :::::
