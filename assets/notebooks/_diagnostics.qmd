@@ -262,7 +262,7 @@ def displayFcsgxContaminationReport(glob_path):
         raise ValueError(f"Unable to read contamination from '{contamination_report}': {e}") from e
 
     if not contamination_table.empty:
-        print(summary.to_markdown(index=False))
+        print(contamination_table.to_markdown(index=False))
     else:
         print("No contamination found")
 
