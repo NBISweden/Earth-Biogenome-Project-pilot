@@ -147,6 +147,7 @@ workflow {
         DECONTAMINATE( ch_to_screen )
         ch_evaluate_assemblies = ch_evaluate_assemblies.mix( DECONTAMINATE.out.assemblies )
         ch_cleaned_assemblies = DECONTAMINATE.out.assemblies
+        ch_multiqc_files = ch_multiqc_files.mix( DECONTAMINATE.out.logs )
         ch_versions = ch_versions.mix(DECONTAMINATE.out.versions)
     } else {
         ch_cleaned_assemblies = ch_to_screen

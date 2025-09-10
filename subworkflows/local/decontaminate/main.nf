@@ -31,6 +31,9 @@ workflow DECONTAMINATE {
         true
     )
 
+    FCSGX_RUNGX.out.fcs_gx_report
+        .set{ logs }
+
     FCSGX_FETCHDB.out.versions.mix(
         FCSGX_RUNGX.out.versions,
         FCSGX_CLEAN.out.versions,
@@ -38,5 +41,6 @@ workflow DECONTAMINATE {
 
     emit:
     assemblies = ch_cleaned_assemblies
+    logs
     versions
 }
