@@ -1,4 +1,4 @@
-include { MERQURYFK_KATCOMP } from "../../../modules/nf-core/merquryfk/katcomp/main"
+include { MERQURYFK_KATCOMP } from "../../../../modules/nf-core/merquryfk/katcomp/main"
 
 workflow COMPARE_LIBRARIES {
 

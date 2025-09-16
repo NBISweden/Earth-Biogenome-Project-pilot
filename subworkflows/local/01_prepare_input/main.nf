@@ -2,7 +2,7 @@
 
 // include { UNTAR as UNTAR_TAXONOMY } from "../../../modules/nf-core/untar/main"
 // include { TAXONKIT_NAME2LINEAGE   } from "../../../modules/local/taxonkit/name2lineage"
-include { FETCH_SAMPLE_METADATA   } from "../fetch_sample_metadata/main"
+include { FETCH_SAMPLE_METADATA   } from "./fetch_sample_metadata/main"
 // include { GOAT_TAXONSEARCH        } from "../../../modules/nf-core/goat/taxonsearch/main"
 include { SAMTOOLS_FASTA          } from "../../../modules/local/samtools/fasta/main"
 include { CAT_CAT as MERGE_PACBIO } from "../../../modules/nf-core/cat/cat/main"

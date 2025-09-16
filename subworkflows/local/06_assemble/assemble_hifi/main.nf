@@ -1,6 +1,6 @@
-include { HIFIASM         } from "../../../modules/nf-core/hifiasm/main"
-include { GFATOOLS_GFA2FA } from "../../../modules/local/gfatools/gfa2fa"
-include { deepMergeMaps   } from "../../../modules/local/functions"
+include { HIFIASM         } from "../../../../modules/nf-core/hifiasm/main"
+include { GFATOOLS_GFA2FA } from "../../../../modules/local/gfatools/gfa2fa"
+include { deepMergeMaps   } from "../../../../modules/local/functions"
 
 workflow ASSEMBLE_HIFI {
     take:

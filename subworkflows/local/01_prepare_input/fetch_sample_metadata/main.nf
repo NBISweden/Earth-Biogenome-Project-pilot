@@ -1,6 +1,6 @@
-include { ENA_TAXQUERY      } from "../../../modules/local/ena/taxquery/main"
-include { GOAT_TAXONSEARCH  } from "../../../modules/nf-core/goat/taxonsearch/main"
-include { deepMergeMaps     } from "../../../modules/local/functions"
+include { ENA_TAXQUERY      } from "../../../../modules/local/ena/taxquery/main"
+include { GOAT_TAXONSEARCH  } from "../../../../modules/nf-core/goat/taxonsearch/main"
+include { deepMergeMaps     } from "../../../../modules/local/functions"
 
 workflow FETCH_SAMPLE_METADATA {
     take:
