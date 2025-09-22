@@ -1,4 +1,4 @@
-include { ASSEMBLE_HIFI } from "./assemble_hifi/main"
+include { ASSEMBLE_HIFI } from "./assemble_hifi"
 
 workflow ASSEMBLE {
     take:

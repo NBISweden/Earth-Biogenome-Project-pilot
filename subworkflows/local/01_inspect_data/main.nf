@@ -2,8 +2,8 @@ include { combineByMetaKeys                 } from "../../../modules/local/funct
 include { SEQKIT_STATS as SEQKIT_HIFI_STATS } from "../../../modules/nf-core/seqkit/stats/main"
 include { SEQKIT_STATS as SEQKIT_HIC_STATS  } from "../../../modules/nf-core/seqkit/stats/main"
 include { FASTQC                            } from "../../../modules/nf-core/fastqc/main"
-include { GENOME_PROPERTIES                 } from "./genome_properties/main"
-include { COMPARE_LIBRARIES                 } from "./compare_libraries/main"
+include { GENOME_PROPERTIES                 } from "./genome_properties"
+include { COMPARE_LIBRARIES                 } from "./compare_libraries"
 
 workflow INSPECT_DATA {
     take:

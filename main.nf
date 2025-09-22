@@ -5,34 +5,34 @@ include { combineByMetaKeys                                 } from "./modules/lo
 include { assembliesFromStage as preassembledInput          } from "./modules/local/functions"
 include { setAssemblyStage                                  } from "./modules/local/functions"
 // Data import
-include { PREPARE_INPUT                                     } from "./subworkflows/local/01_prepare_input/main"
+include { PREPARE_INPUT                                     } from "./subworkflows/local/prepare_input/main"
 // Database preparation
-include { BUILD_FASTK_DATABASE as BUILD_FASTK_HIFI_DATABASE } from "./subworkflows/local/02_build_fastk_database/main"
-include { BUILD_FASTK_DATABASE as BUILD_FASTK_HIC_DATABASE  } from "./subworkflows/local/02_build_fastk_database/main"
-include { BUILD_MERYL_DATABASE as BUILD_MERYL_HIFI_DATABASE } from "./subworkflows/local/03_build_meryl_database/main"
-include { BUILD_MERYL_DATABASE as BUILD_MERYL_HIC_DATABASE  } from "./subworkflows/local/03_build_meryl_database/main"
+include { BUILD_FASTK_DATABASE as BUILD_FASTK_HIFI_DATABASE } from "./subworkflows/local/build_fastk_database/main"
+include { BUILD_FASTK_DATABASE as BUILD_FASTK_HIC_DATABASE  } from "./subworkflows/local/build_fastk_database/main"
+include { BUILD_MERYL_DATABASE as BUILD_MERYL_HIFI_DATABASE } from "./subworkflows/local/build_meryl_database/main"
+include { BUILD_MERYL_DATABASE as BUILD_MERYL_HIC_DATABASE  } from "./subworkflows/local/build_meryl_database/main"
 // Data conversion
-include { CONVERT_FASTQ_CRAM                                } from "./subworkflows/local/04_convert_fastq_cram/main"
+include { CONVERT_FASTQ_CRAM                                } from "./subworkflows/local/02_convert_fastq_cram/main"
 // Data inspection
-include { INSPECT_DATA                                      } from "./subworkflows/local/05_inspect_data/main"
+include { INSPECT_DATA                                      } from "./subworkflows/local/01_inspect_data/main"
 // Assembly
-include { ASSEMBLE                                          } from "./subworkflows/local/06_assemble/main"
-include { ASSEMBLE_ORGANELLES                               } from "./subworkflows/local/07_assemble_organelles/main"
+include { ASSEMBLE                                          } from "./subworkflows/local/03_assemble/main"
+include { ASSEMBLE_ORGANELLES                               } from "./subworkflows/local/03_assemble_organelles/main"
 // Decontamination
-include { DECONTAMINATE                                     } from "./subworkflows/local/08_decontaminate/main"
+include { DECONTAMINATE                                     } from "./subworkflows/local/04_decontaminate/main"
 // Purge duplicates
-include { PURGE_DUPLICATES                                  } from "./subworkflows/local/09_purge_dups/main"
+include { PURGE_DUPLICATES                                  } from "./subworkflows/local/05_purge_dups/main"
 // Scaffold
-include { SCAFFOLD                                          } from "./subworkflows/local/10_scaffold/main.nf"
+include { SCAFFOLD                                          } from "./subworkflows/local/07_scaffold/main"
 // Curation
-include { SCAFFOLD_CURATION                                 } from "./subworkflows/local/11_scaffold_curation/main.nf"
+include { SCAFFOLD_CURATION                                 } from "./subworkflows/local/08_scaffold_curation/main"
 // Evaluate assemblies
-include { COMPARE_ASSEMBLIES                                } from "./subworkflows/local/12_compare_assemblies/main"
-include { EVALUATE_ASSEMBLY                                 } from "./subworkflows/local/13_evaluate_assembly/main"
+include { COMPARE_ASSEMBLIES                                } from "./subworkflows/local/10_compare_assemblies/main"
+include { EVALUATE_ASSEMBLY                                 } from "./subworkflows/local/evaluate_assembly/main"
 // Align RNAseq
-include { ALIGN_RNASEQ                                      } from "./subworkflows/local/14_align_rnaseq/main"
+include { ALIGN_RNASEQ                                      } from "./subworkflows/local/09_align_rnaseq/main"
 // Report
-include { ASSEMBLY_REPORT                                   } from "./subworkflows/local/15_assembly_report/main"
+include { ASSEMBLY_REPORT                                   } from "./subworkflows/local/assembly_report/main"
 
 /*
  * Development: See docs/development to understand the workflow programming model and

@@ -1,9 +1,9 @@
 #! /usr/bin/env nextflow
-include { FASTK_HISTEX } from "../../../../modules/nf-core/fastk/histex/main"
-include { GENESCOPEFK  } from "../../../../modules/nf-core/genescopefk/main"
+include { FASTK_HISTEX } from "../../../modules/nf-core/fastk/histex/main"
+include { GENESCOPEFK  } from "../../../modules/nf-core/genescopefk/main"
 
-include { MERQURYFK_PLOIDYPLOT } from "../../../../modules/nf-core/merquryfk/ploidyplot/main"
-include { MERQURYFK_KATGC      } from "../../../../modules/nf-core/merquryfk/katgc/main"
+include { MERQURYFK_PLOIDYPLOT } from "../../../modules/nf-core/merquryfk/ploidyplot/main"
+include { MERQURYFK_KATGC      } from "../../../modules/nf-core/merquryfk/katgc/main"
 
 workflow GENOME_PROPERTIES {
 
