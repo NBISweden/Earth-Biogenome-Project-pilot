@@ -1,0 +1,19 @@
+Changes in component 'nf-core/samtools/import'
+'modules/nf-core/samtools/import/environment.yml' is unchanged
+'modules/nf-core/samtools/import/meta.yml' is unchanged
+Changes in 'samtools/import/main.nf':
+--- modules/nf-core/samtools/import/main.nf
++++ modules/nf-core/samtools/import/main.nf
+@@ -1,6 +1,6 @@
+ process SAMTOOLS_IMPORT {
+     tag "$meta.id"
+-    label 'process_single'
++    label 'process_low'
+ 
+     conda "${moduleDir}/environment.yml"
+     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+
+'modules/nf-core/samtools/import/tests/main.nf.test.snap' is unchanged
+'modules/nf-core/samtools/import/tests/tags.yml' is unchanged
+'modules/nf-core/samtools/import/tests/main.nf.test' is unchanged
+************************************************************
