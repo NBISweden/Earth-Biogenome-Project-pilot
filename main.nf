@@ -27,7 +27,7 @@ include { SCAFFOLD                                          } from "./subworkflo
 // Curation
 include { SCAFFOLD_CURATION                                 } from "./subworkflows/local/08_scaffold_curation/main"
 // Evaluate assemblies
-include { COMPARE_ASSEMBLIES                                } from "./subworkflows/local/10_compare_assemblies/main"
+include { COMPARE_ASSEMBLIES                                } from "./subworkflows/local/compare_assemblies/main"
 include { EVALUATE_ASSEMBLY                                 } from "./subworkflows/local/evaluate_assembly/main"
 // Align RNAseq
 include { ALIGN_RNASEQ                                      } from "./subworkflows/local/09_align_rnaseq/main"
