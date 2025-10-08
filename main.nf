@@ -12,25 +12,25 @@ include { BUILD_FASTK_DATABASE as BUILD_FASTK_HIC_DATABASE  } from "./subworkflo
 include { BUILD_MERYL_DATABASE as BUILD_MERYL_HIFI_DATABASE } from "./subworkflows/local/build_meryl_database/main"
 include { BUILD_MERYL_DATABASE as BUILD_MERYL_HIC_DATABASE  } from "./subworkflows/local/build_meryl_database/main"
 // Data conversion
-include { CONVERT_FASTQ_CRAM                                } from "./subworkflows/local/convert_fastq_cram/main"
+include { CONVERT_FASTQ_CRAM                                } from "./subworkflows/local/02_convert_fastq_cram/main"
 // Data inspection
-include { INSPECT_DATA                                      } from "./subworkflows/local/inspect_data/main"
+include { INSPECT_DATA                                      } from "./subworkflows/local/01_inspect_data/main"
 // Assembly
-include { ASSEMBLE                                          } from "./subworkflows/local/assemble/main"
-include { ASSEMBLE_ORGANELLES                               } from "./subworkflows/local/assemble_organelles/main"
+include { ASSEMBLE                                          } from "./subworkflows/local/03_assemble/main"
+include { ASSEMBLE_ORGANELLES                               } from "./subworkflows/local/03_assemble/assemble_organelles"
 // Decontamination
-include { DECONTAMINATE                                     } from "./subworkflows/local/decontaminate/main"
+include { DECONTAMINATE                                     } from "./subworkflows/local/04_decontaminate/main"
 // Purge duplicates
-include { PURGE_DUPLICATES                                  } from "./subworkflows/local/purge_dups/main"
+include { PURGE_DUPLICATES                                  } from "./subworkflows/local/05_purge_dups/main"
 // Scaffold
-include { SCAFFOLD                                          } from "./subworkflows/local/scaffold/main.nf"
+include { SCAFFOLD                                          } from "./subworkflows/local/07_scaffold/main"
 // Curation
-include { SCAFFOLD_CURATION                                 } from "./subworkflows/local/scaffold_curation/main.nf"
+include { SCAFFOLD_CURATION                                 } from "./subworkflows/local/08_scaffold_curation/main"
 // Evaluate assemblies
 include { COMPARE_ASSEMBLIES                                } from "./subworkflows/local/compare_assemblies/main"
 include { EVALUATE_ASSEMBLY                                 } from "./subworkflows/local/evaluate_assembly/main"
 // Align RNAseq
-include { ALIGN_RNASEQ                                      } from "./subworkflows/local/align_rnaseq/main"
+include { ALIGN_RNASEQ                                      } from "./subworkflows/local/09_align_rnaseq/main"
 // Report
 include { ASSEMBLY_REPORT                                   } from "./subworkflows/local/assembly_report/main"
 
