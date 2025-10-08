@@ -17,7 +17,7 @@ include { CONVERT_FASTQ_CRAM                                } from "./subworkflo
 include { INSPECT_DATA                                      } from "./subworkflows/local/01_inspect_data/main"
 // Assembly
 include { ASSEMBLE                                          } from "./subworkflows/local/03_assemble/main"
-include { ASSEMBLE_ORGANELLES                               } from "./subworkflows/local/03_assemble_organelles/main"
+include { ASSEMBLE_ORGANELLES                               } from "./subworkflows/local/03_assemble/assemble_organelles"
 // Decontamination
 include { DECONTAMINATE                                     } from "./subworkflows/local/04_decontaminate/main"
 // Purge duplicates
