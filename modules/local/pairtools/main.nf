@@ -56,8 +56,8 @@ process PAIRTOOLS {
         # Parse and sort each BAM
 
         for BAM in ${bam.join(' ')}; do
-            ( BAM_PREFIX=\$(basename "\$BAM" .bam)
-            pairtools parse \\
+            BAM_PREFIX=\$(basename "\$BAM" .bam)
+            ( pairtools parse \\
                 -c ${chromsizes} \\
                 ${args} \\
                 --output-stats \$BAM_PREFIX.pairsam.stat \\
