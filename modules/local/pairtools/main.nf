@@ -62,6 +62,8 @@ process PAIRTOOLS {
             pairtools parse \\
                 -c ${chromsizes} \\
                 ${args} \\
+                --nproc-in ${cpusPerJob} \\
+                --nproc-out ${cpusPerJob} \\
                 --output-stats \$BAM_PREFIX.pairsam.stat \\
                 \$BAM | \\
             pairtools sort \\
@@ -82,7 +84,8 @@ process PAIRTOOLS {
             ${args4} \\
             --output-stats ${prefix}_dedup.pairs.stat | \\
         pairtools split \\
-            --nproc-in ${task.cpus} --nproc-out ${task.cpus} \\
+            --nproc-in ${task.cpus} \\
+            --nproc-out ${task.cpus} \\
             --output-pairs ${prefix}.split.pairs.gz \\
             --output-sam - \\
             ${args5} | \\
@@ -114,7 +117,8 @@ process PAIRTOOLS {
             ${args4} \\
             --output-stats ${prefix}_dedup.pairs.stat | \\
         pairtools split \\
-            --nproc-in ${task.cpus} --nproc-out ${task.cpus} \\
+            --nproc-in ${task.cpus} \\
+            --nproc-out ${task.cpus} \\
             --output-pairs ${prefix}.split.pairs.gz \\
             --output-sam - \\
             ${args5} | \\
