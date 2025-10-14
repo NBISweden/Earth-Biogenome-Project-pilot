@@ -37,9 +37,10 @@ process PAIRTOOLS {
     def prefix = task.ext.prefix ?: "${meta.id}"
     def bamCollection = bam instanceof Collection ? bam : [bam]
     def bamCount = bamCollection.size()
+    def maxParallel = Math.min(bamCount, task.cpus)
     def buffer = task.memory.toGiga().intdiv(2)
-    def bufferPerJob = (buffer / bamCount).max(2).toInteger()
-    def cpusPerJob = (task.cpus / bamCount).max(1)
+    def bufferPerJob = (buffer / maxParallel).max(1).toInteger()
+    def cpusPerJob = (task.cpus / maxParallel).max(1)
     def samtools_command = sort_bam ? 'sort' : 'view'
     def extension_pattern = /(--output-fmt|-O)+\s+(\S+)/
     def extension_matcher =  (args6 =~ extension_pattern)
@@ -55,9 +56,10 @@ process PAIRTOOLS {
 
         # Parse and sort each BAM
 
-        for BAM in ${bam.join(' ')}; do
+        printf "%s\n" ${bam.join(' ')} | xargs -I {} -P ${maxParallel} bash -c '
+            BAM="{}"
             BAM_PREFIX=\$(basename "\$BAM" .bam)
-            ( pairtools parse \\
+            pairtools parse \\
                 -c ${chromsizes} \\
                 ${args} \\
                 --output-stats \$BAM_PREFIX.pairsam.stat \\
@@ -66,10 +68,8 @@ process PAIRTOOLS {
                 ${args2} \\
                 --nproc ${cpusPerJob} \\
                 --memory ${bufferPerJob}G \\
-                --output \$BAM_PREFIX.pairs_temp.gz ) &
-        done
-
-        wait
+                --output \$BAM_PREFIX.pairs_temp.gz
+        '
 
         # Merge BAMs and deduplicate
 
@@ -108,8 +108,8 @@ process PAIRTOOLS {
             ${bam} | \\
         pairtools sort \\
             ${args2} \\
-            --nproc ${cpusPerJob} \\
-            --memory ${bufferPerJob}G | \\
+            --nproc ${task.cpus} \\
+            --memory ${buffer}G | \\
         pairtools dedup \\
             ${args4} \\
             --output-stats ${prefix}_dedup.pairs.stat | \\
