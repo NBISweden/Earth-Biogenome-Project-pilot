@@ -54,16 +54,15 @@ process PAIRTOOLS {
     if (( ${bamCount} > 1 )); then
 
         # Parse and sort each BAM
+
         for BAM in ${bam.join(' ')}; do
             ( BAM_PREFIX=\$(basename "\$BAM" .bam)
-            pairtools \\
-                parse \\
+            pairtools parse \\
                 -c ${chromsizes} \\
                 ${args} \\
                 --output-stats \$BAM_PREFIX.pairsam.stat \\
                 \$BAM | \\
-            pairtools \\
-                sort \\
+            pairtools sort \\
                 ${args2} \\
                 --nproc ${cpusPerJob} \\
                 --memory ${bufferPerJob}G \\
@@ -73,6 +72,7 @@ process PAIRTOOLS {
         wait
 
         # Merge BAMs and deduplicate
+
         pairtools merge \\
             ${args3} \\
             --nproc ${task.cpus} \\
@@ -86,7 +86,12 @@ process PAIRTOOLS {
             --output-pairs ${prefix}.split.pairs.gz \\
             --output-sam - \\
             ${args5} | \\
-        samtools ${samtools_command} ${args6} -@ ${task.cpus} ${reference} -o ${prefix}.split.pairs.${extension} -
+        samtools ${samtools_command} \\
+        ${args6} \\
+        -@ ${task.cpus} \\
+        ${reference} \\
+        -o ${prefix}.split.pairs.${extension} \\
+        -
 
         # Clean up intermediate pairs files
 
@@ -96,14 +101,12 @@ process PAIRTOOLS {
 
     else
 
-        pairtools \\
-            parse \\
+        pairtools parse \\
             -c ${chromsizes} \\
             ${args} \\
             --output-stats \$(basename "${bam}" .bam).pairsam.stat \\
             ${bam} | \\
-        pairtools \\
-            sort \\
+        pairtools sort \\
             ${args2} \\
             --nproc ${cpusPerJob} \\
             --memory ${bufferPerJob}G | \\
@@ -115,7 +118,12 @@ process PAIRTOOLS {
             --output-pairs ${prefix}.split.pairs.gz \\
             --output-sam - \\
             ${args5} | \\
-        samtools ${samtools_command} ${args6} -@ ${task.cpus} ${reference} -o ${prefix}.split.pairs.${extension} -
+        samtools ${samtools_command} \\
+        ${args6} \\
+        -@ ${task.cpus} \\
+        ${reference} \\
+        -o ${prefix}.split.pairs.${extension} \\
+        -
 
     fi
 
