@@ -80,7 +80,7 @@ process PAIRTOOLS {
             *.pairs_temp.gz | \\
         pairtools dedup \\
             ${args4} \\
-            --output-stats ${prefix}.pairs.stat | \\
+            --output-stats ${prefix}_dedup.pairs.stat | \\
         pairtools split \\
             --nproc-in ${task.cpus} --nproc-out ${task.cpus} \\
             --output-pairs ${prefix}.split.pairs.gz \\
@@ -109,7 +109,7 @@ process PAIRTOOLS {
             --memory ${bufferPerJob}G | \\
         pairtools dedup \\
             ${args4} \\
-            --output-stats ${prefix}.pairs.stat | \\
+            --output-stats ${prefix}_dedup.pairs.stat | \\
         pairtools split \\
             --nproc-in ${task.cpus} --nproc-out ${task.cpus} \\
             --output-pairs ${prefix}.split.pairs.gz \\
