@@ -227,54 +227,6 @@
                             "modules"
                         ]
                     },
-                    "pairtools/dedup": {
-                        "branch": "master",
-                        "git_sha": "41dfa3f7c0ffabb96a6a813fe321c6d1cc5b6e46",
-                        "installed_by": [
-                            "modules"
-                        ],
-                        "patch": "modules/nf-core/pairtools/dedup/pairtools-dedup.diff"
-                    },
-                    "pairtools/merge": {
-                        "branch": "master",
-                        "git_sha": "41dfa3f7c0ffabb96a6a813fe321c6d1cc5b6e46",
-                        "installed_by": [
-                            "modules"
-                        ],
-                        "patch": "modules/nf-core/pairtools/merge/pairtools-merge.diff"
-                    },
-                    "pairtools/parse": {
-                        "branch": "master",
-                        "git_sha": "41dfa3f7c0ffabb96a6a813fe321c6d1cc5b6e46",
-                        "installed_by": [
-                            "modules"
-                        ],
-                        "patch": "modules/nf-core/pairtools/parse/pairtools-parse.diff"
-                    },
-                    "pairtools/select": {
-                        "branch": "master",
-                        "git_sha": "41dfa3f7c0ffabb96a6a813fe321c6d1cc5b6e46",
-                        "installed_by": [
-                            "modules"
-                        ],
-                        "patch": "modules/nf-core/pairtools/select/pairtools-select.diff"
-                    },
-                    "pairtools/sort": {
-                        "branch": "master",
-                        "git_sha": "41dfa3f7c0ffabb96a6a813fe321c6d1cc5b6e46",
-                        "installed_by": [
-                            "modules"
-                        ],
-                        "patch": "modules/nf-core/pairtools/sort/pairtools-sort.diff"
-                    },
-                    "pairtools/split": {
-                        "branch": "master",
-                        "git_sha": "41dfa3f7c0ffabb96a6a813fe321c6d1cc5b6e46",
-                        "installed_by": [
-                            "modules"
-                        ],
-                        "patch": "modules/nf-core/pairtools/split/pairtools-split.diff"
-                    },
                     "pilon": {
                         "branch": "master",
                         "git_sha": "240937a2a9c30298110753292be041188891f2cb",
