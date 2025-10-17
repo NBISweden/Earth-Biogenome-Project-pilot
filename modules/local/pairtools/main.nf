@@ -35,9 +35,6 @@ process PAIRTOOLS {
     def args5 = task.ext.args5 ?: ''
     def args6 = task.ext.args6 ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    def bamCollection = bam instanceof Collection ? bam : [bam]
-    def bamCount = bamCollection.size()
-    def halfMemoryG = task.memory.toGiga().intdiv(2)
     def samtools_command = sort_bam ? 'sort' : 'view'
     def extension_pattern = /(--output-fmt|-O)+\s+(\S+)/
     def extension_matcher =  (args6 =~ extension_pattern)
@@ -47,80 +44,46 @@ process PAIRTOOLS {
     """
     export MPLCONFIGDIR=tmp
 
-    if (( ${bamCount} > 1 )); then
+    BAM_FILES=(${bam.join(' ')})
+    TEMP_FILES=()
 
-        # If multiple BAM files, parse and sort each to a temp file
-        for BAM in ${bam.join(' ')}; do
-            BAM_PREFIX=\$(basename "\$BAM" .bam)
-            pairtools parse \\
-                -c ${chromsizes} \\
-                ${args} \\
-                --output-stats \$BAM_PREFIX.pairsam.stat \\
-                \$BAM | \\
-            pairtools sort \\
-                ${args2} \\
-                --nproc ${task.cpus} \\
-                --memory ${halfMemoryG}G \\
-                --output \$BAM_PREFIX.pairs_temp.gz
-        done
-
-        # Merge and process temp files
-        pairtools merge \\
-            ${args3} \\
-            --nproc ${task.cpus} \\
-            --memory ${halfMemoryG}G \\
-            *.pairs_temp.gz | \\
-        pairtools dedup \\
-            ${args4} \\
-            --output-stats ${prefix}_dedup.pairs.stat | \\
-        pairtools split \\
-            --nproc-in ${task.cpus} \\
-            --nproc-out ${task.cpus} \\
-            --output-pairs ${prefix}.split.pairs.gz \\
-            --output-sam - \\
-            ${args5} | \\
-        samtools ${samtools_command} \\
-        ${args6} \\
-        -@ ${task.cpus} \\
-        ${reference} \\
-        -o ${prefix}.split.pairs.${extension} \\
-        -
-
-        # Clean up temp files
-        rm *.pairs_temp.gz
-
-    else
-
-        # Single BAM, stream directly
+    for BAM in "\${BAM_FILES[@]}"; do
+        BAM_PREFIX=\$(basename "\$BAM" .bam)
+        TEMP_FILE="\$BAM_PREFIX.pairs_temp.gz"
+        TEMP_FILES+=("\$TEMP_FILE")
         pairtools parse \\
             -c ${chromsizes} \\
             ${args} \\
-            --output-stats \$(basename "${bam}" .bam).pairsam.stat \\
-            ${bam} | \\
+            --output-stats \$BAM_PREFIX.pairsam.stat \\
+            \$BAM | \\
         pairtools sort \\
             ${args2} \\
             --nproc ${task.cpus} \\
-            --memory ${halfMemoryG}G | \\
-        pairtools dedup \\
-            ${args4} \\
-            --output-stats ${prefix}_dedup.pairs.stat | \\
-        pairtools split \\
-            --nproc-in ${task.cpus} \\
-            --nproc-out ${task.cpus} \\
-            --output-pairs ${prefix}.split.pairs.gz \\
-            --output-sam - \\
-            ${args5} | \\
-        samtools ${samtools_command} \\
-        ${args6} \\
-        -@ ${task.cpus} \\
-        ${reference} \\
-        -o ${prefix}.split.pairs.${extension} \\
-        -
+            --output \$TEMP_FILE
+    done
 
-    fi
-    """
-    <<
-    """
+    pairtools merge \\
+        ${args3} \\
+        --nproc ${task.cpus} \\
+        "\${TEMP_FILES[@]}" | \\
+    pairtools dedup \\
+        ${args4} \\
+        --output-stats ${prefix}_dedup.pairs.stat | \\
+    pairtools split \\
+        --nproc-in ${task.cpus} \\
+        --nproc-out ${task.cpus} \\
+        --output-pairs ${prefix}.split.pairs.gz \\
+        --output-sam - \\
+        ${args5} | \\
+    samtools ${samtools_command} \\
+    ${args6} \\
+    -@ ${task.cpus} \\
+    ${reference} \\
+    -o ${prefix}.split.pairs.${extension} \\
+    -
+
+    rm -f "\${TEMP_FILES[@]}"
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         pairtools: \$(pairtools --version 2>&1 | sed 's/pairtools, version //')
