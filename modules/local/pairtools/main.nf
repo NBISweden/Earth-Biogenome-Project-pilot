@@ -59,12 +59,14 @@ process PAIRTOOLS {
         pairtools sort \\
             ${args2} \\
             --nproc ${task.cpus} \\
+            --memory ${task.memory.toGiga()}G \\
             --output \$TEMP_FILE
     done
 
     pairtools merge \\
         ${args3} \\
         --nproc ${task.cpus} \\
+        --memory ${task.memory.toGiga()}G \\
         "\${TEMP_FILES[@]}" | \\
     pairtools dedup \\
         ${args4} \\
