@@ -37,10 +37,7 @@ process PAIRTOOLS {
     def prefix = task.ext.prefix ?: "${meta.id}"
     def bamCollection = bam instanceof Collection ? bam : [bam]
     def bamCount = bamCollection.size()
-    def maxParallel = Math.min(bamCount, task.cpus)
-    def buffer = task.memory.toGiga().intdiv(2)
-    def bufferPerJob = (buffer / maxParallel).max(1).toInteger()
-    def cpusPerJob = (task.cpus / maxParallel).max(1)
+    def halfMemoryG = task.memory.toGiga().intdiv(2)
     def samtools_command = sort_bam ? 'sort' : 'view'
     def extension_pattern = /(--output-fmt|-O)+\s+(\S+)/
     def extension_matcher =  (args6 =~ extension_pattern)
@@ -50,35 +47,28 @@ process PAIRTOOLS {
     """
     export MPLCONFIGDIR=tmp
 
-    # Multiple BAMs
-
     if (( ${bamCount} > 1 )); then
 
-        # Parse and sort each BAM
-
-        printf "%s\n" ${bam.join(' ')} | xargs -I {} -P ${maxParallel} bash -c '
-            BAM="{}"
+        # If multiple BAM files, parse and sort each to a temp file
+        for BAM in ${bam.join(' ')}; do
             BAM_PREFIX=\$(basename "\$BAM" .bam)
             pairtools parse \\
                 -c ${chromsizes} \\
                 ${args} \\
-                --nproc-in ${cpusPerJob} \\
-                --nproc-out ${cpusPerJob} \\
                 --output-stats \$BAM_PREFIX.pairsam.stat \\
                 \$BAM | \\
             pairtools sort \\
                 ${args2} \\
-                --nproc ${cpusPerJob} \\
-                --memory ${bufferPerJob}G \\
+                --nproc ${task.cpus} \\
+                --memory ${halfMemoryG}G \\
                 --output \$BAM_PREFIX.pairs_temp.gz
-        '
+        done
 
-        # Merge BAMs and deduplicate
-
+        # Merge and process temp files
         pairtools merge \\
             ${args3} \\
             --nproc ${task.cpus} \\
-            --memory ${buffer}G \\
+            --memory ${halfMemoryG}G \\
             *.pairs_temp.gz | \\
         pairtools dedup \\
             ${args4} \\
@@ -96,14 +86,12 @@ process PAIRTOOLS {
         -o ${prefix}.split.pairs.${extension} \\
         -
 
-        # Clean up intermediate pairs files
-
+        # Clean up temp files
         rm *.pairs_temp.gz
-
-    # Single BAM
 
     else
 
+        # Single BAM, stream directly
         pairtools parse \\
             -c ${chromsizes} \\
             ${args} \\
@@ -112,7 +100,7 @@ process PAIRTOOLS {
         pairtools sort \\
             ${args2} \\
             --nproc ${task.cpus} \\
-            --memory ${buffer}G | \\
+            --memory ${halfMemoryG}G | \\
         pairtools dedup \\
             ${args4} \\
             --output-stats ${prefix}_dedup.pairs.stat | \\
@@ -130,7 +118,9 @@ process PAIRTOOLS {
         -
 
     fi
-
+    """
+    <<
+    """
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         pairtools: \$(pairtools --version 2>&1 | sed 's/pairtools, version //')
