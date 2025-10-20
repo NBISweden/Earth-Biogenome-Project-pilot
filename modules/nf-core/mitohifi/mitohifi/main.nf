@@ -14,8 +14,8 @@ process MITOHIFI_MITOHIFI {
     val mito_code
 
     output:
-    tuple val(meta), path("*mitogenome.fasta")               , emit: fasta
-    tuple val(meta), path("*contigs_stats.tsv")              , emit: stats
+    tuple val(meta), path("*mitogenome.fasta")               , emit: fasta, optional: true
+    tuple val(meta), path("*contigs_stats.tsv")              , emit: stats, optional: true
     tuple val(meta), path("*gb")                             , emit: gb, optional: true
     tuple val(meta), path("*gff")                            , emit: gff, optional: true
     tuple val(meta), path("*all_potential_contigs.fa")       , emit: all_potential_contigs, optional: true
@@ -50,12 +50,15 @@ process MITOHIFI_MITOHIFI {
     def fasta = ( zipped ? input.name - '.gz' : input )
     """
     ${zipped ? "gzip -dc $input >" : "cp ${input}"} ${fasta}
+
+    set +e
     mitohifi.py -${input_mode} ${fasta} \\
         -f ${ref_fa} \\
         -g ${ref_gb} \\
         -o ${mito_code} \\
         -t $task.cpus ${args}
-    
+    set -e
+
     # Rename files to include prefix
     find . -maxdepth 1 -type f ! -name '.*' -exec sh -c 'for f do mv "\$f" "${prefix}.\${f#./}"; done' sh {} +
 
@@ -74,7 +77,7 @@ process MITOHIFI_MITOHIFI {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        mitohifi: \$( mitohifi.py --version 2>&1 | head -n1 | sed 's/^.*MitoHiFi //; s/ .*\$//')
+        mitohifi: \$( mitohifi.py -v | sed 's/.* //' )
     END_VERSIONS
     """
 }
