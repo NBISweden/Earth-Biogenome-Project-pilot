@@ -1,16 +1,19 @@
-Changes in module 'nf-core/mitohifi/mitohifi'
+Changes in component 'nf-core/mitohifi/mitohifi'
+Changes in 'mitohifi/mitohifi/main.nf':
 --- modules/nf-core/mitohifi/mitohifi/main.nf
 +++ modules/nf-core/mitohifi/mitohifi/main.nf
-@@ -14,7 +14,7 @@
+@@ -14,8 +14,8 @@
      val mito_code
  
      output:
 -    tuple val(meta), path("*fasta")                          , emit: fasta
-+    tuple val(meta), path("*mitogenome.fasta")               , emit: fasta
-     tuple val(meta), path("*contigs_stats.tsv")              , emit: stats
+-    tuple val(meta), path("*contigs_stats.tsv")              , emit: stats
++    tuple val(meta), path("*mitogenome.fasta")               , emit: fasta, optional: true
++    tuple val(meta), path("*contigs_stats.tsv")              , emit: stats, optional: true
      tuple val(meta), path("*gb")                             , emit: gb, optional: true
      tuple val(meta), path("*gff")                            , emit: gff, optional: true
-@@ -40,17 +40,25 @@
+     tuple val(meta), path("*all_potential_contigs.fa")       , emit: all_potential_contigs, optional: true
+@@ -40,32 +40,44 @@
      if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
          error "MitoHiFi module does not support Conda. Please use Docker / Singularity instead."
      }
@@ -27,19 +30,23 @@ Changes in module 'nf-core/mitohifi/mitohifi'
      """
 -    mitohifi.py -${input_mode} ${input} \\
 +    ${zipped ? "gzip -dc $input >" : "cp ${input}"} ${fasta}
++
++    set +e
 +    mitohifi.py -${input_mode} ${fasta} \\
          -f ${ref_fa} \\
          -g ${ref_gb} \\
          -o ${mito_code} \\
          -t $task.cpus ${args}
-+    
++    set -e
++
 +    # Rename files to include prefix
 +    find . -maxdepth 1 -type f ! -name '.*' -exec sh -c 'for f do mv "\$f" "${prefix}.\${f#./}"; done' sh {} +
 +
      cat <<-END_VERSIONS > versions.yml
      "${task.process}":
-         mitohifi: \$( mitohifi.py --version 2>&1 | head -n1 | sed 's/^.*MitoHiFi //; s/ .*\$//' )
-@@ -58,10 +66,11 @@
+-        mitohifi: \$( mitohifi.py --version 2>&1 | head -n1 | sed 's/^.*MitoHiFi //; s/ .*\$//' )
++        mitohifi: \$( mitohifi.py -v | sed 's/.* //' )
+     END_VERSIONS
      """
  
      stub:
@@ -54,5 +61,11 @@ Changes in module 'nf-core/mitohifi/mitohifi'
  
      cat <<-END_VERSIONS > versions.yml
      "${task.process}":
+-        mitohifi: \$( mitohifi.py --version 2>&1 | head -n1 | sed 's/^.*MitoHiFi //; s/ .*\$//')
++        mitohifi: \$( mitohifi.py -v | sed 's/.* //' )
+     END_VERSIONS
+     """
+ }
 
+'modules/nf-core/mitohifi/mitohifi/meta.yml' is unchanged
 ************************************************************
