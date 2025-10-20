@@ -9,9 +9,9 @@ process MITOHIFI_FINDMITOREFERENCE {
     tuple val(meta), val(species)
 
     output:
-    tuple val(meta), path("*.fasta"), optional: true, emit: fasta
-    tuple val(meta), path("*.gb")   , optional: true, emit: gb
-    path "versions.yml"                             , emit: versions
+    tuple val(meta), path("*.fasta"), emit: fasta, optional: true
+    tuple val(meta), path("*.gb")   , emit: gb, optional: true
+    path "versions.yml"             , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
