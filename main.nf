@@ -17,7 +17,6 @@ include { CONVERT_FASTQ_CRAM                                } from "./subworkflo
 include { INSPECT_DATA                                      } from "./subworkflows/local/01_inspect_data/main"
 // Assembly
 include { ASSEMBLE                                          } from "./subworkflows/local/03_assemble/main"
-include { ASSEMBLE_ORGANELLES                               } from "./subworkflows/local/03_assemble/assemble_organelles"
 // Decontamination
 include { DECONTAMINATE                                     } from "./subworkflows/local/04_decontaminate/main"
 // Purge duplicates
@@ -117,7 +116,12 @@ workflow {
     // Assemble
     if ( 'assemble' in workflow_steps ) {
         // Run assemblers
-        ASSEMBLE ( PREPARE_INPUT.out.hifi_merged )
+        ASSEMBLE (
+                PREPARE_INPUT.out.hifi_merged,
+                params.organelle_assembly_mode
+                // TODO create & propagate new param to turn on/off nuclear assembly - the other options are available (no assembly, nuclear only, nuclear + mito w/ reads, nuclear + mito w/ contigs)
+        )
+        // TODO organelle output channels
         ch_evaluate_assemblies = ch_evaluate_assemblies.mix( ASSEMBLE.out.raw_assemblies )
         ch_raw_assemblies = ASSEMBLE.out.raw_assemblies
         ch_multiqc_files = ch_multiqc_files.mix( ASSEMBLE.out.logs )
@@ -128,15 +132,6 @@ workflow {
     ch_raw_assemblies = ch_raw_assemblies.mix(
         preassembledInput( PREPARE_INPUT.out.assemblies, 'raw' )
     ).dump(tag: 'Assemblies: Raw', pretty: true)
-
-    // Organelle assembly
-    if ( params.organelle_assembly_mode == 'reads' ) {
-        // TODO: Add organelle assembly from reads
-    } else if ( params.organelle_assembly_mode == 'contigs' ){
-        ASSEMBLE_ORGANELLES ( ch_raw_assemblies )
-        ch_versions = ch_versions.mix(ASSEMBLE_ORGANELLES.out.versions)
-        // TODO: filter organelles from assemblies
-    } // else params.organelle_assembly_mode == 'none'
 
     // Contamination screen
     ch_to_screen = setAssemblyStage (
