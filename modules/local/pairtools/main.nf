@@ -78,11 +78,11 @@ process PAIRTOOLS {
         --output-sam - \\
         ${args5} | \\
     samtools ${samtools_command} \\
-    ${args6} \\
-    -@ ${task.cpus} \\
-    ${reference} \\
-    -o ${prefix}.split.pairs.${extension} \\
-    -
+        ${args6} \\
+        -@ ${task.cpus} \\
+        ${reference} \\
+        -o ${prefix}.split.pairs.${extension} \\
+        -
 
     rm -f "\${TEMP_FILES[@]}"
 
