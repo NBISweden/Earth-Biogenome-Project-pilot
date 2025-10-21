@@ -2,7 +2,15 @@ Changes in component 'nf-core/mitohifi/mitohifi'
 Changes in 'mitohifi/mitohifi/main.nf':
 --- modules/nf-core/mitohifi/mitohifi/main.nf
 +++ modules/nf-core/mitohifi/mitohifi/main.nf
-@@ -14,8 +14,8 @@
+@@ -1,7 +1,6 @@
+ process MITOHIFI_MITOHIFI {
+     tag "$meta.id"
+     label 'process_high'
+-
+ 
+     // Docker image available at the project github repository
+     container 'ghcr.io/marcelauliano/mitohifi:master'
+@@ -14,8 +13,8 @@
      val mito_code
  
      output:
@@ -13,7 +21,7 @@ Changes in 'mitohifi/mitohifi/main.nf':
      tuple val(meta), path("*gb")                             , emit: gb, optional: true
      tuple val(meta), path("*gff")                            , emit: gff, optional: true
      tuple val(meta), path("*all_potential_contigs.fa")       , emit: all_potential_contigs, optional: true
-@@ -40,32 +40,44 @@
+@@ -40,32 +39,54 @@
      if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
          error "MitoHiFi module does not support Conda. Please use Docker / Singularity instead."
      }
@@ -31,6 +39,7 @@ Changes in 'mitohifi/mitohifi/main.nf':
 -    mitohifi.py -${input_mode} ${input} \\
 +    ${zipped ? "gzip -dc $input >" : "cp ${input}"} ${fasta}
 +
++    # override workflow exit on mitohifi.py error (issues: #277, #86, #145)
 +    set +e
 +    mitohifi.py -${input_mode} ${fasta} \\
          -f ${ref_fa} \\
@@ -41,6 +50,15 @@ Changes in 'mitohifi/mitohifi/main.nf':
 +
 +    # Rename files to include prefix
 +    find . -maxdepth 1 -type f ! -name '.*' -exec sh -c 'for f do mv "\$f" "${prefix}.\${f#./}"; done' sh {} +
++
++    # Test: for success either both or no main outputs found, fail if only one found
++
++    FASTA=\$(find . -maxdepth 1 -name "*mitogenome.fasta" -type f | wc -l)
++    STATS=\$(find . -maxdepth 1 -name "*contigs_stats.tsv" -type f | wc -l)
++
++    if [[ \$FASTA -ne \$STATS ]]; then
++        exit 1
++    fi
 +
      cat <<-END_VERSIONS > versions.yml
      "${task.process}":
