@@ -2,7 +2,6 @@ process MITOHIFI_MITOHIFI {
     tag "$meta.id"
     label 'process_high'
 
-
     // Docker image available at the project github repository
     container 'ghcr.io/marcelauliano/mitohifi:master'
 
@@ -51,6 +50,7 @@ process MITOHIFI_MITOHIFI {
     """
     ${zipped ? "gzip -dc $input >" : "cp ${input}"} ${fasta}
 
+    # override workflow exit on mitohifi.py error (issues: #277, #86, #145)
     set +e
     mitohifi.py -${input_mode} ${fasta} \\
         -f ${ref_fa} \\
@@ -61,6 +61,15 @@ process MITOHIFI_MITOHIFI {
 
     # Rename files to include prefix
     find . -maxdepth 1 -type f ! -name '.*' -exec sh -c 'for f do mv "\$f" "${prefix}.\${f#./}"; done' sh {} +
+
+    # Test: for success either both or no main outputs found, fail if only one found
+
+    FASTA=\$(find . -maxdepth 1 -name "*mitogenome.fasta" -type f | wc -l)
+    STATS=\$(find . -maxdepth 1 -name "*contigs_stats.tsv" -type f | wc -l)
+
+    if [[ \$FASTA -ne \$STATS ]]; then
+        exit 1
+    fi
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

@@ -19,6 +19,7 @@ process MITOHIFI_FINDMITOREFERENCE {
     script:
     def args = task.ext.args ?: ''
     """
+    # override workflow exit on findMitoReference.py error (issues: #277, #171, #220)
     set +e
     findMitoReference.py \\
         --species "$species" \\
@@ -26,21 +27,19 @@ process MITOHIFI_FINDMITOREFERENCE {
         $args
     set -e
 
+    # Test: for success either both or neither output found, fail if only one found
+
+    FASTA=\$(find . -maxdepth 1 -name "*.fasta" -type f | wc -l)
+    GB=\$(find . -maxdepth 1 -name "*.gb" -type f | wc -l)
+
+    if [[ \$FASTA -ne \$GB ]]; then
+        exit 1
+    fi
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         mitohifi: \$( mitohifi.py -v | sed 's/.* //' )
     END_VERSIONS
-
-    # Test: task success if both, or no outputs are found, and fail upon partial output (one of two filetypes found)
-
-    FASTA_COUNT=\$(ls *.fasta 2>/dev/null | wc -l)
-    GB_COUNT=\$(ls *.gb 2>/dev/null | wc -l)
-
-    if [[ \$FASTA_COUNT -eq \$GB_COUNT ]]; then
-        exit 0
-    else
-        exit 1
-    fi
     """
 
     stub:
