@@ -35,6 +35,7 @@ process PAIRTOOLS {
     def args5 = task.ext.args5 ?: ''
     def args6 = task.ext.args6 ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
+    def halfMemory = task.memory.toGiga().intdiv(2)
     def samtools_command = sort_bam ? 'sort' : 'view'
     def extension_pattern = /(--output-fmt|-O)+\s+(\S+)/
     def extension_matcher =  (args6 =~ extension_pattern)
@@ -59,14 +60,14 @@ process PAIRTOOLS {
         pairtools sort \\
             ${args2} \\
             --nproc ${task.cpus} \\
-            --memory ${task.memory.toGiga()}G \\
+            --memory ${halfMemory}G \\
             --output \$TEMP_FILE
     done
 
     pairtools merge \\
         ${args3} \\
         --nproc ${task.cpus} \\
-        --memory ${task.memory.toGiga()}G \\
+        --memory ${halfMemory}G \\
         "\${TEMP_FILES[@]}" | \\
     pairtools dedup \\
         ${args4} \\
