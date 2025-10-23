@@ -1,8 +1,12 @@
 FROM rocker/r-base:4.2.0 AS builder
 
-ARG fastk_commit_id=f18a4e6d2207539f7b84461daebc54530a9559b0
-# ARG merquryfk_commit_id=8f3ab706e4cf4d7b7d1dfe5739859e3ebd26c494
-ARG merquryfk_commit_id=8ae344092df5dcaf83cfb7f90f662597a9b1fc61
+# Release V1.1 (10/2024)
+ARG fastk_commit_id=ddea6cf254f378db51d22c6eb21af775fa9e1f77
+
+# Release V1.2 + fixes for single assembly QV score (03/2025)
+ARG merquryfk_commit_id=ef1a99c44891ff8cea7df166abae4461ea392ec0
+
+# Release V1 (full) (XX/2021)
 ARG genescope_commit_id=380815c420f50171f9234a0fd1ff426b39829b91
 
 RUN apt-get update && apt-get -y install \
@@ -26,8 +30,8 @@ RUN git clone https://github.com/mahesh-panchal/MERQURY.FK.git merquryfk && \
 
 FROM rocker/r-base:4.2.0
 
-ARG fastk_commit_id=f18a4e6d2207539f7b84461daebc54530a9559b0
-ARG merquryfk_commit_id=8ae344092df5dcaf83cfb7f90f662597a9b1fc61
+ARG fastk_commit_id=ddea6cf254f378db51d22c6eb21af775fa9e1f77
+ARG merquryfk_commit_id=ef1a99c44891ff8cea7df166abae4461ea392ec0
 ARG genescope_commit_id=380815c420f50171f9234a0fd1ff426b39829b91
 
 LABEL description="A container with FastK, GeneScopeFK, and MerquryFK" \
