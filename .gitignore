@@ -18,3 +18,4 @@ results/
 # misc
 .DS_Store
 .screenrc
+.vscode/
