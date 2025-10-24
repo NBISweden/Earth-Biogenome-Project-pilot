@@ -19,7 +19,7 @@ Changes in 'mitohifi/findmitoreference/main.nf':
  
      when:
      task.ext.when == null || task.ext.when
-@@ -19,10 +19,22 @@
+@@ -19,10 +19,25 @@
      script:
      def args = task.ext.args ?: ''
      """
@@ -31,7 +31,10 @@ Changes in 'mitohifi/findmitoreference/main.nf':
          $args
 +    set -e
 +
-+    # Test: for success either both or neither output found, fail if only one found
++    # Test for mitohifi reference files:
++    # *.fasta && *.gb: Mitohifi complete output, proceed with workflow
++    # ! *.fasta && ! *.gb: Mitohifi no output: species not found or other errors, proceed with workflow
++    # *.fasta && ! *.gb: Mitohifi partial output: program crashed or core dumped, exit workflow
 +
 +    FASTA=\$(find . -maxdepth 1 -name "*.fasta" -type f | wc -l)
 +    GB=\$(find . -maxdepth 1 -name "*.gb" -type f | wc -l)

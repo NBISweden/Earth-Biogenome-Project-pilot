@@ -62,7 +62,11 @@ process MITOHIFI_MITOHIFI {
     # Rename files to include prefix
     find . -maxdepth 1 -type f ! -name '.*' -exec sh -c 'for f do mv "\$f" "${prefix}.\${f#./}"; done' sh {} +
 
-    # Test: for success either both or no main outputs found, fail if only one found
+
+    # Test for mitohifi reference files:
+    # *mitogenome.fasta && *contigs_stats.tsv: Mitohifi complete output, proceed with workflow
+    # ! *mitogenome.fasta && ! *contigs_stats.tsv: Mitohifi did not complete, proceed with workflow
+    # *mitogenome.fasta && ! *contigs_stats.tsv: Mitohifi partial output: program crashed, exit workflow
 
     FASTA=\$(find . -maxdepth 1 -name "*mitogenome.fasta" -type f | wc -l)
     STATS=\$(find . -maxdepth 1 -name "*contigs_stats.tsv" -type f | wc -l)

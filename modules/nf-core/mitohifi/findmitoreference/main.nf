@@ -27,7 +27,10 @@ process MITOHIFI_FINDMITOREFERENCE {
         $args
     set -e
 
-    # Test: for success either both or neither output found, fail if only one found
+    # Test for mitohifi reference files:
+    # *.fasta && *.gb: Mitohifi complete output, proceed with workflow
+    # ! *.fasta && ! *.gb: Mitohifi no output: species not found or other errors, proceed with workflow
+    # *.fasta && ! *.gb: Mitohifi partial output: program crashed or core dumped, exit workflow
 
     FASTA=\$(find . -maxdepth 1 -name "*.fasta" -type f | wc -l)
     GB=\$(find . -maxdepth 1 -name "*.gb" -type f | wc -l)
