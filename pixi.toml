@@ -1,4 +1,4 @@
-[project]
+[workspace]
 name = "Swedish Earth Biogenome Project Assembly Pipeline"
 version = "0.1.0"
 description = "A de novo genome assembly pipeline"
