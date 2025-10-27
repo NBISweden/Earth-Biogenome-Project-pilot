@@ -1,0 +1,56 @@
+Changes in component 'nf-core/entrezdirect/esearch'
+Changes in 'entrezdirect/esearch/main.nf':
+--- modules/nf-core/entrezdirect/esearch/main.nf
++++ modules/nf-core/entrezdirect/esearch/main.nf
+@@ -12,8 +12,8 @@
+     val database
+ 
+     output:
+-    tuple val(meta), path("*.xml") , emit: xml
+-    path "versions.yml"            , emit: versions
++    val "success"      , emit: success
++    path "versions.yml", emit: versions
+ 
+     when:
+     task.ext.when == null || task.ext.when
+@@ -21,11 +21,30 @@
+     script:
+     def prefix = task.ext.prefix ?: "${meta.id}"
+     def args = task.ext.args ?: ''
++    def args2 = task.ext.args2 ?: ''
+     """
+-    esearch \\
++    # Get count of taxonomy hits for species name
++    TAXONOMY_HITS=\$(esearch \\
+         -db $database \\
+-        -query $term \\
+-        $args > ${prefix}.xml
++        -query "$term" \\
++        $args | \\
++    xtract \\
++        -pattern ENTREZ_DIRECT \\
++        -element Count \\
++        $args2)
++
++    # Test that only one taxonomy record was found
++    # TAXONOMY_HITS = 0: no records found
++    # TAXONOMY_HITS > 1: miltiple records found
++    if [ "\$TAXONOMY_HITS" == "0" ]; then
++        echo "Error: No taxonomy records found for query: $term" >&2
++        exit 1
++    else
++        if [ "\$TAXONOMY_HITS" -gt "1" ]; then
++            echo "Error: More than one appropriate taxonomy entry for query: $term" >&2
++            exit 1
++        fi
++    fi
+ 
+     cat <<-END_VERSIONS > versions.yml
+     "${task.process}":
+
+'modules/nf-core/entrezdirect/esearch/environment.yml' is unchanged
+'modules/nf-core/entrezdirect/esearch/meta.yml' is unchanged
+'modules/nf-core/entrezdirect/esearch/tests/main.nf.test.snap' is unchanged
+'modules/nf-core/entrezdirect/esearch/tests/main.nf.test' is unchanged
+'modules/nf-core/entrezdirect/esearch/tests/nextflow.config' is unchanged
+************************************************************
