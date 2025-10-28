@@ -35,7 +35,7 @@ process ENTREZDIRECT_ESEARCH {
 
     # Test that only one taxonomy record was found
     # TAXONOMY_HITS = 0: no records found
-    # TAXONOMY_HITS > 1: miltiple records found
+    # TAXONOMY_HITS > 1: multiple records found
     if [ "\$TAXONOMY_HITS" == "0" ]; then
         echo "Error: No taxonomy records found for query: $term" >&2
         exit 1
