@@ -9,8 +9,8 @@ process MITOHIFI_FINDMITOREFERENCE {
     tuple val(meta), val(species)
 
     output:
-    tuple val(meta), path("*.fasta"), emit: fasta
-    tuple val(meta), path("*.gb")   , emit: gb
+    tuple val(meta), path("*.fasta"), emit: fasta, optional: true
+    tuple val(meta), path("*.gb")   , emit: gb, optional: true
     path "versions.yml"             , emit: versions
 
     when:
@@ -19,10 +19,25 @@ process MITOHIFI_FINDMITOREFERENCE {
     script:
     def args = task.ext.args ?: ''
     """
+    # override workflow exit on findMitoReference.py error (issues: #277, #171, #220)
+    set +e
     findMitoReference.py \\
         --species "$species" \\
         --outfolder . \\
         $args
+    set -e
+
+    # Test for mitohifi reference files:
+    # *.fasta && *.gb: Mitohifi complete output, proceed with workflow
+    # ! *.fasta && ! *.gb: Mitohifi no output: species not found or other errors, proceed with workflow
+    # *.fasta && ! *.gb: Mitohifi partial output: program crashed or core dumped, exit workflow
+
+    FASTA=\$(find . -maxdepth 1 -name "*.fasta" -type f | wc -l)
+    GB=\$(find . -maxdepth 1 -name "*.gb" -type f | wc -l)
+
+    if [[ \$FASTA -ne \$GB ]]; then
+        exit 1
+    fi
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
