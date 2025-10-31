@@ -7,7 +7,6 @@ process MITOHIFI_FINDMITOREFERENCE {
 
     input:
     tuple val(meta), val(species)
-    val _taxonomy_check_success
 
     output:
     tuple val(meta), path("*.fasta"), emit: fasta, optional: true
