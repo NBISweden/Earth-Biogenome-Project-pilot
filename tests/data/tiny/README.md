@@ -8,6 +8,11 @@
 
 ## Provenance
 
+* **PB_HIFI/dmel_2Mb.fasta.gz**: Subsampled PacBio Hifi data containing nuclear and mitochondrial reads
+* **HIC/*.fastq.gz**: Subsampled Illumina Hi-C data containing only nuclear reads
+* **assembly/*.fasta**: Hifiasm nuclear genome assemblies from the above test data. 
+
+
 ### Nuclear genome data
 
 - species: _Drosophila melanogaster_
