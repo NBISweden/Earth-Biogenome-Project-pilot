@@ -61,6 +61,8 @@ process MITOHIFI_MITOHIFI {
 
     # Rename files to include prefix
     find . -maxdepth 1 -type f ! -name '.*' -exec sh -c 'for f do mv "\$f" "${prefix}.\${f#./}"; done' sh {} +
+    # Remove broken link that disrupts the publish operation
+    find . -xtype l -delete
 
 
     # Test for mitohifi reference files:

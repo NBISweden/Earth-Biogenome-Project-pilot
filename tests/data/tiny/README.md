@@ -12,7 +12,6 @@
 * **HIC/*.fastq.gz**: Subsampled Illumina Hi-C data containing only nuclear reads
 * **assembly/*.fasta**: Hifiasm nuclear genome assemblies from the above test data. 
 
-
 ### Nuclear genome data
 
 - species: _Drosophila melanogaster_
