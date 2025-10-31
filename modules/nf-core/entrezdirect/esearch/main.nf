@@ -8,12 +8,12 @@ process ENTREZDIRECT_ESEARCH {
         'biocontainers/entrez-direct:16.2--he881be0_1' }"
 
     input:
-    tuple val(meta), val(term)
+    tuple val(meta), val(species)
     val database
 
     output:
-    val "success"      , emit: success
-    path "versions.yml", emit: versions
+    tuple val(meta), val(species), env(TAXONOMY_COUNT), emit: count
+    path "versions.yml"                               , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -23,28 +23,17 @@ process ENTREZDIRECT_ESEARCH {
     def args = task.ext.args ?: ''
     def args2 = task.ext.args2 ?: ''
     """
-    # Get count of taxonomy hits for species name
-    TAXONOMY_HITS=\$(esearch \\
+    # Get count of taxonomy hits for the query species name
+    TAXONOMY_COUNT=\$(esearch \\
         -db $database \\
-        -query "$term" \\
+        -query "$species" \\
         $args | \\
     xtract \\
         -pattern ENTREZ_DIRECT \\
         -element Count \\
         $args2)
 
-    # Test that only one taxonomy record was found
-    # TAXONOMY_HITS = 0: no records found
-    # TAXONOMY_HITS > 1: multiple records found
-    if [ "\$TAXONOMY_HITS" == "0" ]; then
-        echo "Error: No taxonomy records found for query: $term" >&2
-        exit 1
-    else
-        if [ "\$TAXONOMY_HITS" -gt "1" ]; then
-            echo "Error: More than one appropriate taxonomy entry for query: $term" >&2
-            exit 1
-        fi
-    fi
+    export TAXONOMY_COUNT
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
