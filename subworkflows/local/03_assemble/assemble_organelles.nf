@@ -12,19 +12,18 @@ workflow ASSEMBLE_ORGANELLES {
     // Lookup species name in NCBI taxonomy database, get count of hits
     ENTREZDIRECT_ESEARCH( ch_assembly_data.map { meta, _assembly_data -> [ meta, meta.sample.name ] }.unique(), 'taxonomy' )
 
-    // Branch channel based on the number of hits in NCBI taxonomy
+    // Branch channel based on the number of hits in NCBI taxonomy (1 hit is expected, 0 or >1 requires an alternative strategy)
     ENTREZDIRECT_ESEARCH.out.count
         .map { meta, species, count -> [ meta, species, count.toInteger() ] }
         .branch { meta, species, count ->
-            no_hits: count == 0
-            single_hit: count == 1
-            multiple_hits: count > 1
+            attempt_mitohifi: count == 1
+            attempt_oatk: count != 1
         }
         .set { count_ch }
 
     // If single hit in taxonomy lookup, attempt MitoHiFi workflow: step one fetch mitochondrial reference sequence
     // TODO: Need to check options to mitohifi modules.
-    MITOHIFI_FINDMITOREFERENCE( count_ch.single_hit.map { meta, species, _count -> [ meta, species ] } )
+    MITOHIFI_FINDMITOREFERENCE( count_ch.attempt_mitohifi.map { meta, species, _count -> [ meta, species ] } )
 
     // Prepare mitohifi_ch based on input data type (mode c: contigs, mode r: reads)
     mitohifi_ch = ch_assembly_data
