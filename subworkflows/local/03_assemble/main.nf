@@ -3,8 +3,10 @@ include { ASSEMBLE_ORGANELLES } from "./assemble_organelles"
 
 workflow ASSEMBLE {
     take:
-    hifi_reads // [ meta, hifi_reads ]
+    hifi_reads              // [ meta, hifi_reads ]
     organelle_assembly_mode // contigs, reads, or none
+    mito_hmm                // list: [ hmm_files ]
+    plastid_hmm             // list: [ hmm_files ]
 
     main:
     ch_versions = Channel.empty()
@@ -17,10 +19,10 @@ workflow ASSEMBLE {
 
     // Organelle assembly
     if ( organelle_assembly_mode == 'reads' ) {
-        ASSEMBLE_ORGANELLES ( hifi_reads, 'r' )
+        ASSEMBLE_ORGANELLES ( hifi_reads, 'r', hifi_reads, mito_hmm, plastid_hmm )
         ch_versions = ch_versions.mix(ASSEMBLE_ORGANELLES.out.versions)
     } else if ( organelle_assembly_mode == 'contigs' ){
-        ASSEMBLE_ORGANELLES ( ch_raw_assemblies, 'c' )
+        ASSEMBLE_ORGANELLES ( ch_raw_assemblies, 'c', hifi_reads, mito_hmm, plastid_hmm )
         ch_versions = ch_versions.mix(ASSEMBLE_ORGANELLES.out.versions)
         // TODO: filter organelles from assemblies
     } // else organelle_assembly_mode == 'none'

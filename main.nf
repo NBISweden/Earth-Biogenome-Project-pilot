@@ -118,10 +118,11 @@ workflow {
         // Run assemblers
         ASSEMBLE (
                 PREPARE_INPUT.out.hifi_merged,
-                params.organelle_assembly_mode
+                params.organelle_assembly_mode,
+                PREPARE_INPUT.out.mito_hmm,
+                PREPARE_INPUT.out.plastid_hmm
                 // TODO create & propagate new param to turn on/off nuclear assembly - the other options are available (no assembly, nuclear only, nuclear + mito w/ reads, nuclear + mito w/ contigs)
         )
-        // TODO organelle output channels
         ch_evaluate_assemblies = ch_evaluate_assemblies.mix( ASSEMBLE.out.raw_assemblies )
         ch_raw_assemblies = ASSEMBLE.out.raw_assemblies
         ch_multiqc_files = ch_multiqc_files.mix( ASSEMBLE.out.logs )
