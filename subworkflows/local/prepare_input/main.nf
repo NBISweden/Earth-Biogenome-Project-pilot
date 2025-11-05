@@ -33,6 +33,18 @@ rnaseq:
   - reads: /path/to/reads
 isoseq:
   - reads: /path/to/reads
+mito_hmm:
+  - fam: /path/to/mito_hmm.fam
+    h3f: /path/to/mito_hmm.fam.h3f
+    h3i: /path/to/mito_hmm.fam.h3i
+    h3m: /path/to/mito_hmm.fam.h3m
+    h3p: /path/to/mito_hmm.fam.h3p
+plastid_hmm:
+  - fam: /path/to/plastid_hmm.fam
+    h3f: /path/to/plastid_hmm.fam.h3f
+    h3i: /path/to/plastid_hmm.fam.h3i
+    h3m: /path/to/plastid_hmm.fam.h3m
+    h3p: /path/to/plastid_hmm.fam.h3p
 ```
 leads to the following YAML data structure
 ```
@@ -70,6 +82,20 @@ leads to the following YAML data structure
     ],
     isoseq:[
         reads: /path/to/reads
+    ],
+    mito_hmm:[
+        fam: /path/to/mito_hmm.fam
+        h3f: /path/to/mito_hmm.fam.h3f
+        h3i: /path/to/mito_hmm.fam.h3i
+        h3m: /path/to/mito_hmm.fam.h3m
+        h3p: /path/to/mito_hmm.fam.h3p
+    ],
+    plastid_hmm:[
+        fam: /path/to/plastid_hmm.fam
+        h3f: /path/to/plastid_hmm.fam.h3f
+        h3i: /path/to/plastid_hmm.fam.h3i
+        h3m: /path/to/plastid_hmm.fam.h3m
+        h3p: /path/to/plastid_hmm.fam.h3p
     ]
 ]
 ```
@@ -124,11 +150,27 @@ workflow PREPARE_INPUT {
     FETCH_SAMPLE_METADATA( ch_input ).metadata
         .dump( tag: 'Input: Meta', pretty: true )
         .multiMap { data ->
-            assembly_ch : ( data.assembly ? [ data.subMap('id','sample','settings') , data.assembly ] : [] )
-            hic_ch      : ( data.hic      ? [ data.subMap('id','sample','settings') + [ single_end: false ], data.hic.collect { [ file( it.read1, checkIfExists: true ), file( it.read2, checkIfExists: true ) ] } ] : [] )
-            hifi_ch     : ( data.hifi     ? [ data.subMap('id','sample','settings') + [ single_end: true ], data.hifi.collect { file( it.reads, checkIfExists: true ) } ] : [] )
-            rnaseq_ch   : ( data.rnaseq   ? [ data.subMap('id','sample','settings'), data.rnaseq.collect { it.reads ? file( it.reads, checkIfExists: true ) : [ file( it.read1, checkIfExists: true ), file( it.read2, checkIfExists: true ) ] } ] : [] )
-            isoseq_ch   : ( data.isoseq   ? [ data.subMap('id','sample','settings') + [ single_end: true ], data.isoseq.collect { file( it.reads, checkIfExists: true ) } ] : [] )
+            assembly_ch    : ( data.assembly ? [ data.subMap('id','sample','settings') , data.assembly ] : [] )
+            hic_ch         : ( data.hic      ? [ data.subMap('id','sample','settings') + [ single_end: false ], data.hic.collect { [ file( it.read1, checkIfExists: true ), file( it.read2, checkIfExists: true ) ] } ] : [] )
+            hifi_ch        : ( data.hifi     ? [ data.subMap('id','sample','settings') + [ single_end: true ], data.hifi.collect { file( it.reads, checkIfExists: true ) } ] : [] )
+            rnaseq_ch      : ( data.rnaseq   ? [ data.subMap('id','sample','settings'), data.rnaseq.collect { it.reads ? file( it.reads, checkIfExists: true ) : [ file( it.read1, checkIfExists: true ), file( it.read2, checkIfExists: true ) ] } ] : [] )
+            isoseq_ch      : ( data.isoseq   ? [ data.subMap('id','sample','settings') + [ single_end: true ], data.isoseq.collect { file( it.reads, checkIfExists: true ) } ] : [] )
+            mito_hmm_ch    : ( data.mito_hmm ? [ data.subMap('id','sample','settings'), data.mito_hmm.collect {
+                [
+                    file( it.fam, checkIfExists: true),
+                    file( it.h3f, checkIfExists: true),
+                    file( it.h3i, checkIfExists: true),
+                    file( it.h3m, checkIfExists: true),
+                    file( it.h3p, checkIfExists: true)
+                ] } ] : [ [:], [[ [], [], [], [], [] ]] ] ) // Placeholder channel ensures oatk will run when only one hmm set is provided
+            plastid_hmm_ch : ( data.plastid_hmm ? [ data.subMap('id','sample','settings'), data.plastid_hmm.collect {
+                [
+                    file( it.fam, checkIfExists: true),
+                    file( it.h3f, checkIfExists: true),
+                    file( it.h3i, checkIfExists: true),
+                    file( it.h3m, checkIfExists: true),
+                    file( it.h3p, checkIfExists: true)
+                ] } ] : [ [:], [[ [], [], [], [], [] ]] ] ) // Placeholder channel ensures oatk will run when only one hmm set is provided
         }
         .set{ input }
 
@@ -188,6 +230,18 @@ workflow PREPARE_INPUT {
         .transpose()
         .set { isoseq_fastx_ch }
 
+    // Prepare mito HMM channel
+    input.mito_hmm_ch
+        .filter { !it.isEmpty() }
+        .transpose()
+        .set { mito_hmm_ch }
+
+    // Prepare plastid HMM channel
+    input.plastid_hmm_ch
+        .filter { !it.isEmpty() }
+        .transpose()
+        .set { plastid_hmm_ch }
+
     // versions
     FETCH_SAMPLE_METADATA.out.versions.mix(
         SAMTOOLS_FASTA.out.versions.first(),
@@ -202,6 +256,8 @@ workflow PREPARE_INPUT {
     hifi_merged = sample_fastx.single.mix( MERGE_PACBIO.out.file_out )
     rnaseq      = rnaseq_fastx_ch.dump( tag: 'Input: Illumina RnaSeq', pretty: true )
     isoseq      = isoseq_fastx_ch.dump( tag: 'Input: PacBio IsoSeq', pretty: true )
+    mito_hmm    = mito_hmm_ch.dump( tag: 'Input: Oatk mito', pretty: true )
+    plastid_hmm = plastid_hmm_ch.dump( tag: 'Input: Oatk plastid', pretty: true )
     versions
 }
 
