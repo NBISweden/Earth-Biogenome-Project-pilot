@@ -1,0 +1,14 @@
+## EAR report metadata
+
+Metadata fields for the [EAR report](https://github.com/ERGA-consortium/EARs)
+
+```{python}
+#| output: asis
+if "busco" in multiqc.list_modules() and glob.glob(f"{log_path}/short_summary*txt"):
+    lineages = []
+    for lineage in multiqc.list_plots()["busco"]:
+        cleaned_lineage = lineage.replace("Lineage: ", "")
+        lineages.append(cleaned_lineage)
+    print("<b>BUSCO lineages analysed:</b><br>")
+    print(",".join(lineages))
+```
