@@ -23,7 +23,7 @@ include { DECONTAMINATE                                     } from "./subworkflo
 // Purge duplicates
 include { PURGE_DUPLICATES                                  } from "./subworkflows/local/05_purge_dups/main"
 // Polish
-include { DVPOLISH                                          } from "./subworkflows/local/deepvariant_error_polishing/main"
+include { DVPOLISH                                          } from "./subworkflows/local/06_polish/main"
 // Scaffold
 include { SCAFFOLD                                          } from "./subworkflows/local/07_scaffold/main"
 // Curation
