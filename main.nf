@@ -36,7 +36,6 @@ include { ALIGN_RNASEQ                                      } from "./subworkflo
 // Report
 include { ASSEMBLY_REPORT                                   } from "./subworkflows/local/assembly_report/main"
 
-
 /*
  * Development: See docs/development to understand the workflow programming model and
  * how channel contents are structured.
@@ -187,25 +186,20 @@ workflow {
     ).dump(tag: 'Assemblies: to polish', pretty: true)
     if ( 'polish' in workflow_steps ) {
         // Run polishers
-        DVPOLISH(
+        DVPOLISH (
             ch_to_polish,
             ch_hifi,
             BUILD_MERYL_HIFI_DATABASE.out.uniondb
         )
+        ch_evaluate_assemblies = ch_evaluate_assemblies.mix( DVPOLISH.out.assemblies )
         ch_polished_assemblies = DVPOLISH.out.assemblies
+        //TODO: logs, versions
     } else {
         ch_polished_assemblies = ch_to_polish
     }
     ch_polished_assemblies = ch_polished_assemblies.mix(
         preassembledInput( PREPARE_INPUT.out.assemblies, 'polished' )
     ).dump(tag: 'Assemblies: Polished', pretty: true)
-    EVALUATE_POLISHED_ASSEMBLY (
-        ch_polished_assemblies,
-        BUILD_FASTK_HIFI_DATABASE.out.fastk_hist_ktab,
-        BUILD_MERYL_HIFI_DATABASE.out.uniondb
-    )
-    ch_multiqc_files = ch_multiqc_files.mix( EVALUATE_POLISHED_ASSEMBLY.out.logs )
-    ch_versions = ch_versions.mix( EVALUATE_POLISHED_ASSEMBLY.out.versions )
 
     // Scaffold
     ch_to_scaffold = setAssemblyStage (
