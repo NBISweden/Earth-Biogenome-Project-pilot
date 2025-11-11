@@ -20,23 +20,23 @@ workflow ASSEMBLE {
     // Organelle assembly
     if ( organelle_assembly_mode == 'contigs' ) {
         ASSEMBLE_ORGANELLES(
-            Channel.empty(),      // empty reads channel
-            ch_raw_assemblies,    // [ meta, assembly_map ]
-            'c',                  // mode
-            hifi_reads,           // [ meta, reads ]
-            mito_hmm,             // oatk mito hmm files
-            plastid_hmm           // oatk plastid hmm files
+            Channel.empty(),      // mitohifi: empty reads channel
+            ch_raw_assemblies,    // mitohifi: [ meta, assembly_map ]
+            'c',                  // mitohifi: mode
+            hifi_reads,           // oatk: [ meta, reads ]
+            mito_hmm,             // oatk: mito hmm files
+            plastid_hmm           // oatk: plastid hmm files
         )
         ch_versions = ch_versions.mix(ASSEMBLE_ORGANELLES.out.versions)
-        // TODO: filter organelles from assemblies
+        // TODO: filter organelle contigs from primary assembly
     } else if ( organelle_assembly_mode == 'reads' ) {
         ASSEMBLE_ORGANELLES(
-            hifi_reads,           // [ meta, reads ]
-            Channel.empty(),      // empty contigs channel
-            'r',                  // mode
-            hifi_reads,           // [ meta, reads ]
-            mito_hmm,             // oatk mito hmm files
-            plastid_hmm           // oatk plastid hmm files
+            hifi_reads,           // mitohifi: [ meta, reads ]
+            Channel.empty(),      // mitohifi: empty contigs channel
+            'r',                  // mitohifi: mode
+            hifi_reads,           // oatk: [ meta, reads ]
+            mito_hmm,             // oatk: mito hmm files
+            plastid_hmm           // oatk: plastid hmm files
         )
         ch_versions = ch_versions.mix(ASSEMBLE_ORGANELLES.out.versions)
     } // else organelle_assembly_mode == 'none'
