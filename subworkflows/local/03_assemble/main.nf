@@ -21,15 +21,23 @@ workflow ASSEMBLE {
     } // else nuclear_assembly_mode == false
 
     // Organelle assembly
-    if ( organelle_assembly_mode == 'reads' ) {
-        ASSEMBLE_ORGANELLES ( hifi_reads, 'r' )
-        ch_versions = ch_versions.mix(ASSEMBLE_ORGANELLES.out.versions)
-    } else if ( organelle_assembly_mode == 'contigs' && nuclear_assembly_mode ) {
-        ASSEMBLE_ORGANELLES ( ch_raw_assemblies, 'c' )
+    if ( organelle_assembly_mode == 'contigs' && nuclear_assembly_mode ) {
+        ASSEMBLE_ORGANELLES(
+            Channel.empty(),      // empty reads channel
+            ch_raw_assemblies,    // [ meta, assembly_map ]
+            'c'                   // mode
+        )
         ch_versions = ch_versions.mix(ASSEMBLE_ORGANELLES.out.versions)
         // TODO: filter organelles from assemblies
-    } else if (organelle_assembly_mode == 'contigs' && !nuclear_assembly_mode ) {
-        error "ERROR: Organelle assembly with contigs also requires nuclear assembly."
+    } else if ( organelle_assembly_mode == 'reads' ) {
+        ASSEMBLE_ORGANELLES(
+            hifi_reads,           // [ meta, reads ]
+            Channel.empty(),      // empty contigs channel
+            'r'                   // mode
+        )
+        ch_versions = ch_versions.mix(ASSEMBLE_ORGANELLES.out.versions)
+    } else if ( organelle_assembly_mode == 'contigs' && !nuclear_assembly_mode ) {
+        error "Organelle assembly in 'contigs' mode requires 'nuclear_assembly_mode = true'" 
     } // else organelle_assembly_mode == 'none'
 
     emit:

@@ -2,7 +2,6 @@ process MITOHIFI_MITOHIFI {
     tag "$meta.id"
     label 'process_high'
 
-
     // Docker image available at the project github repository
     container 'ghcr.io/marcelauliano/mitohifi:master'
 
@@ -14,8 +13,8 @@ process MITOHIFI_MITOHIFI {
     val mito_code
 
     output:
-    tuple val(meta), path("*mitogenome.fasta")               , emit: fasta
-    tuple val(meta), path("*contigs_stats.tsv")              , emit: stats
+    tuple val(meta), path("*mitogenome.fasta")               , emit: fasta, optional: true
+    tuple val(meta), path("*contigs_stats.tsv")              , emit: stats, optional: true
     tuple val(meta), path("*gb")                             , emit: gb, optional: true
     tuple val(meta), path("*gff")                            , emit: gff, optional: true
     tuple val(meta), path("*all_potential_contigs.fa")       , emit: all_potential_contigs, optional: true
@@ -50,18 +49,37 @@ process MITOHIFI_MITOHIFI {
     def fasta = ( zipped ? input.name - '.gz' : input )
     """
     ${zipped ? "gzip -dc $input >" : "cp ${input}"} ${fasta}
+
+    # override workflow exit on mitohifi.py error (issues: #277, #86, #145)
+    set +e
     mitohifi.py -${input_mode} ${fasta} \\
         -f ${ref_fa} \\
         -g ${ref_gb} \\
         -o ${mito_code} \\
         -t $task.cpus ${args}
-    
+    set -e
+
     # Rename files to include prefix
     find . -maxdepth 1 -type f ! -name '.*' -exec sh -c 'for f do mv "\$f" "${prefix}.\${f#./}"; done' sh {} +
+    # Remove broken link that disrupts the publish operation
+    find . -xtype l -delete
+
+
+    # Test for mitohifi reference files:
+    # *mitogenome.fasta && *contigs_stats.tsv: Mitohifi complete output, proceed with workflow
+    # ! *mitogenome.fasta && ! *contigs_stats.tsv: Mitohifi did not complete, proceed with workflow
+    # *mitogenome.fasta && ! *contigs_stats.tsv: Mitohifi partial output: program crashed, exit workflow
+
+    FASTA=\$(find . -maxdepth 1 -name "*mitogenome.fasta" -type f | wc -l)
+    STATS=\$(find . -maxdepth 1 -name "*contigs_stats.tsv" -type f | wc -l)
+
+    if [[ \$FASTA -ne \$STATS ]]; then
+        exit 1
+    fi
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        mitohifi: \$( mitohifi.py --version 2>&1 | head -n1 | sed 's/^.*MitoHiFi //; s/ .*\$//' )
+        mitohifi: \$( mitohifi.py -v | sed 's/.* //' )
     END_VERSIONS
     """
 
@@ -74,7 +92,7 @@ process MITOHIFI_MITOHIFI {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        mitohifi: \$( mitohifi.py --version 2>&1 | head -n1 | sed 's/^.*MitoHiFi //; s/ .*\$//')
+        mitohifi: \$( mitohifi.py -v | sed 's/.* //' )
     END_VERSIONS
     """
 }

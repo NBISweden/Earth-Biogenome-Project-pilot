@@ -1,3 +1,12 @@
 # GitHub syntax highlighting
-pixi.lock linguist-language=YAML linguist-generated=true
+# Pixi
+pixi.lock linguist-language=YAML linguist-generated=true merge=binary
+
+# Nextflow
 *.config linguist-language=nextflow
+*.nf linguist-language=nextflow
+*.nf.test linguist-language=nextflow
+modules.json linguist-language=json linguist-generated=true merge=binary
+*.snap linguist-language=json linguist-generated=true
+modules/nf-core/** linguist-generated=true
+subworkflows/nf-core/** linguist-generated=true

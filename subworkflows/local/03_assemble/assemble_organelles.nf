@@ -3,24 +3,28 @@ include { MITOHIFI_MITOHIFI          } from "../../../modules/nf-core/mitohifi/m
 
 workflow ASSEMBLE_ORGANELLES {
     take:
-    ch_assembly_data // Channel: tuple(meta, assembly / reads )
+    ch_reads         // Channel: [ meta, reads_path ] - only populated if mode = 'r'
+    ch_assemblies    // Channel: [ meta, assembly_map ] - only populated if mode = 'c'
     ch_assembly_mode // String: enum('c','r')
 
     main:
     ch_versions = Channel.empty()
-    // Find mitochondrial reference
-    // TODO: Need to check options to mitohifi modules.
-    MITOHIFI_FINDMITOREFERENCE( ch_assembly_data.map { meta, _assembly_data -> [ meta, meta.sample.name ] }.unique() )
 
-    // Prepare mitohifi_ch based on input data type (mode c: contigs, mode r: reads)
-    mitohifi_ch = ch_assembly_data
+    // Mix input data channels for mitohifi, only one will be populated
+    ch_input_data = ch_reads.mix( ch_assemblies )
+
+    // Attempt mitohifi workflow
+    MITOHIFI_FINDMITOREFERENCE( ch_input_data.map { meta, _data -> [ meta, meta.sample.name ] }.unique() )
+
+    // Prepare mitohifi input
+    mitohifi_ch = ch_input_data
         .combine(
             MITOHIFI_FINDMITOREFERENCE.out.fasta
                 .join(MITOHIFI_FINDMITOREFERENCE.out.gb),
             by: 0
         )
-        .multiMap { meta, assembly_data, mitofa, mitogb ->
-            input: [ meta, ch_assembly_mode == "c" ? assembly_data.pri_fasta : assembly_data ] // If c, use contigs. Else r, use reads.
+        .multiMap { meta, data, mitofa, mitogb ->
+            input: [ meta, ch_assembly_mode == "c" ? data.pri_fasta : data ] // If c, use contigs. Else r, use reads.
             reference: mitofa
             genbank: mitogb
             mito_code: meta.sample.mito_code

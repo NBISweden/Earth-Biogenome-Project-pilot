@@ -1,16 +1,27 @@
-Changes in module 'nf-core/mitohifi/mitohifi'
+Changes in component 'nf-core/mitohifi/mitohifi'
+Changes in 'mitohifi/mitohifi/main.nf':
 --- modules/nf-core/mitohifi/mitohifi/main.nf
 +++ modules/nf-core/mitohifi/mitohifi/main.nf
-@@ -14,7 +14,7 @@
+@@ -1,7 +1,6 @@
+ process MITOHIFI_MITOHIFI {
+     tag "$meta.id"
+     label 'process_high'
+-
+ 
+     // Docker image available at the project github repository
+     container 'ghcr.io/marcelauliano/mitohifi:master'
+@@ -14,8 +13,8 @@
      val mito_code
  
      output:
 -    tuple val(meta), path("*fasta")                          , emit: fasta
-+    tuple val(meta), path("*mitogenome.fasta")               , emit: fasta
-     tuple val(meta), path("*contigs_stats.tsv")              , emit: stats
+-    tuple val(meta), path("*contigs_stats.tsv")              , emit: stats
++    tuple val(meta), path("*mitogenome.fasta")               , emit: fasta, optional: true
++    tuple val(meta), path("*contigs_stats.tsv")              , emit: stats, optional: true
      tuple val(meta), path("*gb")                             , emit: gb, optional: true
      tuple val(meta), path("*gff")                            , emit: gff, optional: true
-@@ -40,17 +40,25 @@
+     tuple val(meta), path("*all_potential_contigs.fa")       , emit: all_potential_contigs, optional: true
+@@ -40,32 +39,60 @@
      if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
          error "MitoHiFi module does not support Conda. Please use Docker / Singularity instead."
      }
@@ -27,19 +38,39 @@ Changes in module 'nf-core/mitohifi/mitohifi'
      """
 -    mitohifi.py -${input_mode} ${input} \\
 +    ${zipped ? "gzip -dc $input >" : "cp ${input}"} ${fasta}
++
++    # override workflow exit on mitohifi.py error (issues: #277, #86, #145)
++    set +e
 +    mitohifi.py -${input_mode} ${fasta} \\
          -f ${ref_fa} \\
          -g ${ref_gb} \\
          -o ${mito_code} \\
          -t $task.cpus ${args}
-+    
++    set -e
++
 +    # Rename files to include prefix
 +    find . -maxdepth 1 -type f ! -name '.*' -exec sh -c 'for f do mv "\$f" "${prefix}.\${f#./}"; done' sh {} +
++    # Remove broken link that disrupts the publish operation
++    find . -xtype l -delete
++
++
++    # Test for mitohifi reference files:
++    # *mitogenome.fasta && *contigs_stats.tsv: Mitohifi complete output, proceed with workflow
++    # ! *mitogenome.fasta && ! *contigs_stats.tsv: Mitohifi did not complete, proceed with workflow
++    # *mitogenome.fasta && ! *contigs_stats.tsv: Mitohifi partial output: program crashed, exit workflow
++
++    FASTA=\$(find . -maxdepth 1 -name "*mitogenome.fasta" -type f | wc -l)
++    STATS=\$(find . -maxdepth 1 -name "*contigs_stats.tsv" -type f | wc -l)
++
++    if [[ \$FASTA -ne \$STATS ]]; then
++        exit 1
++    fi
 +
      cat <<-END_VERSIONS > versions.yml
      "${task.process}":
-         mitohifi: \$( mitohifi.py --version 2>&1 | head -n1 | sed 's/^.*MitoHiFi //; s/ .*\$//' )
-@@ -58,10 +66,11 @@
+-        mitohifi: \$( mitohifi.py --version 2>&1 | head -n1 | sed 's/^.*MitoHiFi //; s/ .*\$//' )
++        mitohifi: \$( mitohifi.py -v | sed 's/.* //' )
+     END_VERSIONS
      """
  
      stub:
@@ -54,5 +85,11 @@ Changes in module 'nf-core/mitohifi/mitohifi'
  
      cat <<-END_VERSIONS > versions.yml
      "${task.process}":
+-        mitohifi: \$( mitohifi.py --version 2>&1 | head -n1 | sed 's/^.*MitoHiFi //; s/ .*\$//')
++        mitohifi: \$( mitohifi.py -v | sed 's/.* //' )
+     END_VERSIONS
+     """
+ }
 
+'modules/nf-core/mitohifi/mitohifi/meta.yml' is unchanged
 ************************************************************
