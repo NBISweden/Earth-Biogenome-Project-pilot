@@ -3,7 +3,7 @@ process FASTK_HISTEX {
     label 'process_low'
 
     // WARN: Version information not provided by tool on CLI. Please update version string below when bumping container versions.
-    container 'ghcr.io/nbisweden/fastk_genescopefk_merquryfk:1.2'
+    container 'oras://community.wave.seqera.io/library/fastk:1.1.0--c033613137caa2b9'
 
     input:
     tuple val(meta), path(histogram)
@@ -22,7 +22,7 @@ process FASTK_HISTEX {
     }
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    def FASTK_VERSION = 'f18a4e6d2207539f7b84461daebc54530a9559b0' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
+    def FASTK_VERSION = '1.1' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
     """
     Histex \\
         $args \\
