@@ -1,13 +1,13 @@
-FROM rocker/r-base:4.2.0 AS builder
+# Global args
+# MERQURY.FK: Release v1.1.3 + patch to save.cni file (09/2025)
+# GENESCOPE.FK: Release v1.0 (full) (09/2023)
+ARG merquryfk_commit_id=acef44f51ed5c431805682a42cc96616552b6cdb
+ARG genescopefk_commit_id=380815c420f50171f9234a0fd1ff426b39829b91
 
-# Release V1.1 (10/2024)
-ARG fastk_commit_id=ddea6cf254f378db51d22c6eb21af775fa9e1f77
+FROM rocker/r-base:4.5.2 AS builder
 
-# Release V1.2 + fixes for single assembly QV score (03/2025)
-ARG merquryfk_commit_id=ef1a99c44891ff8cea7df166abae4461ea392ec0
-
-# Release V1 (full) (XX/2021)
-ARG genescope_commit_id=380815c420f50171f9234a0fd1ff426b39829b91
+ARG merquryfk_commit_id
+ARG genescopefk_commit_id
 
 RUN apt-get update && apt-get -y install \
     build-essential \
@@ -18,47 +18,26 @@ RUN apt-get update && apt-get -y install \
     libcurl4-openssl-dev
 
 WORKDIR /opt
-RUN git clone https://github.com/thegenemyers/FASTK.git fastk && \
-    cd fastk && \
-    git reset --hard ${fastk_commit_id} && \
-    make all
-# RUN git clone https://github.com/thegenemyers/MERQURY.FK.git merquryfk && \
+
+# Clone from patched version of MERQURY.FK
 RUN git clone https://github.com/mahesh-panchal/MERQURY.FK.git merquryfk && \
     cd merquryfk && \
     git reset --hard ${merquryfk_commit_id} && \
     make all
 
-FROM rocker/r-base:4.2.0
+FROM rocker/r-base:4.5.2
 
-ARG fastk_commit_id=ddea6cf254f378db51d22c6eb21af775fa9e1f77
-ARG merquryfk_commit_id=ef1a99c44891ff8cea7df166abae4461ea392ec0
-ARG genescope_commit_id=380815c420f50171f9234a0fd1ff426b39829b91
+ARG merquryfk_commit_id
+ARG genescopefk_commit_id
 
-LABEL description="A container with FastK, GeneScopeFK, and MerquryFK" \
+LABEL description="A container with MerquryFK and GeneScopeFK" \
     container_author="Mahesh Binzer-Panchal" \
-    version="1.1" \
-    fastk_commit_id="${fastk_commit_id}" \
+    version="1.3" \
     merquryfk_commit_id="${merquryfk_commit_id}" \
-    genescope_commit_id="${genescope_commit_id}" \
+    genescopefk_commit_id="${genescopefk_commit_id}" \
     tool_author="Gene Myers" \
-    fastk_repo="https://github.com/thegenemyers/FASTK" \
     merquryfk_repo="https://github.com/thegenemyers/MERQURY.FK" \
     genescopefk_repo="https://github.com/thegenemyers/GENESCOPE.FK"
-
-COPY --from=builder /opt/fastk/FastK \
-    /opt/fastk/Fastcp \ 
-    /opt/fastk/Fastmv \ 
-    /opt/fastk/Fastmerge \ 
-    /opt/fastk/Fastrm \ 
-    /opt/fastk/Haplex \ 
-    /opt/fastk/Histex \ 
-    /opt/fastk/Homex \ 
-    /opt/fastk/Logex \ 
-    /opt/fastk/Profex \ 
-    /opt/fastk/Symmex \ 
-    /opt/fastk/Tabex \ 
-    /opt/fastk/Vennex \ 
-    /usr/local/bin/
 
 COPY --from=builder /opt/merquryfk/ASMplot \
     /opt/merquryfk/CNplot \
@@ -67,7 +46,6 @@ COPY --from=builder /opt/merquryfk/ASMplot \
     /opt/merquryfk/KatComp \
     /opt/merquryfk/KatGC \
     /opt/merquryfk/MerquryFK \
-    /opt/merquryfk/PloidyPlot \
     /usr/local/bin/
 
 RUN apt-get update && apt-get -y install \
@@ -80,13 +58,14 @@ RUN apt-get update && apt-get -y install \
     procps
 
 WORKDIR /opt
+
 RUN git clone https://github.com/thegenemyers/GENESCOPE.FK.git genescopefk && \
     cd genescopefk && \
-    git reset --hard ${genescope_commit_id} && \
+    git reset --hard ${genescopefk_commit_id} && \
     Rscript -e 'install.packages(c("minpack.lm","argparse","ggplot2","scales","viridis","cowplot"))' && \
     Rscript -e 'install.packages(c("."), repos=NULL, type="source")' && \
     cp GeneScopeFK.R /usr/local/bin/
 
 WORKDIR /
 
-CMD [ "FastK" ]
+CMD [ "MerquryFK" ]
