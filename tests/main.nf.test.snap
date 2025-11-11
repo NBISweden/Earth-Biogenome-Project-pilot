@@ -1,7 +1,7 @@
 {
     "Tiny dataset - inspect,preprocess,assemble,purge,polish,scaffold,curate": {
         "content": [
-            97,
+            96,
             [
                 "01_read_inspection/dtol_search/7227_tol_info.json",
                 "01_read_inspection/fastk/.Drosophila_melanogaster_dmel_2Mb.fasta_hifi_fk.ktab.1",

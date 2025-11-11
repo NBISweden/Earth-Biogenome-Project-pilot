@@ -4,27 +4,31 @@ include { OATK                       } from "../../../modules/nf-core/oatk/main"
 
 workflow ASSEMBLE_ORGANELLES {
     take:
-    ch_assembly_data // Channel: tuple(meta, assembly / reads )
+    ch_reads         // Channel: [ meta, reads_path ] - only populated if mode = 'r'
+    ch_assemblies    // Channel: [ meta, assembly_map ] - only populated if mode = 'c'
     ch_assembly_mode // String: enum('c','r')
-    ch_reads         // Channel: tuple(meta, reads )
+    ch_oatk_reads    // Channel: tuple(meta, reads )
     ch_mito_hmm      // list: [ hmm_files ]
     ch_plastid_hmm   // list: [ hmm_files ]
 
     main:
     ch_versions = Channel.empty()
 
-    // Attempt MitoHiFi workflow
-    MITOHIFI_FINDMITOREFERENCE( ch_assembly_data.map { meta, _assembly_data -> [ meta, meta.sample.name ] }.unique() )
+    // Mix input data channels for mitohifi, only one will be populated
+    ch_input_data = ch_reads.mix( ch_assemblies )
 
-    // Prepare mitohifi_ch based on input data type (mode c: contigs, mode r: reads)
-    mitohifi_ch = ch_assembly_data
+    // Attempt mitohifi workflow
+    MITOHIFI_FINDMITOREFERENCE( ch_input_data.map { meta, _data -> [ meta, meta.sample.name ] }.unique() )
+
+    // Prepare mitohifi input
+    mitohifi_ch = ch_input_data
         .combine(
             MITOHIFI_FINDMITOREFERENCE.out.fasta
                 .join(MITOHIFI_FINDMITOREFERENCE.out.gb),
             by: 0
         )
-        .multiMap { meta, assembly_data, mitofa, mitogb ->
-            input: [ meta, ch_assembly_mode == "c" ? assembly_data.pri_fasta : assembly_data ] // If c, use contigs. Else r, use reads.
+        .multiMap { meta, data, mitofa, mitogb ->
+            input: [ meta, ch_assembly_mode == "c" ? data.pri_fasta : data ] // If c, use contigs. Else r, use reads.
             reference: mitofa
             genbank: mitogb
             mito_code: meta.sample.mito_code
@@ -40,7 +44,7 @@ workflow ASSEMBLE_ORGANELLES {
     )
 
     // Prepare channels for Oatk fallback strategy upon Mitohifi failure
-    ch_oatk_input = ch_reads
+    ch_oatk_input = ch_oatk_reads
         .map { meta, reads ->
             // Create join key (ch_reads meta won't match MITOHIFI.out meta in contig mode)
             def meta_key = [ meta.sample ]
