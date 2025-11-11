@@ -3,8 +3,9 @@
 # GENESCOPE.FK: Release v1.0 (full) (09/2023)
 ARG merquryfk_commit_id=acef44f51ed5c431805682a42cc96616552b6cdb
 ARG genescopefk_commit_id=380815c420f50171f9234a0fd1ff426b39829b91
+ARG rbase_version=4.5.2
 
-FROM rocker/r-base:4.5.2 AS builder
+FROM rocker/r-base:${rbase_version} AS builder
 
 ARG merquryfk_commit_id
 ARG genescopefk_commit_id
@@ -25,7 +26,7 @@ RUN git clone https://github.com/mahesh-panchal/MERQURY.FK.git merquryfk && \
     git reset --hard ${merquryfk_commit_id} && \
     make all
 
-FROM rocker/r-base:4.5.2
+FROM rocker/r-base:${rbase_version}
 
 ARG merquryfk_commit_id
 ARG genescopefk_commit_id
