@@ -43,32 +43,9 @@ workflow ASSEMBLE_ORGANELLES {
         mitohifi_ch.mito_code,
     )
 
-    // Prepare channels for Oatk fallback strategy upon Mitohifi failure
-    ch_oatk_input = ch_oatk_reads
-        .map { meta, reads ->
-            // Create join key (ch_reads meta won't match MITOHIFI.out meta in contig mode)
-            def meta_key = [ meta.sample ]
-            [ meta_key, meta, reads ]
-        }
-        .join(
-            MITOHIFI_MITOHIFI.out.fasta
-                .map { meta, mito_fasta ->
-                    // Create matching join key
-                    def meta_key = [ meta.sample ]
-                    [ meta_key, mito_fasta ]
-                },
-            by: 0,
-            remainder: true) // null remainder when there is no Mitohifi fasta output
-        .filter { _meta_key, _meta, _reads, mito_fasta ->
-            mito_fasta == null
-         }
-        .map { _meta_key, meta, reads, _mito_fasta ->
-            [ meta, reads ]
-        }
-
-    // Run Oatk assembly if Mitohifi failed
+    // Run Oatk assembly
     OATK(
-        ch_oatk_input,
+        ch_oatk_reads,
         ch_mito_hmm
             .map { _meta, hmm_files ->
             hmm_files
