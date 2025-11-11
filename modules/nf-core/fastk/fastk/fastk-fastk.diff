@@ -1,11 +1,22 @@
 Changes in component 'nf-core/fastk/fastk'
-'modules/nf-core/fastk/fastk/meta.yml' is unchanged
 Changes in 'fastk/fastk/main.nf':
 --- modules/nf-core/fastk/fastk/main.nf
 +++ modules/nf-core/fastk/fastk/main.nf
-@@ -26,12 +26,17 @@
+@@ -3,7 +3,7 @@
+     label 'process_medium'
+ 
+     // WARN: Version information not provided by tool on CLI. Please update version string below when bumping container versions.
+-    container 'ghcr.io/nbisweden/fastk_genescopefk_merquryfk:1.2'
++    container 'oras://community.wave.seqera.io/library/fastk:1.1.0--c033613137caa2b9'
+ 
+     input:
+     tuple val(meta), path(reads)
+@@ -24,14 +24,19 @@
+     }
+     def args = task.ext.args ?: ''
      def prefix = task.ext.prefix ?: "${meta.id}"
-     def FASTK_VERSION = 'f18a4e6d2207539f7b84461daebc54530a9559b0' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
+-    def FASTK_VERSION = 'f18a4e6d2207539f7b84461daebc54530a9559b0' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
++    def FASTK_VERSION = '1.1' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
      """
 +    mkdir tmp_uncompressed
 +    
@@ -22,4 +33,5 @@ Changes in 'fastk/fastk/main.nf':
      cat <<-END_VERSIONS > versions.yml
      "${task.process}":
 
+'modules/nf-core/fastk/fastk/meta.yml' is unchanged
 ************************************************************
