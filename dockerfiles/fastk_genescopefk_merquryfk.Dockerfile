@@ -3,7 +3,7 @@
 # MERQURY.FK: Release v1.1.3 + patch to save.cni file (09/2025)
 # GENESCOPE.FK: Release v1.0 (full) (09/2023)
 ARG fastk_commit_id=0e24fb45b71c4e14382ae1e1bc063bf66ea4e112
-ARG merquryfk_commit_id=acef44f51ed5c431805682a42cc96616552b6cdb
+ARG merquryfk_commit_id=2ebdeb6a990f87edf2439acc353bba0cd34b07c7
 ARG genescopefk_commit_id=380815c420f50171f9234a0fd1ff426b39829b91
 ARG rbase_version=4.5.2
 
@@ -29,7 +29,7 @@ RUN git clone https://github.com/thegenemyers/FASTK.git fastk && \
     make all
 
 # Clone from patched version of MERQURY.FK
-RUN git clone https://github.com/mahesh-panchal/MERQURY.FK.git merquryfk && \
+RUN git clone https://github.com/thegenemyers/MERQURY.FK.git merquryfk && \
     cd merquryfk && \
     git reset --hard ${merquryfk_commit_id} && \
     make all
