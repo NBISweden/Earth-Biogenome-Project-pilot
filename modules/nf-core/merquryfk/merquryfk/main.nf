@@ -17,21 +17,21 @@ process MERQURYFK_MERQURYFK {
     tuple val(meta), path("${prefix}.*.spectra-cn.fl.{png,pdf}")  , emit: part_spectra_cn_fl,  optional: true
     tuple val(meta), path("${prefix}.*.spectra-cn.ln.{png,pdf}")  , emit: part_spectra_cn_ln,  optional: true
     tuple val(meta), path("${prefix}.*.spectra-cn.st.{png,pdf}")  , emit: part_spectra_cn_st,  optional: true
-    tuple val(meta), path("${prefix}.spectra-cn.fl.{png,pdf}")    , emit: full_spectra_cn_fl, optional: true
-    tuple val(meta), path("${prefix}.spectra-cn.ln.{png,pdf}")    , emit: full_spectra_cn_ln, optional: true
-    tuple val(meta), path("${prefix}.spectra-cn.st.{png,pdf}")    , emit: full_spectra_cn_st, optional: true
+    tuple val(meta), path("${prefix}.spectra-cn.fl.{png,pdf}")    , emit: full_spectra_cn_fl,  optional: true
+    tuple val(meta), path("${prefix}.spectra-cn.ln.{png,pdf}")    , emit: full_spectra_cn_ln,  optional: true
+    tuple val(meta), path("${prefix}.spectra-cn.st.{png,pdf}")    , emit: full_spectra_cn_st,  optional: true
     tuple val(meta), path("${prefix}.qv")                         , emit: qv
-    tuple val(meta), path("${prefix}.spectra-asm.fl.{png,pdf}")   , emit: spectra_asm_fl, optional: true
-    tuple val(meta), path("${prefix}.spectra-asm.ln.{png,pdf}")   , emit: spectra_asm_ln, optional: true
-    tuple val(meta), path("${prefix}.spectra-asm.st.{png,pdf}")   , emit: spectra_asm_st, optional: true
-    tuple val(meta), path("${prefix}.phased_block.bed")           , emit: phased_block_bed,   optional: true
-    tuple val(meta), path("${prefix}.phased_block.stats")         , emit: phased_block_stats, optional: true
-    tuple val(meta), path("${prefix}.continuity.N.{pdf,png}")     , emit: continuity_N,       optional: true
-    tuple val(meta), path("${prefix}.block.N.{pdf,png}")          , emit: block_N,            optional: true
-    tuple val(meta), path("${prefix}.block.blob.{pdf,png}")       , emit: block_blob,         optional: true
-    tuple val(meta), path("${prefix}.hapmers.blob.{pdf,png}")     , emit: hapmers_blob,       optional: true
+    tuple val(meta), path("${prefix}.spectra-asm.fl.{png,pdf}")   , emit: spectra_asm_fl,      optional: true
+    tuple val(meta), path("${prefix}.spectra-asm.ln.{png,pdf}")   , emit: spectra_asm_ln,      optional: true
+    tuple val(meta), path("${prefix}.spectra-asm.st.{png,pdf}")   , emit: spectra_asm_st,      optional: true
+    tuple val(meta), path("${prefix}.phased_block.bed")           , emit: phased_block_bed,    optional: true
+    tuple val(meta), path("${prefix}.phased_block.stats")         , emit: phased_block_stats,  optional: true
+    tuple val(meta), path("${prefix}.continuity.N.{pdf,png}")     , emit: continuity_N,        optional: true
+    tuple val(meta), path("${prefix}.block.N.{pdf,png}")          , emit: block_N,             optional: true
+    tuple val(meta), path("${prefix}.block.blob.{pdf,png}")       , emit: block_blob,          optional: true
+    tuple val(meta), path("${prefix}.hapmers.blob.{pdf,png}")     , emit: hapmers_blob,        optional: true
     tuple val(meta), path("${prefix}.false_duplications.tsv")     , emit: false_duplications
-    tuple val(meta), path("${prefix}.cni.gz")                     , emit: cn_histogram
+    tuple val(meta), path("${prefix}.*.spectra-cn.cni.gz")        , emit: cn_histogram
     path "versions.yml"                                           , emit: versions
 
     when:
@@ -47,7 +47,7 @@ process MERQURYFK_MERQURYFK {
     def mat_ktab = matktab ? "${matktab.find{ it.toString().endsWith(".ktab") }}" : ''
     def pat_ktab = patktab ? "${patktab.find{ it.toString().endsWith(".ktab") }}" : ''
     def FASTK_VERSION = '0e24fb45b71c4e14382ae1e1bc063bf66ea4e112' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
-    def MERQURY_VERSION = 'acef44f51ed5c431805682a42cc96616552b6cdb' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
+    def MERQURY_VERSION = '2ebdeb6a990f87edf2439acc353bba0cd34b07c7' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
     """
     MerquryFK \\
         $args \\
@@ -59,11 +59,11 @@ process MERQURYFK_MERQURYFK {
         $haplotigs \\
         $prefix
 
-    mv .cni ${prefix}.cni
     awk -v asm_ploidy=${assembly instanceof List ? assembly.size() : 1} \\
-        -f $projectDir/bin/false_duplications.awk ${prefix}.cni \\
+        -f $projectDir/bin/false_duplications.awk ${prefix}.*.cni \\
         > ${prefix}.false_duplications.tsv
-    gzip ${prefix}.cni
+
+    gzip ${prefix}.*.cni
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
@@ -75,8 +75,8 @@ process MERQURYFK_MERQURYFK {
 
     stub:
     prefix = task.ext.prefix ?: "${meta.id}"
-    def FASTK_VERSION = 'f18a4e6d2207539f7b84461daebc54530a9559b0' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
-    def MERQURY_VERSION = '8ae344092df5dcaf83cfb7f90f662597a9b1fc61' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
+    def FASTK_VERSION = '0e24fb45b71c4e14382ae1e1bc063bf66ea4e112' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
+    def MERQURY_VERSION = '2ebdeb6a990f87edf2439acc353bba0cd34b07c7' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
     """
     touch ${prefix}.completeness.stats
     touch ${prefix}.qv
