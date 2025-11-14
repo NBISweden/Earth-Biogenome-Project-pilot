@@ -46,7 +46,7 @@ process MITOHIFI_MITOHIFI {
     def prefix = task.ext.prefix ?: meta.id
     def zipped = input.name.endsWith('.gz')
     // Mitohifi deletes the original file when renaming headers.
-    def fasta = ( zipped ? input.name - '.gz' : input )
+    def fasta = ( zipped ? input.name - '.gz' : "${prefix}.${input.name}" )
     """
     ${zipped ? "gzip -dc $input >" : "cp ${input}"} ${fasta}
 
