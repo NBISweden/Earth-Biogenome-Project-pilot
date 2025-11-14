@@ -1,12 +1,15 @@
 # Global args
+# FASTK: Release v1.1 + 12 unreleased commits (09/2025)
 # MERQURY.FK: Release v1.1.3 + patch to save.cni file (09/2025)
 # GENESCOPE.FK: Release v1.0 (full) (09/2023)
+ARG fastk_commit_id=0e24fb45b71c4e14382ae1e1bc063bf66ea4e112
 ARG merquryfk_commit_id=acef44f51ed5c431805682a42cc96616552b6cdb
 ARG genescopefk_commit_id=380815c420f50171f9234a0fd1ff426b39829b91
 ARG rbase_version=4.5.2
 
 FROM rocker/r-base:${rbase_version} AS builder
 
+ARG fastk_commit_id
 ARG merquryfk_commit_id
 ARG genescopefk_commit_id
 
@@ -20,6 +23,11 @@ RUN apt-get update && apt-get -y install \
 
 WORKDIR /opt
 
+RUN git clone https://github.com/thegenemyers/FASTK.git fastk && \
+    cd fastk && \
+    git reset --hard ${fastk_commit_id} && \
+    make all
+
 # Clone from patched version of MERQURY.FK
 RUN git clone https://github.com/mahesh-panchal/MERQURY.FK.git merquryfk && \
     cd merquryfk && \
@@ -28,17 +36,35 @@ RUN git clone https://github.com/mahesh-panchal/MERQURY.FK.git merquryfk && \
 
 FROM rocker/r-base:${rbase_version}
 
+ARG fastk_commit_id
 ARG merquryfk_commit_id
 ARG genescopefk_commit_id
 
-LABEL description="A container with MerquryFK and GeneScopeFK" \
+LABEL description="A container with Fastk, MerquryFK, and GeneScopeFK" \
     container_author="Mahesh Binzer-Panchal" \
     version="1.3" \
+    fastk_commit_id="${fastk_commit_id}" \
     merquryfk_commit_id="${merquryfk_commit_id}" \
     genescopefk_commit_id="${genescopefk_commit_id}" \
     tool_author="Gene Myers" \
+    fastk_repo="https://github.com/thegenemyers/FASTK" \
     merquryfk_repo="https://github.com/thegenemyers/MERQURY.FK" \
     genescopefk_repo="https://github.com/thegenemyers/GENESCOPE.FK"
+
+COPY --from=builder /opt/fastk/FastK \
+    /opt/fastk/Fastcp \
+    /opt/fastk/Fastmv \
+    /opt/fastk/Fastmerge \
+    /opt/fastk/Fastrm \
+    /opt/fastk/Haplex \
+    /opt/fastk/Histex \
+    /opt/fastk/Homex \
+    /opt/fastk/Logex \
+    /opt/fastk/Profex \
+    /opt/fastk/Symmex \
+    /opt/fastk/Tabex \
+    /opt/fastk/Vennex \
+    /usr/local/bin/
 
 COPY --from=builder /opt/merquryfk/ASMplot \
     /opt/merquryfk/CNplot \
@@ -69,4 +95,4 @@ RUN git clone https://github.com/thegenemyers/GENESCOPE.FK.git genescopefk && \
 
 WORKDIR /
 
-CMD [ "MerquryFK" ]
+CMD [ "FastK" ]
