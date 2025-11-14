@@ -59,9 +59,10 @@ process MITOHIFI_MITOHIFI {
         -t $task.cpus ${args}
     set -e
 
+    rm -f ${fasta} *fixed_header_contigs.fasta
+
     # Rename files to include prefix
     find . -maxdepth 1 -type f ! -name '.*' -exec sh -c 'for f do mv "\$f" "${prefix}.\${f#./}"; done' sh {} +
-
 
     # Test for mitohifi reference files:
     # *mitogenome.fasta && *contigs_stats.tsv: Mitohifi complete output, proceed with workflow
