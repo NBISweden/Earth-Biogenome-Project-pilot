@@ -3,7 +3,7 @@ process MERQURYFK_MERQURYFK {
     label 'process_medium'
 
     // WARN: Version information not provided by tool on CLI. Please update version string below when bumping container versions.
-    container 'ghcr.io/nbisweden/fastk_genescopefk_merquryfk:1.2'
+    container 'ghcr.io/nbisweden/fastk_genescopefk_merquryfk:1.3'
 
     input:
     tuple val(meta), path(fastk_hist),path(fastk_ktab),path(assembly),path(haplotigs)
@@ -46,8 +46,8 @@ process MERQURYFK_MERQURYFK {
     prefix = task.ext.prefix ?: "${meta.id}"
     def mat_ktab = matktab ? "${matktab.find{ it.toString().endsWith(".ktab") }}" : ''
     def pat_ktab = patktab ? "${patktab.find{ it.toString().endsWith(".ktab") }}" : ''
-    def FASTK_VERSION = 'f18a4e6d2207539f7b84461daebc54530a9559b0' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
-    def MERQURY_VERSION = '8ae344092df5dcaf83cfb7f90f662597a9b1fc61' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
+    def FASTK_VERSION = '0e24fb45b71c4e14382ae1e1bc063bf66ea4e112' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
+    def MERQURY_VERSION = 'acef44f51ed5c431805682a42cc96616552b6cdb' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
     """
     MerquryFK \\
         $args \\
