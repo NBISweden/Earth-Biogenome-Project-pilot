@@ -21,7 +21,7 @@ Changes in 'mitohifi/mitohifi/main.nf':
      tuple val(meta), path("*gb")                             , emit: gb, optional: true
      tuple val(meta), path("*gff")                            , emit: gff, optional: true
      tuple val(meta), path("*all_potential_contigs.fa")       , emit: all_potential_contigs, optional: true
-@@ -40,32 +39,60 @@
+@@ -40,32 +39,61 @@
      if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
          error "MitoHiFi module does not support Conda. Please use Docker / Singularity instead."
      }
@@ -34,7 +34,7 @@ Changes in 'mitohifi/mitohifi/main.nf':
 +    def prefix = task.ext.prefix ?: meta.id
 +    def zipped = input.name.endsWith('.gz')
 +    // Mitohifi deletes the original file when renaming headers.
-+    def fasta = ( zipped ? input.name - '.gz' : input )
++    def fasta = ( zipped ? input.name - '.gz' : "${prefix}.${input.name}" )
      """
 -    mitohifi.py -${input_mode} ${input} \\
 +    ${zipped ? "gzip -dc $input >" : "cp ${input}"} ${fasta}
@@ -48,11 +48,12 @@ Changes in 'mitohifi/mitohifi/main.nf':
          -t $task.cpus ${args}
 +    set -e
 +
++    rm -f ${fasta} *fixed_header_contigs.fasta
++
 +    # Rename files to include prefix
 +    find . -maxdepth 1 -type f ! -name '.*' -exec sh -c 'for f do mv "\$f" "${prefix}.\${f#./}"; done' sh {} +
 +    # Remove broken link that disrupts the publish operation
 +    find . -xtype l -delete
-+
 +
 +    # Test for mitohifi reference files:
 +    # *mitogenome.fasta && *contigs_stats.tsv: Mitohifi complete output, proceed with workflow
