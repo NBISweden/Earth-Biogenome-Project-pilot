@@ -2,8 +2,11 @@ Changes in component 'nf-core/merquryfk/merquryfk'
 Changes in 'merquryfk/merquryfk/main.nf':
 --- modules/nf-core/merquryfk/merquryfk/main.nf
 +++ modules/nf-core/merquryfk/merquryfk/main.nf
-@@ -3,7 +3,7 @@
+@@ -1,9 +1,10 @@
+ process MERQURYFK_MERQURYFK {
+     tag "$meta.id"
      label 'process_medium'
++    debug true
  
      // WARN: Version information not provided by tool on CLI. Please update version string below when bumping container versions.
 -    container 'ghcr.io/nbisweden/fastk_genescopefk_merquryfk:1.2'
@@ -11,7 +14,7 @@ Changes in 'merquryfk/merquryfk/main.nf':
  
      input:
      tuple val(meta), path(fastk_hist),path(fastk_ktab),path(assembly),path(haplotigs)
-@@ -14,19 +14,24 @@
+@@ -14,19 +15,24 @@
      tuple val(meta), path("${prefix}.completeness.stats")         , emit: stats
      tuple val(meta), path("${prefix}.*_only.bed")                 , emit: bed
      tuple val(meta), path("${prefix}.*.qv")                       , emit: assembly_qv
@@ -44,35 +47,42 @@ Changes in 'merquryfk/merquryfk/main.nf':
 +    tuple val(meta), path("${prefix}.block.blob.{pdf,png}")       , emit: block_blob,          optional: true
 +    tuple val(meta), path("${prefix}.hapmers.blob.{pdf,png}")     , emit: hapmers_blob,        optional: true
 +    tuple val(meta), path("${prefix}.false_duplications.tsv")     , emit: false_duplications
-+    tuple val(meta), path("${prefix}.*.spectra-cn.cni.gz")        , emit: cn_histogram
++    tuple val(meta), path("${prefix}.spectra-cn.cni.gz")          , emit: cn_histogram
      path "versions.yml"                                           , emit: versions
  
      when:
-@@ -41,8 +46,8 @@
+@@ -41,8 +47,8 @@
      prefix = task.ext.prefix ?: "${meta.id}"
      def mat_ktab = matktab ? "${matktab.find{ it.toString().endsWith(".ktab") }}" : ''
      def pat_ktab = patktab ? "${patktab.find{ it.toString().endsWith(".ktab") }}" : ''
 -    def FASTK_VERSION = 'f18a4e6d2207539f7b84461daebc54530a9559b0' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
 -    def MERQURY_VERSION = '8ae344092df5dcaf83cfb7f90f662597a9b1fc61' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
 +    def FASTK_VERSION = '0e24fb45b71c4e14382ae1e1bc063bf66ea4e112' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
-+    def MERQURY_VERSION = '2ebdeb6a990f87edf2439acc353bba0cd34b07c7' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
++    def MERQURY_VERSION = '41451f8fb146158c5b747ae7915e69975c61ddd9' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
      """
      MerquryFK \\
          $args \\
-@@ -54,6 +59,12 @@
+@@ -54,6 +60,19 @@
          $haplotigs \\
          $prefix
  
++    # Providing 1 assembly outputs 1 cni that requires a rename
++    # Providing assembly + haplotigs outputs 3 cnis, of which one is correctly named already
++    CNI_COUNT=\$(find . -maxdepth 1 -name "*.spectra-cn.cni" -type f | wc -l)
++    if [ "\$CNI_COUNT" -eq 1 ]; then
++      mv ./*.spectra-cn.cni ${prefix}.spectra-cn.cni
++    fi
++
 +    awk -v asm_ploidy=${assembly instanceof List ? assembly.size() : 1} \\
-+        -f $projectDir/bin/false_duplications.awk ${prefix}.*.cni \\
++        -f $projectDir/bin/false_duplications.awk ${prefix}.spectra-cn.cni \\
 +        > ${prefix}.false_duplications.tsv
 +
-+    gzip ${prefix}.*.cni
++    gzip ${prefix}.spectra-cn.cni
 +
      cat <<-END_VERSIONS > versions.yml
      "${task.process}":
          fastk: $FASTK_VERSION
-@@ -61,10 +72,11 @@
+@@ -61,10 +80,11 @@
          r: \$( R --version | sed '1!d; s/.*version //; s/ .*//' )
      END_VERSIONS
      """
@@ -82,7 +92,7 @@ Changes in 'merquryfk/merquryfk/main.nf':
 -    def FASTK_VERSION = 'f18a4e6d2207539f7b84461daebc54530a9559b0' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
 -    def MERQURY_VERSION = '8ae344092df5dcaf83cfb7f90f662597a9b1fc61' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
 +    def FASTK_VERSION = '0e24fb45b71c4e14382ae1e1bc063bf66ea4e112' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
-+    def MERQURY_VERSION = '2ebdeb6a990f87edf2439acc353bba0cd34b07c7' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
++    def MERQURY_VERSION = '41451f8fb146158c5b747ae7915e69975c61ddd9' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
      """
      touch ${prefix}.completeness.stats
      touch ${prefix}.qv
