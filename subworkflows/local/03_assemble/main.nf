@@ -37,7 +37,7 @@ workflow ASSEMBLE {
         )
         ch_versions = ch_versions.mix(ASSEMBLE_ORGANELLES.out.versions)
     } else if ( organelle_assembly_mode == 'contigs' && !nuclear_assembly_mode ) {
-        error "Organelle assembly in 'contigs' mode requires 'nuclear_assembly_mode = true'" 
+        error "Organelle assembly in 'contigs' mode requires 'nuclear_assembly_mode = true'"
     } // else organelle_assembly_mode == 'none'
 
     emit:
