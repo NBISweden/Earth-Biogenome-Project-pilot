@@ -28,7 +28,7 @@ process MERQURYFK_KATGC {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     def FASTK_VERSION   = 'f18a4e6d2207539f7b84461daebc54530a9559b0' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
-    def MERQURY_VERSION = '396941adc0fcc18f8e3a2f614f002853d40678f7' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
+    def MERQURY_VERSION = '41451f8fb146158c5b747ae7915e69975c61ddd9' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
     """
     KatGC \\
         $args \\

@@ -3,7 +3,7 @@
 # MERQURY.FK: Release v1.1.3 + patch to save.cni file (09/2025)
 # GENESCOPE.FK: Release v1.0 (full) (09/2023)
 ARG fastk_commit_id=0e24fb45b71c4e14382ae1e1bc063bf66ea4e112
-ARG merquryfk_commit_id=396941adc0fcc18f8e3a2f614f002853d40678f7
+ARG merquryfk_commit_id=41451f8fb146158c5b747ae7915e69975c61ddd9
 ARG genescopefk_commit_id=380815c420f50171f9234a0fd1ff426b39829b91
 ARG rbase_version=4.5.2
 
