@@ -46,7 +46,7 @@ process MITOHIFI_MITOHIFI {
     def prefix = task.ext.prefix ?: meta.id
     def zipped = input.name.endsWith('.gz')
     // Mitohifi deletes the original file when renaming headers.
-    def fasta = ( zipped ? input.name - '.gz' : input )
+    def fasta = ( zipped ? input.name - '.gz' : "${prefix}.${input.name}" )
     """
     ${zipped ? "gzip -dc $input >" : "cp ${input}"} ${fasta}
 
@@ -59,11 +59,12 @@ process MITOHIFI_MITOHIFI {
         -t $task.cpus ${args}
     set -e
 
+    rm -f ${fasta} *fixed_header_contigs.fasta
+
     # Rename files to include prefix
     find . -maxdepth 1 -type f ! -name '.*' -exec sh -c 'for f do mv "\$f" "${prefix}.\${f#./}"; done' sh {} +
     # Remove broken link that disrupts the publish operation
     find . -xtype l -delete
-
 
     # Test for mitohifi reference files:
     # *mitogenome.fasta && *contigs_stats.tsv: Mitohifi complete output, proceed with workflow

@@ -24,7 +24,7 @@ workflow ASSEMBLE_ORGANELLES {
             by: 0
         )
         .multiMap { meta, data, mitofa, mitogb ->
-            input: [ meta, ch_assembly_mode == "c" ? data.pri_fasta : data ] // If c, use contigs. Else r, use reads.
+            input: [ meta, ch_assembly_mode == "c" ? data.pri_fasta : data ] // If "c", use contigs, data = (Channel<Map>]. Else "r", use reads, data = (Channel<Path>).
             reference: mitofa
             genbank: mitogb
             mito_code: meta.sample.mito_code
