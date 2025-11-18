@@ -13,10 +13,10 @@ IMAGE_NAME="ghcr.io/nbisweden/smudgeplot"
 
 # Push
 
-        docker push $IMAGE_NAME:$IMAGE_VERSION || {
-                echo "Error pushing image, exited script"
-                exit 1
-        }
+        # docker push $IMAGE_NAME:$IMAGE_VERSION || {
+        #         echo "Error pushing image, exited script"
+        #         exit 1
+        # }
 
 # Debug build
 
