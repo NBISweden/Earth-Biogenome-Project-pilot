@@ -61,7 +61,7 @@ welcome your feedback; please submit any suggestions or feature requests at
 {{< include _08_assembly_curation.qmd >}}
 
 <!-- 09 EAR Metadata -->
-{{< include _09_ear_metadata.qmd >}}
+{{< include _09_species_information.qmd >}}
 
 ## Summary
 

@@ -1,6 +1,6 @@
-## EAR report metadata
+## Species information
 
-Metadata fields for the [EAR report](https://github.com/ERGA-consortium/EARs)
+Species information fields, e.g., for the [EAR report](https://github.com/ERGA-consortium/EARs)
 
 ```{python}
 #| output: asis
