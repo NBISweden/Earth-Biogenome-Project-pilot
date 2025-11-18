@@ -25,7 +25,7 @@ nextflow_pipeline {
                 fcs {
                     manifest           = "https://ftp.ncbi.nlm.nih.gov/genomes/TOOLS/FCS/database/test-only/test-only.manifest"
                 }
-                organelle_assembly_mode = 'none'
+                organelle_assembly_mode = 'contigs'
             }
         }
 
