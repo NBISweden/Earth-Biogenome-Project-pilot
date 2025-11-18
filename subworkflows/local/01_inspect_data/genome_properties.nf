@@ -1,9 +1,8 @@
 #! /usr/bin/env nextflow
-include { FASTK_HISTEX } from "../../../modules/nf-core/fastk/histex/main"
-include { GENESCOPEFK  } from "../../../modules/nf-core/genescopefk/main"
-
-include { MERQURYFK_PLOIDYPLOT } from "../../../modules/nf-core/merquryfk/ploidyplot/main"
-include { MERQURYFK_KATGC      } from "../../../modules/nf-core/merquryfk/katgc/main"
+include { FASTK_HISTEX    } from "../../../modules/nf-core/fastk/histex/main"
+include { GENESCOPEFK     } from "../../../modules/nf-core/genescopefk/main"
+include { SMUDGEPLOT      } from "../../../modules/local/smudgeplot/main"
+include { MERQURYFK_KATGC } from "../../../modules/nf-core/merquryfk/katgc/main"
 
 workflow GENOME_PROPERTIES {
 
@@ -21,7 +20,7 @@ workflow GENOME_PROPERTIES {
     GENESCOPEFK ( FASTK_HISTEX.out.hist )
 
     // Generate Smudgeplot
-    MERQURYFK_PLOIDYPLOT ( fastk_hist_ktab )
+    SMUDGEPLOT ( fastk_hist_ktab.map { meta, _hist, ktab -> [meta, ktab] } )
 
     // Generage GC plot
     MERQURYFK_KATGC ( fastk_hist_ktab )
@@ -30,7 +29,7 @@ workflow GENOME_PROPERTIES {
         GENESCOPEFK.out.log_plot,
         GENESCOPEFK.out.transformed_linear_plot,
         GENESCOPEFK.out.transformed_log_plot,
-        MERQURYFK_PLOIDYPLOT.out.stacked_ploidy_plot_png,
+        SMUDGEPLOT.out.smudgeplot_png,
         MERQURYFK_KATGC.out.stacked_gc_plot_png
     )
     .map { _meta, img -> img }
@@ -38,7 +37,7 @@ workflow GENOME_PROPERTIES {
 
     FASTK_HISTEX.out.versions.first().mix(
         GENESCOPEFK.out.versions.first(),
-        MERQURYFK_PLOIDYPLOT.out.versions.first(),
+        SMUDGEPLOT.out.versions.first(),
         MERQURYFK_KATGC.out.versions.first()
     ).set { versions }
 

@@ -13,7 +13,7 @@ module_order:
   - "Data Profile"
   - "genescope"
   - "katgc"
-  - "ploidyplot"
+  - "smudgeplot"
   - "busco"
   - "quast"
   - "Software versions - Assembly"
@@ -37,10 +37,10 @@ custom_data:
   genescope:
     section_name: "GenomeScope2"
     description: "Sample data k-mer histogram."
-  ploidyplot:
-    id: "ploidyplot"
+  smudgeplot:
+    id: "smudgeplot"
     file_format: "png"
-    section_name: "Ploidy Plot"
+    section_name: "Smudgeplot"
     description: "Ploidy estimate based on kmers."
   katgc:
     id: "katgc"
@@ -53,8 +53,8 @@ sp: # Search pattern
     fn: "DToL.tsv"
   traits:
     fn: "Genome_traits.tsv"
-  ploidyplot:
-    fn: "*_ploidyplot.st.png"
+  smudgeplot:
+    fn: "*_smudgeplot.png"
   katgc:
     fn: "*_katgc.st.png"
   quast:

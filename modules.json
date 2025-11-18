@@ -167,13 +167,6 @@
                         ],
                         "patch": "modules/nf-core/merquryfk/merquryfk/merquryfk-merquryfk.diff"
                     },
-                    "merquryfk/ploidyplot": {
-                        "branch": "master",
-                        "git_sha": "ebb27711cd5f4de921244bfa81c676504072d31c",
-                        "installed_by": [
-                            "modules"
-                        ]
-                    },
                     "meryl/count": {
                         "branch": "master",
                         "git_sha": "2910aa889fd3497727d87854148a0e0aa1105da3",
