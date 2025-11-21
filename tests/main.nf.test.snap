@@ -1,7 +1,7 @@
 {
     "Tiny dataset - inspect,preprocess,assemble,purge,polish,scaffold,curate": {
         "content": [
-            96,
+            97,
             [
                 "01_read_inspection/dtol_search/7227_tol_info.json",
                 "01_read_inspection/fastk/.Drosophila_melanogaster_dmel_2Mb.fasta_hifi_fk.ktab.1",
@@ -192,6 +192,12 @@
                 "03_assembly/mitohifi/hifiasm-raw-default/potential_contigs/ptg000006l/ptg000006l.trnas",
                 "03_assembly/mitohifi/references/PP764103.1.fasta",
                 "03_assembly/mitohifi/references/PP764103.1.gb",
+                "03_assembly/oatk/Drosophila_melanogaster.annot_mito.txt",
+                "03_assembly/oatk/Drosophila_melanogaster.mito.ctg.bed",
+                "03_assembly/oatk/Drosophila_melanogaster.mito.ctg.fasta",
+                "03_assembly/oatk/Drosophila_melanogaster.mito.gfa",
+                "03_assembly/oatk/Drosophila_melanogaster.utg.final.gfa",
+                "03_assembly/oatk/Drosophila_melanogaster.utg.gfa",
                 "05_duplicate_purging/busco/hifiasm-purged-default/hifiasm-purged-default-bacteria_odb10-busco.batch_summary.txt",
                 "05_duplicate_purging/busco/hifiasm-purged-default/short_summary.specific.bacteria_odb10.Drosophila_melanogaster_hifiasm-purged-default_hap0.purged_fold.fasta.json",
                 "05_duplicate_purging/busco/hifiasm-purged-default/short_summary.specific.bacteria_odb10.Drosophila_melanogaster_hifiasm-purged-default_hap0.purged_fold.fasta.txt",
@@ -341,7 +347,7 @@
             "nf-test": "0.9.2",
             "nextflow": "25.04.8"
         },
-        "timestamp": "2025-10-31T22:39:48.342532236"
+        "timestamp": "2025-11-11T10:09:49.564949906"
     },
     "Tiny dataset - purge,polish,scaffold,curate": {
         "content": [

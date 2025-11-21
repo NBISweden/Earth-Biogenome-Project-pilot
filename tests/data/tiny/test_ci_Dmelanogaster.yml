@@ -14,3 +14,9 @@ hic:
     read2: 'https://raw.githubusercontent.com/NBISweden/Earth-Biogenome-Project-pilot/main/tests/data/tiny/HIC/dmel_2Mb_p1_R2.fastq.gz'
   - read1: 'https://raw.githubusercontent.com/NBISweden/Earth-Biogenome-Project-pilot/main/tests/data/tiny/HIC/dmel_2Mb_p2_R1.fastq.gz'
     read2: 'https://raw.githubusercontent.com/NBISweden/Earth-Biogenome-Project-pilot/main/tests/data/tiny/HIC/dmel_2Mb_p2_R2.fastq.gz'
+mito_hmm:
+  - fam: https://raw.githubusercontent.com/c-zhou/OatkDB/main/v20230921/insecta_mito.fam
+    h3f: https://raw.githubusercontent.com/c-zhou/OatkDB/main/v20230921/insecta_mito.fam.h3f
+    h3i: https://raw.githubusercontent.com/c-zhou/OatkDB/main/v20230921/insecta_mito.fam.h3i
+    h3m: https://raw.githubusercontent.com/c-zhou/OatkDB/main/v20230921/insecta_mito.fam.h3m
+    h3p: https://raw.githubusercontent.com/c-zhou/OatkDB/main/v20230921/insecta_mito.fam.h3p

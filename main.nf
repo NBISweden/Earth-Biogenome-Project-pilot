@@ -118,10 +118,11 @@ workflow {
         // Run assemblers
         ASSEMBLE (
                 PREPARE_INPUT.out.hifi_merged,
+                PREPARE_INPUT.out.mito_hmm,
+                PREPARE_INPUT.out.plastid_hmm,
                 params.nuclear_assembly_mode,
                 params.organelle_assembly_mode
         )
-        // TODO organelle output channels
         ch_evaluate_assemblies = ch_evaluate_assemblies.mix( ASSEMBLE.out.raw_assemblies )
         ch_raw_assemblies = ASSEMBLE.out.raw_assemblies
         ch_multiqc_files = ch_multiqc_files.mix( ASSEMBLE.out.logs )
