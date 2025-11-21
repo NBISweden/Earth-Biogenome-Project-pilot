@@ -6,7 +6,7 @@ workflow ASSEMBLE {
     hifi_reads              // [ meta, hifi_reads ]
     mito_hmm                // list: [ hmm_files ]
     plastid_hmm             // list: [ hmm_files ]
-    nuclear_assembly_mode // true, false
+    nuclear_assembly_mode   // true, false
     organelle_assembly_mode // contigs, reads, or none
 
     main:
@@ -25,10 +25,9 @@ workflow ASSEMBLE {
     // Organelle assembly
     if ( organelle_assembly_mode == 'contigs' && nuclear_assembly_mode ) {
         ASSEMBLE_ORGANELLES(
-            channel.empty(),      // mitohifi: empty reads channel
+            hifi_reads,           // oatk: [ meta, reads ]
             ch_raw_assemblies,    // mitohifi: [ meta, assembly_map ]
             'c',                  // mitohifi: mode
-            hifi_reads,           // oatk: [ meta, reads ]
             mito_hmm,             // oatk: mito hmm files
             plastid_hmm           // oatk: plastid hmm files
         )
@@ -36,10 +35,9 @@ workflow ASSEMBLE {
         // TODO: filter organelle contigs from primary assembly
     } else if ( organelle_assembly_mode == 'reads' ) {
         ASSEMBLE_ORGANELLES(
-            hifi_reads,           // mitohifi: [ meta, reads ]
+            hifi_reads,           // mitohifi & oatk: [ meta, reads ]
             channel.empty(),      // mitohifi: empty contigs channel
             'r',                  // mitohifi: mode
-            hifi_reads,           // oatk: [ meta, reads ]
             mito_hmm,             // oatk: mito hmm files
             plastid_hmm           // oatk: plastid hmm files
         )
