@@ -8,6 +8,7 @@ process SMUDGEPLOT {
 
     input:
     tuple val(meta), path(fastk_ktab)
+    val smudgeplot_threshold
 
     output:
     tuple val(meta), path("*.smudge_report.tsv")     , emit: smudgeplot_report_tsv
@@ -41,6 +42,7 @@ process SMUDGEPLOT {
         $args \\
         -t ${task.cpus} \\
         -o $prefix \\
+        -L $smudgeplot_threshold \\
         ${fastk_ktab.find{ it.toString().endsWith(".ktab") }}
     smudgeplot \\
         all \\

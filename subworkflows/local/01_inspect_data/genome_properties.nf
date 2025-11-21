@@ -7,7 +7,8 @@ include { MERQURYFK_KATGC } from "../../../modules/nf-core/merquryfk/katgc/main"
 workflow GENOME_PROPERTIES {
 
     take:
-    fastk_hist_ktab   // [ meta, fastk_hist, fastk_ktab ]
+    fastk_hist_ktab         // [ meta, fastk_hist, fastk_ktab ]
+    ch_smudgeplot_threshold // Int.
 
     /* Genome properties workflow:
         - Estimate genome depth of coverage from reads
@@ -20,7 +21,7 @@ workflow GENOME_PROPERTIES {
     GENESCOPEFK ( FASTK_HISTEX.out.hist )
 
     // Generate Smudgeplot
-    SMUDGEPLOT ( fastk_hist_ktab.map { meta, _hist, ktab -> [meta, ktab] } )
+    SMUDGEPLOT ( fastk_hist_ktab.map { meta, _hist, ktab -> [meta, ktab] }, ch_smudgeplot_threshold )
 
     // Generage GC plot
     MERQURYFK_KATGC ( fastk_hist_ktab )
