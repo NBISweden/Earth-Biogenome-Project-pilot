@@ -30,7 +30,7 @@ workflow GENOME_PROPERTIES {
         GENESCOPEFK.out.log_plot,
         GENESCOPEFK.out.transformed_linear_plot,
         GENESCOPEFK.out.transformed_log_plot,
-        SMUDGEPLOT.out.smudgeplot_png,
+        SMUDGEPLOT.out.smudgeplot,
         MERQURYFK_KATGC.out.stacked_gc_plot_png
     )
     .map { _meta, img -> img }

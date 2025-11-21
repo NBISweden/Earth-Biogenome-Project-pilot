@@ -11,17 +11,14 @@ process SMUDGEPLOT {
     val smudgeplot_threshold
 
     output:
-    tuple val(meta), path("*.smudge_report.tsv")     , emit: smudgeplot_report_tsv
-    tuple val(meta), path("*_centralities.txt")      , emit: centralities_txt
-    tuple val(meta), path("*_annotated_smu.txt")     , emit: kmer_pairs_txt
-    tuple val(meta), path("*_centralities.png")      , emit: centralities_png      , optional: true
-    tuple val(meta), path("*_centralities.pdf")      , emit: centralities_pdf      , optional: true
-    tuple val(meta), path("*_smudgeplot.png")        , emit: smudgeplot_png        , optional: true
-    tuple val(meta), path("*_smudgeplot.pdf")        , emit: smudgeplot_pdf        , optional: true
-    tuple val(meta), path("*_smudgeplot_log10.png")  , emit: smudgeplot_log10_png  , optional: true
-    tuple val(meta), path("*_smudgeplot_log10.pdf")  , emit: smudgeplot_log10_pdf  , optional: true
-    tuple val(meta), path("*_smudgeplot_report.json"), emit: smudgeplot_report_json, optional: true
-    path "versions.yml"                              , emit: versions
+    tuple val(meta), path("*.smudge_report.tsv")         , emit: smudgeplot_report_tsv
+    tuple val(meta), path("*_centralities.txt")          , emit: centralities_txt
+    tuple val(meta), path("*_annotated_smu.txt")         , emit: kmer_pairs_txt
+    tuple val(meta), path("*_centralities.{png,pdf}")    , emit: centralities
+    tuple val(meta), path("*_smudgeplot.{png,pdf}")      , emit: smudgeplot
+    tuple val(meta), path("*_smudgeplot_log10.{png,pdf}"), emit: smudgeplot_log10
+    tuple val(meta), path("*_smudgeplot_report.json")    , emit: smudgeplot_report_json, optional: true
+    path "versions.yml"                                  , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
