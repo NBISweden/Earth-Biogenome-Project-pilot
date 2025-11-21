@@ -143,7 +143,7 @@ workflow PREPARE_INPUT {
 
     main:
     // Read in YAML
-    ch_input = Channel.fromPath( infile, checkIfExists: true )
+    ch_input = channel.fromPath( infile, checkIfExists: true )
         .map { file -> readYAML( file ) }
 
     // Populate meta data
@@ -162,7 +162,7 @@ workflow PREPARE_INPUT {
                     file( it.h3i, checkIfExists: true),
                     file( it.h3m, checkIfExists: true),
                     file( it.h3p, checkIfExists: true)
-                ] } ] : [ [:], [[ [], [], [], [], [] ]] ] ) // Placeholder channel ensures oatk will run when only one hmm set is provided
+                ] } ] : [] )
             plastid_hmm_ch : ( data.plastid_hmm ? [ data.subMap('id','sample','settings'), data.plastid_hmm.collect {
                 [
                     file( it.fam, checkIfExists: true),
@@ -170,7 +170,7 @@ workflow PREPARE_INPUT {
                     file( it.h3i, checkIfExists: true),
                     file( it.h3m, checkIfExists: true),
                     file( it.h3p, checkIfExists: true)
-                ] } ] : [ [:], [[ [], [], [], [], [] ]] ] ) // Placeholder channel ensures oatk will run when only one hmm set is provided
+                ] } ] : [] )
         }
         .set{ input }
 

@@ -10,9 +10,9 @@ workflow ASSEMBLE {
     organelle_assembly_mode // contigs, reads, or none
 
     main:
-    ch_raw_assemblies = Channel.empty()
-    ch_logs = Channel.empty()
-    ch_versions = Channel.empty()
+    ch_raw_assemblies = channel.empty()
+    ch_logs = channel.empty()
+    ch_versions = channel.empty()
 
     // Nuclear assembly
     if ( nuclear_assembly_mode ) {
@@ -25,7 +25,7 @@ workflow ASSEMBLE {
     // Organelle assembly
     if ( organelle_assembly_mode == 'contigs' && nuclear_assembly_mode ) {
         ASSEMBLE_ORGANELLES(
-            Channel.empty(),      // mitohifi: empty reads channel
+            channel.empty(),      // mitohifi: empty reads channel
             ch_raw_assemblies,    // mitohifi: [ meta, assembly_map ]
             'c',                  // mitohifi: mode
             hifi_reads,           // oatk: [ meta, reads ]
@@ -37,7 +37,7 @@ workflow ASSEMBLE {
     } else if ( organelle_assembly_mode == 'reads' ) {
         ASSEMBLE_ORGANELLES(
             hifi_reads,           // mitohifi: [ meta, reads ]
-            Channel.empty(),      // mitohifi: empty contigs channel
+            channel.empty(),      // mitohifi: empty contigs channel
             'r',                  // mitohifi: mode
             hifi_reads,           // oatk: [ meta, reads ]
             mito_hmm,             // oatk: mito hmm files

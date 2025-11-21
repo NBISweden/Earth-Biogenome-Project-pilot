@@ -12,7 +12,7 @@ workflow ASSEMBLE_ORGANELLES {
     ch_plastid_hmm   // list: [ hmm_files ]
 
     main:
-    ch_versions = Channel.empty()
+    ch_versions = channel.empty()
 
     // Mix input data channels for mitohifi, only one will be populated
     ch_input_data = ch_reads.mix( ch_assemblies )
@@ -49,11 +49,13 @@ workflow ASSEMBLE_ORGANELLES {
         ch_mito_hmm
             .map { _meta, hmm_files ->
             hmm_files
-        },
+            }
+            .ifEmpty( [ [], [], [], [], [] ] ),
         ch_plastid_hmm
             .map { _meta, hmm_files ->
             hmm_files
-        }
+            }
+            .ifEmpty( [ [], [], [], [], [] ] )
      )
 
     // Versions
