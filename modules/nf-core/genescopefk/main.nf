@@ -39,7 +39,7 @@ process GENESCOPEFK {
         --output . \\
         --name_prefix ${prefix}
 
-    printf -v KMERCOV "%.2f\\n" \$( grep "^kmercov" *_model.txt | cut -d" " -f2 )
+    KMERCOV=\$( awk '/^kmercov/ {printf "%.2f", \$2}' *_model.txt )
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
