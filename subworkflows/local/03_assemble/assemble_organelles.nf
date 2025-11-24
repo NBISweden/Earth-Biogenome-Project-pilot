@@ -1,17 +1,20 @@
 include { MITOHIFI_FINDMITOREFERENCE } from "../../../modules/nf-core/mitohifi/findmitoreference/main"
 include { MITOHIFI_MITOHIFI          } from "../../../modules/nf-core/mitohifi/mitohifi/main"
+include { OATK                       } from "../../../modules/nf-core/oatk/main"
 
 workflow ASSEMBLE_ORGANELLES {
     take:
-    ch_reads         // Channel: [ meta, reads_path ] - only populated if mode = 'r'
+    ch_reads         // Channel: [ meta, reads_path ]
     ch_assemblies    // Channel: [ meta, assembly_map ] - only populated if mode = 'c'
     ch_assembly_mode // String: enum('c','r')
+    ch_mito_hmm      // list: [ hmm_files ]
+    ch_plastid_hmm   // list: [ hmm_files ]
 
     main:
-    ch_versions = Channel.empty()
+    ch_versions = channel.empty()
 
-    // Mix input data channels for mitohifi, only one will be populated
-    ch_input_data = ch_reads.mix( ch_assemblies )
+    // In mode "r", keep reads (ch_assemblies is empty). In mode "c", empty the reads channel and keep assemblies.
+    ch_input_data = ch_reads.filter { ch_assembly_mode == 'r' }.mix( ch_assemblies )
 
     // Attempt mitohifi workflow
     MITOHIFI_FINDMITOREFERENCE( ch_input_data.map { meta, _data -> [ meta, meta.sample.name ] }.unique() )
@@ -38,9 +41,27 @@ workflow ASSEMBLE_ORGANELLES {
         ch_assembly_mode,
         mitohifi_ch.mito_code,
     )
+
+    // Run Oatk assembly
+    OATK(
+        ch_reads,
+        ch_mito_hmm
+            .map { _meta, hmm_files ->
+                hmm_files
+            }
+            .ifEmpty( [ [], [], [], [], [] ] ),
+        ch_plastid_hmm
+            .map { _meta, hmm_files ->
+                hmm_files
+            }
+            .ifEmpty( [ [], [], [], [], [] ] )
+    )
+
+    // Versions
     ch_versions = ch_versions.mix(
         MITOHIFI_FINDMITOREFERENCE.out.versions.first(),
-        MITOHIFI_MITOHIFI.out.versions.first()
+        MITOHIFI_MITOHIFI.out.versions.first(),
+        OATK.out.versions.first()
     )
 
     emit:
