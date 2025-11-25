@@ -49,8 +49,7 @@ workflow ASSEMBLE_ORGANELLES {
         ch_mito_hmm
             .map { _meta, hmm_files ->
                 hmm_files
-            }
-            .ifEmpty( [ [], [], [], [], [] ] ),
+            },
         ch_plastid_hmm
             .map { _meta, hmm_files ->
                 hmm_files
