@@ -3,11 +3,10 @@ include { ASSEMBLE_ORGANELLES } from "./assemble_organelles"
 
 workflow ASSEMBLE {
     take:
-    hifi_reads              // [ meta, hifi_reads ]
-    mito_hmm                // list: [ hmm_files ]
-    plastid_hmm             // list: [ hmm_files ]
-    nuclear_assembly_mode   // true, false
-    organelle_assembly_mode // contigs, reads, or none
+    hifi_reads              // Channel: [ meta, hifi_reads ]
+    oatkdb                  // Path: /path/to/oatkdb
+    nuclear_assembly_mode   // Boolean: assemble chromosomes
+    organelle_assembly_mode // Enum: [ contigs, reads, or none ]
 
     main:
     ch_raw_assemblies = channel.empty()
@@ -31,8 +30,7 @@ workflow ASSEMBLE {
             hifi_reads,              // mitohifi + oatk: [ meta, reads ]
             ch_raw_assemblies,       // mitohifi + oatk: [ meta, assembly_map ]
             organelle_assembly_mode, // mitohifi + oatk: mode
-            mito_hmm,                // oatk: user-given mito hmm files
-            plastid_hmm              // oatk: user-given plastid hmm files
+            oatkdb                   // oatk: hmm database
         )
         ch_versions = ch_versions.mix(ASSEMBLE_ORGANELLES.out.versions)
         // TODO: filter organelle contigs from primary assembly

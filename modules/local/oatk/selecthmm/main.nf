@@ -8,7 +8,7 @@ process OATK_SELECTHMM {
         : 'biocontainers/oatk:1.0--h577a1d6_1'}"
 
     input:
-    tuple val(meta), val(species)
+    tuple val(meta), val(species), val(lineage)
     val oatkdb
 
     output:
@@ -23,7 +23,7 @@ process OATK_SELECTHMM {
     """
     # Search for most specific lineage match
     taxa=""
-    echo "${meta.lineage.toLowerCase()}" \
+    echo "${lineage.toLowerCase()}" \
         | tr -s " ;" "\\n" \
         > lineages.txt
     while IFS= read -r lineage; do
