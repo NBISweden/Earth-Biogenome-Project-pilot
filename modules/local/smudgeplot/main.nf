@@ -3,18 +3,18 @@ process SMUDGEPLOT {
     label 'process_medium'
 
     // WARN: Version information not provided by tool on CLI. Please update version string below when bumping container versions.
-    // TODO: smudgeplot has an error rate calc bug (https://github.com/KamilSJaron/smudgeplot/issues/227), update container once fixed
-    container 'ghcr.io/nbisweden/smudgeplot:1.0'
+    container 'ghcr.io/nbisweden/smudgeplot:1.1'
 
     input:
     tuple val(meta), path(fastk_ktab)
     val smudgeplot_threshold
 
     output:
+    tuple val(meta), path("*.sma")                       , emit: annotated_kmer_pairs_tsv
+    tuple val(meta), path("*.smu")                       , emit: kmer_pairs_tsv
     tuple val(meta), path("*.smudge_report.tsv")         , emit: smudgeplot_report_tsv
-    tuple val(meta), path("*_centralities.txt")          , emit: centralities_txt
-    tuple val(meta), path("*_annotated_smu.txt")         , emit: kmer_pairs_txt
     tuple val(meta), path("*_centralities.{png,pdf}")    , emit: centralities
+    tuple val(meta), path("*_centralities.txt")          , emit: centralities_txt
     tuple val(meta), path("*_smudgeplot.{png,pdf}")      , emit: smudgeplot
     tuple val(meta), path("*_smudgeplot_log10.{png,pdf}"), emit: smudgeplot_log10
     tuple val(meta), path("*_smudgeplot_report.json")    , emit: smudgeplot_report_json, optional: true
