@@ -55,9 +55,17 @@ workflow ASSEMBLE_ORGANELLES {
             .ifEmpty( [ [], [], [], [], [] ] )
     )
 
-    // Mitohifi dot plots: final mitogenome vs. each candidate
-    ch_final_vs_candidates = MITOHIFI_MITOHIFI.out.fasta
-        .join(MITOHIFI_MITOHIFI.out.all_candidates_fa,
+    // Dot plots
+    // Reference vs final mitohifi mitogenome channel
+    ch_ref_vs_final = MITOHIFI_FINDMITOREFERENCE.out.fasta
+        .join(
+            MITOHIFI_MITOHIFI.out.fasta,
+            by: 0
+        )
+    // Final mitohifi mitogenome vs. each mitohifi candidate channel
+    ch_final_vs_mitohifi = MITOHIFI_MITOHIFI.out.fasta
+        .join(
+            MITOHIFI_MITOHIFI.out.all_candidates_fa,
             by: 0
         )
         .flatMap { meta, fasta, candidates ->
@@ -66,9 +74,23 @@ workflow ASSEMBLE_ORGANELLES {
                 [ meta, fasta, candidate ]
             }
         }
-    DNADOTPLOT(ch_final_vs_candidates)
+    // Final mitohifi mitogenome vs. each oatk candidate channel
+    ch_final_vs_oatk = MITOHIFI_MITOHIFI.out.fasta
+        .map { meta, fasta -> [ [ meta.id, meta.sample], meta, fasta ] }
+        .combine(
+            OATK.out.mito_fasta
+                .map { meta, fasta -> [ [ meta.id, meta.sample ], fasta ] }
+                .splitFasta(
+                    file: true,
+                    by: 1
+                ),
+            by: 0
+        )
+        .map { _key, meta, fasta, candidate -> [ meta, fasta, candidate ] }
 
-    // TODO OATK dot plots:
+    // Mix channels and plot
+    ch_dotplot_inputs = ch_ref_vs_final.mix( ch_final_vs_mitohifi, ch_final_vs_oatk )
+    DNADOTPLOT( ch_dotplot_inputs )
 
     // Versions
     ch_versions = ch_versions.mix(
