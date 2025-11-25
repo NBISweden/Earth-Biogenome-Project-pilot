@@ -1,6 +1,7 @@
 include { MITOHIFI_FINDMITOREFERENCE } from "../../../modules/nf-core/mitohifi/findmitoreference/main"
 include { MITOHIFI_MITOHIFI          } from "../../../modules/nf-core/mitohifi/mitohifi/main"
 include { OATK                       } from "../../../modules/nf-core/oatk/main"
+include { DNADOTPLOT                 } from "../../../modules/local/dnadotplot/main"
 
 workflow ASSEMBLE_ORGANELLES {
     take:
@@ -57,11 +58,27 @@ workflow ASSEMBLE_ORGANELLES {
             .ifEmpty( [ [], [], [], [], [] ] )
     )
 
+    // Mitohifi dot plots: final mitogenome vs. each candidate
+    ch_final_vs_candidates = MITOHIFI_MITOHIFI.out.fasta
+        .join(MITOHIFI_MITOHIFI.out.all_candidates_fa,
+            by: 0
+        )
+        .flatMap { meta, fasta, candidates ->
+            def candidate_list = candidates instanceof List ? candidates : [candidates]
+            candidate_list.collect { candidate ->
+                [ meta, fasta, candidate ]
+            }
+        }
+    DNADOTPLOT(ch_final_vs_candidates)
+
+    // TODO OATK dot plots:
+
     // Versions
     ch_versions = ch_versions.mix(
         MITOHIFI_FINDMITOREFERENCE.out.versions.first(),
         MITOHIFI_MITOHIFI.out.versions.first(),
-        OATK.out.versions.first()
+        OATK.out.versions.first(),
+        DNADOTPLOT.out.versions.first()
     )
 
     emit:
