@@ -37,7 +37,7 @@ workflow ASSEMBLE_ORGANELLES {
         mitohifi_ch.input,
         mitohifi_ch.reference,
         mitohifi_ch.genbank,
-        ch_assembly_mode.charAt(0), // mode: 'c'/'r'
+        ch_assembly_mode[0], // mode: 'c'/'r'
         mitohifi_ch.mito_code,
     )
 
