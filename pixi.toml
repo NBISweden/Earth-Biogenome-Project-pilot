@@ -15,7 +15,7 @@ dev = { cmd = "nextflow run main.nf -profile docker,test,debug --oatkdb database
 nftest-docker = "nf-test test tests/main.nf.test --verbose"
 nftest-singularity = "nf-test test tests/main.nf.test --verbose --profile singularity"
 # Clean up
-clean-work = "nextflow clean -f -before $(nextflow log -q | tail -n 1) && find work/ -type d -empty -delete"
+clean-work = "nextflow clean -f -before last && find work/ -type d -empty -delete"
 clean-nf = "git clean -fX && rm -rf .nextflow/ work/ .lineage/"
 clean-results = "rm -rf results/"
 clean-nftest = "rm -rf .nf-test/"
