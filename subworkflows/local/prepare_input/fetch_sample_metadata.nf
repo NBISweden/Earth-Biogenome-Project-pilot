@@ -8,7 +8,7 @@ workflow FETCH_SAMPLE_METADATA {
 
     main:
     // Metadata to retrieve
-    def sample_keys_ena = [ 'tax_id', 'genetic_code', 'mito_code', 'domain' ]
+    def sample_keys_ena = [ 'tax_id', 'genetic_code', 'mito_code', 'domain', 'lineage' ]
     def sample_keys_goat = [ 'genome_size', 'haploid_number', 'ploidy' ]
     // Prepare channel
     ch_with_id = ch_sample.map { yaml -> yaml + [id: yaml.sample.name.replace(" ", "_") ] }
@@ -29,6 +29,7 @@ workflow FETCH_SAMPLE_METADATA {
                         genetic_code: input.sample.genetic_code ?: ena.geneticCode,
                         mito_code: input.sample.mito_code ?: ena.mitochondrialGeneticCode,
                         domain: input.sample.domain ?: ena.lineage.tokenize(';').head(),
+                        lineage: input.sample.lineage ?: ena.lineage,
                     ]
                 ]
             ) : input
