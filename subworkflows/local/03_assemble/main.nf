@@ -23,27 +23,19 @@ workflow ASSEMBLE {
     } // else nuclear_assembly_mode == false
 
     // Organelle assembly
-    if ( organelle_assembly_mode == 'contigs' && nuclear_assembly_mode ) {
+    if ( organelle_assembly_mode in ['contigs', 'reads'] ) {
+        if ( organelle_assembly_mode == 'contigs' && !nuclear_assembly_mode ) {
+            error "Organelle assembly in 'contigs' mode requires 'nuclear_assembly_mode = true'"
+        }
         ASSEMBLE_ORGANELLES(
-            hifi_reads,           // oatk: [ meta, reads ]
-            ch_raw_assemblies,    // mitohifi: [ meta, assembly_map ]
-            'c',                  // mitohifi: mode
-            mito_hmm,             // oatk: mito hmm files
-            plastid_hmm           // oatk: plastid hmm files
+            hifi_reads,              // mitohifi + oatk: [ meta, reads ]
+            ch_raw_assemblies,       // mitohifi + oatk: [ meta, assembly_map ]
+            organelle_assembly_mode, // mitohifi + oatk: mode
+            mito_hmm,                // oatk: user-given mito hmm files
+            plastid_hmm              // oatk: user-given plastid hmm files
         )
         ch_versions = ch_versions.mix(ASSEMBLE_ORGANELLES.out.versions)
         // TODO: filter organelle contigs from primary assembly
-    } else if ( organelle_assembly_mode == 'reads' ) {
-        ASSEMBLE_ORGANELLES(
-            hifi_reads,           // mitohifi & oatk: [ meta, reads ]
-            channel.empty(),      // mitohifi: empty contigs channel
-            'r',                  // mitohifi: mode
-            mito_hmm,             // oatk: mito hmm files
-            plastid_hmm           // oatk: plastid hmm files
-        )
-        ch_versions = ch_versions.mix(ASSEMBLE_ORGANELLES.out.versions)
-    } else if ( organelle_assembly_mode == 'contigs' && !nuclear_assembly_mode ) {
-        error "Organelle assembly in 'contigs' mode requires 'nuclear_assembly_mode = true'"
     } // else organelle_assembly_mode == 'none'
 
     emit:
