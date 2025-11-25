@@ -17,10 +17,10 @@ workflow ASSEMBLE_ORGANELLES {
     // In mode "r", keep reads (ch_assemblies is empty). In mode "c", empty the reads channel and keep assemblies.
     ch_input_data = ch_reads.filter { ch_assembly_mode == 'r' }.mix( ch_assemblies )
 
-    // Attempt mitohifi workflow
+    // Get mitochondrial reference files
     MITOHIFI_FINDMITOREFERENCE( ch_input_data.map { meta, _data -> [ meta, meta.sample.name ] }.unique() )
 
-    // Prepare mitohifi input
+    // Run mitohifi assembly
     mitohifi_ch = ch_input_data
         .combine(
             MITOHIFI_FINDMITOREFERENCE.out.fasta
@@ -33,8 +33,6 @@ workflow ASSEMBLE_ORGANELLES {
             genbank: mitogb
             mito_code: meta.sample.mito_code
         }
-
-    // Run mitochondrial assembly
     MITOHIFI_MITOHIFI(
         mitohifi_ch.input,
         mitohifi_ch.reference,
@@ -43,7 +41,7 @@ workflow ASSEMBLE_ORGANELLES {
         mitohifi_ch.mito_code,
     )
 
-    // Run Oatk assembly
+    // Run oatk assembly
     OATK(
         ch_reads,
         ch_mito_hmm
