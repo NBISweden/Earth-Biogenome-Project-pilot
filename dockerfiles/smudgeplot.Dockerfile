@@ -1,10 +1,10 @@
 # Global args
 # FASTK: Release v1.1 + 12 unreleased commits (09/2025)
-# smudgeplot: Skylight pre-release
-ARG image_version=1.0.0-skylight_prerelease
+# smudgeplot: Skylight v0.5.1
+ARG image_version=1.1-skylight
 ARG python_version=3.12
 ARG fastk_commit_id=0e24fb45b71c4e14382ae1e1bc063bf66ea4e112
-ARG smudgeplot_commit_id=2a8dc5073aab309960e4e25d8b383292d5a186ce
+ARG smudgeplot_commit_id=1bdd853220b5a0c4b98c3336535f1a18eb7fd221
 
 FROM python:${python_version}-slim
 
@@ -31,7 +31,6 @@ RUN git clone https://github.com/thegenemyers/FASTK.git fastk && \
 
 RUN git clone https://github.com/KamilSJaron/smudgeplot smudgeplot && \
     cd smudgeplot && \
-    git fetch --all && \
     git reset --hard ${smudgeplot_commit_id} && \
     python -m pip install .
 
