@@ -1,6 +1,6 @@
 ::::: {.content-visible when-meta="assemble"}
 
-## Assembly
+## Nuclear assembly
 
 ```{python}
 if assemble and "hifiasm" in multiqc.list_modules():

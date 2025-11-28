@@ -1,0 +1,90 @@
+::::: {.content-visible when-meta="assemble"}
+
+## Organelle assembly
+
+### Mitohifi Report
+
+```{python}
+if assemble and glob.glob(f"{log_path}/*.contigs_stats.tsv"):
+    tsv_file = glob.glob(f"{log_path}/*.contigs_stats.tsv")[0]
+    # Read the file to handle the comment line
+    with open(tsv_file, 'r') as f:
+        lines = f.readlines()
+    # Extract and display the comment line (first line starting with #)
+    if lines[0].startswith('#'):
+        comment = lines[0].strip('# \n')
+        print(f"Mitohifi found a related reference mitogenome in NCBI nuccore:")
+        print(f"{comment}")
+        print(f"Below is a table with summary statistics of the final Mitohifi mitogenome assembly:")
+        # Read the rest as dataframe
+        df = pd.read_csv(tsv_file, sep='\t', comment='#')
+    else:
+        df = pd.read_csv(tsv_file, sep='\t')
+    # Display the table
+    pd.set_option('display.max_colwidth', None)
+    display(df)
+else:
+    print("Mitohifi report not available")
+```
+
+### Mitogenome annotation
+
+```{python}
+if assemble and glob.glob(f"{log_path}/*.contigs_annotations.png"):
+    display(Image(filename=glob.glob(f"{log_path}/*contigs_annotations.png")[0]))
+else:
+    print("Mitogenome annotation figure not available")
+```
+
+### Dotplots
+
+::: {.callout-note title="Dotplot interpretation" collapse="true"}
+* Each axis represents one mitogenome assembly (x-axis = reference, y-axis = query)
+* Ideal match: a continuous main diagonal line spanning both sequences entirely
+* Partial/extra sequence in one assembly appears as an unaligned section of the other assembly
+* Alignment colour is red when the sequences are in the same sense, alignments in the reverse complement are green
+:::
+
+```{python}
+if assemble and glob.glob(f"{log_path}/*.svg"):
+    from IPython.display import SVG, HTML, display, Markdown
+    import os
+
+    svg_files = sorted(glob.glob(f"{log_path}/*.svg"))
+
+    # Categorize and sort files by experiment
+    plot_categories = {
+        'reference': {'files': [], 'header': '#### Reference mitogenome vs. Mitohifi final assembly',
+                      'label': lambda s1, s2: f"Seq1, NCBI Reference: {s1}, vs. Seq2, Mitohifi final: {s2}"},
+        'mitohifi': {'files': [], 'header': '#### Mitohifi final assembly vs. each Mitohifi candidate',
+                               'label': lambda s1, s2: f"Seq1, Mitohifi final: {s1}, vs. Seq2, candidate: {s2}"},
+        'oatk': {'files': [], 'header': '#### Mitohifi final assembly vs. each OATK candidate',
+                           'label': lambda s1, s2: f"Seq1, Mitohifi final: {s1}, vs. Seq2, candidate: {s2}"}
+    }
+    for svg_file in svg_files:
+        basename = os.path.basename(svg_file)
+        for exp_type in plot_categories.keys():
+            if f'.{exp_type}.svg' in basename:
+                plot_categories[exp_type]['files'].append(svg_file)
+                break
+
+    # Display each category
+    for exp_type in ['reference', 'mitohifi', 'oatk']:
+        category = plot_categories[exp_type]
+        if category['files']:
+            display(Markdown(category['header']))
+            for svg_file in sorted(category['files']):
+                basename = os.path.basename(svg_file)
+                parts = basename.replace(f'.{exp_type}.svg', '').split('_seq2-')
+                if len(parts) == 2:
+                    seq1 = parts[0].replace('seq1-', '')
+                    seq2 = parts[1]
+                    title = category['label'](seq1, seq2)
+                display(Markdown(title))
+                display(SVG(filename=svg_file))
+
+else:
+    print("Organelle dotplots not available")
+```
+
+:::::
