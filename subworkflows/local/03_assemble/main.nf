@@ -18,7 +18,7 @@ workflow ASSEMBLE {
     if ( nuclear_assembly_mode ) {
         ASSEMBLE_HIFI( hifi_reads )
         ch_raw_assemblies = ASSEMBLE_HIFI.out.assemblies
-        ch_logs = ASSEMBLE_HIFI.out.logs
+        ch_logs = ch_logs.mix(ASSEMBLE_HIFI.out.logs)
         ch_versions = ch_versions.mix( ASSEMBLE_HIFI.out.versions )
     } // else nuclear_assembly_mode == false
 
@@ -31,6 +31,7 @@ workflow ASSEMBLE {
             mito_hmm,             // oatk: mito hmm files
             plastid_hmm           // oatk: plastid hmm files
         )
+        ch_logs     = ch_logs.mix(ASSEMBLE_ORGANELLES.out.logs)
         ch_versions = ch_versions.mix(ASSEMBLE_ORGANELLES.out.versions)
         // TODO: filter organelle contigs from primary assembly
     } else if ( organelle_assembly_mode == 'reads' ) {
@@ -41,6 +42,7 @@ workflow ASSEMBLE {
             mito_hmm,             // oatk: mito hmm files
             plastid_hmm           // oatk: plastid hmm files
         )
+        ch_logs     = ch_logs.mix(ASSEMBLE_ORGANELLES.out.logs)
         ch_versions = ch_versions.mix(ASSEMBLE_ORGANELLES.out.versions)
     } else if ( organelle_assembly_mode == 'contigs' && !nuclear_assembly_mode ) {
         error "Organelle assembly in 'contigs' mode requires 'nuclear_assembly_mode = true'"

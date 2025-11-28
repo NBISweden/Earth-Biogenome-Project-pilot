@@ -92,6 +92,15 @@ workflow ASSEMBLE_ORGANELLES {
     ch_dotplot_inputs = ch_ref_vs_final.mix( ch_final_vs_mitohifi, ch_final_vs_oatk )
     DNADOTPLOT( ch_dotplot_inputs )
 
+    // Logs
+    MITOHIFI_MITOHIFI.out.contigs_annotations
+        .mix (
+            MITOHIFI_MITOHIFI.out.stats,
+            DNADOTPLOT.out.svg
+        )
+        .map { _meta, log -> log }
+        .set { logs }
+
     // Versions
     ch_versions = ch_versions.mix(
         MITOHIFI_FINDMITOREFERENCE.out.versions.first(),
@@ -102,5 +111,6 @@ workflow ASSEMBLE_ORGANELLES {
 
     emit:
     // TODO: emit filtered assembly, or contig list to purge. Also emit from 03_assemble.
+    logs
     versions = ch_versions
 }
