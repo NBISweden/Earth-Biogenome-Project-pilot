@@ -37,7 +37,7 @@ workflow PURGE_DUPLICATES {
     reads_plus_assembly_ch
         // Add single_end for minimap module
         .flatMap { meta, reads, assembly -> reads instanceof List ?
-            reads.collect{ [ meta + [ single_end: true ], it, assembly.pri_fasta ] }
+            reads.collect{ read_set -> [ meta + [ single_end: true ], read_set, assembly.pri_fasta ] }
             : [ [ meta + [ single_end: true ], reads, assembly.pri_fasta ] ] }
         .multiMap { meta, reads, assembly ->
             reads_ch: [ meta, reads ]
@@ -83,10 +83,10 @@ workflow PURGE_DUPLICATES {
 
     if( params.use_phased ){
         // Purge alternate contigs.
+        // Combine Hap1 with the haplotigs from Hap0.
         reads_plus_assembly_ch
             .filter { _meta, _reads, assembly -> assembly.alt_fasta != null }
             .map { meta, _reads, assembly -> [ meta, assembly.alt_fasta ] }
-            //! WARN Purges only primary haplotigs when using consensus
             .mix( PURGEDUPS_GETSEQS_PRIMARY.out.haplotigs )
             .groupTuple()  // TODO Find size to prevent blocking
             .set { alternate_assembly_ch }
