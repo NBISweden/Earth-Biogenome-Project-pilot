@@ -42,15 +42,14 @@ workflow EVALUATE_ASSEMBLY {
     )
 
     // Evaluate core gene space coverage
-    busco_input = getPrimaryAssembly(assembly_ch)
+    busco_input = ( params.use_phased ? getEachAssembly(assembly_ch) : getPrimaryAssembly(assembly_ch) )
+        .transpose()
         .flatMap { meta, asm ->
-            if ( meta.settings?.busco?.lineages ) {
-                // Use lineages from params.busco.lineages/GOAT.
-                meta.settings.busco.lineages.tokenize(',').collect{ [ meta, asm, it ] }
-            } else {
-                // auto-detect.
-                [ [ meta, asm, 'auto' ] ]
-            }
+            // Use lineages from params.busco.lineages/GOAT.
+            meta.settings.busco.lineages
+                .tokenize(',')
+                .takeRight(params.busco.max_lineages)
+                .collect{ lineage -> [ meta, asm, lineage ] }
         }
         .dump(tag: 'BUSCO', pretty: true)
         .multiMap { meta, asm, line ->
@@ -67,10 +66,12 @@ workflow EVALUATE_ASSEMBLY {
     )
 
     // Calculate contiguity stats
-    fasta_ch = assembly_ch.multiMap { meta, assembly ->
-        fasta: [ meta, assembly.pri_fasta ]
-        genome_size: meta.sample.genome_size
-    }
+    fasta_ch = ( params.use_phased ? getEachAssembly(assembly_ch) : getPrimaryAssembly(assembly_ch) )
+        .transpose()
+        .multiMap { meta, assembly ->
+            fasta: [ meta, assembly ]
+            genome_size: meta.sample.genome_size
+        }
     GFASTATS(
         fasta_ch.fasta,
         [],                   // output format: none
