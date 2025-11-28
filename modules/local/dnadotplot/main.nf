@@ -4,7 +4,7 @@ process DNADOTPLOT {
     container "oras://community.wave.seqera.io/library/dnadotplot:0.1.4--aa4389449e8456fc"
 
     input:
-    tuple val(meta), path(ref), path(query)
+    tuple val(meta), path(ref), path(query), val(experiment)
 
     output:
     tuple val(meta), path("*.svg"), emit: svg
@@ -21,7 +21,7 @@ process DNADOTPLOT {
         $args \\
         -1 $ref \\
         -2 $query \\
-        -o seq1-${ref.baseName}_seq2-${query.baseName}.svg
+        -o seq1-${ref.baseName}_seq2-${query.baseName}.${experiment}.svg
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":

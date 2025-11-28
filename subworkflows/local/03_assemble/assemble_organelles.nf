@@ -62,6 +62,8 @@ workflow ASSEMBLE_ORGANELLES {
             MITOHIFI_MITOHIFI.out.fasta,
             by: 0
         )
+        .map { meta, ref_fasta, final_fasta -> [ meta, ref_fasta, final_fasta, 'reference' ] }
+
     // Final mitohifi mitogenome vs. each mitohifi candidate channel
     ch_final_vs_mitohifi = MITOHIFI_MITOHIFI.out.fasta
         .join(
@@ -71,7 +73,7 @@ workflow ASSEMBLE_ORGANELLES {
         .flatMap { meta, fasta, candidates ->
             def candidate_list = candidates instanceof List ? candidates : [candidates]
             candidate_list.collect { candidate ->
-                [ meta, fasta, candidate ]
+                [ meta, fasta, candidate, 'mitohifi' ]
             }
         }
     // Final mitohifi mitogenome vs. each oatk candidate channel
@@ -86,7 +88,7 @@ workflow ASSEMBLE_ORGANELLES {
                 ),
             by: 0
         )
-        .map { _key, meta, fasta, candidate -> [ meta, fasta, candidate ] }
+        .map { _key, meta, fasta, candidate -> [ meta, fasta, candidate, 'oatk' ] }
 
     // Mix channels and plot
     ch_dotplot_inputs = ch_ref_vs_final.mix( ch_final_vs_mitohifi, ch_final_vs_oatk )
