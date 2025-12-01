@@ -303,7 +303,7 @@ workflow DVPOLISH {
 
     ch_polished_assemblies = constructAssemblyRecord(
         DVPOLISH_CREATE_FINALASM.out.fasta_gz,
-        true //TODO: check argument
+        params.use_phased
     )
 
     emit:
