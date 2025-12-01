@@ -1,7 +1,9 @@
 process DNADOTPLOT {
     tag "$meta.id"
     label 'process_low'
-    container "oras://community.wave.seqera.io/library/dnadotplot:0.1.4--aa4389449e8456fc"
+    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+        'oras://community.wave.seqera.io/library/dnadotplot:0.1.4--aa4389449e8456fc' :
+        'community.wave.seqera.io/library/dnadotplot:0.1.4--165aba59778a399e' }"
 
     input:
     tuple val(meta), path(ref), path(query), val(experiment)
