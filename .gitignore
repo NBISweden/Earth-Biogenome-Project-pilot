@@ -19,3 +19,4 @@ results/
 .DS_Store
 .screenrc
 .vscode/
+dockerfiles/build_*

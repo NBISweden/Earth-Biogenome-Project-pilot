@@ -86,10 +86,10 @@ of peaks in the k-mer histogram. A haploid organism should have one peak, while 
 Smudgeplot is used to infer the ploidy of the organism.
 
 ```{python}
-if inspect and glob.glob(f"{log_path}/*_ploidyplot.st.png"):
-    display(Image(filename=glob.glob(f"{log_path}/*_ploidyplot.st.png")[0]))
+if inspect and glob.glob(f"{log_path}/*_smudgeplot.png"):
+    display(Image(filename=glob.glob(f"{log_path}/*_smudgeplot.png")[0]))
 else:
-    print("Ploidyplot not available")
+    print("Smudgeplot not available")
 ```
 
 #### GC content
