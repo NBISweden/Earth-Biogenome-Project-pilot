@@ -9,7 +9,7 @@ process OATK_SELECTHMM {
 
     input:
     tuple val(meta), val(species), val(lineage)
-    val oatkdb
+    path oatkdb
 
     output:
     tuple path("mito/*_mito.fam"), path("mito/*_mito.fam.h3f"), path("mito/*_mito.fam.h3i"), path("mito/*_mito.fam.h3m"), path("mito/*_mito.fam.h3p"), emit: mito_hmm, optional: true
