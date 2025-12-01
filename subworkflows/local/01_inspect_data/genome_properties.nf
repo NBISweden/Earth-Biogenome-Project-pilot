@@ -24,7 +24,7 @@ workflow GENOME_PROPERTIES {
         fastk_hist_ktab.map { meta, _hist, ktab -> [meta, ktab] },
         // the genomescopefk kmer value = mean value of the heterozygous peak
         // smudgeplot -L advice = avoid cutting off the monoploid peak, thus / 2
-        GENESCOPEFK.out.kmer_cov.map{ _meta, kmercov -> Math.round((kmercov as Double) / 2) as Integer }
+        GENESCOPEFK.out.kmer_cov.map{ _meta, kmercov -> (kmercov as Double) / 2).round() }
     )
 
     // Generage GC plot
