@@ -96,14 +96,16 @@
                         "git_sha": "ed67f2fadd6d2a155b296f728e6b1f8c92ddc1a6",
                         "installed_by": [
                             "modules"
-                        ]
+                        ],
+                        "patch": "modules/nf-core/fastk/histex/fastk-histex.diff"
                     },
                     "fastk/merge": {
                         "branch": "master",
                         "git_sha": "8c4542e5d421c4690cf1fa6ec729e9304763fdaf",
                         "installed_by": [
                             "modules"
-                        ]
+                        ],
+                        "patch": "modules/nf-core/fastk/merge/fastk-merge.diff"
                     },
                     "fastp": {
                         "branch": "master",
@@ -124,7 +126,8 @@
                         "git_sha": "3f908700a03ca2fa388f794914f89be977ce5740",
                         "installed_by": [
                             "modules"
-                        ]
+                        ],
+                        "patch": "modules/nf-core/genescopefk/genescopefk.diff"
                     },
                     "genomescope2": {
                         "branch": "master",
@@ -174,14 +177,16 @@
                         "git_sha": "6f150e1503c0826c21fedf1fa566cdbecbe98ec7",
                         "installed_by": [
                             "modules"
-                        ]
+                        ],
+                        "patch": "modules/nf-core/merquryfk/katcomp/merquryfk-katcomp.diff"
                     },
                     "merquryfk/katgc": {
                         "branch": "master",
                         "git_sha": "6f150e1503c0826c21fedf1fa566cdbecbe98ec7",
                         "installed_by": [
                             "modules"
-                        ]
+                        ],
+                        "patch": "modules/nf-core/merquryfk/katgc/merquryfk-katgc.diff"
                     },
                     "merquryfk/merquryfk": {
                         "branch": "master",
@@ -190,13 +195,6 @@
                             "modules"
                         ],
                         "patch": "modules/nf-core/merquryfk/merquryfk/merquryfk-merquryfk.diff"
-                    },
-                    "merquryfk/ploidyplot": {
-                        "branch": "master",
-                        "git_sha": "ebb27711cd5f4de921244bfa81c676504072d31c",
-                        "installed_by": [
-                            "modules"
-                        ]
                     },
                     "meryl/count": {
                         "branch": "master",

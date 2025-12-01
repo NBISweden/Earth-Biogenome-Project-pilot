@@ -80,7 +80,7 @@ workflow {
     // Create Cram and trim
     CONVERT_FASTQ_CRAM ( PREPARE_INPUT.out.hic, params.hic_type.startsWith('arima') )
     // Build necessary databases
-    // TODO: Migrate back to Meryl. Genome inspection missing KATGC and PLOIDYPLOT for meryldb
+    // TODO: Migrate back to Meryl. Genome inspection missing KATGC and SMUDGEPLOT for meryldb
     BUILD_FASTK_HIFI_DATABASE ( PREPARE_INPUT.out.hifi )
     BUILD_FASTK_HIC_DATABASE ( CONVERT_FASTQ_CRAM.out.fastq )
     BUILD_MERYL_HIFI_DATABASE ( PREPARE_INPUT.out.hifi )
