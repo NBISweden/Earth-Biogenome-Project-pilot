@@ -7,11 +7,10 @@ include { COMPARE_LIBRARIES                 } from "./compare_libraries"
 
 workflow INSPECT_DATA {
     take:
-    hifi_reads              // [ meta, hifi ]
-    hic_reads               // [ meta, hic ]
-    hifi_histogram          // [ meta, hifi_hist, ktab ]
-    hic_histogram           // [ meta, hic_hist, ktab ]
-    ch_smudgeplot_threshold // Int.
+    hifi_reads     // [ meta, hifi ]
+    hic_reads      // [ meta, hic ]
+    hifi_histogram // [ meta, hifi_hist, ktab ]
+    hic_histogram  // [ meta, hic_hist, ktab ]
 
     main:
     // Quantify data
@@ -20,7 +19,7 @@ workflow INSPECT_DATA {
     FASTQC( hic_reads )
 
     // Generate K-mer histogram
-    GENOME_PROPERTIES ( hifi_histogram, ch_smudgeplot_threshold )
+    GENOME_PROPERTIES ( hifi_histogram )
     COMPARE_LIBRARIES ( hifi_histogram.join( hic_histogram ) )
     ch_versions =  GENOME_PROPERTIES.out.versions.mix(
         COMPARE_LIBRARIES.out.versions,

@@ -99,8 +99,7 @@ workflow {
             PREPARE_INPUT.out.hifi,
             PREPARE_INPUT.out.hic,
             BUILD_FASTK_HIFI_DATABASE.out.fastk_hist_ktab,
-            BUILD_FASTK_HIC_DATABASE.out.fastk_hist_ktab,
-            params.smudgeplot.threshold
+            BUILD_FASTK_HIC_DATABASE.out.fastk_hist_ktab
         )
         ch_hifi = INSPECT_DATA.out.hifi // with added kmer coverage
         ch_multiqc_files = ch_multiqc_files.mix( INSPECT_DATA.out.logs )

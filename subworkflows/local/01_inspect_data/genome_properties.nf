@@ -7,8 +7,7 @@ include { MERQURYFK_KATGC } from "../../../modules/nf-core/merquryfk/katgc/main"
 workflow GENOME_PROPERTIES {
 
     take:
-    fastk_hist_ktab         // [ meta, fastk_hist, fastk_ktab ]
-    ch_smudgeplot_threshold // Int.
+    fastk_hist_ktab // [ meta, fastk_hist, fastk_ktab ]
 
     /* Genome properties workflow:
         - Estimate genome depth of coverage from reads
@@ -21,7 +20,12 @@ workflow GENOME_PROPERTIES {
     GENESCOPEFK ( FASTK_HISTEX.out.hist )
 
     // Generate Smudgeplot
-    SMUDGEPLOT ( fastk_hist_ktab.map { meta, _hist, ktab -> [meta, ktab] }, ch_smudgeplot_threshold )
+    SMUDGEPLOT (
+        fastk_hist_ktab.map { meta, _hist, ktab -> [meta, ktab] },
+        // the genomescopefk kmer value = mean value of the heterozygous peak
+        // smudgeplot -L advice = avoid cutting off the monoploid peak, thus / 2
+        GENESCOPEFK.out.kmer_cov.map{ _meta, kmercov -> Math.round((kmercov as Double) / 2) as Integer }
+    )
 
     // Generage GC plot
     MERQURYFK_KATGC ( fastk_hist_ktab )
