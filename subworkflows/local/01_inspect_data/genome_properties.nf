@@ -1,14 +1,13 @@
 #! /usr/bin/env nextflow
-include { FASTK_HISTEX } from "../../../modules/nf-core/fastk/histex/main"
-include { GENESCOPEFK  } from "../../../modules/nf-core/genescopefk/main"
-
-include { MERQURYFK_PLOIDYPLOT } from "../../../modules/nf-core/merquryfk/ploidyplot/main"
-include { MERQURYFK_KATGC      } from "../../../modules/nf-core/merquryfk/katgc/main"
+include { FASTK_HISTEX    } from "../../../modules/nf-core/fastk/histex/main"
+include { GENESCOPEFK     } from "../../../modules/nf-core/genescopefk/main"
+include { SMUDGEPLOT      } from "../../../modules/local/smudgeplot/main"
+include { MERQURYFK_KATGC } from "../../../modules/nf-core/merquryfk/katgc/main"
 
 workflow GENOME_PROPERTIES {
 
     take:
-    fastk_hist_ktab   // [ meta, fastk_hist, fastk_ktab ]
+    fastk_hist_ktab // [ meta, fastk_hist, fastk_ktab ]
 
     /* Genome properties workflow:
         - Estimate genome depth of coverage from reads
@@ -21,7 +20,12 @@ workflow GENOME_PROPERTIES {
     GENESCOPEFK ( FASTK_HISTEX.out.hist )
 
     // Generate Smudgeplot
-    MERQURYFK_PLOIDYPLOT ( fastk_hist_ktab )
+    SMUDGEPLOT (
+        fastk_hist_ktab.map { meta, _hist, ktab -> [meta, ktab] },
+        // the genomescopefk kmer value = mean value of the heterozygous peak
+        // smudgeplot -L advice = avoid cutting off the monoploid peak, thus / 2
+        GENESCOPEFK.out.kmer_cov.map{ _meta, kmercov -> (kmercov as Double) / 2).round() }
+    )
 
     // Generage GC plot
     MERQURYFK_KATGC ( fastk_hist_ktab )
@@ -30,7 +34,7 @@ workflow GENOME_PROPERTIES {
         GENESCOPEFK.out.log_plot,
         GENESCOPEFK.out.transformed_linear_plot,
         GENESCOPEFK.out.transformed_log_plot,
-        MERQURYFK_PLOIDYPLOT.out.stacked_ploidy_plot_png,
+        SMUDGEPLOT.out.smudgeplot,
         MERQURYFK_KATGC.out.stacked_gc_plot_png
     )
     .map { _meta, img -> img }
@@ -38,7 +42,7 @@ workflow GENOME_PROPERTIES {
 
     FASTK_HISTEX.out.versions.first().mix(
         GENESCOPEFK.out.versions.first(),
-        MERQURYFK_PLOIDYPLOT.out.versions.first(),
+        SMUDGEPLOT.out.versions.first(),
         MERQURYFK_KATGC.out.versions.first()
     ).set { versions }
 
