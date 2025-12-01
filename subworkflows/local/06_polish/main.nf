@@ -2,27 +2,27 @@
  * Workflow based around the DeepVariant tool to polish homozygous variants.
  * https://git.mpi-cbg.de/assembly/programs/polishing
  */
-include { getPrimaryAssembly                      } from "$projectDir/modules/local/functions"
-include { constructAssemblyRecord                 } from "$projectDir/modules/local/functions"
-include { joinByMetaKeys                          } from "$projectDir/modules/local/functions"
-include { combineByMetaKeys                       } from "$projectDir/modules/local/functions"
-include { DVPOLISH_CHUNKFA                        } from "$projectDir/modules/local/dvpolish/chunkfa"
-include { DVPOLISH_PBMM2_INDEX                    } from "$projectDir/modules/local/dvpolish/pbmm2_index"
-include { DVPOLISH_PBMM2_ALIGN                    } from "$projectDir/modules/local/dvpolish/pbmm2_align"
-include { SAMTOOLS_FAIDX                          } from "$projectDir/modules/nf-core/samtools/faidx/main"
-include { SAMTOOLS_VIEW                           } from "$projectDir/modules/nf-core/samtools/view/main"
-include { SAMTOOLS_INDEX as SAMTOOLS_INDEX_FILTER } from "$projectDir/modules/nf-core/samtools/index/main"
-include { SAMTOOLS_INDEX as SAMTOOLS_INDEX_MERGE  } from "$projectDir/modules/nf-core/samtools/index/main"
-include { SAMTOOLS_MERGE                          } from "$projectDir/modules/nf-core/samtools/merge/main"
-include { DEEPVARIANT                             } from "$projectDir/modules/nf-core/deepvariant/main"
-include { BCFTOOLS_VIEW                           } from "$projectDir/modules/nf-core/bcftools/view/main"
-include { TABIX_TABIX as TABIX_TABIX              } from "$projectDir/modules/nf-core/tabix/tabix/main"
-include { TABIX_TABIX as TABIX_TABIX_MERGED       } from "$projectDir/modules/nf-core/tabix/tabix/main"
-include { BCFTOOLS_MERGE                          } from "$projectDir/modules/nf-core/bcftools/merge/main"
-include { BCFTOOLS_CONSENSUS                      } from "$projectDir/modules/nf-core/bcftools/consensus/main"
-include { MERQURY as MERQURY_INPUT_ASM            } from "$projectDir/modules/nf-core/merqury/main"
-include { MERQURY as MERQURY_POLISHED_ASM         } from "$projectDir/modules/nf-core/merqury/main"
-include { DVPOLISH_CREATE_FINALASM                } from "$projectDir/modules/local/dvpolish/createFinalAsm"
+include { getPrimaryAssembly                      } from "../../../modules/local/functions"
+include { constructAssemblyRecord                 } from "../../../modules/local/functions"
+include { joinByMetaKeys                          } from "../../../modules/local/functions"
+include { combineByMetaKeys                       } from "../../../modules/local/functions"
+include { DVPOLISH_CHUNKFA                        } from "../../../modules/local/dvpolish/chunkfa"
+include { DVPOLISH_PBMM2_INDEX                    } from "../../../modules/local/dvpolish/pbmm2_index"
+include { DVPOLISH_PBMM2_ALIGN                    } from "../../../modules/local/dvpolish/pbmm2_align"
+include { SAMTOOLS_FAIDX                          } from "../../../modules/nf-core/samtools/faidx/main"
+include { SAMTOOLS_VIEW                           } from "../../../modules/nf-core/samtools/view/main"
+include { SAMTOOLS_INDEX as SAMTOOLS_INDEX_FILTER } from "../../../modules/nf-core/samtools/index/main"
+include { SAMTOOLS_INDEX as SAMTOOLS_INDEX_MERGE  } from "../../../modules/nf-core/samtools/index/main"
+include { SAMTOOLS_MERGE                          } from "../../../modules/nf-core/samtools/merge/main"
+include { DEEPVARIANT                             } from "../../../modules/nf-core/deepvariant/rundeepvariant/main"
+include { BCFTOOLS_VIEW                           } from "../../../modules/nf-core/bcftools/view/main"
+include { TABIX_TABIX as TABIX_TABIX              } from "../../../modules/nf-core/tabix/tabix/main"
+include { TABIX_TABIX as TABIX_TABIX_MERGED       } from "../../../modules/nf-core/tabix/tabix/main"
+include { BCFTOOLS_MERGE                          } from "../../../modules/nf-core/bcftools/merge/main"
+include { BCFTOOLS_CONSENSUS                      } from "../../../modules/nf-core/bcftools/consensus/main"
+include { MERQURY as MERQURY_INPUT_ASM            } from "../../../modules/nf-core/merqury/main"
+include { MERQURY as MERQURY_POLISHED_ASM         } from "../../../modules/nf-core/merqury/main"
+include { DVPOLISH_CREATE_FINALASM                } from "../../../modules/local/dvpolish/createFinalAsm"
 
 /*
 outline: 
@@ -139,7 +139,7 @@ workflow DVPOLISH {
     SAMTOOLS_INDEX_MERGE(SAMTOOLS_MERGE.out.bam)
 
     bam_merge_ch.singleton
-        .map { meta, bam -> [ meta, *bam ] } // the spread operator (*) flattens the bam list
+        .map { meta, bam -> [ meta, bam[0] ] }
         .join( SAMTOOLS_INDEX_FILTER.out.bai )
         .mix( SAMTOOLS_MERGE.out.bam
             .join( SAMTOOLS_INDEX_MERGE.out.bai )
@@ -238,8 +238,8 @@ workflow DVPOLISH {
     )
 
     vcf_plus_index_ch = vcf_merge_ch.singleton
-    .map { meta, vcf, idx  -> [ meta, *vcf, *idx ] } // the spread operator (*) flattens the bam list
-    .mix(BCFTOOLS_MERGE.out.merged_variants
+        .map { meta, vcf, idx  -> [ meta, vcf[0], idx[0] ] }
+        .mix(BCFTOOLS_MERGE.out.merged_variants
         .join(TABIX_TABIX_MERGED.out.tbi)
     )
 
