@@ -221,6 +221,13 @@
                         ],
                         "patch": "modules/nf-core/mitohifi/mitohifi/mitohifi-mitohifi.diff"
                     },
+                    "oatk": {
+                        "branch": "master",
+                        "git_sha": "41dfa3f7c0ffabb96a6a813fe321c6d1cc5b6e46",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
                     "pairix": {
                         "branch": "master",
                         "git_sha": "06c8865e36741e05ad32ef70ab3fac127486af48",
