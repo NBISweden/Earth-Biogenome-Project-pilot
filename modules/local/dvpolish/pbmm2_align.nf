@@ -36,7 +36,7 @@ process DVPOLISH_PBMM2_ALIGN {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        \$(pbmm2 --version 2>&1 | head -n 1)
+        pbmm2: \$(pbmm2 --version 2>&1 | head -n 1 | sed 's/pbmm2 //')
     END_VERSIONS
     """
 }
