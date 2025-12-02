@@ -1,4 +1,5 @@
 ::::: {.content-visible when-meta="assemble"}
+::::: {.content-visible when-meta="nuclear_assembly_mode"}
 
 ## Nuclear assembly
 
@@ -46,4 +47,5 @@ if assemble and glob.glob(f"{log_path}/*-raw-*_merquryfk.false_duplications.tsv"
     displayMerquryFalseDuplicationEstimate(f"{log_path}/*-raw-*_merquryfk.false_duplications.tsv")
 ```
 
+:::::
 :::::
