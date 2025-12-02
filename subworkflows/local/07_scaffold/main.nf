@@ -105,12 +105,6 @@ workflow SCAFFOLD {
         yahs_input.fai
     )
 
-    // // Consensus case:
-    // // Preserve haplotigs from purge dups
-    // ch_scaff_and_alt = ch_assemblies
-    //     .filter { _meta, assembly -> assembly.alt_fasta }
-    //     .map { meta, assembly -> [ meta, assembly.alt_fasta ] }
-    //     .mix( YAHS.out.scaffolds_fasta )
     ch_scaffolded_assemblies = constructAssemblyRecord(
         YAHS.out.scaffolds_fasta
             .map{ meta, fasta -> tuple( meta.subMap( meta.keySet() - ['haplotype'] ), fasta) },
