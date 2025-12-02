@@ -21,11 +21,8 @@ process DVPOLISH_PBMM2_ALIGN {
 
     script:
     def args  = task.ext.args ?: ''
-    def args2 = task.ext.args2 ?: ''
-
     def out_name_part1 = reference.name.endsWith(".gz") ? reference.getBaseName(2) : reference.baseName
     def out_name_part2 = reads.name.endsWith(".gz") ?  reads.getBaseName(2) : reads.baseName
-
     """
     pbmm2 align --sort \\
         $args \\
