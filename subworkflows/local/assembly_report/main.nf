@@ -6,10 +6,10 @@ include { QUARTO_NOTEBOOK            } from "../../../modules/local/quarto/noteb
 
 workflow ASSEMBLY_REPORT {
     take:
-    notebook        // Channel: [ meta:Map, notebook:Path, aux_files:Path ]
-    logs            // Channel: Path
-    versions        // Channel: Path
-    executed_steps  // Object: Map
+    notebook      // Channel: [ meta:Map, notebook:Path, aux_files:Path ]
+    logs          // Channel: Path
+    versions      // Channel: Path
+    report_params // Object: Map
 
     main:
     // DTOL table
@@ -32,7 +32,7 @@ workflow ASSEMBLY_REPORT {
     QUARTO_NOTEBOOK(
         notebook.collect(),
         mqc_files.collect().dump(tag:'MultiQC', pretty: true),
-        Channel.value(executed_steps.collect{ k, v -> "$k: ${v}" }.join('\n')).collectFile(),
+        channel.value(report_params.collect{ k, v -> "$k: ${v}" }.join('\n')).collectFile(),
     )
 
     emit:
