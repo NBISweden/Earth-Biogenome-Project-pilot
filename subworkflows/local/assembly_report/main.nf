@@ -32,7 +32,15 @@ workflow ASSEMBLY_REPORT {
     QUARTO_NOTEBOOK(
         notebook.collect(),
         mqc_files.collect().dump(tag:'MultiQC', pretty: true),
-        Channel.value(executed_steps.collect{ k, v -> "$k: ${v}" }.join('\n')).collectFile(),
+        notebook
+            .map { meta, _notebook, _aux ->
+                def yaml_content = (
+                    executed_steps.collect{ k, v -> "$k: ${v}" } +
+                    ["tax_id: ${meta?.sample?.tax_id ?: 'unknown'}"]
+                ).join('\n')
+                return yaml_content
+            }
+            .collectFile()
     )
 
     emit:

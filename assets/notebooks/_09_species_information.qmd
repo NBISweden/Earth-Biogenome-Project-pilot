@@ -1,0 +1,21 @@
+## Species information
+
+Species information fields, e.g., for the [EAR report](https://github.com/ERGA-consortium/EARs)
+
+```{python}
+#| output: asis
+if tax_id:
+    print("<b>Taxid:</b>")
+    print(f"{tax_id}")
+```
+
+```{python}
+#| output: asis
+if "busco" in multiqc.list_modules() and glob.glob(f"{log_path}/short_summary*txt"):
+    lineages = []
+    for lineage in multiqc.list_plots()["busco"]:
+        cleaned_lineage = lineage.replace("Lineage: ", "")
+        lineages.append(cleaned_lineage)
+    print("<b>BUSCO lineages:</b>")
+    print(",".join(lineages))
+```
