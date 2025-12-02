@@ -83,7 +83,7 @@ workflow SCAFFOLD {
         true    // sort_bam
     )
 
-    combineByMetaKeys( // Combine bam with (assembly + fai)
+    joinByMetaKeys( // Join bam with (assembly + fai)
         PAIRTOOLS.out.bam, // FIXME: note this expects BAM, while module can output CRAM
         joinByMetaKeys( // join assembly + fai
             ch_to_scaffold,
@@ -91,7 +91,7 @@ workflow SCAFFOLD {
             keySet: ['id','sample','assembly','haplotype'],
             meta: 'rhs'
         ),
-        keySet: ['id','sample','assembly'],
+        keySet: ['id','sample','assembly','haplotype'],
         meta: 'rhs'
     ).multiMap{ meta, bam, fasta, fai ->
         bam:   [ meta, bam ]
