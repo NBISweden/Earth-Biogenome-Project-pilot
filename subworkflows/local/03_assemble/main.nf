@@ -38,7 +38,6 @@ workflow ASSEMBLE {
     } // else organelle_assembly_mode == 'none'
 
     emit:
-    // TODO emit organelle assemblies
     raw_assemblies = ch_raw_assemblies
     logs           = ch_logs
     versions       = ch_versions
