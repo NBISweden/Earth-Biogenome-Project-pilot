@@ -6,6 +6,7 @@ include { combineByMetaKeys                       } from "../../../modules/local
 include { BWAMEM2_INDEX as BWAMEM2_INDEX_SCAFFOLD } from "../../../modules/nf-core/bwamem2/index/main"
 include { BWAMEM2_MEM as BWAMEM2_MEM_SCAFFOLD     } from "../../../modules/nf-core/bwamem2/mem/main"
 include { SAMTOOLS_FAIDX                          } from "../../../modules/nf-core/samtools/faidx/main"
+include { EXTRACT_CHROMSIZES                      } from "../../../modules/local/extract/chromsizes/main"
 include { PAIRTOOLS                               } from "../../../modules/local/pairtools/main"
 include { YAHS                                    } from "../../../modules/nf-core/yahs/main.nf"
 
@@ -59,18 +60,12 @@ workflow SCAFFOLD {
         false
     )
 
-    SAMTOOLS_FAIDX.out.fai
-        .map{ _meta, fai ->
-            fai.splitCsv( sep: '\t', header: false )
-                .collect{ row -> row[ 0..1 ].join('\t') }
-                .join('\n')
-        }.collectFile()
-        .set { chrom_sizes }
+    EXTRACT_CHROMSIZES( SAMTOOLS_FAIDX.out.fai )
 
     // For each assembly, group hi-c alignment bams and combine with chrom sizes
     joinByMetaKeys(
         BWAMEM2_MEM_SCAFFOLD.out.bam.groupTuple()
-            .combine(chrom_sizes)
+            .combine(EXTRACT_CHROMSIZES.out.chr_sizes, by: 0)
             .map{ meta, hic_bam, chr_lengths -> [ meta, hic_bam, chr_lengths ] },
         ch_to_scaffold,
         keySet: ['id','sample','assembly','haplotype'],
