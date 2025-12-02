@@ -3,9 +3,9 @@ process OATK {
     label 'process_medium'
 
     conda "${moduleDir}/environment.yml"
-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/oatk:1.0':
-        'biocontainers/oatk:1.0' }"
+    container "${workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container
+        ? 'https://depot.galaxyproject.org/singularity/oatk:1.0--h577a1d6_1'
+        : 'biocontainers/oatk:1.0--h577a1d6_1'}"
 
     input:
     tuple val(meta), path(reads)

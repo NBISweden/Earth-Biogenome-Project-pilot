@@ -64,9 +64,9 @@ workflow {
     """)
 
     // Setup sink channels
-    ch_multiqc_files = Channel.value( file(params.multiqc_assembly_report_config, checkIfExists: true) )
+    ch_multiqc_files = channel.value( file(params.multiqc_assembly_report_config, checkIfExists: true) )
     // ch_quarto_files  = Channel.empty()
-    ch_versions      = Channel.empty()
+    ch_versions      = channel.empty()
 
     // Read in data
     PREPARE_INPUT (
@@ -78,7 +78,7 @@ workflow {
     // Create Cram and trim
     CONVERT_FASTQ_CRAM ( PREPARE_INPUT.out.hic, params.hic_type.startsWith('arima') )
     // Build necessary databases
-    // TODO: Migrate back to Meryl. Genome inspection missing KATGC and PLOIDYPLOT for meryldb
+    // TODO: Migrate back to Meryl. Genome inspection missing KATGC and SMUDGEPLOT for meryldb
     BUILD_FASTK_HIFI_DATABASE ( PREPARE_INPUT.out.hifi )
     BUILD_FASTK_HIC_DATABASE ( CONVERT_FASTQ_CRAM.out.fastq )
     BUILD_MERYL_HIFI_DATABASE ( PREPARE_INPUT.out.hifi )
@@ -118,8 +118,7 @@ workflow {
         // Run assemblers
         ASSEMBLE (
                 PREPARE_INPUT.out.hifi_merged,
-                PREPARE_INPUT.out.mito_hmm,
-                PREPARE_INPUT.out.plastid_hmm,
+                params.oatkdb ? file(params.oatkdb, checkIfExists: true, type: 'dir') : channel.empty(),
                 params.nuclear_assembly_mode,
                 params.organelle_assembly_mode
         )
@@ -128,7 +127,7 @@ workflow {
         ch_multiqc_files = ch_multiqc_files.mix( ASSEMBLE.out.logs )
         ch_versions = ch_versions.mix( ASSEMBLE.out.versions )
     } else {
-        ch_raw_assemblies = Channel.empty() // No assemblies from a previous stage
+        ch_raw_assemblies = channel.empty() // No assemblies from a previous stage
     }
     ch_raw_assemblies = ch_raw_assemblies.mix(
         preassembledInput( PREPARE_INPUT.out.assemblies, 'raw' )
