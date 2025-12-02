@@ -43,7 +43,6 @@ workflow EVALUATE_ASSEMBLY {
 
     // Evaluate core gene space coverage
     busco_input = ( params.use_phased ? getEachAssembly(assembly_ch) : getPrimaryAssembly(assembly_ch) )
-        .transpose()
         .flatMap { meta, asm ->
             // Use lineages from params.busco.lineages/GOAT.
             meta.settings.busco.lineages
