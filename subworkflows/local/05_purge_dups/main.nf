@@ -41,11 +41,11 @@ workflow PURGE_DUPLICATES {
         .flatMap { meta, reads, assembly ->
             def read_list = reads instanceof List ? reads : [reads]
             if( params.use_phased ){
-                read_list.collect { read_set ->
-                    [meta + [single_end: true, haplotype: 'hap1'], read_set, assembly.pri_fasta]
-                }
-                + read_list.collect { read_set ->
-                    [meta + [single_end: true, haplotype: 'hap2'], read_set, assembly.alt_fasta]
+                read_list.collectMany { read_set ->
+                    [
+                        [meta + [single_end: true, haplotype: 'hap1'], read_set, assembly.pri_fasta],
+                        [meta + [single_end: true, haplotype: 'hap2'], read_set, assembly.alt_fasta]
+                    ]
                 }
             } else {
                 read_list.collect { read_set ->
