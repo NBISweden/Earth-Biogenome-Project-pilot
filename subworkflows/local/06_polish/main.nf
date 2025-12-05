@@ -59,8 +59,8 @@ workflow DVPOLISH {
     reads_plus_assembly_ch
         // Add single_end for minimap module
         .flatMap { meta, reads, assembly -> reads instanceof List ?
-            reads.collect{ [ meta + [ single_end: true ], it, assembly.pri_fasta ] }
-            : [ [ meta + [ single_end: true ], reads, assembly.pri_fasta ] ] }
+            reads.collect{ [ meta, it, assembly.pri_fasta ] }
+            : [ [ meta, reads, assembly.pri_fasta ] ] }
         .multiMap { meta, reads, assembly ->
             reads_ch: [ meta + [ readID: reads.baseName ], reads ]
             assembly_ch: [ meta, assembly ]
