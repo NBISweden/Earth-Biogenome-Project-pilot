@@ -21,6 +21,8 @@ include { ASSEMBLE                                          } from "./subworkflo
 include { DECONTAMINATE                                     } from "./subworkflows/local/04_decontaminate/main"
 // Purge duplicates
 include { PURGE_DUPLICATES                                  } from "./subworkflows/local/05_purge_dups/main"
+// Polish
+include { DVPOLISH                                          } from "./subworkflows/local/06_polish/main"
 // Scaffold
 include { SCAFFOLD                                          } from "./subworkflows/local/07_scaffold/main"
 // Curation
@@ -179,7 +181,14 @@ workflow {
     ).dump(tag: 'Assemblies: to polish', pretty: true)
     if ( 'polish' in workflow_steps ) {
         // Run polishers
-        ch_polished_assemblies = ch_to_polish
+        DVPOLISH (
+            ch_to_polish,
+            ch_hifi,
+            BUILD_MERYL_HIFI_DATABASE.out.uniondb
+        )
+        ch_evaluate_assemblies = ch_evaluate_assemblies.mix( DVPOLISH.out.assemblies )
+        ch_polished_assemblies = DVPOLISH.out.assemblies
+        //TODO: logs, versions
     } else {
         ch_polished_assemblies = ch_to_polish
     }

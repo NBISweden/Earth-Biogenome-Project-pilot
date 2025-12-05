@@ -1,0 +1,24 @@
+Changes in module 'nf-core/samtools/view'
+--- modules/nf-core/samtools/view/main.nf
++++ modules/nf-core/samtools/view/main.nf
+@@ -29,7 +29,9 @@
+     def args2 = task.ext.args2 ?: ''
+     def prefix = task.ext.prefix ?: "${meta.id}"
+     def reference = fasta ? "--reference ${fasta}" : ""
+-    def readnames = qname ? "--qname-file ${qname}": ""
++    // get rid of the qname path, we don't need this and we use 
++    // this to provide all corresponding bai-index files
++    //def readnames = qname ? "--qname-file ${qname}": ""
+     def file_type = args.contains("--output-fmt sam") ? "sam" :
+                     args.contains("--output-fmt bam") ? "bam" :
+                     args.contains("--output-fmt cram") ? "cram" :
+@@ -40,7 +42,6 @@
+         view \\
+         --threads ${task.cpus-1} \\
+         ${reference} \\
+-        ${readnames} \\
+         $args \\
+         -o ${prefix}.${file_type} \\
+         $input \\
+
+************************************************************
