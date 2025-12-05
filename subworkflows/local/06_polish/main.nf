@@ -281,6 +281,7 @@ workflow DVPOLISH {
         meta: 'rhs'
     )
 
+    // combine unpolished and polished assemblies with their respective QV scores
     combineByMetaKeys(
         unpolASM_merqQV_ch,
         polASM_merqQV_ch,
@@ -293,14 +294,15 @@ workflow DVPOLISH {
     }
     .set { createFinalAsm }
 
+    // create final assembly by selecting the best sequence (polished or unpolished) 
+    // for each contig based on Merqury QV scores. For each contig, the sequence 
+    // with fewer errors is selected.
     DVPOLISH_CREATE_FINALASM(
         createFinalAsm.unpolASM_qv_ch,
         createFinalAsm.polASM_qv_ch,
     )
 
-    // TODO 
-    // 3. publish result
-
+    // construct assembly record for the final polished assembly
     ch_polished_assemblies = constructAssemblyRecord(
         DVPOLISH_CREATE_FINALASM.out.fasta_gz,
         params.use_phased
