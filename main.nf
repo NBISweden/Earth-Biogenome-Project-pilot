@@ -93,7 +93,7 @@ workflow {
 
     // Data inspection
     // ch_hifi = PREPARE_INPUT.out.hifi
-    ch_kmer_cov = channel.empty()
+    ch_kmer_cov = PREPARE_INPUT.out.hifi_merged.map { meta, _reads -> tuple(meta, []) }
     if ( 'inspect' in workflow_steps ) {
         // QC Steps
         INSPECT_DATA(

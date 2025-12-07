@@ -33,7 +33,7 @@ workflow PURGE_DUPLICATES {
     // Update with k-mer coverage
     ch_updated_hifi = combineByMetaKeys(
         ch_hifi,
-        ch_kmer_cov.ifEmpty([[]]),
+        ch_kmer_cov,
         keySet: ['id','sample'],
         meta: 'lhs'
     ).map { meta, reads, kmer_cov ->
