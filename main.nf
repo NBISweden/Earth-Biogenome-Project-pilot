@@ -1,7 +1,7 @@
 #! /usr/bin/env nextflow
 
 // Functions
-include { combineByMetaKeys                                 } from "./modules/local/functions"
+// include { combineByMetaKeys                                 } from "./modules/local/functions"
 include { assembliesFromStage as preassembledInput          } from "./modules/local/functions"
 include { setAssemblyStage                                  } from "./modules/local/functions"
 // Data import
@@ -54,7 +54,7 @@ workflow {
 
     // Check input
     def workflow_steps = params.steps.tokenize(",")
-    if ( ! workflow_steps.every { it in workflow_permitted_stages } ) {
+    if ( ! workflow_steps.every { step -> step in workflow_permitted_stages } ) {
         error "Unrecognised workflow step in $params.steps ( $workflow_permitted_stages )"
     }
 
@@ -64,9 +64,9 @@ workflow {
     """)
 
     // Setup sink channels
-    ch_multiqc_files = Channel.value( file(params.multiqc_assembly_report_config, checkIfExists: true) )
+    ch_multiqc_files = channel.value( file(params.multiqc_assembly_report_config, checkIfExists: true) )
     // ch_quarto_files  = Channel.empty()
-    ch_versions      = Channel.empty()
+    ch_versions      = channel.empty()
 
     // Read in data
     PREPARE_INPUT (
@@ -92,7 +92,8 @@ workflow {
     )
 
     // Data inspection
-    ch_hifi = PREPARE_INPUT.out.hifi
+    // ch_hifi = PREPARE_INPUT.out.hifi
+    ch_kmer_cov = channel.empty()
     if ( 'inspect' in workflow_steps ) {
         // QC Steps
         INSPECT_DATA(
@@ -101,7 +102,8 @@ workflow {
             BUILD_FASTK_HIFI_DATABASE.out.fastk_hist_ktab,
             BUILD_FASTK_HIC_DATABASE.out.fastk_hist_ktab
         )
-        ch_hifi = INSPECT_DATA.out.hifi // with added kmer coverage
+        // ch_hifi = INSPECT_DATA.out.hifi // with added kmer coverage
+        ch_kmer_cov = INSPECT_DATA.out.kmer_cov // with added kmer coverage
         ch_multiqc_files = ch_multiqc_files.mix( INSPECT_DATA.out.logs )
         ch_versions = ch_versions.mix( INSPECT_DATA.out.versions )
     }
@@ -128,7 +130,7 @@ workflow {
         ch_multiqc_files = ch_multiqc_files.mix( ASSEMBLE.out.logs )
         ch_versions = ch_versions.mix( ASSEMBLE.out.versions )
     } else {
-        ch_raw_assemblies = Channel.empty() // No assemblies from a previous stage
+        ch_raw_assemblies = channel.empty() // No assemblies from a previous stage
     }
     ch_raw_assemblies = ch_raw_assemblies.mix(
         preassembledInput( PREPARE_INPUT.out.assemblies, 'raw' )
@@ -160,7 +162,8 @@ workflow {
     if ( 'purge' in workflow_steps ) {
         PURGE_DUPLICATES (
             ch_to_purge,
-            ch_hifi
+            PREPARE_INPUT.out.hifi_merged,
+            ch_kmer_cov
         )
         ch_evaluate_assemblies = ch_evaluate_assemblies.mix( PURGE_DUPLICATES.out.assemblies )
         ch_purged_assemblies = PURGE_DUPLICATES.out.assemblies
