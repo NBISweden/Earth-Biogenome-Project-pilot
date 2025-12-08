@@ -2,10 +2,10 @@ process DVPOLISH_CREATE_FINALASM {
     tag "$meta.id"
     label 'process_single'
 
-    conda 'bioconda::seqkit=2.8.2'
+    conda 'bioconda::seqkit=2.8.2 bioconda::samtools=1.22.1'
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/seqkit:2.8.2--h9ee0642_0' :
-        'nf-core/seqkit:2.8.2--h9ee0642_0' }"
+        'oras://community.wave.seqera.io/library/samtools_seqkit:d4c7f2ace72c42af' :
+        'community.wave.seqera.io/library/samtools_seqkit:27168e18ad389b27' }"
 
     input:
     tuple val(meta), path(unpol_fasta), path(unpol_merqury_csv)  // meta map, unpolished assembly, corresponding merqury qv file
@@ -68,11 +68,12 @@ process DVPOLISH_CREATE_FINALASM {
         fi
 
         l=\$((l+1))
-    done | gzip -c > ${prefix}.fasta.gz
+    done | bgzip -c > ${prefix}.fasta.gz
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
         seqkit: \$(seqkit version | sed 's/^seqkit v//')
+        samtools: \$(samtools --version | head -n1 | sed 's/^samtools //')
     END_VERSIONS
     """
 }
