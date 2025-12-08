@@ -8,7 +8,8 @@ include { BWAMEM2_MEM as BWAMEM2_MEM_SCAFFOLD     } from "../../../modules/nf-co
 include { SAMTOOLS_FAIDX                          } from "../../../modules/nf-core/samtools/faidx/main"
 include { EXTRACT_CHROMSIZES                      } from "../../../modules/local/extract/chromsizes/main"
 include { PAIRTOOLS                               } from "../../../modules/local/pairtools/main"
-include { YAHS                                    } from "../../../modules/nf-core/yahs/main.nf"
+include { YAHS                                    } from "../../../modules/nf-core/yahs/main"
+include { SEQKIT_SEQ as MERGE_HAPLOTYPES          } from "../../../modules/nf-core/seqkit/seq/main"
 
 /*
     PURPOSE: Performs scaffolding of haplotype/consensus assemblies with a scaffolding tool.
@@ -105,10 +106,18 @@ workflow SCAFFOLD {
         yahs_input.fai
     )
 
+    ch_scaffolded_haplotypes = YAHS.out.scaffolds_fasta
+            .map{ meta, fasta -> tuple( meta.subMap( meta.keySet() - ['haplotype'] ), fasta) }
     ch_scaffolded_assemblies = constructAssemblyRecord(
-        YAHS.out.scaffolds_fasta
-            .map{ meta, fasta -> tuple( meta.subMap( meta.keySet() - ['haplotype'] ), fasta) },
+        ch_scaffolded_haplotypes,
         params.use_phased
+    )
+
+    MERGE_HAPLOTYPES(
+        ch_scaffolded_haplotypes
+            .groupTuple(sort: { a, b -> a.name <=> b.name })
+            .filter { _meta, fa_list -> fa_list.size() > 1 },
+        "fasta.gz"
     )
 
     logs = PAIRTOOLS.out.stat
