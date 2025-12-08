@@ -17,7 +17,7 @@ process ITERATIVE_PURGEDUPS {
     path "versions.yml"                           , emit: versions
 
     script:
-    def prefix              = task.ext.prefix ?: "${meta.id}_${meta.assembly.build}"
+    def prefix              = task.ext.prefix ?: "${meta.id}"
     def minimap2_reads_args = task.ext.minimap2_reads_args ?: ''
     def minimap2_self_args  = task.ext.minimap2_self_args  ?: ''
     def pbcstat_args        = task.ext.pbcstat_args        ?: ''
