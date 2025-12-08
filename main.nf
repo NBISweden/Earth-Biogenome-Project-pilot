@@ -249,6 +249,7 @@ workflow {
         EVALUATE_ASSEMBLY.out.versions
     )
 
+    // Assembly report
     ASSEMBLY_REPORT(
         PREPARE_INPUT.out.sample_meta.map{ meta ->
             [
@@ -259,8 +260,13 @@ workflow {
         },
         ch_multiqc_files,
         ch_versions,
-        [ diagnostics: "debug" in workflow.profile.tokenize(",") ] +
-            workflow_permitted_stages.collectEntries{ step -> [(step): step in params.steps.tokenize(",")] }
+        [
+            diagnostics: "debug" in workflow.profile.tokenize(","),
+            nuclear_assembly_mode: params.nuclear_assembly_mode,
+            organelle_assembly_mode: params.organelle_assembly_mode in ['contigs', 'reads']
+        ] + workflow_permitted_stages.collectEntries{ step ->
+            [(step): step in params.steps.tokenize(",")]
+        }
     )
 
     workflow.onComplete = {
