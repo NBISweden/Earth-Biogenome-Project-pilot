@@ -35,7 +35,7 @@ process DVPOLISH_CREATE_FINALASM {
         >&2 echo "[ERROR] DVPOLISH_CREATE_FINALASM: merqury files have different lines: ${unpol_merqury_csv}: \${nl_unpol_ASM} != ${pol_merqury_csv}: \${nl_pol_ASM}"
         exit 1
     fi
-    
+
     #split unpolished assembly by sequence ID
     seqkit split -i -O unpolished_asm ${unpol_fasta}
 
@@ -69,10 +69,10 @@ process DVPOLISH_CREATE_FINALASM {
 
         l=\$((l+1))
     done | gzip -c > ${prefix}.fasta.gz
-    
+
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        dvpolish: \$(seqkit version)
+        seqkit: \$(seqkit version | sed 's/^seqkit v//')
     END_VERSIONS
     """
 }
