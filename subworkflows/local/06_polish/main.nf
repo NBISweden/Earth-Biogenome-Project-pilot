@@ -48,25 +48,8 @@ workflow DVPOLISH {
     ch_meryl_hifi // [ meta, union.meryldb ] 
 
     main:
-    
-    reads_plus_assembly_ch = combineByMetaKeys (
-            ch_hifi,
-            ch_assemblies,
-            keySet: [ 'id', 'sample' ],
-            meta: 'rhs'
-        )
 
-    reads_plus_assembly_ch
-        // Add single_end for minimap module
-        .flatMap { meta, reads, assembly -> reads instanceof List ?
-            reads.collect{ [ meta + [ single_end: true ], it, assembly.pri_fasta ] }
-            : [ [ meta + [ single_end: true ], reads, assembly.pri_fasta ] ] }
-        .multiMap { meta, reads, assembly ->
-            reads_ch: [ meta + [ readID: reads.baseName ], reads ]
-            assembly_ch: [ meta, assembly ]
-        }
-        .set { input }
-
+    // Create input channels for assembly-level tasks
     uniq_assembly_ch = getPrimaryAssembly(ch_assemblies)
 
     assembly_plus_meryl_ch = combineByMetaKeys (
@@ -93,10 +76,35 @@ workflow DVPOLISH {
         uniq_assembly_ch
     )
 
+    // Create input channel for read-level tasks
+    reads_plus_assembly_ch = combineByMetaKeys (
+        ch_hifi,
+        ch_assemblies,
+        keySet: [ 'id', 'sample' ],
+        meta: 'rhs'
+    )
+    reads_plus_assembly_plus_index_ch = combineByMetaKeys (
+        reads_plus_assembly_ch,
+        DVPOLISH_PBMM2_INDEX.out.index,
+        keySet: [ 'id', 'sample' ],
+        meta: 'lhs'
+    )
+    reads_plus_assembly_plus_index_ch
+        .flatMap { meta, reads, assembly, index -> reads instanceof List ?
+            reads.collect{ [ meta, it, assembly.pri_fasta, index ] }
+            : [ [ meta, reads, assembly.pri_fasta, index ] ] }
+        .multiMap { meta, reads, assembly, index ->
+            reads_ch: [ meta + [ readID: reads.baseName ], reads ]
+            assembly_ch: [ meta, assembly ]
+            index_ch: [ meta, index ]
+        }
+        .set { input }
+
     // map reads with pbmm2 to complete assemblies (chunks are not used in that step)
     DVPOLISH_PBMM2_ALIGN (
         input.reads_ch,
-        input.assembly_ch
+        input.assembly_ch,
+        input.index_ch
     )
 
     combineByMetaKeys (

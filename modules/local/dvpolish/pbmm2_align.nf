@@ -9,8 +9,9 @@ process DVPOLISH_PBMM2_ALIGN {
         'biocontainers/pbmm2:1.13.1--h9ee0642_0' }"
 
     input:
-    tuple val(meta), path(reads)
+    tuple val(meta) , path(reads)
     tuple val(meta2), path(reference)
+    tuple val(meta3), path(index)
 
     output:
     tuple val(meta), path("*.bam"), path("*.bai"), emit: bam_bai
@@ -27,7 +28,7 @@ process DVPOLISH_PBMM2_ALIGN {
     pbmm2 align --sort \\
         $args \\
         -j $task.cpus \\
-        "$reference" \\
+        "$index" \\
         "$reads" \\
         ${out_name_part1}_${out_name_part2}.bam
 
