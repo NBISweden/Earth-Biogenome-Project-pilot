@@ -1,0 +1,24 @@
+Changes in component 'nf-core/oatk'
+'modules/nf-core/oatk/environment.yml' is unchanged
+'modules/nf-core/oatk/meta.yml' is unchanged
+Changes in 'oatk/main.nf':
+--- modules/nf-core/oatk/main.nf
++++ modules/nf-core/oatk/main.nf
+@@ -3,9 +3,9 @@
+     label 'process_medium'
+ 
+     conda "${moduleDir}/environment.yml"
+-    container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+-        'https://depot.galaxyproject.org/singularity/oatk:1.0':
+-        'biocontainers/oatk:1.0' }"
++    container "${workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container
++        ? 'https://depot.galaxyproject.org/singularity/oatk:1.0--h577a1d6_1'
++        : 'biocontainers/oatk:1.0--h577a1d6_1'}"
+ 
+     input:
+     tuple val(meta), path(reads)
+
+'modules/nf-core/oatk/tests/main.nf.test.snap' is unchanged
+'modules/nf-core/oatk/tests/nextflow.config' is unchanged
+'modules/nf-core/oatk/tests/main.nf.test' is unchanged
+************************************************************

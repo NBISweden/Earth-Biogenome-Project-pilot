@@ -40,7 +40,7 @@ flowchart TD
     assembly[/ Assembly /] --> quast[[ Quast ]]
     fastk_hifi --> histex[[ Histex ]]
     histex --> genescopefk[[ GeneScopeFK ]]
-    fastk_hifi --> ploidyplot[[ PloidyPlot ]]
+    fastk_hifi --> smudgeplot[[ Smudgeplot ]]
     fastk_hifi --> katgc[[ KatGC ]]
     fastk_hifi --> merquryfk[[ MerquryFK ]]
     assembly --> merquryfk
@@ -62,7 +62,7 @@ flowchart TD
     quarto --> multiqc
     dtol --> multiqc
     katgc --> multiqc
-    ploidyplot --> multiqc
+    smudgeplot --> multiqc
     busco --> multiqc
     quast --> multiqc
 ```
@@ -246,15 +246,19 @@ results
 │   │   ├── Drosophila_melanogaster_katgc.fi.png
 │   │   ├── Drosophila_melanogaster_katgc.ln.png
 │   │   └── Drosophila_melanogaster_katgc.st.png
-│   ├── ploidyplot
-│   │   ├── Drosophila_melanogaster_ploidyplot.fi.png
-│   │   ├── Drosophila_melanogaster_ploidyplot.ln.png
-│   │   └── Drosophila_melanogaster_ploidyplot.st.png
 │   ├── seqkit_hic_stats
 │   │   ├── dmel_2Mb_p1_R1_hic.tsv
 │   │   └── dmel_2Mb_p2_R1_hic.tsv
-│   └── seqkit_hifi_stats
-│       └── dmel_2Mb_hifi.tsv
+│   ├── seqkit_hifi_stats
+│   │   └── dmel_2Mb_hifi.tsv
+│   └── smudgeplot
+│       ├── Drosophila_melanogaster_smudgeplot.smudge_report.tsv
+│       ├── Drosophila_melanogaster_smudgeplot_centralities.png
+│       ├── Drosophila_melanogaster_smudgeplot_centralities.txt
+│       ├── Drosophila_melanogaster_smudgeplot_smudgeplot.png
+│       ├── Drosophila_melanogaster_smudgeplot_smudgeplot_log10.png
+│       ├── Drosophila_melanogaster_smudgeplot_smudgeplot_report.json
+│       └── Drosophila_melanogaster_smudgeplot_with_annotated_smu.txt
 ├── 02_read_preprocessing
 │   └── hi-c_cram
 │       ├── dmel_2Mb_p1.cram
@@ -298,20 +302,102 @@ results
 │   │       ├── hifiasm-raw-default_merqury.spectra-asm.hist
 │   │       ├── hifiasm-raw-default_merqury.spectra-asm.ln.png
 │   │       └── hifiasm-raw-default_merqury.spectra-asm.st.png
-│   └── merquryfk
-│       └── hifiasm-raw-default
-│           ├── hifiasm-raw-default_merquryfk.cni.gz
-│           ├── hifiasm-raw-default_merquryfk.completeness.stats
-│           ├── hifiasm-raw-default_merquryfk.false_duplications.tsv
-│           ├── hifiasm-raw-default_merquryfk.hifiasm-raw-default.bp.p_ctg.qv
-│           ├── hifiasm-raw-default_merquryfk.hifiasm-raw-default.bp.p_ctg.spectra-cn.fl.png
-│           ├── hifiasm-raw-default_merquryfk.hifiasm-raw-default.bp.p_ctg.spectra-cn.ln.png
-│           ├── hifiasm-raw-default_merquryfk.hifiasm-raw-default.bp.p_ctg.spectra-cn.st.png
-│           ├── hifiasm-raw-default_merquryfk.hifiasm-raw-default.bp.p_ctg_only.bed
-│           ├── hifiasm-raw-default_merquryfk.qv
-│           ├── hifiasm-raw-default_merquryfk.spectra-asm.fl.png
-│           ├── hifiasm-raw-default_merquryfk.spectra-asm.ln.png
-│           └── hifiasm-raw-default_merquryfk.spectra-asm.st.png
+│   ├── merquryfk
+│   │   └── hifiasm-raw-default
+│   │       ├── hifiasm-raw-default_merquryfk.completeness.stats
+│   │       ├── hifiasm-raw-default_merquryfk.false_duplications.tsv
+│   │       ├── hifiasm-raw-default_merquryfk.hifiasm-raw-default.bp.p_ctg.qv
+│   │       ├── hifiasm-raw-default_merquryfk.hifiasm-raw-default.bp.p_ctg.spectra-cn.fl.png
+│   │       ├── hifiasm-raw-default_merquryfk.hifiasm-raw-default.bp.p_ctg.spectra-cn.ln.png
+│   │       ├── hifiasm-raw-default_merquryfk.hifiasm-raw-default.bp.p_ctg.spectra-cn.st.png
+│   │       ├── hifiasm-raw-default_merquryfk.hifiasm-raw-default.bp.p_ctg_only.bed
+│   │       ├── hifiasm-raw-default_merquryfk.qv
+│   │       ├── hifiasm-raw-default_merquryfk.spectra-asm.fl.png
+│   │       ├── hifiasm-raw-default_merquryfk.spectra-asm.ln.png
+│   │       ├── hifiasm-raw-default_merquryfk.spectra-asm.st.png
+│   │       └── hifiasm-raw-default_merquryfk.spectra-cn.cni.gz
+│   └── mitohifi
+│       ├── hifiasm-raw-default
+│       │   ├── Drosophila_melanogaster-hifiasm-raw-default.contigs_annotations.png
+│       │   ├── Drosophila_melanogaster-hifiasm-raw-default.contigs_stats.tsv
+│       │   ├── Drosophila_melanogaster-hifiasm-raw-default.final_mitogenome.annotation.png
+│       │   ├── Drosophila_melanogaster-hifiasm-raw-default.final_mitogenome.fasta
+│       │   ├── Drosophila_melanogaster-hifiasm-raw-default.final_mitogenome.gb
+│       │   ├── Drosophila_melanogaster-hifiasm-raw-default.shared_genes.tsv
+│       │   ├── contigs_circularization
+│       │   │   └── all_contigs.circularisationCheck.txt
+│       │   ├── contigs_filtering
+│       │   │   ├── contigs.blastn
+│       │   │   ├── contigs_ids.txt
+│       │   │   ├── parsed_blast.txt
+│       │   │   └── parsed_blast_all.txt
+│       │   ├── coverage_mapping
+│       │   ├── final_mitogenome_choice
+│       │   │   ├── all_mitogenomes.rotated.aligned.aln
+│       │   │   ├── all_mitogenomes.rotated.fa
+│       │   │   ├── cdhit.out
+│       │   │   └── cdhit.out.clstr
+│       │   └── potential_contigs
+│       │       └── ptg000006l
+│       │           ├── ptg000006l.annotation
+│       │           │   ├── PP764103.fasta
+│       │           │   ├── ptg000006l.annotation_MitoFinder_mitfi_Final_Results
+│       │           │   │   ├── ptg000006l.annotation.infos
+│       │           │   │   ├── ptg000006l.annotation_final_genes_AA.fasta
+│       │           │   │   ├── ptg000006l.annotation_final_genes_NT.fasta
+│       │           │   │   ├── ptg000006l.annotation_mtDNA_contig.fasta
+│       │           │   │   ├── ptg000006l.annotation_mtDNA_contig.gb
+│       │           │   │   ├── ptg000006l.annotation_mtDNA_contig.gff
+│       │           │   │   ├── ptg000006l.annotation_mtDNA_contig.tbl
+│       │           │   │   ├── ptg000006l.annotation_mtDNA_contig_genes_AA.fasta
+│       │           │   │   └── ptg000006l.annotation_mtDNA_contig_genes_NT.fasta
+│       │           │   ├── ptg000006l.annotation_mitfi
+│       │           │   │   ├── MiTFi.log
+│       │           │   │   └── ptg000006l.annotation_mtDNA_contig.mitfi
+│       │           │   └── ptg000006l.annotation_tmp
+│       │           │       ├── circularization_check.blast.xml
+│       │           │       ├── contig_id_database.fasta
+│       │           │       ├── geneChecker.log
+│       │           │       ├── geneChecker_error.log
+│       │           │       ├── ptg000006l.annotation_blast_out.txt
+│       │           │       ├── ptg000006l.annotation_link.scafSeq.nhr
+│       │           │       ├── ptg000006l.annotation_link.scafSeq.nin
+│       │           │       ├── ptg000006l.annotation_link.scafSeq.nsq
+│       │           │       ├── ptg000006l.annotation_mtDNA_contig_raw.gff
+│       │           │       ├── ptg000006l.annotation_mtDNA_contig_ref.blast.xml
+│       │           │       ├── ptg000006l.annotation_mtDNA_contig_ref.cds.blast.xml
+│       │           │       ├── ptg000006l.annotation_mtDNA_contig_ref.cds.fasta
+│       │           │       ├── ptg000006l.annotation_mtDNA_contig_ref.fasta
+│       │           │       ├── ref_ATP6_database.fasta
+│       │           │       ├── ref_ATP8_database.fasta
+│       │           │       ├── ref_COX1_database.fasta
+│       │           │       ├── ref_COX2_database.fasta
+│       │           │       ├── ref_COX3_database.fasta
+│       │           │       ├── ref_CYTB_database.fasta
+│       │           │       ├── ref_ND1_database.fasta
+│       │           │       ├── ref_ND2_database.fasta
+│       │           │       ├── ref_ND3_database.fasta
+│       │           │       ├── ref_ND4L_database.fasta
+│       │           │       ├── ref_ND4_database.fasta
+│       │           │       ├── ref_ND5_database.fasta
+│       │           │       ├── ref_ND6_database.fasta
+│       │           │       ├── ref_for_mtDNA_contig.fasta
+│       │           │       ├── ref_rrnL_database.fasta
+│       │           │       ├── ref_rrnS_database.fasta
+│       │           │       └── translated_genes_for_database.fasta
+│       │           ├── ptg000006l.annotation_MitoFinder.log
+│       │           ├── ptg000006l.circularisationCheck.txt
+│       │           ├── ptg000006l.circularization_check.blast.tsv
+│       │           ├── ptg000006l.individual.stats
+│       │           ├── ptg000006l.mito.fa
+│       │           ├── ptg000006l.mitogenome.fa
+│       │           ├── ptg000006l.mitogenome.gb
+│       │           ├── ptg000006l.mitogenome.rotated.fa
+│       │           ├── ptg000006l.mitogenome.rotated.gb
+│       │           └── ptg000006l.trnas
+│       └── references
+│           ├── PP764103.1.fasta
+│           └── PP764103.1.gb
 ├── 05_duplicate_purging
 │   ├── busco
 │   │   └── hifiasm-purged-default
@@ -361,13 +447,13 @@ results
 │   │       ├── hifiasm-purged-default_merquryfk.Drosophila_melanogaster_hifiasm-purged-default_hap0.purged_fold.spectra-cn.ln.png
 │   │       ├── hifiasm-purged-default_merquryfk.Drosophila_melanogaster_hifiasm-purged-default_hap0.purged_fold.spectra-cn.st.png
 │   │       ├── hifiasm-purged-default_merquryfk.Drosophila_melanogaster_hifiasm-purged-default_hap0.purged_fold_only.bed
-│   │       ├── hifiasm-purged-default_merquryfk.cni.gz
 │   │       ├── hifiasm-purged-default_merquryfk.completeness.stats
 │   │       ├── hifiasm-purged-default_merquryfk.false_duplications.tsv
 │   │       ├── hifiasm-purged-default_merquryfk.qv
 │   │       ├── hifiasm-purged-default_merquryfk.spectra-asm.fl.png
 │   │       ├── hifiasm-purged-default_merquryfk.spectra-asm.ln.png
 │   │       ├── hifiasm-purged-default_merquryfk.spectra-asm.st.png
+│   │       ├── hifiasm-purged-default_merquryfk.spectra-cn.cni.gz
 │   │       ├── hifiasm-purged-default_merquryfk.spectra-cn.fl.png
 │   │       ├── hifiasm-purged-default_merquryfk.spectra-cn.ln.png
 │   │       └── hifiasm-purged-default_merquryfk.spectra-cn.st.png
@@ -428,13 +514,13 @@ results
 │   │       ├── hifiasm-scaffolded-default_merquryfk.Drosophila_melanogaster_hifiasm-scaffolded-default_scaffolds_final.spectra-cn.ln.png
 │   │       ├── hifiasm-scaffolded-default_merquryfk.Drosophila_melanogaster_hifiasm-scaffolded-default_scaffolds_final.spectra-cn.st.png
 │   │       ├── hifiasm-scaffolded-default_merquryfk.Drosophila_melanogaster_hifiasm-scaffolded-default_scaffolds_final_only.bed
-│   │       ├── hifiasm-scaffolded-default_merquryfk.cni.gz
 │   │       ├── hifiasm-scaffolded-default_merquryfk.completeness.stats
 │   │       ├── hifiasm-scaffolded-default_merquryfk.false_duplications.tsv
 │   │       ├── hifiasm-scaffolded-default_merquryfk.qv
 │   │       ├── hifiasm-scaffolded-default_merquryfk.spectra-asm.fl.png
 │   │       ├── hifiasm-scaffolded-default_merquryfk.spectra-asm.ln.png
 │   │       ├── hifiasm-scaffolded-default_merquryfk.spectra-asm.st.png
+│   │       ├── hifiasm-scaffolded-default_merquryfk.spectra-cn.cni.gz
 │   │       ├── hifiasm-scaffolded-default_merquryfk.spectra-cn.fl.png
 │   │       ├── hifiasm-scaffolded-default_merquryfk.spectra-cn.ln.png
 │   │       └── hifiasm-scaffolded-default_merquryfk.spectra-cn.st.png
@@ -485,10 +571,10 @@ results
 │   │   └── Drosophila_melanogaster_quast_report.tsv
 │   └── versions.yml
 └── pipeline_info
-    ├── execution_report_2025-10-14_11-58-07.html
-    ├── execution_timeline_2025-10-14_11-58-07.html
-    ├── execution_trace_2025-10-14_11-58-07.txt
-    └── pipeline_dag_2025-10-14_11-58-07.mmd
+    ├── execution_report_2025-11-18_11-57-39.html
+    ├── execution_timeline_2025-11-18_11-57-39.html
+    ├── execution_trace_2025-11-18_11-57-39.txt
+    └── pipeline_dag_2025-11-18_11-57-39.mmd
 </pre>
 </details>
 
