@@ -15,7 +15,7 @@ assembly:
     pri_fasta: 'https://raw.githubusercontent.com/NBISweden/Earth-Biogenome-Project-pilot/main/tests/data/tiny/assembly/hifiasm-raw-hifi_v1.asm.bp.p_ctg.fasta'
 
 hifi:
-  - reads: 'https://raw.githubusercontent.com/NBISweden/Earth-Biogenome-Project-pilot/main/tests/data/tiny/PB_HIFI/dmel_2Mb.fasta.gz'
+  - reads: 'https://raw.githubusercontent.com/NBISweden/Earth-Biogenome-Project-pilot/main/tests/data/tiny/PB_HIFI/dmel_2Mb.fastq.gz'
 hic:
   - read1: 'https://raw.githubusercontent.com/NBISweden/Earth-Biogenome-Project-pilot/main/tests/data/tiny/HIC/dmel_2Mb_p1_R1.fastq.gz'
     read2: 'https://raw.githubusercontent.com/NBISweden/Earth-Biogenome-Project-pilot/main/tests/data/tiny/HIC/dmel_2Mb_p1_R2.fastq.gz'
