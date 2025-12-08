@@ -28,14 +28,6 @@ workflow INSPECT_DATA {
         FASTQC.out.versions.first()
     )
 
-    // ch_hifi_with_kmer_cov = combineByMetaKeys(
-    //     hifi_reads,
-    //     GENOME_PROPERTIES.out.kmer_cov,
-    //     keySet: ['id','sample'],
-    //     meta: 'lhs'
-    // )
-    // .map { meta, reads, kmer_cov -> [ meta + [ kmercov: kmer_cov ], reads ] }
-
     GENOME_PROPERTIES.out.logs
         .mix(
             COMPARE_LIBRARIES.out.logs,
@@ -46,8 +38,7 @@ workflow INSPECT_DATA {
         .set { logs }
 
     emit:
-    kmer_cov = GENOME_PROPERTIES.out.kmer_cov
-    // hifi = ch_hifi_with_kmer_cov
+    hifi_kmer_cov = GENOME_PROPERTIES.out.kmer_cov
     logs
     versions = ch_versions
 }

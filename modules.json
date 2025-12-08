@@ -249,49 +249,6 @@
                             "modules"
                         ]
                     },
-                    "purgedups/calcuts": {
-                        "branch": "master",
-                        "git_sha": "911696ea0b62df80e900ef244d7867d177971f73",
-                        "installed_by": [
-                            "modules"
-                        ]
-                    },
-                    "purgedups/getseqs": {
-                        "branch": "master",
-                        "git_sha": "911696ea0b62df80e900ef244d7867d177971f73",
-                        "installed_by": [
-                            "modules"
-                        ]
-                    },
-                    "purgedups/histplot": {
-                        "branch": "master",
-                        "git_sha": "d449de9e062dd159ff8c802709d3c5ab06ce6789",
-                        "installed_by": [
-                            "modules"
-                        ]
-                    },
-                    "purgedups/pbcstat": {
-                        "branch": "master",
-                        "git_sha": "911696ea0b62df80e900ef244d7867d177971f73",
-                        "installed_by": [
-                            "modules"
-                        ]
-                    },
-                    "purgedups/purgedups": {
-                        "branch": "master",
-                        "git_sha": "911696ea0b62df80e900ef244d7867d177971f73",
-                        "installed_by": [
-                            "modules"
-                        ]
-                    },
-                    "purgedups/splitfa": {
-                        "branch": "master",
-                        "git_sha": "911696ea0b62df80e900ef244d7867d177971f73",
-                        "installed_by": [
-                            "modules"
-                        ],
-                        "patch": "modules/nf-core/purgedups/splitfa/purgedups-splitfa.diff"
-                    },
                     "quast": {
                         "branch": "master",
                         "git_sha": "344638191a5d6b3526556410819dfcf24e98039e",
@@ -339,13 +296,6 @@
                     "samtools/sort": {
                         "branch": "master",
                         "git_sha": "b7800db9b069ed505db3f9d91b8c72faea9be17b",
-                        "installed_by": [
-                            "modules"
-                        ]
-                    },
-                    "seqkit/seq": {
-                        "branch": "master",
-                        "git_sha": "2be41ca2cc780eca4293d1b0dd3850b0b7ac40a3",
                         "installed_by": [
                             "modules"
                         ]
