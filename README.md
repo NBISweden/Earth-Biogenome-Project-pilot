@@ -372,17 +372,13 @@ results
 │   │       ├── hifiasm-purged-default_merquryfk.spectra-cn.ln.png
 │   │       └── hifiasm-purged-default_merquryfk.spectra-cn.st.png
 │   └── purge_dups
-│       ├── Drosophila_melanogaster.PB.base.cov
-│       ├── Drosophila_melanogaster.PB.stat
-│       ├── Drosophila_melanogaster.calcuts.log
-│       ├── Drosophila_melanogaster.cutoffs
-│       ├── Drosophila_melanogaster_hifiasm-purged-default_hap0.dups.bed
-│       ├── Drosophila_melanogaster_hifiasm-purged-default_hap0.hap.fa
-│       ├── Drosophila_melanogaster_hifiasm-purged-default_hap0.merged.fasta.gz
-│       ├── Drosophila_melanogaster_hifiasm-purged-default_hap0.purge_dups.log
-│       ├── Drosophila_melanogaster_hifiasm-purged-default_hap0.purged.fa
-│       ├── Drosophila_melanogaster_hifiasm-purged-default_hap0.split.fasta.gz
-│       └── Drosophila_melanogaster_hifiasm-purged-default_purgedups_hist.png
+│       ├── logs
+│       │   ├── Drosophila_melanogaster_hifiasm-purged-default_hap1.dups.bed
+│       │   └── Drosophila_melanogaster_hifiasm-purged-default_hap1.hist_plot.png
+│       └── purged
+│           ├── Drosophila_melanogaster_hifiasm-purged-default_hap1.haplotigs.fa
+│           ├── Drosophila_melanogaster_hifiasm-purged-default_hap1.purged.fa
+│           └── Drosophila_melanogaster_hifiasm-purged-default_hap2.purged.fa
 ├── 07_scaffolding
 │   ├── busco
 │   │   └── hifiasm-scaffolded-default
