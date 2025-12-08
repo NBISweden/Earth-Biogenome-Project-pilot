@@ -32,7 +32,12 @@ process DVPOLISH_CREATE_FINALASM {
 
     if [[ \${nl_unpol_ASM} -ne \${nl_pol_ASM} ]]
     then 
-        >&2 echo "[ERROR] DVPOLISH_CREATE_FINALASM: merqury files have different lines: ${unpol_merqury_csv}: \${nl_unpol_ASM} != ${pol_merqury_csv}: \${nl_pol_ASM}"
+        >&2 echo "[ERROR] DVPOLISH_CREATE_FINALASM: merqury files have different line counts: ${unpol_merqury_csv}: \${nl_unpol_ASM} != ${pol_merqury_csv}: \${nl_pol_ASM}"
+        exit 1
+    fi
+
+    if [[ \${nl_unpol_ASM} -eq 0 ]]; then
+        >&2 echo "[ERROR] DVPOLISH_CREATE_FINALASM: merqury files have no lines"
         exit 1
     fi
 
@@ -42,7 +47,7 @@ process DVPOLISH_CREATE_FINALASM {
     #split polished assembly by sequence ID
     seqkit split -i -O polished_asm ${pol_fasta}
 
-    l=1 
+    l=1
     while [[ \$l -le \${nl_pol_ASM} ]]
     do 
         # read qv string in line p from unpolished and polished merqury files into bash array l_uasm and l_pasm respectively
@@ -58,9 +63,9 @@ process DVPOLISH_CREATE_FINALASM {
             exit 2
         fi 
 
-        # compare number of errorneous kmers (column 2)
-        if [[ \${l_uasm[1]} -le \${l_pasm[1]} ]]    # unpolished assembly has fewer errors, or no difference -> go with the unpolished assembly 
-        then 
+        # compare number of erroneous kmers (column 2)
+        if [[ \${l_uasm[1]} -le \${l_pasm[1]} ]]    # unpolished assembly has fewer errors, or no difference -> go with the unpolished assembly
+        then
             cat unpolished_asm/${unpol_name}.part_\${l_uasm[0]}.${unpol_ext}
             >&2 echo "[WARNING] DVPOLISH_CREATE_FINALASM: unpolished contig \${l_uasm[0]} has better or equal QV: \${l_uasm[3]} vs \${l_pasm[3]}"
         else                                      # polished assembly has fewer errors
