@@ -2,30 +2,29 @@
  * Workflow based around the DeepVariant tool to polish homozygous variants.
  * https://git.mpi-cbg.de/assembly/programs/polishing
  */
-include { getPrimaryAssembly                      } from "../../../modules/local/functions"
-include { constructAssemblyRecord                 } from "../../../modules/local/functions"
-include { joinByMetaKeys                          } from "../../../modules/local/functions"
-include { combineByMetaKeys                       } from "../../../modules/local/functions"
-include { DVPOLISH_CHUNKFA                        } from "../../../modules/local/dvpolish/chunkfa"
-include { DVPOLISH_PBMM2_INDEX                    } from "../../../modules/local/dvpolish/pbmm2_index"
-include { DVPOLISH_PBMM2_ALIGN                    } from "../../../modules/local/dvpolish/pbmm2_align"
-include { SAMTOOLS_FAIDX                          } from "../../../modules/nf-core/samtools/faidx/main"
-include { SAMTOOLS_VIEW                           } from "../../../modules/nf-core/samtools/view/main"
-include { SAMTOOLS_INDEX as SAMTOOLS_INDEX_FILTER } from "../../../modules/nf-core/samtools/index/main"
-include { SAMTOOLS_INDEX as SAMTOOLS_INDEX_MERGE  } from "../../../modules/nf-core/samtools/index/main"
-include { SAMTOOLS_MERGE                          } from "../../../modules/nf-core/samtools/merge/main"
-include { DEEPVARIANT                             } from "../../../modules/nf-core/deepvariant/rundeepvariant/main"
-include { BCFTOOLS_VIEW                           } from "../../../modules/nf-core/bcftools/view/main"
-include { TABIX_TABIX as TABIX_TABIX              } from "../../../modules/nf-core/tabix/tabix/main"
-include { TABIX_TABIX as TABIX_TABIX_MERGED       } from "../../../modules/nf-core/tabix/tabix/main"
-include { BCFTOOLS_MERGE                          } from "../../../modules/nf-core/bcftools/merge/main"
-include { BCFTOOLS_CONSENSUS                      } from "../../../modules/nf-core/bcftools/consensus/main"
-include { MERQURY as MERQURY_INPUT_ASM            } from "../../../modules/nf-core/merqury/main"
-include { MERQURY as MERQURY_POLISHED_ASM         } from "../../../modules/nf-core/merqury/main"
-include { DVPOLISH_CREATE_FINALASM                } from "../../../modules/local/dvpolish/createFinalAsm"
+include { getPrimaryAssembly                } from "../../../modules/local/functions"
+include { constructAssemblyRecord           } from "../../../modules/local/functions"
+include { joinByMetaKeys                    } from "../../../modules/local/functions"
+include { combineByMetaKeys                 } from "../../../modules/local/functions"
+include { DVPOLISH_CHUNKFA                  } from "../../../modules/local/dvpolish/chunkfa"
+include { DVPOLISH_PBMM2_INDEX              } from "../../../modules/local/dvpolish/pbmm2_index"
+include { DVPOLISH_PBMM2_ALIGN              } from "../../../modules/local/dvpolish/pbmm2_align"
+include { SAMTOOLS_FAIDX                    } from "../../../modules/nf-core/samtools/faidx/main"
+include { SAMTOOLS_VIEW                     } from "../../../modules/nf-core/samtools/view/main"
+include { SAMTOOLS_INDEX                    } from "../../../modules/nf-core/samtools/index/main"
+include { SAMTOOLS_MERGE                    } from "../../../modules/nf-core/samtools/merge/main"
+include { DEEPVARIANT                       } from "../../../modules/nf-core/deepvariant/rundeepvariant/main"
+include { BCFTOOLS_VIEW                     } from "../../../modules/nf-core/bcftools/view/main"
+include { TABIX_TABIX as TABIX_TABIX        } from "../../../modules/nf-core/tabix/tabix/main"
+include { TABIX_TABIX as TABIX_TABIX_MERGED } from "../../../modules/nf-core/tabix/tabix/main"
+include { BCFTOOLS_MERGE                    } from "../../../modules/nf-core/bcftools/merge/main"
+include { BCFTOOLS_CONSENSUS                } from "../../../modules/nf-core/bcftools/consensus/main"
+include { MERQURY as MERQURY_INPUT_ASM      } from "../../../modules/nf-core/merqury/main"
+include { MERQURY as MERQURY_POLISHED_ASM   } from "../../../modules/nf-core/merqury/main"
+include { DVPOLISH_CREATE_FINALASM          } from "../../../modules/local/dvpolish/createFinalAsm"
 
 /*
-outline: 
+outline:
 
 |- create pbmm2 index for assembly (1)
 |- create bed chunks for given assembly (1..n)
@@ -45,28 +44,20 @@ workflow DVPOLISH {
     take:
     ch_assemblies // [ meta, assembly ]
     ch_hifi       // [ meta, hifi ]
-    ch_meryl_hifi // [ meta, union.meryldb ] 
+    ch_meryl_hifi // [ meta, union.meryldb ]
 
     main:
 
-    // Create input channels for assembly-level tasks
+    // Create input channel for assembly-level tasks
     uniq_assembly_ch = getPrimaryAssembly(ch_assemblies)
 
-    assembly_plus_meryl_ch = combineByMetaKeys (
-            ch_meryl_hifi,
-            uniq_assembly_ch,
-            keySet: [ 'id', 'sample' ],
-            meta: 'rhs'
-        )
-
-    // index assembly file(s)
+    // Index assembly file(s)
     SAMTOOLS_FAIDX (
         uniq_assembly_ch,
         [ [] , [] ]
-    )    
+    )
 
-    // split assembly into smaller chunks, this step just creates bed files 
-    // that represent the assembly chunks, no sequence is split
+    // Generate BED intervals partitioning the assembly into fixed-size regions
     DVPOLISH_CHUNKFA (
         SAMTOOLS_FAIDX.out.fai
     )
@@ -100,13 +91,14 @@ workflow DVPOLISH {
         }
         .set { input }
 
-    // map reads with pbmm2 to complete assemblies (chunks are not used in that step)
+    // Map reads with pbmm2 to complete assemblies
     DVPOLISH_PBMM2_ALIGN (
         input.reads_ch,
         input.assembly_ch,
         input.index_ch
     )
 
+    // Create channel combining whole genome alignment with bed chunk files
     combineByMetaKeys (
         DVPOLISH_PBMM2_ALIGN.out.bam_bai,
         DVPOLISH_CHUNKFA.out.bed.transpose(),
@@ -118,50 +110,56 @@ workflow DVPOLISH {
         meta_bed_ch:      [ meta + [ mergeID: bed.baseName ], bed ]
         bed_ch:             bed
     }
-    .set { alignment }
-    
-    // split bam files according to bed file chunks 
-    SAMTOOLS_VIEW (alignment.meta_bam_bai_ch,
-    [ [],[] ],
-    alignment.bed_ch)                   
+    .set { alignment } // Note on meta: readID dropped, mergeID added
 
-    // index the splitted bam files 
-    SAMTOOLS_INDEX_FILTER(SAMTOOLS_VIEW.out.bam)
+    // Split alignment bam by BED coordinates
+    SAMTOOLS_VIEW (
+        alignment.meta_bam_bai_ch,
+        [ [],[] ],
+        alignment.bed_ch
+    )
 
+    // Groups BAMs on meta (BAMs from different readsets covering the same BED region are grouped)
     SAMTOOLS_VIEW.out.bam
-    .groupTuple(by:0)
-    .branch { meta, bam_list ->
-        multiples: bam_list.size() > 1
-        singleton: true
-    }
-    .set { bam_merge_ch }
+        .groupTuple(by:0)
+        .branch { _meta, bam_list ->
+            multiples: bam_list.size() > 1 // Multiple read files aligned to same region
+            singleton: true                // Single read file aligned to region
+        }
+        .set { bam_merge_ch }
 
-    // in case multiple reads files are present, all corresponding bam files 
-    // that were splitted in the previous step need to be merged. key:bed file ID
-    SAMTOOLS_MERGE(
+    // Merge BAMs aligned to the same region (originating from different input readsets). key:bed file ID
+    SAMTOOLS_MERGE (
         bam_merge_ch.multiples,
         [ [], [] ],
         [ [], [] ]
     )
-    // index merged bam files
-    SAMTOOLS_INDEX_MERGE(SAMTOOLS_MERGE.out.bam)
 
+    // Mix BAMs for indexing
     bam_merge_ch.singleton
         .map { meta, bam -> [ meta, bam[0] ] }
-        .join( SAMTOOLS_INDEX_FILTER.out.bai )
-        .mix( SAMTOOLS_MERGE.out.bam
-            .join( SAMTOOLS_INDEX_MERGE.out.bai )
-        )
+        .mix( SAMTOOLS_MERGE.out.bam )
+        .set { bams_to_index }
+
+    // Index BAMS
+    SAMTOOLS_INDEX(
+        bams_to_index
+    )
+
+    // Join indexed bams with corresponding BED files
+    bams_to_index
+        .join( SAMTOOLS_INDEX.out.bai )
         .join( alignment.meta_bed_ch )
         .set { dv_bam_bai_bed_ch }
 
+    // Join assembly with samtools index
     asm_fai_ch = joinByMetaKeys (
         uniq_assembly_ch,
         SAMTOOLS_FAIDX.out.fai,
         keySet: [ 'sample', 'assembly' ],
         meta: 'lhs'
     )
-
+    // Create DeepVariant input channel
     combineByMetaKeys (
         dv_bam_bai_bed_ch,
         asm_fai_ch,
@@ -175,7 +173,7 @@ workflow DVPOLISH {
     }
     .set { dv_input }
 
-    // run deepvariant and the chunked bam files 
+    // run deepvariant on the chunked bam files
     DEEPVARIANT(
         dv_input.bam_bai_bed_ch,    // tuple val(meta), path(input), path(index), path(intervals)
         dv_input.fasta_ch,          // tuple val(meta2), path(fasta)
@@ -183,10 +181,12 @@ workflow DVPOLISH {
         [ [], [] ]                  // tuple val(meta4), path(gzi)
     )
 
+    // Prepare channel with indexed vcf
     DEEPVARIANT.out.vcf
-    .join(DEEPVARIANT.out.vcf_tbi, by:0)
-    .set { bcftools_view_ch }
-    // filter vcf files for PASS and homozygous varinats
+        .join(DEEPVARIANT.out.vcf_tbi, by:0)
+        .set { bcftools_view_ch }
+
+    // filter vcf files for PASS and homozygous variants
     // TODO add a minimim and maximum coverage filter ??? Needs to be tested
     BCFTOOLS_VIEW (
         bcftools_view_ch,
@@ -195,30 +195,27 @@ workflow DVPOLISH {
         [] // path(samples)
     )
 
-    // index vcf file 
+    // Index vcf files
     TABIX_TABIX(
         BCFTOOLS_VIEW.out.vcf
     )
 
-    // in case of multiple vcf files, merge them prior the consenus step
+    // in case of multiple vcf files, merge them prior to the consensus step
     BCFTOOLS_VIEW.out.vcf
         .map { meta, vcf -> [ meta - meta.subMap( 'mergeID' ), vcf ] }
         .groupTuple(by:0)
         .set { filt_vcf_list_ch }
-
     TABIX_TABIX.out.tbi
         .map { meta, tbi -> [ meta - meta.subMap( 'mergeID' ), tbi ] }
         .groupTuple( by:0 )
         .set { filt_tbi_list_ch }
-
     filt_vcf_list_ch
         .join( filt_tbi_list_ch, by:0 )
-        .branch { meta, vcf_list, vcf_index_list ->
+        .branch { _meta, vcf_list, _vcf_index_list ->
             multiples: vcf_list.size() > 1
             singleton: true
         }
         .set { vcf_merge_ch }
-
     joinByMetaKeys (
         vcf_merge_ch.multiples,
         asm_fai_ch,
@@ -231,8 +228,6 @@ workflow DVPOLISH {
         fai_ch:         [ meta, fai ]
     }
     .set { bcf_input }
-
-    // merge all vcf files 
     BCFTOOLS_MERGE(
         bcf_input.vcf_tbis_ch,
         bcf_input.fasta_ch,
@@ -245,12 +240,12 @@ workflow DVPOLISH {
         BCFTOOLS_MERGE.out.merged_variants
     )
 
+    // Prepare input for consensus step
     vcf_plus_index_ch = vcf_merge_ch.singleton
         .map { meta, vcf, idx  -> [ meta, vcf[0], idx[0] ] }
         .mix(BCFTOOLS_MERGE.out.merged_variants
         .join(TABIX_TABIX_MERGED.out.tbi)
     )
-
     vcf_plus_index_plus_assembly_ch = joinByMetaKeys (
         vcf_plus_index_ch,
         uniq_assembly_ch,
@@ -258,37 +253,44 @@ workflow DVPOLISH {
         meta: 'lhs'
     )
 
-    // create consensus sequence 
+    // create consensus sequence
     BCFTOOLS_CONSENSUS(
         vcf_plus_index_plus_assembly_ch
     )
 
-    // run merqury on input assembly 
-    MERQURY_INPUT_ASM(assembly_plus_meryl_ch)
+    // run merqury on input assembly
+    MERQURY_INPUT_ASM (
+        combineByMetaKeys (
+            ch_meryl_hifi,
+            uniq_assembly_ch,
+            keySet: [ 'id', 'sample' ],
+            meta: 'rhs'
+        )
+    )
 
     // run merqury on polished assembly
-    polishedASM_plus_meryl_ch = combineByMetaKeys (
-        ch_meryl_hifi,
-        BCFTOOLS_CONSENSUS.out.fasta,
-        keySet: [ 'id', 'sample' ],
-        meta: 'rhs'
+    MERQURY_POLISHED_ASM (
+        combineByMetaKeys (
+            ch_meryl_hifi,
+            BCFTOOLS_CONSENSUS.out.fasta,
+            keySet: [ 'id', 'sample' ],
+            meta: 'rhs'
+        )
     )
-    MERQURY_POLISHED_ASM(polishedASM_plus_meryl_ch)
 
+    // combine merqury results & assemblies
     unpolASM_merqQV_ch = combineByMetaKeys(
         uniq_assembly_ch,
         MERQURY_INPUT_ASM.out.scaffold_qv,
         keySet: [ 'id', 'assembly' ],
         meta: 'rhs'
     )
-
     polASM_merqQV_ch = combineByMetaKeys(
         BCFTOOLS_CONSENSUS.out.fasta,
         MERQURY_POLISHED_ASM.out.scaffold_qv,
         keySet: [ 'id', 'assembly' ],
         meta: 'rhs'
     )
-
     combineByMetaKeys(
         unpolASM_merqQV_ch,
         polASM_merqQV_ch,
@@ -306,7 +308,7 @@ workflow DVPOLISH {
         createFinalAsm.polASM_qv_ch,
     )
 
-    // TODO 
+    // TODO
     // 3. publish result
 
     ch_polished_assemblies = constructAssemblyRecord(
