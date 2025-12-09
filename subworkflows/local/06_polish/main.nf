@@ -44,7 +44,7 @@ workflow DVPOLISH {
     take:
     ch_assemblies // [ meta, assembly ]
     ch_hifi       // [ meta, hifi ]
-    ch_meryl_hifi // [ meta, union.meryldb ]
+    ch_meryl_hifi // [ meta, union.meryl ]
 
     main:
 

@@ -33,7 +33,19 @@ Changes in 'meryl/unionsum/main.nf':
      "${task.process}":
 
 'modules/nf-core/meryl/unionsum/environment.yml' is unchanged
-'modules/nf-core/meryl/unionsum/meta.yml' is unchanged
+Changes in 'meryl/unionsum/meta.yml':
+--- modules/nf-core/meryl/unionsum/meta.yml
++++ modules/nf-core/meryl/unionsum/meta.yml
+@@ -36,7 +36,7 @@
+   - meryl_db:
+       type: directory
+       description: A Meryl k-mer database that is the union sum of the input databases
+-      pattern: "*.unionsum.meryldb"
++      pattern: "*.unionsum.meryl"
+ authors:
+   - "@mahesh-panchal"
+ maintainers:
+
 'modules/nf-core/meryl/unionsum/tests/main.nf.test.snap' is unchanged
 'modules/nf-core/meryl/unionsum/tests/main.nf.test' is unchanged
 'modules/nf-core/meryl/unionsum/tests/tags.yml' is unchanged
