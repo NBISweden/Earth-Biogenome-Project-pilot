@@ -68,7 +68,7 @@ workflow {
 
     // Read in data
     PREPARE_INPUT (
-        params.input,
+        params.input
     )
     ch_evaluate_assemblies = PREPARE_INPUT.out.assemblies
 
