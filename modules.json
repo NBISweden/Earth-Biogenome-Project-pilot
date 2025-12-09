@@ -5,6 +5,27 @@
         "https://github.com/nf-core/modules.git": {
             "modules": {
                 "nf-core": {
+                    "bcftools/consensus": {
+                        "branch": "master",
+                        "git_sha": "44096c08ffdbc694f5f92ae174ea0f7ba0f37e09",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
+                    "bcftools/merge": {
+                        "branch": "master",
+                        "git_sha": "44096c08ffdbc694f5f92ae174ea0f7ba0f37e09",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
+                    "bcftools/view": {
+                        "branch": "master",
+                        "git_sha": "1013101da4252623fd7acf19cc581bae91d4f839",
+                        "installed_by": [
+                            "modules"
+                        ]
+                    },
                     "biobambam/bammarkduplicates2": {
                         "branch": "master",
                         "git_sha": "41dfa3f7c0ffabb96a6a813fe321c6d1cc5b6e46",
@@ -53,6 +74,14 @@
                         "installed_by": [
                             "modules"
                         ]
+                    },
+                    "deepvariant/rundeepvariant": {
+                        "branch": "master",
+                        "git_sha": "dd78204eb24332ec3cdd512fa9a83898f9728842",
+                        "installed_by": [
+                            "modules"
+                        ],
+                        "patch": "modules/nf-core/deepvariant/rundeepvariant/deepvariant-rundeepvariant.diff"
                     },
                     "fastk/fastk": {
                         "branch": "master",
@@ -342,6 +371,14 @@
                             "modules"
                         ]
                     },
+                    "samtools/view": {
+                        "branch": "master",
+                        "git_sha": "83b05a8dc05b9dd2f1979d1a9f08411fb1a82b11",
+                        "installed_by": [
+                            "modules"
+                        ],
+                        "patch": "modules/nf-core/samtools/view/samtools-view.diff"
+                    },
                     "seqkit/seq": {
                         "branch": "master",
                         "git_sha": "2be41ca2cc780eca4293d1b0dd3850b0b7ac40a3",
@@ -378,6 +415,13 @@
                             "modules"
                         ],
                         "patch": "modules/nf-core/star/genomegenerate/star-genomegenerate.diff"
+                    },
+                    "tabix/tabix": {
+                        "branch": "master",
+                        "git_sha": "3f5420aa22e00bd030a2556dfdffc9e164ec0ec5",
+                        "installed_by": [
+                            "modules"
+                        ]
                     },
                     "tidk/plot": {
                         "branch": "master",

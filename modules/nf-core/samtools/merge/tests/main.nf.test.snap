@@ -80,6 +80,7 @@
     "bam_versions": {
         "content": [
             [
+<<<<<<< HEAD
                 "versions.yml:md5,d51d18a97513e370e43f0c891c51dfc4"
             ]
         ],
@@ -88,6 +89,16 @@
             "nextflow": "24.04.4"
         },
         "timestamp": "2024-09-16T09:16:30.476887194"
+=======
+                "versions.yml:md5,52c62d4712f7af00eb962d090ca32fe4"
+            ]
+        ],
+        "meta": {
+            "nf-test": "0.8.4",
+            "nextflow": "24.01.0"
+        },
+        "timestamp": "2024-02-13T16:16:33.782637377"
+>>>>>>> 9153879 (add modules for error polishing workflow)
     },
     "bams_csi": {
         "content": [

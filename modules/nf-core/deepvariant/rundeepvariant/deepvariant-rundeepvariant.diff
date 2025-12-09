@@ -1,0 +1,279 @@
+Changes in component 'nf-core/deepvariant/rundeepvariant'
+Changes in 'deepvariant/rundeepvariant/main.nf':
+--- modules/nf-core/deepvariant/rundeepvariant/main.nf
++++ modules/nf-core/deepvariant/rundeepvariant/main.nf
+@@ -1,26 +1,21 @@
+-process DEEPVARIANT_RUNDEEPVARIANT {
++process DEEPVARIANT {
+     tag "$meta.id"
+     label 'process_high'
+ 
+-    // FIXME Conda is not supported at the moment
+-    // https://github.com/bioconda/bioconda-recipes/pull/45214#issuecomment-1890937836
+-    // BUG https://github.com/nf-core/modules/issues/1754
+-    // BUG https://github.com/bioconda/bioconda-recipes/issues/30310
+-    container "docker.io/google/deepvariant:1.9.0"
++    container "docker.io/google/deepvariant:CL602468145"
+ 
+     input:
+     tuple val(meta), path(input), path(index), path(intervals)
+     tuple val(meta2), path(fasta)
+     tuple val(meta3), path(fai)
+     tuple val(meta4), path(gzi)
+-    tuple val(meta5), path(par_bed)
+ 
+     output:
+-    tuple val(meta), path("${prefix}.vcf.gz")             , emit: vcf
+-    tuple val(meta), path("${prefix}.vcf.gz.{tbi,csi}")   , emit: vcf_index
+-    tuple val(meta), path("${prefix}.g.vcf.gz")           , emit: gvcf
+-    tuple val(meta), path("${prefix}.g.vcf.gz.{tbi,csi}") , emit: gvcf_index
+-    path "versions.yml"                                   , emit: versions
++    tuple val(meta), path("${prefix}.vcf.gz")      ,  emit: vcf
++    tuple val(meta), path("${prefix}.vcf.gz.tbi")  ,  emit: vcf_tbi
++    tuple val(meta), path("${prefix}.g.vcf.gz")    ,  emit: gvcf
++    tuple val(meta), path("${prefix}.g.vcf.gz.tbi"),  emit: gvcf_tbi
++    path "versions.yml"                            ,  emit: versions
+ 
+     when:
+     task.ext.when == null || task.ext.when
+@@ -32,8 +27,7 @@
+     }
+     def args = task.ext.args ?: ''
+     prefix = task.ext.prefix ?: "${meta.id}"
+-    def regions = intervals ? "--regions=${intervals}" : ""
+-    def par_regions = par_bed ? "--par_regions_bed=${par_bed}" : ""
++    def regions = intervals ? "--regions=./${intervals}" : ""
+ 
+     """
+     /opt/deepvariant/bin/run_deepvariant \\
+@@ -43,8 +37,7 @@
+         --output_gvcf=${prefix}.g.vcf.gz \\
+         ${args} \\
+         ${regions} \\
+-        ${par_regions} \\
+-        --intermediate_results_dir=tmp \\
++        --intermediate_results_dir=intermediate_results \\
+         --num_shards=${task.cpus}
+ 
+     cat <<-END_VERSIONS > versions.yml
+@@ -60,9 +53,9 @@
+     }
+     prefix = task.ext.prefix ?: "${meta.id}"
+     """
+-    echo "" | gzip > ${prefix}.vcf.gz
++    touch ${prefix}.vcf.gz
+     touch ${prefix}.vcf.gz.tbi
+-    echo "" | gzip > ${prefix}.g.vcf.gz
++    touch ${prefix}.g.vcf.gz
+     touch ${prefix}.g.vcf.gz.tbi
+ 
+     cat <<-END_VERSIONS > versions.yml
+
+Changes in 'deepvariant/rundeepvariant/meta.yml':
+--- modules/nf-core/deepvariant/rundeepvariant/meta.yml
++++ modules/nf-core/deepvariant/rundeepvariant/meta.yml
+@@ -1,134 +1,80 @@
+-name: deepvariant_rundeepvariant
+-description: DeepVariant is an analysis pipeline that uses a deep neural network to
+-  call genetic variants from next-generation DNA sequencing data
++name: deepvariant
++description: DeepVariant is an analysis pipeline that uses a deep neural network to call genetic variants from next-generation DNA sequencing data
+ keywords:
+   - variant calling
+   - machine learning
+   - neural network
+ tools:
+   - deepvariant:
+-      description: DeepVariant is an analysis pipeline that uses a deep neural network
+-        to call genetic variants from next-generation DNA sequencing data
++      description: DeepVariant is an analysis pipeline that uses a deep neural network to call genetic variants from next-generation DNA sequencing data
+       homepage: https://github.com/google/deepvariant
+       documentation: https://github.com/google/deepvariant
+       tool_dev_url: https://github.com/google/deepvariant
+       doi: "10.1038/nbt.4235"
+       licence: ["BSD-3-clause"]
+-      identifier: biotools:deepvariant
+ input:
+-  - - meta:
+-        type: map
+-        description: |
+-          Groovy Map containing sample information
+-          e.g. [ id:'test', single_end:false ]
+-    - input:
+-        type: file
+-        description: BAM/CRAM file
+-        pattern: "*.bam/cram"
+-        ontologies: []
+-    - index:
+-        type: file
+-        description: Index of BAM/CRAM file
+-        pattern: "*.bai/crai"
+-        ontologies: []
+-    - intervals:
+-        type: file
+-        description: file containing intervals
+-        ontologies: []
+-  - - meta2:
+-        type: map
+-        description: |
+-          Groovy Map containing reference information
+-          e.g. [ id:'genome' ]
+-    - fasta:
+-        type: file
+-        description: The reference fasta file
+-        pattern: "*.fasta"
+-        ontologies: []
+-  - - meta3:
+-        type: map
+-        description: |
+-          Groovy Map containing reference information
+-          e.g. [ id:'genome' ]
+-    - fai:
+-        type: file
+-        description: Index of reference fasta file
+-        pattern: "*.fai"
+-        ontologies: []
+-  - - meta4:
+-        type: map
+-        description: |
+-          Groovy Map containing reference information
+-          e.g. [ id:'genome' ]
+-    - gzi:
+-        type: file
+-        description: GZI index of reference fasta file
+-        pattern: "*.gzi"
+-        ontologies: []
+-  - - meta5:
+-        type: map
+-        description: |
+-          Groovy Map containing reference information
+-          e.g. [ id:'genome' ]
+-    - par_bed:
+-        type: file
+-        description: BED file containing PAR regions
+-        pattern: "*.bed"
+-        ontologies: []
++  - meta:
++      type: map
++      description: |
++        Groovy Map containing sample information
++        e.g. [ id:'test', single_end:false ]
++  - input:
++      type: file
++      description: BAM/CRAM file
++      pattern: "*.bam/cram"
++  - index:
++      type: file
++      description: Index of BAM/CRAM file
++      pattern: "*.bai/crai"
++  - interval:
++      type: file
++      description: Interval file for targeted regions
++      pattern: "*.bed"
++  - meta2:
++      type: map
++      description: |
++        Groovy Map containing reference information
++        e.g. [ id:'genome' ]
++  - fasta:
++      type: file
++      description: The reference fasta file
++      pattern: "*.fasta"
++  - meta3:
++      type: map
++      description: |
++        Groovy Map containing reference information
++        e.g. [ id:'genome' ]
++  - fai:
++      type: file
++      description: Index of reference fasta file
++      pattern: "*.fai"
++  - meta4:
++      type: map
++      description: |
++        Groovy Map containing reference information
++        e.g. [ id:'genome' ]
++  - gzi:
++      type: file
++      description: GZI index of reference fasta file
++      pattern: "*.gzi"
+ output:
+-  vcf:
+-    - - meta:
+-          type: map
+-          description: |
+-            Groovy Map containing sample information
+-            e.g. [ id:'test', single_end:false ]
+-      - ${prefix}.vcf.gz:
+-          type: file
+-          description: Compressed VCF file
+-          pattern: "*.vcf.gz"
+-          ontologies:
+-            - edam: http://edamontology.org/format_3989 # GZIP format
+-  vcf_index:
+-    - - meta:
+-          type: map
+-          description: |
+-            Groovy Map containing sample information
+-            e.g. [ id:'test', single_end:false ]
+-      - ${prefix}.vcf.gz.{tbi,csi}:
+-          type: file
+-          description: Tabix index file of compressed VCF
+-          pattern: "*.vcf.gz.{tbi,csi}"
+-          ontologies: []
+-  gvcf:
+-    - - meta:
+-          type: map
+-          description: |
+-            Groovy Map containing sample information
+-            e.g. [ id:'test', single_end:false ]
+-      - ${prefix}.g.vcf.gz:
+-          type: file
+-          description: Compressed GVCF file
+-          pattern: "*.g.vcf.gz"
+-          ontologies:
+-            - edam: http://edamontology.org/format_3989 # GZIP format
+-  gvcf_index:
+-    - - meta:
+-          type: map
+-          description: |
+-            Groovy Map containing sample information
+-            e.g. [ id:'test', single_end:false ]
+-      - ${prefix}.g.vcf.gz.{tbi,csi}:
+-          type: file
+-          description: Tabix index file of compressed GVCF
+-          pattern: "*.g.vcf.gz.{tbi,csi}"
+-          ontologies: []
+-  versions:
+-    - versions.yml:
+-        type: file
+-        description: File containing software versions
+-        pattern: "versions.yml"
+-        ontologies:
+-          - edam: http://edamontology.org/format_3750 # YAML
++  - meta:
++      type: map
++      description: |
++        Groovy Map containing sample information
++        e.g. [ id:'test', single_end:false ]
++  - vcf:
++      type: file
++      description: Compressed VCF file
++      pattern: "*.vcf.gz"
++  - gvcf:
++      type: file
++      description: Compressed GVCF file
++      pattern: "*.g.vcf.gz"
++  - version:
++      type: file
++      description: File containing software version
++      pattern: "*.{version.txt}"
+ authors:
+   - "@abhi18av"
+   - "@ramprasadn"
+
+'modules/nf-core/deepvariant/rundeepvariant/deepvariant.diff' was created
+'modules/nf-core/deepvariant/rundeepvariant/tests/main.nf.test.snap' was removed
+'modules/nf-core/deepvariant/rundeepvariant/tests/main.nf.test' was removed
+'modules/nf-core/deepvariant/rundeepvariant/tests/nextflow.config' was removed
+************************************************************
