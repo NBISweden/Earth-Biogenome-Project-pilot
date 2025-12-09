@@ -115,6 +115,7 @@ workflow {
         // Run assemblers
         ASSEMBLE (
                 PREPARE_INPUT.out.hifi_merged,
+                PREPARE_INPUT.out.hic,
                 params.oatkdb ? file(params.oatkdb, checkIfExists: true, type: 'dir') : channel.empty(),
                 params.nuclear_assembly_mode,
                 params.organelle_assembly_mode
