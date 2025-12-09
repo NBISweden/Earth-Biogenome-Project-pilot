@@ -4,8 +4,8 @@ process MERQURY {
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/merqury:1.3--hdfd78af_1':
-        'biocontainers/merqury:1.3--hdfd78af_1' }"
+        'https://depot.galaxyproject.org/singularity/merqury:1.3--hdfd78af_4' :
+        'biocontainers/merqury:1.3--hdfd78af_4' }"
 
     input:
     tuple val(meta), path(meryl_db), path(assembly)
@@ -34,7 +34,8 @@ process MERQURY {
     script:
     // def args = task.ext.args ?: ''
     prefix = task.ext.prefix ?: "${meta.id}"
-    def VERSION = 1.3
+    def MERQURY_VERSION = "1.3"
+    def MERYL_VERSION = "1.4.1"
     """
     # Nextflow changes the container --entrypoint to /bin/bash (container default entrypoint: /usr/local/env-execute)
     # Check for container variable initialisation script and source it.
@@ -53,7 +54,8 @@ process MERQURY {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        merqury: $VERSION
+        merqury: $MERQURY_VERSION
+        meryl: $MERYL_VERSION
     END_VERSIONS
     """
 }
