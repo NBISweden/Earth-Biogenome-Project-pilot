@@ -1,0 +1,6 @@
+channels:
+- conda-forge
+- bioconda
+dependencies:
+- bioconda::purge_dups=1.2.6
+- bioconda::seqkit=2.12.0
