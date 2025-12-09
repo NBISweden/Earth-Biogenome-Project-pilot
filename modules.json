@@ -216,7 +216,8 @@
                         "git_sha": "b7f584e61c35c138a5717f837f4da9b838e290a7",
                         "installed_by": [
                             "modules"
-                        ]
+                        ],
+                        "patch": "modules/nf-core/meryl/unionsum/meryl-unionsum.diff"
                     },
                     "minimap2/align": {
                         "branch": "master",
