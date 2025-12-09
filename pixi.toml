@@ -24,7 +24,8 @@ clean-all = { depends-on = [ "clean-nf", "clean-results", "clean-nftest" ] }
 fetch-oatkdb = { cmd = "mkdir -p database_cache && cd database_cache && git clone --depth 1 https://github.com/c-zhou/OatkDB.git", outputs = [ "database_cache/OatkDB" ] }
 
 [dependencies]
-nextflow = ">=25.4.8,<26"
-mamba = ">=2.3.2,<3"
-nf-core = ">=3.3.2,<4"
-gh = ">=2.81.0,<3"
+nextflow = ">=25.10.2,<26"
+nf-core = ">=3.5.1,<4"
+gh = ">=2.83.1,<3"
+questionary = ">=2.1.1,<3"
+tree = ">=2.2.1,<3"
