@@ -34,7 +34,9 @@ workflow ASSEMBLE_HIFI {
     if( params.hifiasm_with_hic ){
         ch_hifiasm_input = combineByMetaKeys(
             reads_ch,
-            hic_reads.map{ meta, hic -> tuple(meta, hic.first(), hic.last()) }.groupTuple(),
+            hic_reads.map{ meta, hic ->
+                tuple(meta.subMap(meta.keySet() - ['pair_id']), hic.first(), hic.last())
+            }.groupTuple(),
             keySet: ['id','sample'],
             meta: 'lhs'
         )
