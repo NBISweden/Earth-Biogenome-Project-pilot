@@ -9,7 +9,7 @@ include { SAMTOOLS_FAIDX                          } from "../../../modules/nf-co
 include { EXTRACT_CHROMSIZES                      } from "../../../modules/local/extract/chromsizes/main"
 include { PAIRTOOLS                               } from "../../../modules/local/pairtools/main"
 include { YAHS                                    } from "../../../modules/nf-core/yahs/main"
-include { SEQKIT_SEQ as MERGE_HAPLOTYPES          } from "../../../modules/nf-core/seqkit/seq/main"
+include { SEQKIT_MERGE as MERGE_HAPLOTYPES        } from "../../../modules/local/seqkit/merge/main"
 
 /*
     PURPOSE: Performs scaffolding of haplotype/consensus assemblies with a scaffolding tool.
