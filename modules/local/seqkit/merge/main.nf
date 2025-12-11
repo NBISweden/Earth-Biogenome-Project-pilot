@@ -32,9 +32,11 @@ process SEQKIT_MERGE {
             replace \\
             -p "^" -r "\${LABEL}_" \\
             --threads ${task.cpus} \\
-            ${args} \\
             \$FA
-    done ${call_gzip} > ${prefix}.${extension}
+    done | seqkit seq \\
+        --threads ${task.cpus} \\
+        ${args} \\
+    ${call_gzip} > ${prefix}.${extension}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
