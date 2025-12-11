@@ -27,7 +27,7 @@ process SEQKIT_MERGE {
     def call_gzip = extension.endsWith('.gz') ? "| gzip -c ${args2}" : ''
     """
     for FA in ${fastx}; do
-        LABEL=\$(echo "\$FA" | grep -o 'hap[0-9]\+')
+        LABEL=\$(echo "\$FA" | grep -o 'hap[0-9]\\+')
         seqkit \\
             replace \\
             -p "^" -r "\${LABEL}_" \\
