@@ -7,6 +7,10 @@ website:
     left:
       - href: index.qmd
         text: Home
+      - installation.qmd
+      - usage.qmd
+      - outputs.qmd
+      - faq.qmd
       - about.qmd
 
 format:
