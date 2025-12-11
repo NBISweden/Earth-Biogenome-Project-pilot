@@ -33,7 +33,7 @@ process SEQKIT_MERGE {
             -p "^" -r "\${LABEL}_" \\
             --threads ${task.cpus} \\
             ${args} \\
-            ${fastx} \\
+            \$FA
     done ${call_gzip} > ${prefix}.${extension}
 
     cat <<-END_VERSIONS > versions.yml
