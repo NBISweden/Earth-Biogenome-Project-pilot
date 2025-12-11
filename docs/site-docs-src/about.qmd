@@ -2,4 +2,53 @@
 title: "About"
 ---
 
-About this site
+# About the AGATE Workflow
+
+## Overview
+The **Automated Genome Assembly Toolkit and Evaluator (AGATE)** - formerly known as the Earth Biogenome Project Pilot Workflow -
+is a comprehensive bioinformatics pipeline developed by the **National Bioinformatics Infrastructure Sweden (NBIS)**. It serves as
+the primary genome assembly workflow for SciLifeLab's contribution to the global **Earth BioGenome Project (EBP)**.
+
+This workflow streamlines the complex process of *de novo* genome assembly, taking raw sequencing data and transforming it into
+high-quality, curated reference genomes. Built using **Nextflow**, it ensures portability, reproducibility, and scalability across
+different computing environments, from local machines to high-performance computing (HPC) clusters like UPPMAX and Dardel.
+
+## The Mission
+This workflow contributes to the ambitious goal of the [Earth BioGenome Project](https://www.earthbiogenome.org/): to sequence, catalog,
+and characterize the genomes of all of Earth's eukaryotic biodiversity. By providing a standardized, efficient, and robust assembly
+pipeline, this software enables researchers to:
+
+* Produce high-quality reference genomes for diverse species.
+* Ensure data consistency and adherence to EBP standards.
+* Facilitate the study of biodiversity, evolution, and conservation genomics.
+
+## How It Works
+The workflow is an automated pipeline that integrates best-in-class bioinformatics tools to handle every stage of the assembly process,
+from raw data inspection to final curation.
+
+### Key Pipeline Stages
+1.  **Data Inspection**: Validates input data integrity for PacBio HiFi and Hi-C reads.
+2.  **Preprocessing**: Prepares reads for assembly, including k-mer analysis and quality control.
+3.  **Assembly**: Constructs the primary genome assembly using state-of-the-art assemblers like **HiFiasm**.
+4.  **Validation**: Rigorously evaluates assembly quality using tools like **BUSCO** (gene completeness), **Merqury** (k-mer based evaluation), and **Quast**.
+5.  **Contamination Screening**: Detects and removes contaminants (e.g., bacteria, adapters) using tools like **FCS-GX**.
+6.  **Curation & Polishing**: Refines the assembly through duplicate purging and scaffolding.
+7.  **Mitochondrial Assembly**: Specifically targets and assembles the mitochondrial genome using **MitoHiFi** and **OATK**.
+
+## Deployment
+The pipeline is designed for flexibility and can be deployed on various infrastructures:
+
+* **HPC Clusters**: Pre-configured profiles for Swedish clusters **UPPMAX** and **Dardel**.
+* **Containers**: Full support for **Docker** and **Singularity** to manage software dependencies.
+
+## Contributors & Attribution
+This project is maintained by **NBIS (National Bioinformatics Infrastructure Sweden)**.
+
+* **Primary Contributors**: Mahesh Binzer-Panchal, Martin Pippel, Cormac Kinsella, and the NBIS Evolution and Biodiversity team.
+* **License**: This project is open-source and released under the **GPL-3.0 License**.
+
+## Get Involved
+The project is hosted on GitHub. We welcome feedback, bug reports, and contributions from the community.
+
+* **Source Code**: [NBISweden/Earth-Biogenome-Project-pilot](https://github.com/NBISweden/Earth-Biogenome-Project-pilot)
+* **Issue Tracker**: [Report Bugs or Request Features](https://github.com/NBISweden/Earth-Biogenome-Project-pilot/issues)
