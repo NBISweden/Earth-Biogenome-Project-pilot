@@ -47,6 +47,8 @@ workflow DVPOLISH {
     ch_meryl_hifi // [ meta, union.meryl ]
 
     main:
+    ch_logs     = channel.empty()
+    ch_versions = channel.empty()
 
     // Create input channel for assembly-level tasks
     uniq_assembly_ch = getPrimaryAssembly(ch_assemblies)
@@ -308,14 +310,37 @@ workflow DVPOLISH {
         createFinalAsm.polASM_qv_ch,
     )
 
-    // TODO
-    // 3. publish result
-
     ch_polished_assemblies = constructAssemblyRecord(
         DVPOLISH_CREATE_FINALASM.out.fasta_gz,
         params.use_phased
     )
 
+    ch_logs = ch_logs.mix(
+        DVPOLISH_CREATE_FINALASM.out.dvpolish_selection_tsv
+        )
+        .map { _meta, file -> file }
+
+    ch_versions = ch_versions.mix(
+        SAMTOOLS_FAIDX.out.versions.first(),
+        DVPOLISH_CHUNKFA.out.versions.first(),
+        DVPOLISH_PBMM2_INDEX.out.versions.first(),
+        DVPOLISH_PBMM2_ALIGN.out.versions.first(),
+        SAMTOOLS_VIEW.out.versions.first(),
+        SAMTOOLS_MERGE.out.versions.first(),
+        SAMTOOLS_INDEX.out.versions.first(),
+        DEEPVARIANT.out.versions.first(),
+        BCFTOOLS_VIEW.out.versions.first(),
+        TABIX_TABIX.out.versions.first(),
+        BCFTOOLS_MERGE.out.versions.first(),
+        TABIX_TABIX_MERGED.out.versions.first(),
+        BCFTOOLS_CONSENSUS.out.versions.first(),
+        MERQURY_INPUT_ASM.out.versions.first(),
+        MERQURY_POLISHED_ASM.out.versions.first(),
+        DVPOLISH_CREATE_FINALASM.out.versions.first()
+    )
+
     emit:
     assemblies = ch_polished_assemblies
+    logs       = ch_logs
+    versions   = ch_versions
 }

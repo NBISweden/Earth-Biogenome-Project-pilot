@@ -12,9 +12,9 @@ process DVPOLISH_CREATE_FINALASM {
     tuple val(meta2), path(pol_fasta), path(pol_merqury_csv)     // meta map, polished assembly, corresponding merqury qv file
 
     output:
-    tuple val(meta), path('*.fasta.gz')   , emit: fasta_gz
-    tuple val(meta), path('*_summary.tsv'), emit: dvpolish_summary_tsv
-    path  "versions.yml"                  , emit: versions
+    tuple val(meta), path('*.fasta.gz')     , emit: fasta_gz
+    tuple val(meta), path('*_selection.tsv'), emit: dvpolish_selection_tsv
+    path  "versions.yml"                    , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -31,12 +31,12 @@ process DVPOLISH_CREATE_FINALASM {
         exit 1
     fi
     if [[ \${nl_unpol_ASM} -eq 0 ]]; then
-        >&2 echo "[ERROR] DVPOLISH_CREATE_FINALASM: merqury files are empty!"
+        >&2 echo "[ERROR] DVPOLISH_CREATE_FINALASM: merqury files are empty"
         exit 1
     fi
 
     # Create selection report header
-    echo -e "contig\\tsource_asm\\tunpolished_asm_errors\\tpolished_asm_errors\\tunpolished_asm_qv\\tpolished_asm_qv" > ${prefix}_summary.tsv
+    echo -e "contig\\tsource_asm\\tunpolished_asm_errors\\tpolished_asm_errors\\tunpolished_asm_qv\\tpolished_asm_qv" > ${prefix}_selection.tsv
 
     # Index both assemblies
     samtools faidx ${unpol_fasta}
@@ -66,7 +66,7 @@ process DVPOLISH_CREATE_FINALASM {
         fi
 
         # Append selection info to report
-        echo -e "\$contig\\t\$source\\t\${l_uasm[1]}\\t\${l_pasm[1]}\\t\${l_uasm[3]}\\t\${l_pasm[3]}" >> ${prefix}_summary.tsv
+        echo -e "\$contig\\t\$source\\t\${l_uasm[1]}\\t\${l_pasm[1]}\\t\${l_uasm[3]}\\t\${l_pasm[3]}" >> ${prefix}_selection.tsv
 
     done < ${unpol_merqury_csv} 3< ${pol_merqury_csv} | bgzip -@ ${task.cpus} -c > ${prefix}.fasta.gz
 

@@ -188,7 +188,8 @@ workflow {
         )
         ch_evaluate_assemblies = ch_evaluate_assemblies.mix( DVPOLISH.out.assemblies )
         ch_polished_assemblies = DVPOLISH.out.assemblies
-        //TODO: logs, versions
+        ch_multiqc_files = ch_multiqc_files.mix( DVPOLISH.out.logs )
+        ch_versions = ch_versions.mix(DVPOLISH.out.versions)
     } else {
         ch_polished_assemblies = ch_to_polish
     }
