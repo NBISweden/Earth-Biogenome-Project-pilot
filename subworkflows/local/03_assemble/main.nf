@@ -10,8 +10,8 @@ workflow ASSEMBLE {
 
     main:
     ch_raw_assemblies = channel.empty()
-    ch_logs = channel.empty()
-    ch_versions = channel.empty()
+    ch_logs           = channel.empty()
+    ch_versions       = channel.empty()
 
     // Nuclear assembly
     if ( nuclear_assembly_mode ) {

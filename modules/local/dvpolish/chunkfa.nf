@@ -50,7 +50,7 @@ process DVPOLISH_CHUNKFA {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        dvpolish: \$(awk --version |& sed '1!d')
+        mawk: \$(awk -W version |& head -n 1 | sed 's/mawk //; s/ .*//')
     END_VERSIONS
     """
 
@@ -62,7 +62,7 @@ process DVPOLISH_CHUNKFA {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        dvpolish: \$(awk --version |& sed '1!d')
+        mawk: \$(awk -W version |& head -n 1 | sed 's/mawk //; s/ .*//')
     END_VERSIONS
     """
 }
