@@ -3,6 +3,7 @@
 ## Polishing
 
 ```{python}
+#| output: asis
 if polish and glob.glob(f"{log_path}/*_dvpolish_selection.tsv"):
     displayDvpolishSummary(f"{log_path}/*_dvpolish_selection.tsv")
 else:
