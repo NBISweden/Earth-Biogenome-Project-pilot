@@ -4,6 +4,7 @@ include { ASSEMBLE_ORGANELLES } from "./assemble_organelles"
 workflow ASSEMBLE {
     take:
     hifi_reads              // Channel: [ meta, hifi_reads ]
+    hic_reads               // Channel: [ meta, hic_reads ]
     oatkdb                  // Path: /path/to/oatkdb
     nuclear_assembly_mode   // Boolean: assemble chromosomes
     organelle_assembly_mode // Enum: [ contigs, reads, or none ]
@@ -15,7 +16,7 @@ workflow ASSEMBLE {
 
     // Nuclear assembly
     if ( nuclear_assembly_mode ) {
-        ASSEMBLE_HIFI( hifi_reads )
+        ASSEMBLE_HIFI( hifi_reads, hic_reads )
         ch_raw_assemblies = ASSEMBLE_HIFI.out.assemblies
         ch_logs = ASSEMBLE_HIFI.out.logs
         ch_versions = ch_versions.mix( ASSEMBLE_HIFI.out.versions )
