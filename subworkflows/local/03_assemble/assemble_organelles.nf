@@ -3,6 +3,7 @@ include { MITOHIFI_MITOHIFI          } from "../../../modules/nf-core/mitohifi/m
 include { OATK_SELECTHMM             } from "../../../modules/local/oatk/selecthmm/main"
 include { OATK                       } from "../../../modules/nf-core/oatk/main"
 include { DNADOTPLOT                 } from "../../../modules/local/dnadotplot/main"
+include { combineByMetaKeys          } from "../../../modules/local/functions"
 
 workflow ASSEMBLE_ORGANELLES {
     take:
@@ -71,18 +72,17 @@ workflow ASSEMBLE_ORGANELLES {
             }
         }
     // Final mitohifi mitogenome vs. each oatk candidate channel
-    ch_final_vs_oatk = MITOHIFI_MITOHIFI.out.fasta
-        .map { meta, fasta -> [ [ meta.id, meta.sample], meta, fasta ] }
-        .combine(
-            OATK.out.mito_fasta
-                .map { meta, fasta -> [ [ meta.id, meta.sample ], fasta ] }
-                .splitFasta(
-                    file: true,
-                    by: 1
-                ),
-            by: 0
+    ch_final_vs_oatk = combineByMetaKeys(
+        keySet: ['id','sample'],
+        meta: 'lhs',
+        MITOHIFI_MITOHIFI.out.fasta,
+        OATK.out.mito_fasta
+            .flatMap { meta, fasta ->
+                def split_fastas = fasta.splitFasta(file: true, by: 1)
+                split_fastas.collect { candidate -> [ meta, candidate ] }
+            }
         )
-        .map { _key, meta, fasta, candidate -> [ meta, fasta, candidate, 'oatk' ] }
+        .map { meta, fasta, candidate -> [ meta, fasta, candidate, 'oatk' ] }
 
     // Mix channels and plot
     ch_dotplot_inputs = ch_ref_vs_final.mix( ch_final_vs_mitohifi, ch_final_vs_oatk )
