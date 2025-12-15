@@ -8,4 +8,4 @@ assembly:
     pri_fasta: 'https://raw.githubusercontent.com/NBISweden/Earth-Biogenome-Project-pilot/main/tests/data/tiny/assembly/hifiasm-curated-hifi_v1.asm.bp.p_ctg.fasta'
 # HiFi reads for Merqury
 hifi:
-  - reads: 'https://raw.githubusercontent.com/NBISweden/Earth-Biogenome-Project-pilot/main/tests/data/tiny/PB_HIFI/dmel_2Mb.fasta.gz'
+  - reads: 'https://raw.githubusercontent.com/NBISweden/Earth-Biogenome-Project-pilot/main/tests/data/tiny/PB_HIFI/dmel_2Mb.fastq.gz'

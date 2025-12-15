@@ -22,49 +22,234 @@ Current implementation:
 
 ```mermaid
 flowchart TD
-    input[/ Input file/] --> hifi
-    input --> hic
-    input --> taxquery[[ ENA taxonomic query ]]
-    taxquery --> goat_taxon[[ GOAT taxon search ]]
-    goat_taxon --> busco
-    goat_taxon --> dtol[[ DToL lookup ]]
-    hifi --> samtools_fa[[ Samtools fasta ]]
-    samtools_fa --> fastk_hifi
-    hifi[/ HiFi reads /] --> fastk_hifi[[ FastK - HiFi ]]
-    hifi --> meryl_hifi[[ Meryl - HiFi ]]
-    hic[/ Hi-C reads /] --> fastk_hic[[ FastK - Hi-C ]]
-    hifi --> meryl_hic[[ Meryl - Hi-C ]]
-    hic --> fastqc_hic[[ FastQC - Hi-C ]]
-    hic --> seqkit_hic[[ SeqKit Stats - Hi-C ]]
-    hifi --> seqkit_hifi[[ SeqKit Stats - HiFi ]]
-    assembly[/ Assembly /] --> quast[[ Quast ]]
-    fastk_hifi --> histex[[ Histex ]]
-    histex --> genescopefk[[ GeneScopeFK ]]
-    fastk_hifi --> smudgeplot[[ Smudgeplot ]]
-    fastk_hifi --> katgc[[ KatGC ]]
-    fastk_hifi --> merquryfk[[ MerquryFK ]]
-    assembly --> merquryfk
-    meryl_hifi --> merqury[[ Merqury ]]
-    assembly --> merqury
-    fastk_hifi --> katcomp[[ KatComp ]]
-    fastk_hic --> katcomp
-    assembly --> busco[[ Busco ]]
-    fastk_hifi --> hifiasm[[ HiFiasm ]]
-    hifiasm --> assembly
-    assembly --> purgedups[[ Purgedups ]]
-    input --> mitoref[[ Mitohifi - Find reference ]]
-    assembly --> mitohifi[[ Mitohifi ]]
-    assembly --> fcsgx[[ FCS GX ]]
-    fcs_fetchdb[( FCS fetchdb )] --> fcsgx
-    mitoref --> mitohifi
-    genescopefk --> quarto[[ Quarto ]]
-    goat_taxon --> multiqc[[ MultiQC ]]
-    quarto --> multiqc
-    dtol --> multiqc
-    katgc --> multiqc
-    smudgeplot --> multiqc
-    busco --> multiqc
-    quast --> multiqc
+    %% Input
+    input[/ Input files /] --> hifi[/ HiFi reads /]
+    input --> hic[/ Hi-C reads /]
+
+    subgraph metadata[" METADATA FETCHING "]
+        taxquery[[ ENA taxonomic query ]]
+        goat[[ GOAT taxon search ]]
+        tol_search[[ ToL search ]]
+        taxquery --> goat
+        goat --> tol_search
+    end
+
+    input --> taxquery
+
+    subgraph preprocess[" PREPROCESSING "]
+        direction TB
+        subgraph hifi_prep[" HiFi Processing "]
+            samtools_fa[[ Samtools fasta ]]
+            merge_pacbio[[ Merge PacBio ]]
+            samtools_fa --> merge_pacbio
+        end
+
+        subgraph hic_prep[" Hi-C Processing "]
+            fastp[[ Fastp ]]
+            samtools_import[[ Samtools import ]]
+            samtools_index[[ Samtools index ]]
+            fastp --> samtools_import
+            samtools_import --> samtools_index
+        end
+    end
+
+    hifi --> samtools_fa
+    hic --> fastp
+
+    subgraph kmer_db[" K-MER DATABASES "]
+        direction TB
+        subgraph fastk_build[" FastK "]
+            fastk[[ FastK ]]
+            fastk_merge[[ FastK merge ]]
+            fastk --> fastk_merge
+        end
+
+        subgraph meryl_build[" Meryl "]
+            meryl_count[[ Meryl count ]]
+            meryl_unionsum[[ Meryl unionsum ]]
+            meryl_hist[[ Meryl histogram ]]
+            meryl_count --> meryl_unionsum
+            meryl_unionsum --> meryl_hist
+        end
+    end
+
+    merge_pacbio --> fastk
+    merge_pacbio --> meryl_count
+    samtools_index --> fastk
+    samtools_index --> meryl_count
+
+    subgraph inspect[" DATA INSPECTION "]
+        direction TB
+        subgraph basic_stats[" Basic Statistics "]
+            seqkit[[ SeqKit Stats ]]
+            fastqc[[ FastQC ]]
+        end
+
+        subgraph genome_props[" Genome Properties "]
+            histex[[ Histex ]]
+            genescopefk[[ GeneScopeFK ]]
+            smudgeplot[[ Smudgeplot ]]
+            katgc[[ KatGC ]]
+            histex --> genescopefk
+        end
+
+        subgraph lib_compare[" Library Comparison "]
+            katcomp[[ KatComp ]]
+        end
+    end
+
+    merge_pacbio --> seqkit
+    samtools_index --> seqkit
+    samtools_index --> fastqc
+    fastk_merge --> histex
+    fastk_merge --> smudgeplot
+    fastk_merge --> katgc
+    fastk_merge --> katcomp
+
+    subgraph assemble[" ASSEMBLY "]
+        direction TB
+        subgraph hifiasm_asm[" HiFiasm Assembly "]
+            hifiasm[[ HiFiasm ]]
+            gfa2fa[[ GFA2FA ]]
+            hifiasm --> gfa2fa
+        end
+
+        subgraph organelles[" Organelle Assembly "]
+            direction LR
+            oatkdb[( OATK HMM database )]
+            oatk_selecthmm[[ OATK SelectHMM ]]
+            oatk[[ OATK ]]
+            mitoref[[ Mitohifi - Find reference ]]
+            mitohifi[[ Mitohifi ]]
+            oatkdb --> oatk_selecthmm
+            oatk_selecthmm --> oatk
+            mitoref --> mitohifi
+        end
+    end
+
+    merge_pacbio --> hifiasm
+    merge_pacbio --> oatk
+    merge_pacbio --> mitoref
+    merge_pacbio --> mitohifi
+    goat --> oatk_selecthmm
+    goat --> mitoref
+
+    subgraph decontam[" DECONTAMINATION "]
+        direction LR
+        fcs_db[( FCS GX database )]
+        fcsgx_fetch[[ FCS GX fetchdb ]]
+        fcsgx[[ FCS GX ]]
+        fcsgx_clean[[ FCS GX clean ]]
+        fcs_db --> fcsgx_fetch
+        fcsgx_fetch --> fcsgx
+        fcsgx --> fcsgx_clean
+    end
+
+    gfa2fa --> fcsgx
+
+    subgraph purge[" PURGE DUPLICATES "]
+        purgedups[[ Purge duplicates ]]
+    end
+
+    fcsgx_clean --> purgedups
+    merge_pacbio --> purgedups
+
+    subgraph scaffold[" SCAFFOLDING "]
+        direction TB
+        subgraph index_prep[" Index Preparation "]
+            bwamem2_index[[ BWA-MEM2 index ]]
+            samtools_faidx[[ Samtools faidx ]]
+            chromsizes[[ Extract chromsizes ]]
+            samtools_faidx --> chromsizes
+        end
+
+        subgraph hic_map[" Hi-C Mapping "]
+            bwamem2_mem[[ BWA-MEM2 mem ]]
+            pairtools[[ Pairtools ]]
+            bwamem2_mem --> pairtools
+        end
+
+        subgraph yahs_scaf[" YAHS Scaffolding "]
+            yahs[[ YAHS ]]
+            merge_haps[[ Merge haplotypes ]]
+            yahs --> merge_haps
+        end
+    end
+
+    purgedups --> bwamem2_index
+    purgedups --> samtools_faidx
+    bwamem2_index --> bwamem2_mem
+    samtools_index --> bwamem2_mem
+    chromsizes --> pairtools
+    pairtools --> yahs
+    purgedups --> yahs
+
+    subgraph evaluate[" ASSEMBLY EVALUATION "]
+        direction TB
+        merquryfk[[ MerquryFK ]]
+        merqury[[ Merqury ]]
+        busco[[ BUSCO ]]
+        gfastats[[ GFAstats ]]
+        quast[[ QUAST ]]
+    end
+
+    gfa2fa --> merquryfk
+    fastk_merge --> merquryfk
+    fcsgx_clean --> merquryfk
+    purgedups --> merquryfk
+    yahs --> merquryfk
+
+    gfa2fa --> merqury
+    meryl_unionsum --> merqury
+    fcsgx_clean --> merqury
+    purgedups --> merqury
+    yahs --> merqury
+
+    goat --> busco
+    gfa2fa --> busco
+    fcsgx_clean --> busco
+    purgedups --> busco
+    yahs --> busco
+
+    gfa2fa --> gfastats
+    fcsgx_clean --> gfastats
+    purgedups --> gfastats
+    yahs --> gfastats
+
+    gfa2fa --> quast
+    fcsgx_clean --> quast
+    purgedups --> quast
+    yahs --> quast
+
+    subgraph report[" REPORTING "]
+        direction TB
+        report_dtol[[ Report DToL ]]
+        report_genometraits[[ Report genome traits ]]
+        report_versions[[ Report software versions ]]
+        quarto[[ Quarto notebook ]]
+        output[/ Final report /]
+        report_dtol --> quarto
+        report_genometraits --> quarto
+        report_versions --> quarto
+        quarto --> output
+    end
+
+    tol_search --> report_dtol
+    goat --> report_genometraits
+    busco --> report_versions
+    genescopefk --> quarto
+    smudgeplot --> quarto
+    katgc --> quarto
+    katcomp --> quarto
+    seqkit --> quarto
+    fastqc --> quarto
+    gfastats --> quarto
+    merquryfk --> quarto
+    merqury --> quarto
+    busco --> quarto
+    quast --> quarto
+    oatk --> quarto
+    mitohifi --> quarto
 ```
 
 ## Usage
@@ -463,17 +648,13 @@ results
 │   │       ├── hifiasm-purged-default_merquryfk.spectra-cn.ln.png
 │   │       └── hifiasm-purged-default_merquryfk.spectra-cn.st.png
 │   └── purge_dups
-│       ├── Drosophila_melanogaster.PB.base.cov
-│       ├── Drosophila_melanogaster.PB.stat
-│       ├── Drosophila_melanogaster.calcuts.log
-│       ├── Drosophila_melanogaster.cutoffs
-│       ├── Drosophila_melanogaster_hifiasm-purged-default_hap0.dups.bed
-│       ├── Drosophila_melanogaster_hifiasm-purged-default_hap0.hap.fa
-│       ├── Drosophila_melanogaster_hifiasm-purged-default_hap0.merged.fasta.gz
-│       ├── Drosophila_melanogaster_hifiasm-purged-default_hap0.purge_dups.log
-│       ├── Drosophila_melanogaster_hifiasm-purged-default_hap0.purged.fa
-│       ├── Drosophila_melanogaster_hifiasm-purged-default_hap0.split.fasta.gz
-│       └── Drosophila_melanogaster_hifiasm-purged-default_purgedups_hist.png
+│       ├── logs
+│       │   ├── Drosophila_melanogaster_hifiasm-purged-default_hap1.dups.bed
+│       │   └── Drosophila_melanogaster_hifiasm-purged-default_hap1.hist_plot.png
+│       └── purged
+│           ├── Drosophila_melanogaster_hifiasm-purged-default_hap1.haplotigs.fa
+│           ├── Drosophila_melanogaster_hifiasm-purged-default_hap1.purged.fa
+│           └── Drosophila_melanogaster_hifiasm-purged-default_hap2.purged.fa
 ├── 07_scaffolding
 │   ├── busco
 │   │   └── hifiasm-scaffolded-default
