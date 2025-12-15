@@ -61,16 +61,12 @@ workflow ASSEMBLE_ORGANELLES {
 
     // Final mitohifi mitogenome vs. each mitohifi candidate channel
     ch_final_vs_mitohifi = MITOHIFI_MITOHIFI.out.fasta
-        .join(
-            MITOHIFI_MITOHIFI.out.all_candidates_fa,
+        .combine(
+            MITOHIFI_MITOHIFI.out.all_candidates_fa.transpose(),
             by: 0
         )
-        .flatMap { meta, fasta, candidates ->
-            def candidate_list = candidates instanceof List ? candidates : [candidates]
-            candidate_list.collect { candidate ->
-                [ meta, fasta, candidate, 'mitohifi' ]
-            }
-        }
+        .map { meta, fasta, candidate -> [ meta, fasta, candidate, 'mitohifi' ] }
+
     // Final mitohifi mitogenome vs. each oatk candidate channel
     ch_final_vs_oatk = combineByMetaKeys(
         keySet: ['id','sample'],
@@ -87,6 +83,10 @@ workflow ASSEMBLE_ORGANELLES {
     // Mix channels and plot
     ch_dotplot_inputs = ch_ref_vs_final.mix( ch_final_vs_mitohifi, ch_final_vs_oatk )
     DNADOTPLOT( ch_dotplot_inputs )
+
+    // Mitochondrial assemblies
+    ch_mito_assemblies = MITOHIFI_MITOHIFI.out.fasta
+        .mix( OATK.out.mito_fasta )
 
     // Logs
     MITOHIFI_MITOHIFI.out.contigs_annotations
@@ -108,6 +108,7 @@ workflow ASSEMBLE_ORGANELLES {
 
     emit:
     // TODO: emit filtered assembly, or contig list to purge. Also emit from 03_assemble.
+    mito_assemblies = ch_mito_assemblies
     logs
     versions = ch_versions
 }
