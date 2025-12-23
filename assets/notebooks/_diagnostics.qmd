@@ -316,6 +316,78 @@ def displayPurgeDupsBinPercentages(glob_path):
         print(summary.to_markdown(index=False))
     else:
         print("Unable to calculate purged content percentage.")
+
+def displayDvpolishSummary(dvpolish_selection_tsv):
+    print("#### DeepVariant Polishing Summary\n")
+
+    filepath = glob.glob(dvpolish_selection_tsv)[0]
+    try:
+        df = pd.read_csv(filepath, sep='\t')
+    except Exception as e:
+        print(f"Error reading {filepath}: {e}")
+        return
+    if df.empty:
+        print("DeepVariant polishing selection file is empty.")
+        return
+
+    # Replace +inf with NaN for calculations (0 errors results in inf qv)
+    df.replace([float('inf'), '+inf'], float('nan'), inplace=True)
+
+    # Convert numeric columns to numeric, coercing errors
+    numeric_cols = ['unpolished_asm_errors', 'polished_asm_errors', 'unpolished_asm_qv', 'polished_asm_qv']
+    for col in numeric_cols:
+        df[col] = pd.to_numeric(df[col], errors='coerce')
+
+    total_contigs = len(df)
+
+    # Source assembly counts
+    source_counts = df['source_asm'].value_counts()
+    unpolished_count = source_counts.get('unpolished', 0)
+    polished_count = source_counts.get('polished', 0)
+
+    # Compare error counts to see if polishing improved or degraded things
+    error_diff = df['unpolished_asm_errors'] - df['polished_asm_errors']
+    improved = (error_diff > 0).sum() # Unpolished had more errors than polished (polished selected)
+    degraded = (error_diff < 0).sum() # Unpolished had fewer errors than polished (unpolished selected)
+    unchanged = (error_diff == 0).sum() # Equal errors (unpolished selected)
+
+    # Averages
+    avg_unpol_errors = df['unpolished_asm_errors'].mean()
+    avg_pol_errors = df['polished_asm_errors'].mean()
+    avg_unpol_qv = df['unpolished_asm_qv'].mean()
+    avg_pol_qv = df['polished_asm_qv'].mean()
+
+    summary_data = {
+            "Metric": [
+                "Total contigs",
+                "Selected from unpolished assembly",
+                "Selected from polished assembly",
+                "Contigs improved by polishing (errors reduced)",
+                "Contigs degraded by polishing (errors increased)",
+                "Contigs unchanged by polishing",
+                "Avg unpolished errors",
+                "Avg polished errors",
+                "Avg unpolished QV",
+                "Avg polished QV"
+            ],
+            "Value": [
+                f"{total_contigs}",
+                f"{unpolished_count} ({unpolished_count/total_contigs*100:.2f}%)" if total_contigs else "0",
+                f"{polished_count} ({polished_count/total_contigs*100:.2f}%)" if total_contigs else "0",
+                f"{improved} ({improved/total_contigs*100:.2f}%)" if total_contigs else "0",
+                f"{degraded} ({degraded/total_contigs*100:.2f}%)" if total_contigs else "0",
+                f"{unchanged} ({unchanged/total_contigs*100:.2f}%)" if total_contigs else "0",
+                f"{avg_unpol_errors:.4f}",
+                f"{avg_pol_errors:.4f}",
+                f"{avg_unpol_qv:.4f}",
+                f"{avg_pol_qv:.4f}"
+            ]
+    }
+
+    summary_df = pd.DataFrame(summary_data)
+    print(summary_df.to_markdown(index=False))
+    print("\n")
+
 ```
 
 :::::
