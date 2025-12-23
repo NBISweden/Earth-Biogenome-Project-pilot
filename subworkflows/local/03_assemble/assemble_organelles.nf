@@ -69,7 +69,7 @@ workflow ASSEMBLE_ORGANELLES {
 
     // Final mitohifi mitogenome vs. each oatk candidate channel
     ch_final_vs_oatk = combineByMetaKeys(
-        keySet: ['id','sample'],
+        keySet: ['id','sample','assembly'],
         meta: 'lhs',
         MITOHIFI_MITOHIFI.out.fasta,
         OATK.out.mito_fasta
