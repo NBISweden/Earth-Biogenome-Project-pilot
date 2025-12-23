@@ -96,7 +96,6 @@ workflow DVPOLISH {
     // Map reads with pbmm2 to complete assemblies
     DVPOLISH_PBMM2_ALIGN (
         input.reads_ch,
-        input.assembly_ch,
         input.index_ch
     )
 

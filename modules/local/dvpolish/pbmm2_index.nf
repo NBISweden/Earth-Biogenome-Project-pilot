@@ -28,7 +28,7 @@ process DVPOLISH_PBMM2_INDEX {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        pbmm2: \$(pbmm2 --version 2>&1 | head -n 1 | sed 's/pbmm2 //')
+        pbmm2: \$(pbmm2 --version 2>&1 | sed '1!d; s/pbmm2 //')
     END_VERSIONS
     """
 }

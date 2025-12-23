@@ -10,8 +10,7 @@ process DVPOLISH_PBMM2_ALIGN {
 
     input:
     tuple val(meta) , path(reads)
-    tuple val(meta2), path(reference)
-    tuple val(meta3), path(index)
+    tuple val(meta2), path(index)
 
     output:
     tuple val(meta), path("*.bam"), path("*.bai"), emit: bam_bai
@@ -22,7 +21,7 @@ process DVPOLISH_PBMM2_ALIGN {
 
     script:
     def args  = task.ext.args ?: ''
-    def out_name_part1 = reference.name.endsWith(".gz") ? reference.getBaseName(2) : reference.baseName
+    def out_name_part1 = index.baseName
     def out_name_part2 = reads.name.endsWith(".gz") ?  reads.getBaseName(2) : reads.baseName
     """
     pbmm2 align --sort \\
@@ -34,7 +33,7 @@ process DVPOLISH_PBMM2_ALIGN {
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        pbmm2: \$(pbmm2 --version 2>&1 | head -n 1 | sed 's/pbmm2 //')
+        pbmm2: \$(pbmm2 --version 2>&1 | sed '1!d; s/pbmm2 //')
     END_VERSIONS
     """
 }

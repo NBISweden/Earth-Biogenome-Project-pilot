@@ -43,36 +43,36 @@ process DVPOLISH_CREATE_FINALASM {
     samtools faidx ${pol_fasta}
 
     # Process contigs in single pass (merqury files = file descriptor 0 and 3)
-    line_count=0
-    while IFS=\$'\\t' read -r -a l_uasm && IFS=\$'\\t' read -r -a l_pasm <&3; do
-        line_count=\$((line_count + 1))
-        contig="\${l_uasm[0]}"
+    CONTIG_NUMBER=0
+    while IFS=\$'\\t' read -r -a UNPOL_LINE && IFS=\$'\\t' read -r -a POL_LINE <&3; do
+        CONTIG_NUMBER=\$((CONTIG_NUMBER + 1))
+        CONTIG="\${UNPOL_LINE[0]}"
 
         # Validate contig name match between unpolished & polished assemblies
-        if [[ "\$contig" != "\${l_pasm[0]}" ]]; then
+        if [[ "\$CONTIG" != "\${POL_LINE[0]}" ]]; then
             >&2 echo "[ERROR] DVPOLISH_CREATE_FINALASM: merqury files are not in same order!"
-            >&2 echo "[ERROR]        ${unpol_merqury_csv} line \$line_count: \${l_uasm[0]}"
-            >&2 echo "[ERROR]        ${pol_merqury_csv} line \$line_count: \${l_pasm[0]}"
+            >&2 echo "[ERROR]        ${unpol_merqury_csv} line \$CONTIG_NUMBER: \${UNPOL_LINE[0]}"
+            >&2 echo "[ERROR]        ${pol_merqury_csv} line \$CONTIG_NUMBER: \${POL_LINE[0]}"
             exit 2
         fi
 
         # Compare error counts (column 2) and extract best contig
-        if [[ \${l_uasm[1]} -le \${l_pasm[1]} ]]; then
-            samtools faidx ${unpol_fasta} "\$contig"
-            source="unpolished"
+        if [[ \${UNPOL_LINE[1]} -le \${POL_LINE[1]} ]]; then
+            samtools faidx ${unpol_fasta} "\$CONTIG"
+            SOURCE="unpolished"
         else
-            samtools faidx ${pol_fasta} "\$contig"
-            source="polished"
+            samtools faidx ${pol_fasta} "\$CONTIG"
+            SOURCE="polished"
         fi
 
         # Append selection info to report
-        echo -e "\$contig\\t\$source\\t\${l_uasm[1]}\\t\${l_pasm[1]}\\t\${l_uasm[3]}\\t\${l_pasm[3]}" >> ${prefix}_selection.tsv
+        echo -e "\$CONTIG\\t\$SOURCE\\t\${UNPOL_LINE[1]}\\t\${POL_LINE[1]}\\t\${UNPOL_LINE[3]}\\t\${POL_LINE[3]}" >> ${prefix}_selection.tsv
 
     done < ${unpol_merqury_csv} 3< ${pol_merqury_csv} | bgzip -@ ${task.cpus} -c > ${prefix}.fasta.gz
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
-        samtools: \$(samtools --version | head -n1 | sed 's/^samtools //')
+        samtools: \$(samtools --version | sed '1!d; s/^samtools //')
     END_VERSIONS
     """
 }
