@@ -55,7 +55,7 @@ process HIFIASM {
         if(![hic_read1, hic_read2].every()) {
             log.error("ERROR: Either the forward or reverse Hi-C reads are missing!")
         } else {
-            input_hic = "--h1 ${hic_read1} --h2 ${hic_read2}"
+            input_hic = "--h1 ${hic_read1.join(",")} --h2 ${hic_read2.join(",")}"
         }
     }
     """
