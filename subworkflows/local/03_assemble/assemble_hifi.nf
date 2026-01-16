@@ -1,10 +1,12 @@
-include { HIFIASM         } from "../../../modules/nf-core/hifiasm/main"
-include { GFATOOLS_GFA2FA } from "../../../modules/local/gfatools/gfa2fa"
-include { deepMergeMaps   } from "../../../modules/local/functions"
+include { combineByMetaKeys } from "../../../modules/local/functions"
+include { HIFIASM           } from "../../../modules/nf-core/hifiasm/main"
+include { GFATOOLS_GFA2FA   } from "../../../modules/local/gfatools/gfa2fa"
+include { deepMergeMaps     } from "../../../modules/local/functions"
 
 workflow ASSEMBLE_HIFI {
     take:
     hifi_reads     // [ meta, fastx ]
+    hic_reads      // [ meta, hic]
 
     main:
     // Add build ID.
@@ -29,12 +31,33 @@ workflow ASSEMBLE_HIFI {
                 ]
             }
         }
-    HIFIASM(
-        reads_ch,
-        [[],[],[]], // meta, paternal k-mers, maternal k-mers
-        [[],[],[]], // meta, Hi-C r1, Hi-C r2
-        [[], []],   // meta, bin files
-    )
+    if( params.hifiasm_with_hic ){
+        ch_hifiasm_input = combineByMetaKeys(
+            reads_ch,
+            hic_reads.map{ meta, hic ->
+                tuple(meta.subMap(meta.keySet() - ['pair_id']), hic.first(), hic.last())
+            }.groupTuple(),
+            keySet: ['id','sample'],
+            meta: 'lhs'
+        )
+        .multiMap { meta, hifi, ul_ont, hic1, hic2 ->
+            long_reads : tuple(meta, hifi, ul_ont)
+            short_reads: tuple(meta, hic1, hic2)
+        }
+        HIFIASM(
+            ch_hifiasm_input.long_reads,
+            [[],[],[]], // meta, paternal k-mers, maternal k-mers
+            ch_hifiasm_input.short_reads, // meta, Hi-C r1, Hi-C r2
+            [[], []],   // meta, bin files
+        )
+    } else {
+        HIFIASM(
+            reads_ch,
+            [[],[],[]], // meta, paternal k-mers, maternal k-mers
+            [[],[],[]], // meta, Hi-C r1, Hi-C r2
+            [[], []],   // meta, bin files
+        )
+    }
     raw_assembly_ch = params.use_phased ? HIFIASM.out.hap1_contigs.mix( HIFIASM.out.hap2_contigs ) : HIFIASM.out.primary_contigs
     GFATOOLS_GFA2FA( raw_assembly_ch )
 
@@ -43,7 +66,7 @@ workflow ASSEMBLE_HIFI {
             .join( HIFIASM.out.hap2_contigs )
             .map { meta, pgfa, mgfa -> [ meta, [ pgfa, mgfa ] ] } :
         HIFIASM.out.primary_contigs
-    assemblies_ch = GFATOOLS_GFA2FA.out.fasta.groupTuple( sort: { it.name } )
+    assemblies_ch = GFATOOLS_GFA2FA.out.fasta.groupTuple( sort: { fa -> fa.name } )
         .join( gfa_ch )
         .map { meta, fasta, gfa ->
             [ meta, meta.assembly + (
