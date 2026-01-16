@@ -316,6 +316,84 @@ def displayPurgeDupsBinPercentages(glob_path):
         print(summary.to_markdown(index=False))
     else:
         print("Unable to calculate purged content percentage.")
+
+def displayMitohifiReport():
+    tsv_file = glob.glob(f"{log_path}/*.contigs_stats.tsv")[0]
+    # Read the file to handle the comment line
+    with open(tsv_file, 'r') as f:
+        lines = f.readlines()
+    # Extract and display the comment line (first line starting with #)
+    if lines[0].startswith('#'):
+        comment = lines[0].strip('# \n')
+        print(f"Mitohifi found a related reference mitogenome in NCBI nuccore:")
+        print(f"{comment}")
+        print(f"Below is a table with summary statistics of the final Mitohifi mitogenome assembly:")
+        # Read the rest as dataframe
+        df = pd.read_csv(tsv_file, sep='\t', comment='#')
+    else:
+        df = pd.read_csv(tsv_file, sep='\t')
+    # Display the table
+    pd.set_option('display.max_colwidth', None)
+    display(df)
+
+def displayMitogenomeDotplots():
+    from IPython.display import SVG, HTML, display, Markdown
+    import os
+    import re
+    # Get all svg files
+    svg_files = glob.glob(f"{log_path}/*.svg")
+    # Define expected filename pattern: seq1-NAME_seq2-NAME.experiment.svg
+    # where experiment is one of: reference, mitohifi, oatk
+    pattern = re.compile(r'^seq1-(.+)_seq2-(.+)\.(reference|mitohifi|oatk)\.svg$')
+    # Filter only valid files
+    valid_files = []
+    for svg_file in svg_files:
+        basename = os.path.basename(svg_file)
+        if pattern.match(basename):
+            valid_files.append(svg_file)
+    # Stop if none found
+    if not valid_files:
+        print("No mitogenome dotplot files found")
+        return
+    # Categorize and sort files by experiment
+    plot_categories = {
+        'reference': {
+            'files': [],
+            'header': '#### Reference mitogenome vs. Mitohifi final assembly',
+            'label': lambda s1, s2: f"Seq1, NCBI Reference: {s1}, vs. Seq2, Mitohifi final: {s2}"
+        },
+        'mitohifi': {
+            'files': [],
+            'header': '#### Mitohifi final assembly vs. each Mitohifi candidate',
+            'label': lambda s1, s2: f"Seq1, Mitohifi final: {s1}, vs. Seq2, candidate: {s2}"
+        },
+        'oatk': {
+            'files': [],
+            'header': '#### Mitohifi final assembly vs. each OATK candidate',
+            'label': lambda s1, s2: f"Seq1, Mitohifi final: {s1}, vs. Seq2, candidate: {s2}"
+        }
+    }
+    # Categorise the valid files
+    for svg_file in valid_files:
+        basename = os.path.basename(svg_file)
+        match = pattern.match(basename)
+        if match:
+            exp_type = match.group(3) # Extract experiment
+            plot_categories[exp_type]['files'].append(svg_file)
+    # Display each category
+    for exp_type in ['reference', 'mitohifi', 'oatk']:
+        category = plot_categories[exp_type]
+        if category['files']:
+            display(Markdown(category['header']))
+            for svg_file in sorted(category['files']):
+                basename = os.path.basename(svg_file)
+                match = pattern.match(basename)
+                if match:
+                    seq1 = match.group(1)
+                    seq2 = match.group(2)
+                    title = category['label'](seq1, seq2)
+                    display(Markdown(title))
+                    display(SVG(filename=svg_file))
 ```
 
 :::::

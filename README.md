@@ -22,49 +22,234 @@ Current implementation:
 
 ```mermaid
 flowchart TD
-    input[/ Input file/] --> hifi
-    input --> hic
-    input --> taxquery[[ ENA taxonomic query ]]
-    taxquery --> goat_taxon[[ GOAT taxon search ]]
-    goat_taxon --> busco
-    goat_taxon --> dtol[[ DToL lookup ]]
-    hifi --> samtools_fa[[ Samtools fasta ]]
-    samtools_fa --> fastk_hifi
-    hifi[/ HiFi reads /] --> fastk_hifi[[ FastK - HiFi ]]
-    hifi --> meryl_hifi[[ Meryl - HiFi ]]
-    hic[/ Hi-C reads /] --> fastk_hic[[ FastK - Hi-C ]]
-    hifi --> meryl_hic[[ Meryl - Hi-C ]]
-    hic --> fastqc_hic[[ FastQC - Hi-C ]]
-    hic --> seqkit_hic[[ SeqKit Stats - Hi-C ]]
-    hifi --> seqkit_hifi[[ SeqKit Stats - HiFi ]]
-    assembly[/ Assembly /] --> quast[[ Quast ]]
-    fastk_hifi --> histex[[ Histex ]]
-    histex --> genescopefk[[ GeneScopeFK ]]
-    fastk_hifi --> smudgeplot[[ Smudgeplot ]]
-    fastk_hifi --> katgc[[ KatGC ]]
-    fastk_hifi --> merquryfk[[ MerquryFK ]]
-    assembly --> merquryfk
-    meryl_hifi --> merqury[[ Merqury ]]
-    assembly --> merqury
-    fastk_hifi --> katcomp[[ KatComp ]]
-    fastk_hic --> katcomp
-    assembly --> busco[[ Busco ]]
-    fastk_hifi --> hifiasm[[ HiFiasm ]]
-    hifiasm --> assembly
-    assembly --> purgedups[[ Purgedups ]]
-    input --> mitoref[[ Mitohifi - Find reference ]]
-    assembly --> mitohifi[[ Mitohifi ]]
-    assembly --> fcsgx[[ FCS GX ]]
-    fcs_fetchdb[( FCS fetchdb )] --> fcsgx
-    mitoref --> mitohifi
-    genescopefk --> quarto[[ Quarto ]]
-    goat_taxon --> multiqc[[ MultiQC ]]
-    quarto --> multiqc
-    dtol --> multiqc
-    katgc --> multiqc
-    smudgeplot --> multiqc
-    busco --> multiqc
-    quast --> multiqc
+    %% Input
+    input[/ Input files /] --> hifi[/ HiFi reads /]
+    input --> hic[/ Hi-C reads /]
+
+    subgraph metadata[" METADATA FETCHING "]
+        taxquery[[ ENA taxonomic query ]]
+        goat[[ GOAT taxon search ]]
+        tol_search[[ ToL search ]]
+        taxquery --> goat
+        goat --> tol_search
+    end
+
+    input --> taxquery
+
+    subgraph preprocess[" PREPROCESSING "]
+        direction TB
+        subgraph hifi_prep[" HiFi Processing "]
+            samtools_fa[[ Samtools fasta ]]
+            merge_pacbio[[ Merge PacBio ]]
+            samtools_fa --> merge_pacbio
+        end
+
+        subgraph hic_prep[" Hi-C Processing "]
+            fastp[[ Fastp ]]
+            samtools_import[[ Samtools import ]]
+            samtools_index[[ Samtools index ]]
+            fastp --> samtools_import
+            samtools_import --> samtools_index
+        end
+    end
+
+    hifi --> samtools_fa
+    hic --> fastp
+
+    subgraph kmer_db[" K-MER DATABASES "]
+        direction TB
+        subgraph fastk_build[" FastK "]
+            fastk[[ FastK ]]
+            fastk_merge[[ FastK merge ]]
+            fastk --> fastk_merge
+        end
+
+        subgraph meryl_build[" Meryl "]
+            meryl_count[[ Meryl count ]]
+            meryl_unionsum[[ Meryl unionsum ]]
+            meryl_hist[[ Meryl histogram ]]
+            meryl_count --> meryl_unionsum
+            meryl_unionsum --> meryl_hist
+        end
+    end
+
+    merge_pacbio --> fastk
+    merge_pacbio --> meryl_count
+    samtools_index --> fastk
+    samtools_index --> meryl_count
+
+    subgraph inspect[" DATA INSPECTION "]
+        direction TB
+        subgraph basic_stats[" Basic Statistics "]
+            seqkit[[ SeqKit Stats ]]
+            fastqc[[ FastQC ]]
+        end
+
+        subgraph genome_props[" Genome Properties "]
+            histex[[ Histex ]]
+            genescopefk[[ GeneScopeFK ]]
+            smudgeplot[[ Smudgeplot ]]
+            katgc[[ KatGC ]]
+            histex --> genescopefk
+        end
+
+        subgraph lib_compare[" Library Comparison "]
+            katcomp[[ KatComp ]]
+        end
+    end
+
+    merge_pacbio --> seqkit
+    samtools_index --> seqkit
+    samtools_index --> fastqc
+    fastk_merge --> histex
+    fastk_merge --> smudgeplot
+    fastk_merge --> katgc
+    fastk_merge --> katcomp
+
+    subgraph assemble[" ASSEMBLY "]
+        direction TB
+        subgraph hifiasm_asm[" HiFiasm Assembly "]
+            hifiasm[[ HiFiasm ]]
+            gfa2fa[[ GFA2FA ]]
+            hifiasm --> gfa2fa
+        end
+
+        subgraph organelles[" Organelle Assembly "]
+            direction LR
+            oatkdb[( OATK HMM database )]
+            oatk_selecthmm[[ OATK SelectHMM ]]
+            oatk[[ OATK ]]
+            mitoref[[ Mitohifi - Find reference ]]
+            mitohifi[[ Mitohifi ]]
+            oatkdb --> oatk_selecthmm
+            oatk_selecthmm --> oatk
+            mitoref --> mitohifi
+        end
+    end
+
+    merge_pacbio --> hifiasm
+    merge_pacbio --> oatk
+    merge_pacbio --> mitoref
+    merge_pacbio --> mitohifi
+    goat --> oatk_selecthmm
+    goat --> mitoref
+
+    subgraph decontam[" DECONTAMINATION "]
+        direction LR
+        fcs_db[( FCS GX database )]
+        fcsgx_fetch[[ FCS GX fetchdb ]]
+        fcsgx[[ FCS GX ]]
+        fcsgx_clean[[ FCS GX clean ]]
+        fcs_db --> fcsgx_fetch
+        fcsgx_fetch --> fcsgx
+        fcsgx --> fcsgx_clean
+    end
+
+    gfa2fa --> fcsgx
+
+    subgraph purge[" PURGE DUPLICATES "]
+        purgedups[[ Purge duplicates ]]
+    end
+
+    fcsgx_clean --> purgedups
+    merge_pacbio --> purgedups
+
+    subgraph scaffold[" SCAFFOLDING "]
+        direction TB
+        subgraph index_prep[" Index Preparation "]
+            bwamem2_index[[ BWA-MEM2 index ]]
+            samtools_faidx[[ Samtools faidx ]]
+            chromsizes[[ Extract chromsizes ]]
+            samtools_faidx --> chromsizes
+        end
+
+        subgraph hic_map[" Hi-C Mapping "]
+            bwamem2_mem[[ BWA-MEM2 mem ]]
+            pairtools[[ Pairtools ]]
+            bwamem2_mem --> pairtools
+        end
+
+        subgraph yahs_scaf[" YAHS Scaffolding "]
+            yahs[[ YAHS ]]
+            merge_haps[[ Merge haplotypes ]]
+            yahs --> merge_haps
+        end
+    end
+
+    purgedups --> bwamem2_index
+    purgedups --> samtools_faidx
+    bwamem2_index --> bwamem2_mem
+    samtools_index --> bwamem2_mem
+    chromsizes --> pairtools
+    pairtools --> yahs
+    purgedups --> yahs
+
+    subgraph evaluate[" ASSEMBLY EVALUATION "]
+        direction TB
+        merquryfk[[ MerquryFK ]]
+        merqury[[ Merqury ]]
+        busco[[ BUSCO ]]
+        gfastats[[ GFAstats ]]
+        quast[[ QUAST ]]
+    end
+
+    gfa2fa --> merquryfk
+    fastk_merge --> merquryfk
+    fcsgx_clean --> merquryfk
+    purgedups --> merquryfk
+    yahs --> merquryfk
+
+    gfa2fa --> merqury
+    meryl_unionsum --> merqury
+    fcsgx_clean --> merqury
+    purgedups --> merqury
+    yahs --> merqury
+
+    goat --> busco
+    gfa2fa --> busco
+    fcsgx_clean --> busco
+    purgedups --> busco
+    yahs --> busco
+
+    gfa2fa --> gfastats
+    fcsgx_clean --> gfastats
+    purgedups --> gfastats
+    yahs --> gfastats
+
+    gfa2fa --> quast
+    fcsgx_clean --> quast
+    purgedups --> quast
+    yahs --> quast
+
+    subgraph report[" REPORTING "]
+        direction TB
+        report_dtol[[ Report DToL ]]
+        report_genometraits[[ Report genome traits ]]
+        report_versions[[ Report software versions ]]
+        quarto[[ Quarto notebook ]]
+        output[/ Final report /]
+        report_dtol --> quarto
+        report_genometraits --> quarto
+        report_versions --> quarto
+        quarto --> output
+    end
+
+    tol_search --> report_dtol
+    goat --> report_genometraits
+    busco --> report_versions
+    genescopefk --> quarto
+    smudgeplot --> quarto
+    katgc --> quarto
+    katcomp --> quarto
+    seqkit --> quarto
+    fastqc --> quarto
+    gfastats --> quarto
+    merquryfk --> quarto
+    merqury --> quarto
+    busco --> quarto
+    quast --> quarto
+    oatk --> quarto
+    mitohifi --> quarto
 ```
 
 ## Usage
@@ -252,13 +437,14 @@ results
 │   ├── seqkit_hifi_stats
 │   │   └── dmel_2Mb_hifi.tsv
 │   └── smudgeplot
-│       ├── Drosophila_melanogaster_smudgeplot.smudge_report.tsv
-│       ├── Drosophila_melanogaster_smudgeplot_centralities.png
-│       ├── Drosophila_melanogaster_smudgeplot_centralities.txt
-│       ├── Drosophila_melanogaster_smudgeplot_smudgeplot.png
-│       ├── Drosophila_melanogaster_smudgeplot_smudgeplot_log10.png
-│       ├── Drosophila_melanogaster_smudgeplot_smudgeplot_report.json
-│       └── Drosophila_melanogaster_smudgeplot_with_annotated_smu.txt
+│       ├── Drosophila_melanogaster.sma
+│       ├── Drosophila_melanogaster.smu
+│       ├── Drosophila_melanogaster.smudge_report.tsv
+│       ├── Drosophila_melanogaster_centralities.png
+│       ├── Drosophila_melanogaster_centralities.txt
+│       ├── Drosophila_melanogaster_smudgeplot.png
+│       ├── Drosophila_melanogaster_smudgeplot_log10.png
+│       └── Drosophila_melanogaster_smudgeplot_report.json
 ├── 02_read_preprocessing
 │   └── hi-c_cram
 │       ├── dmel_2Mb_p1.cram
@@ -316,88 +502,92 @@ results
 │   │       ├── hifiasm-raw-default_merquryfk.spectra-asm.ln.png
 │   │       ├── hifiasm-raw-default_merquryfk.spectra-asm.st.png
 │   │       └── hifiasm-raw-default_merquryfk.spectra-cn.cni.gz
-│   └── mitohifi
-│       ├── hifiasm-raw-default
-│       │   ├── Drosophila_melanogaster-hifiasm-raw-default.contigs_annotations.png
-│       │   ├── Drosophila_melanogaster-hifiasm-raw-default.contigs_stats.tsv
-│       │   ├── Drosophila_melanogaster-hifiasm-raw-default.final_mitogenome.annotation.png
-│       │   ├── Drosophila_melanogaster-hifiasm-raw-default.final_mitogenome.fasta
-│       │   ├── Drosophila_melanogaster-hifiasm-raw-default.final_mitogenome.gb
-│       │   ├── Drosophila_melanogaster-hifiasm-raw-default.shared_genes.tsv
-│       │   ├── contigs_circularization
-│       │   │   └── all_contigs.circularisationCheck.txt
-│       │   ├── contigs_filtering
-│       │   │   ├── contigs.blastn
-│       │   │   ├── contigs_ids.txt
-│       │   │   ├── parsed_blast.txt
-│       │   │   └── parsed_blast_all.txt
-│       │   ├── coverage_mapping
-│       │   ├── final_mitogenome_choice
-│       │   │   ├── all_mitogenomes.rotated.aligned.aln
-│       │   │   ├── all_mitogenomes.rotated.fa
-│       │   │   ├── cdhit.out
-│       │   │   └── cdhit.out.clstr
-│       │   └── potential_contigs
-│       │       └── ptg000006l
-│       │           ├── ptg000006l.annotation
-│       │           │   ├── PP764103.fasta
-│       │           │   ├── ptg000006l.annotation_MitoFinder_mitfi_Final_Results
-│       │           │   │   ├── ptg000006l.annotation.infos
-│       │           │   │   ├── ptg000006l.annotation_final_genes_AA.fasta
-│       │           │   │   ├── ptg000006l.annotation_final_genes_NT.fasta
-│       │           │   │   ├── ptg000006l.annotation_mtDNA_contig.fasta
-│       │           │   │   ├── ptg000006l.annotation_mtDNA_contig.gb
-│       │           │   │   ├── ptg000006l.annotation_mtDNA_contig.gff
-│       │           │   │   ├── ptg000006l.annotation_mtDNA_contig.tbl
-│       │           │   │   ├── ptg000006l.annotation_mtDNA_contig_genes_AA.fasta
-│       │           │   │   └── ptg000006l.annotation_mtDNA_contig_genes_NT.fasta
-│       │           │   ├── ptg000006l.annotation_mitfi
-│       │           │   │   ├── MiTFi.log
-│       │           │   │   └── ptg000006l.annotation_mtDNA_contig.mitfi
-│       │           │   └── ptg000006l.annotation_tmp
-│       │           │       ├── circularization_check.blast.xml
-│       │           │       ├── contig_id_database.fasta
-│       │           │       ├── geneChecker.log
-│       │           │       ├── geneChecker_error.log
-│       │           │       ├── ptg000006l.annotation_blast_out.txt
-│       │           │       ├── ptg000006l.annotation_link.scafSeq.nhr
-│       │           │       ├── ptg000006l.annotation_link.scafSeq.nin
-│       │           │       ├── ptg000006l.annotation_link.scafSeq.nsq
-│       │           │       ├── ptg000006l.annotation_mtDNA_contig_raw.gff
-│       │           │       ├── ptg000006l.annotation_mtDNA_contig_ref.blast.xml
-│       │           │       ├── ptg000006l.annotation_mtDNA_contig_ref.cds.blast.xml
-│       │           │       ├── ptg000006l.annotation_mtDNA_contig_ref.cds.fasta
-│       │           │       ├── ptg000006l.annotation_mtDNA_contig_ref.fasta
-│       │           │       ├── ref_ATP6_database.fasta
-│       │           │       ├── ref_ATP8_database.fasta
-│       │           │       ├── ref_COX1_database.fasta
-│       │           │       ├── ref_COX2_database.fasta
-│       │           │       ├── ref_COX3_database.fasta
-│       │           │       ├── ref_CYTB_database.fasta
-│       │           │       ├── ref_ND1_database.fasta
-│       │           │       ├── ref_ND2_database.fasta
-│       │           │       ├── ref_ND3_database.fasta
-│       │           │       ├── ref_ND4L_database.fasta
-│       │           │       ├── ref_ND4_database.fasta
-│       │           │       ├── ref_ND5_database.fasta
-│       │           │       ├── ref_ND6_database.fasta
-│       │           │       ├── ref_for_mtDNA_contig.fasta
-│       │           │       ├── ref_rrnL_database.fasta
-│       │           │       ├── ref_rrnS_database.fasta
-│       │           │       └── translated_genes_for_database.fasta
-│       │           ├── ptg000006l.annotation_MitoFinder.log
-│       │           ├── ptg000006l.circularisationCheck.txt
-│       │           ├── ptg000006l.circularization_check.blast.tsv
-│       │           ├── ptg000006l.individual.stats
-│       │           ├── ptg000006l.mito.fa
-│       │           ├── ptg000006l.mitogenome.fa
-│       │           ├── ptg000006l.mitogenome.gb
-│       │           ├── ptg000006l.mitogenome.rotated.fa
-│       │           ├── ptg000006l.mitogenome.rotated.gb
-│       │           └── ptg000006l.trnas
-│       └── references
-│           ├── PP764103.1.fasta
-│           └── PP764103.1.gb
+│   └── organelle
+│       ├── dotplots
+│       │   ├── seq1-Drosophila_melanogaster-hifiasm-raw-default.final_mitogenome_seq2-ptg000006l.mitogenome.rotated.mitohifi.svg
+│       │   └── seq1-PP764103.1_seq2-Drosophila_melanogaster-hifiasm-raw-default.final_mitogenome.reference.svg
+│       └── mitohifi
+│           ├── hifiasm-raw-default
+│           │   ├── Drosophila_melanogaster-hifiasm-raw-default.contigs_annotations.png
+│           │   ├── Drosophila_melanogaster-hifiasm-raw-default.contigs_stats.tsv
+│           │   ├── Drosophila_melanogaster-hifiasm-raw-default.final_mitogenome.annotation.png
+│           │   ├── Drosophila_melanogaster-hifiasm-raw-default.final_mitogenome.fasta
+│           │   ├── Drosophila_melanogaster-hifiasm-raw-default.final_mitogenome.gb
+│           │   ├── Drosophila_melanogaster-hifiasm-raw-default.shared_genes.tsv
+│           │   ├── contigs_circularization
+│           │   │   └── all_contigs.circularisationCheck.txt
+│           │   ├── contigs_filtering
+│           │   │   ├── contigs.blastn
+│           │   │   ├── contigs_ids.txt
+│           │   │   ├── parsed_blast.txt
+│           │   │   └── parsed_blast_all.txt
+│           │   ├── coverage_mapping
+│           │   ├── final_mitogenome_choice
+│           │   │   ├── all_mitogenomes.rotated.aligned.aln
+│           │   │   ├── all_mitogenomes.rotated.fa
+│           │   │   ├── cdhit.out
+│           │   │   └── cdhit.out.clstr
+│           │   └── potential_contigs
+│           │       └── ptg000006l
+│           │           ├── ptg000006l.annotation
+│           │           │   ├── PP764103.fasta
+│           │           │   ├── ptg000006l.annotation_MitoFinder_mitfi_Final_Results
+│           │           │   │   ├── ptg000006l.annotation.infos
+│           │           │   │   ├── ptg000006l.annotation_final_genes_AA.fasta
+│           │           │   │   ├── ptg000006l.annotation_final_genes_NT.fasta
+│           │           │   │   ├── ptg000006l.annotation_mtDNA_contig.fasta
+│           │           │   │   ├── ptg000006l.annotation_mtDNA_contig.gb
+│           │           │   │   ├── ptg000006l.annotation_mtDNA_contig.gff
+│           │           │   │   ├── ptg000006l.annotation_mtDNA_contig.tbl
+│           │           │   │   ├── ptg000006l.annotation_mtDNA_contig_genes_AA.fasta
+│           │           │   │   └── ptg000006l.annotation_mtDNA_contig_genes_NT.fasta
+│           │           │   ├── ptg000006l.annotation_mitfi
+│           │           │   │   ├── MiTFi.log
+│           │           │   │   └── ptg000006l.annotation_mtDNA_contig.mitfi
+│           │           │   └── ptg000006l.annotation_tmp
+│           │           │       ├── circularization_check.blast.xml
+│           │           │       ├── contig_id_database.fasta
+│           │           │       ├── geneChecker.log
+│           │           │       ├── geneChecker_error.log
+│           │           │       ├── ptg000006l.annotation_blast_out.txt
+│           │           │       ├── ptg000006l.annotation_link.scafSeq.nhr
+│           │           │       ├── ptg000006l.annotation_link.scafSeq.nin
+│           │           │       ├── ptg000006l.annotation_link.scafSeq.nsq
+│           │           │       ├── ptg000006l.annotation_mtDNA_contig_raw.gff
+│           │           │       ├── ptg000006l.annotation_mtDNA_contig_ref.blast.xml
+│           │           │       ├── ptg000006l.annotation_mtDNA_contig_ref.cds.blast.xml
+│           │           │       ├── ptg000006l.annotation_mtDNA_contig_ref.cds.fasta
+│           │           │       ├── ptg000006l.annotation_mtDNA_contig_ref.fasta
+│           │           │       ├── ref_ATP6_database.fasta
+│           │           │       ├── ref_ATP8_database.fasta
+│           │           │       ├── ref_COX1_database.fasta
+│           │           │       ├── ref_COX2_database.fasta
+│           │           │       ├── ref_COX3_database.fasta
+│           │           │       ├── ref_CYTB_database.fasta
+│           │           │       ├── ref_ND1_database.fasta
+│           │           │       ├── ref_ND2_database.fasta
+│           │           │       ├── ref_ND3_database.fasta
+│           │           │       ├── ref_ND4L_database.fasta
+│           │           │       ├── ref_ND4_database.fasta
+│           │           │       ├── ref_ND5_database.fasta
+│           │           │       ├── ref_ND6_database.fasta
+│           │           │       ├── ref_for_mtDNA_contig.fasta
+│           │           │       ├── ref_rrnL_database.fasta
+│           │           │       ├── ref_rrnS_database.fasta
+│           │           │       └── translated_genes_for_database.fasta
+│           │           ├── ptg000006l.annotation_MitoFinder.log
+│           │           ├── ptg000006l.circularisationCheck.txt
+│           │           ├── ptg000006l.circularization_check.blast.tsv
+│           │           ├── ptg000006l.individual.stats
+│           │           ├── ptg000006l.mito.fa
+│           │           ├── ptg000006l.mitogenome.fa
+│           │           ├── ptg000006l.mitogenome.gb
+│           │           ├── ptg000006l.mitogenome.rotated.fa
+│           │           ├── ptg000006l.mitogenome.rotated.gb
+│           │           └── ptg000006l.trnas
+│           └── references
+│               ├── PP764103.1.fasta
+│               └── PP764103.1.gb
 ├── 05_duplicate_purging
 │   ├── busco
 │   │   └── hifiasm-purged-default
@@ -571,10 +761,10 @@ results
 │   │   └── Drosophila_melanogaster_quast_report.tsv
 │   └── versions.yml
 └── pipeline_info
-    ├── execution_report_2025-11-18_11-57-39.html
-    ├── execution_timeline_2025-11-18_11-57-39.html
-    ├── execution_trace_2025-11-18_11-57-39.txt
-    └── pipeline_dag_2025-11-18_11-57-39.mmd
+    ├── execution_report_2025-12-02_10-05-59.html
+    ├── execution_timeline_2025-12-02_10-05-59.html
+    ├── execution_trace_2025-12-02_10-05-59.txt
+    └── pipeline_dag_2025-12-02_10-05-59.mmd
 </pre>
 </details>
 

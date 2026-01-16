@@ -1,6 +1,7 @@
 ::::: {.content-visible when-meta="assemble"}
+::::: {.content-visible when-meta="nuclear_assembly_mode"}
 
-## Assembly
+## Nuclear assembly
 
 ```{python}
 if assemble and "hifiasm" in multiqc.list_modules():
@@ -46,4 +47,5 @@ if assemble and glob.glob(f"{log_path}/*-raw-*_merquryfk.false_duplications.tsv"
     displayMerquryFalseDuplicationEstimate(f"{log_path}/*-raw-*_merquryfk.false_duplications.tsv")
 ```
 
+:::::
 :::::
