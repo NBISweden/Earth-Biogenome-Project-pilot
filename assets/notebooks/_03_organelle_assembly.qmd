@@ -1,0 +1,41 @@
+::::: {.content-visible when-meta="assemble"}
+::::: {.content-visible when-meta="organelle_assembly_mode"}
+
+## Organelle assembly
+
+### Mitohifi Report
+
+```{python}
+if assemble and glob.glob(f"{log_path}/*.contigs_stats.tsv"):
+    displayMitohifiReport()
+else:
+    print("Mitohifi report not available")
+```
+
+### Mitogenome annotation
+
+```{python}
+if assemble and glob.glob(f"{log_path}/*.contigs_annotations.png"):
+    display(Image(filename=glob.glob(f"{log_path}/*contigs_annotations.png")[0]))
+else:
+    print("Mitogenome annotation figure not available")
+```
+
+### Dotplots
+
+::: {.callout-note title="Dotplot interpretation" collapse="true"}
+* Each axis represents one mitogenome assembly (x-axis = reference, y-axis = query)
+* Ideal match: a continuous main diagonal line spanning both sequences entirely
+* Partial/extra sequence in one assembly appears as an unaligned section of the other assembly
+* Alignment colour is red when the sequences are in the same sense, alignments in the reverse complement are green
+:::
+
+```{python}
+if assemble and glob.glob(f"{log_path}/*.svg"):
+    displayMitogenomeDotplots()
+else:
+    print("Organelle dotplots not available")
+```
+
+:::::
+:::::

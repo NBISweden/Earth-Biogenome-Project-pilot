@@ -38,8 +38,8 @@ Interpreting the Data
 :::
 
 ```{python}
-if purge and glob.glob(f"{log_path}/*_purgedups_hist.png"):
-    display(Image(filename=glob.glob(f"{log_path}/*_purgedups_hist.png")[0]))
+if purge and glob.glob(f"{log_path}/*_hap1.hist_plot.png"):
+    display(Image(filename=glob.glob(f"{log_path}/*_hap1.hist_plot.png")[0]))
 else:
     print("Purge dups histogram not available")
 ```

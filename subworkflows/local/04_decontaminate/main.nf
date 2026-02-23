@@ -9,15 +9,15 @@ workflow DECONTAMINATE {
     ch_assemblies // [ meta, assembly ]
 
     main:
-    FCSGX_FETCHDB ( params.fcs.database ? Channel.empty() : Channel.fromPath( params.fcs.manifest, checkIfExists: true ) )
-    ch_fcs_database = params.fcs.database ? Channel.fromPath( params.fcs.database, checkIfExists: true, type: 'dir' ) : FCSGX_FETCHDB.out.database
+    FCSGX_FETCHDB ( params.fcs.database ? channel.empty() : channel.fromPath( params.fcs.manifest, checkIfExists: true ) )
+    ch_fcs_database = params.fcs.database ? channel.fromPath( params.fcs.database, checkIfExists: true, type: 'dir' ) : FCSGX_FETCHDB.out.database
     ch_to_screen = ch_assemblies.flatMap { meta, assembly ->
             def updated_meta = deepMergeMaps(meta, [ assembly: [ stage: 'decontaminated', build: "${meta.assembly.assembler}-decontaminated-${meta.assembly.id}" ] ] )
             assembly.alt_fasta ? [
-                [ updated_meta + [ haplotype: 0 ], updated_meta.sample.tax_id, assembly.pri_fasta ],
-                [ updated_meta + [ haplotype: 1 ], updated_meta.sample.tax_id, assembly.alt_fasta ]
+                [ updated_meta + [ haplotype: 1 ], updated_meta.sample.tax_id, assembly.pri_fasta ],
+                [ updated_meta + [ haplotype: 2 ], updated_meta.sample.tax_id, assembly.alt_fasta ]
             ] : [
-                [ updated_meta + [ haplotype: 0 ], updated_meta.sample.tax_id, assembly.pri_fasta ]
+                [ updated_meta + [ haplotype: 1 ], updated_meta.sample.tax_id, assembly.pri_fasta ]
             ]
         }
     FCSGX_RUNGX( ch_to_screen, ch_fcs_database.collect(), params.fcs.ramdisk_path )

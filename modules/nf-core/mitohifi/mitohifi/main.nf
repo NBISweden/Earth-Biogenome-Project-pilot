@@ -14,6 +14,7 @@ process MITOHIFI_MITOHIFI {
 
     output:
     tuple val(meta), path("*mitogenome.fasta")               , emit: fasta, optional: true
+    tuple val(meta), path("potential_*/*/*.rotated.fa")      , emit: all_candidates_fa, optional: true
     tuple val(meta), path("*contigs_stats.tsv")              , emit: stats, optional: true
     tuple val(meta), path("*gb")                             , emit: gb, optional: true
     tuple val(meta), path("*gff")                            , emit: gff, optional: true
@@ -59,7 +60,7 @@ process MITOHIFI_MITOHIFI {
         -t $task.cpus ${args}
     set -e
 
-    rm -f ${fasta} *fixed_header_contigs.fasta
+    rm -f ${fasta} fixed_header_contigs.fasta
 
     # Rename files to include prefix
     find . -maxdepth 1 -type f ! -name '.*' -exec sh -c 'for f do mv "\$f" "${prefix}.\${f#./}"; done' sh {} +

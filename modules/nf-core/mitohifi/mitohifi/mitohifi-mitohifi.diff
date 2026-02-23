@@ -10,18 +10,19 @@ Changes in 'mitohifi/mitohifi/main.nf':
  
      // Docker image available at the project github repository
      container 'ghcr.io/marcelauliano/mitohifi:master'
-@@ -14,8 +13,8 @@
+@@ -14,8 +13,9 @@
      val mito_code
  
      output:
 -    tuple val(meta), path("*fasta")                          , emit: fasta
 -    tuple val(meta), path("*contigs_stats.tsv")              , emit: stats
 +    tuple val(meta), path("*mitogenome.fasta")               , emit: fasta, optional: true
++    tuple val(meta), path("potential_*/*/*.rotated.fa")      , emit: all_candidates_fa, optional: true
 +    tuple val(meta), path("*contigs_stats.tsv")              , emit: stats, optional: true
      tuple val(meta), path("*gb")                             , emit: gb, optional: true
      tuple val(meta), path("*gff")                            , emit: gff, optional: true
      tuple val(meta), path("*all_potential_contigs.fa")       , emit: all_potential_contigs, optional: true
-@@ -40,32 +39,61 @@
+@@ -40,32 +40,61 @@
      if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
          error "MitoHiFi module does not support Conda. Please use Docker / Singularity instead."
      }
@@ -48,7 +49,7 @@ Changes in 'mitohifi/mitohifi/main.nf':
          -t $task.cpus ${args}
 +    set -e
 +
-+    rm -f ${fasta} *fixed_header_contigs.fasta
++    rm -f ${fasta} fixed_header_contigs.fasta
 +
 +    # Rename files to include prefix
 +    find . -maxdepth 1 -type f ! -name '.*' -exec sh -c 'for f do mv "\$f" "${prefix}.\${f#./}"; done' sh {} +
