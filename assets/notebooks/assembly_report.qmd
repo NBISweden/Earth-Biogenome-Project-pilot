@@ -45,6 +45,9 @@ welcome your feedback; please submit any suggestions or feature requests at
 <!-- 03 Read Assembly -->
 {{< include _03_read_assembly.qmd >}}
 
+<!-- 03 Organelle Assembly -->
+{{< include _03_organelle_assembly.qmd >}}
+
 <!-- 04 Assembly Screening -->
 {{< include _04_assembly_screening.qmd >}}
 

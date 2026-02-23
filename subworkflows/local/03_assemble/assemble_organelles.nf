@@ -2,6 +2,8 @@ include { MITOHIFI_FINDMITOREFERENCE } from "../../../modules/nf-core/mitohifi/f
 include { MITOHIFI_MITOHIFI          } from "../../../modules/nf-core/mitohifi/mitohifi/main"
 include { OATK_SELECTHMM             } from "../../../modules/local/oatk/selecthmm/main"
 include { OATK                       } from "../../../modules/nf-core/oatk/main"
+include { DNADOTPLOT                 } from "../../../modules/local/dnadotplot/main"
+include { combineByMetaKeys          } from "../../../modules/local/functions"
 
 workflow ASSEMBLE_ORGANELLES {
     take:
@@ -19,7 +21,7 @@ workflow ASSEMBLE_ORGANELLES {
     // Attempt mitohifi workflow
     MITOHIFI_FINDMITOREFERENCE( ch_meta_data )
 
-    // Prepare mitohifi input
+    // Run mitohifi assembly
     mitohifi_ch = ch_input_data
         .combine(
             MITOHIFI_FINDMITOREFERENCE.out.fasta
@@ -32,8 +34,6 @@ workflow ASSEMBLE_ORGANELLES {
             genbank: mitogb
             mito_code: meta.sample.mito_code
         }
-
-    // Run mitochondrial assembly
     MITOHIFI_MITOHIFI(
         mitohifi_ch.input,
         mitohifi_ch.reference,
@@ -50,15 +50,65 @@ workflow ASSEMBLE_ORGANELLES {
         OATK_SELECTHMM.out.pltd_hmm.ifEmpty( [ [], [], [], [], [] ] )
     )
 
+    // Dot plots
+    // Reference vs final mitohifi mitogenome channel
+    ch_ref_vs_final = MITOHIFI_FINDMITOREFERENCE.out.fasta
+        .join(
+            MITOHIFI_MITOHIFI.out.fasta,
+            by: 0
+        )
+        .map { meta, ref_fasta, final_fasta -> [ meta, ref_fasta, final_fasta, 'reference' ] }
+
+    // Final mitohifi mitogenome vs. each mitohifi candidate channel
+    ch_final_vs_mitohifi = MITOHIFI_MITOHIFI.out.fasta
+        .combine(
+            MITOHIFI_MITOHIFI.out.all_candidates_fa.transpose(),
+            by: 0
+        )
+        .map { meta, fasta, candidate -> [ meta, fasta, candidate, 'mitohifi' ] }
+
+    // Final mitohifi mitogenome vs. each oatk candidate channel
+    ch_final_vs_oatk = combineByMetaKeys(
+        keySet: ['id','sample','assembly'],
+        meta: 'lhs',
+        MITOHIFI_MITOHIFI.out.fasta,
+        OATK.out.mito_fasta
+            .flatMap { meta, fasta ->
+                def split_fastas = fasta.splitFasta(file: true, by: 1)
+                split_fastas.collect { candidate -> [ meta, candidate ] }
+            }
+        )
+        .map { meta, fasta, candidate -> [ meta, fasta, candidate, 'oatk' ] }
+
+    // Mix channels and plot
+    ch_dotplot_inputs = ch_ref_vs_final.mix( ch_final_vs_mitohifi, ch_final_vs_oatk )
+    DNADOTPLOT( ch_dotplot_inputs )
+
+    // Mitochondrial assemblies
+    ch_mito_assemblies = MITOHIFI_MITOHIFI.out.fasta
+        .mix( OATK.out.mito_fasta )
+
+    // Logs
+    MITOHIFI_MITOHIFI.out.contigs_annotations
+        .mix (
+            MITOHIFI_MITOHIFI.out.stats,
+            DNADOTPLOT.out.svg
+        )
+        .map { _meta, log -> log }
+        .set { logs }
+
     // Versions
     ch_versions = ch_versions.mix(
         MITOHIFI_FINDMITOREFERENCE.out.versions.first(),
         MITOHIFI_MITOHIFI.out.versions.first(),
         OATK_SELECTHMM.out.versions.first(),
-        OATK.out.versions.first()
+        OATK.out.versions.first(),
+        DNADOTPLOT.out.versions.first()
     )
 
     emit:
     // TODO: emit filtered assembly, or contig list to purge. Also emit from 03_assemble.
+    mito_assemblies = ch_mito_assemblies
+    logs
     versions = ch_versions
 }

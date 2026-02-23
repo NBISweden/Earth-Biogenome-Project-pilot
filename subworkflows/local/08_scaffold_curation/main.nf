@@ -34,7 +34,7 @@ workflow SCAFFOLD_CURATION {
 
     main:
 
-    ch_versions  = Channel.empty()
+    ch_versions  = channel.empty()
 
     BWAMEM2_INDEX ( getPrimaryAssembly(ch_assemblies) )
     ch_versions  = ch_versions.mix( BWAMEM2_INDEX.out.versions )
