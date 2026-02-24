@@ -1,8 +1,8 @@
 /*
  * Workflow based around the DeepVariant tool to polish homozygous variants.
  * https://git.mpi-cbg.de/assembly/programs/polishing
- */
-include { getPrimaryAssembly                } from "../../../modules/local/functions"
+*/
+
 include { constructAssemblyRecord           } from "../../../modules/local/functions"
 include { joinByMetaKeys                    } from "../../../modules/local/functions"
 include { combineByMetaKeys                 } from "../../../modules/local/functions"
@@ -49,55 +49,58 @@ workflow DVPOLISH {
     main:
     ch_logs     = channel.empty()
     ch_versions = channel.empty()
+    ch_polished_assemblies = channel.empty() //TEMP TODO
 
-    // Create input channel for assembly-level tasks
-    uniq_assembly_ch = getPrimaryAssembly(ch_assemblies)
+    // Create channels from available haplotypes
+    ch_assemblies.multiMap { meta, assembly ->
+        primary: [meta + [haplotype: 'primary'], assembly.pri_fasta]
+        alternate: params.use_phased ? [meta + [haplotype: 'alternate'], assembly.alt_fasta] : null
+    }.set { haplotype }
+    all_haplotypes = haplotype.primary.mix( haplotype.alternate )
 
-    // Index assembly file(s)
+    // Index assembly files
     SAMTOOLS_FAIDX (
-        uniq_assembly_ch,
+        all_haplotypes,
         [ [] , [] ]
     )
 
-    // Generate BED intervals partitioning the assembly into fixed-size regions
+    // Generate BED intervals partitioning each assembly into fixed-size regions
     DVPOLISH_CHUNKFA (
         SAMTOOLS_FAIDX.out.fai
     )
 
-    // create minimap2 index for assemblies
+    // Create minimap2 index for each assembly
     DVPOLISH_PBMM2_INDEX (
-        uniq_assembly_ch
+        all_haplotypes
     )
 
-    // Create input channel for read-level tasks
-    reads_plus_assembly_ch = combineByMetaKeys (
-        ch_hifi,
-        ch_assemblies,
-        keySet: [ 'id', 'sample' ],
-        meta: 'rhs'
-    )
-    reads_plus_assembly_plus_index_ch = combineByMetaKeys (
-        reads_plus_assembly_ch,
+    // Create channel with assembly, reads, and minimap2 index
+    combineByMetaKeys (
+        combineByMetaKeys (
+            ch_hifi,
+            all_haplotypes,
+            keySet: [ 'id', 'sample' ],
+            meta: 'rhs'
+        ),
         DVPOLISH_PBMM2_INDEX.out.index,
-        keySet: [ 'id', 'sample' ],
+        keySet: [ 'id', 'sample', 'haplotype' ],
         meta: 'lhs'
-    )
-    reads_plus_assembly_plus_index_ch
-        .flatMap { meta, reads, assembly, index -> reads instanceof List ?
-            reads.collect{ [ meta, it, assembly.pri_fasta, index ] }
-            : [ [ meta, reads, assembly.pri_fasta, index ] ] }
-        .multiMap { meta, reads, assembly, index ->
-            reads_ch: [ meta + [ readID: reads.baseName ], reads ]
-            assembly_ch: [ meta, assembly ]
-            index_ch: [ meta, index ]
-        }
-        .set { input }
+    ).flatMap { meta, reads, assembly, index ->
+        reads instanceof List ?
+            reads.collect { [ meta, it, assembly, index ] } : [ [ meta, reads, assembly, index ] ]
+    }.multiMap { meta, reads, assembly, index ->
+        reads_ch: [ meta + [ readID: reads.baseName ], reads ]
+        assembly_ch: [ meta, assembly ]
+        index_ch: [ meta, index ]
+    }.set { input }
 
-    // Map reads with pbmm2 to complete assemblies
+    // Map reads with pbmm2
     DVPOLISH_PBMM2_ALIGN (
         input.reads_ch,
         input.index_ch
     )
+
+//TODO temp
 
     // Create channel combining whole genome alignment with bed chunk files
     combineByMetaKeys (
