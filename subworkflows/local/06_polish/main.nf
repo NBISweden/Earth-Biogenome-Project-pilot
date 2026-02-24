@@ -49,14 +49,14 @@ workflow DVPOLISH {
     main:
     ch_logs     = channel.empty()
     ch_versions = channel.empty()
-    ch_polished_assemblies = channel.empty() //TEMP TODO
 
-    // Create channels from available haplotypes
+    // Create tagged channels for each available haplotype + mix
     ch_assemblies.multiMap { meta, assembly ->
         primary: [meta + [haplotype: 'primary'], assembly.pri_fasta]
-        alternate: params.use_phased ? [meta + [haplotype: 'alternate'], assembly.alt_fasta] : null
+        alternate: [meta + [haplotype: 'alternate'], assembly.alt_fasta]
     }.set { haplotype }
-    all_haplotypes = haplotype.primary.mix( haplotype.alternate )
+
+    all_haplotypes = params.use_phased ? haplotype.primary.mix( haplotype.alternate ) : haplotype.primary
 
     // Index assembly files
     SAMTOOLS_FAIDX (
@@ -100,21 +100,17 @@ workflow DVPOLISH {
         input.index_ch
     )
 
-//TODO temp
-
-    // Create channel combining whole genome alignment with bed chunk files
+    // Combine indexed bam with bed chunk file, tag by region (mergeID) and emit each region separately
     combineByMetaKeys (
         DVPOLISH_PBMM2_ALIGN.out.bam_bai,
         DVPOLISH_CHUNKFA.out.bed.transpose(),
-        keySet: [ 'sample', 'assembly' ],
+        keySet: [ 'sample', 'assembly', 'haplotype' ],
         meta: 'rhs'
-    )
-    .multiMap { meta, bam, bai, bed ->
+    ).multiMap { meta, bam, bai, bed ->
         meta_bam_bai_ch:  [ meta + [ mergeID: bed.baseName ], bam, bai ]
         meta_bed_ch:      [ meta + [ mergeID: bed.baseName ], bed ]
         bed_ch:             bed
-    }
-    .set { alignment } // Note on meta: readID dropped, mergeID added
+    }.set { alignment }
 
     // Split alignment bam by BED coordinates
     SAMTOOLS_VIEW (
@@ -123,7 +119,7 @@ workflow DVPOLISH {
         alignment.bed_ch
     )
 
-    // Groups BAMs on meta (BAMs from different readsets covering the same BED region are grouped)
+    // Group BAMs on meta (i.e. mergeID + haplotype). BAMs from different readsets covering the same BED region are grouped
     SAMTOOLS_VIEW.out.bam
         .groupTuple(by:0)
         .branch { _meta, bam_list ->
@@ -132,7 +128,7 @@ workflow DVPOLISH {
         }
         .set { bam_merge_ch }
 
-    // Merge BAMs aligned to the same region (originating from different input readsets). key:bed file ID
+    // Merge any BAMs from different readsets aligned to the same region. key:bed file ID
     SAMTOOLS_MERGE (
         bam_merge_ch.multiples,
         [ [], [] ],
@@ -156,18 +152,18 @@ workflow DVPOLISH {
         .join( alignment.meta_bed_ch )
         .set { dv_bam_bai_bed_ch }
 
-    // Join assembly with samtools index
+    // Join each assembly with samtools index
     asm_fai_ch = joinByMetaKeys (
-        uniq_assembly_ch,
+        all_haplotypes,
         SAMTOOLS_FAIDX.out.fai,
-        keySet: [ 'sample', 'assembly' ],
+        keySet: [ 'sample', 'assembly', 'haplotype' ],
         meta: 'lhs'
     )
     // Create DeepVariant input channel
     combineByMetaKeys (
         dv_bam_bai_bed_ch,
         asm_fai_ch,
-        keySet: ['sample', 'assembly' ],
+        keySet: [ 'sample', 'assembly', 'haplotype' ],
         meta: 'lhs'
     )
     .multiMap { meta, bam, bai, bed, fasta, fai ->
@@ -223,15 +219,13 @@ workflow DVPOLISH {
     joinByMetaKeys (
         vcf_merge_ch.multiples,
         asm_fai_ch,
-        keySet: ['sample','assembly'],
+        keySet: [ 'sample','assembly', 'haplotype' ],
         meta: 'lhs'
-    )
-    .multiMap { meta, vcfs, tbis, fasta, fai ->
+    ).multiMap { meta, vcfs, tbis, fasta, fai ->
         vcf_tbis_ch:    [ meta, vcfs, tbis ]
         fasta_ch:       [ meta, fasta ]
         fai_ch:         [ meta, fai ]
-    }
-    .set { bcf_input }
+    }.set { bcf_input }
     BCFTOOLS_MERGE(
         bcf_input.vcf_tbis_ch,
         bcf_input.fasta_ch,
@@ -252,8 +246,8 @@ workflow DVPOLISH {
     )
     vcf_plus_index_plus_assembly_ch = joinByMetaKeys (
         vcf_plus_index_ch,
-        uniq_assembly_ch,
-        keySet: [ 'sample', 'assembly' ],
+        all_haplotypes,
+        keySet: [ 'sample', 'assembly', 'haplotype' ],
         meta: 'lhs'
     )
 
@@ -266,7 +260,7 @@ workflow DVPOLISH {
     MERQURY_INPUT_ASM (
         combineByMetaKeys (
             ch_meryl_hifi,
-            uniq_assembly_ch,
+            all_haplotypes,
             keySet: [ 'id', 'sample' ],
             meta: 'rhs'
         )
@@ -284,21 +278,21 @@ workflow DVPOLISH {
 
     // combine merqury results & assemblies
     unpolASM_merqQV_ch = combineByMetaKeys(
-        uniq_assembly_ch,
+        all_haplotypes,
         MERQURY_INPUT_ASM.out.scaffold_qv,
-        keySet: [ 'id', 'assembly' ],
+        keySet: [ 'id', 'assembly', 'haplotype' ],
         meta: 'rhs'
     )
     polASM_merqQV_ch = combineByMetaKeys(
         BCFTOOLS_CONSENSUS.out.fasta,
         MERQURY_POLISHED_ASM.out.scaffold_qv,
-        keySet: [ 'id', 'assembly' ],
+        keySet: [ 'id', 'assembly', 'haplotype' ],
         meta: 'rhs'
     )
     combineByMetaKeys(
         unpolASM_merqQV_ch,
         polASM_merqQV_ch,
-        keySet: [ 'id', 'assembly' ],
+        keySet: [ 'id', 'assembly', 'haplotype' ],
         meta: 'rhs'
     )
     .multiMap { meta, unpol_asm, unpol_qv, pol_asm, pol_qv ->
@@ -313,7 +307,10 @@ workflow DVPOLISH {
     )
 
     ch_polished_assemblies = constructAssemblyRecord(
-        DVPOLISH_CREATE_FINALASM.out.fasta_gz,
+        DVPOLISH_CREATE_FINALASM.out.fasta_gz
+            .map { meta, fasta ->
+                [ meta.subMap(meta.keySet()-['haplotype']), fasta ]
+            },
         params.use_phased
     )
 
@@ -345,4 +342,5 @@ workflow DVPOLISH {
     assemblies = ch_polished_assemblies
     logs       = ch_logs
     versions   = ch_versions
+
 }

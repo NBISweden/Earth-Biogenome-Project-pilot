@@ -182,7 +182,7 @@ workflow {
         // Run polishers
         DVPOLISH (
             ch_to_polish,
-            ch_hifi,
+            PREPARE_INPUT.out.hifi_merged,
             BUILD_MERYL_HIFI_DATABASE.out.uniondb
         )
         ch_evaluate_assemblies = ch_evaluate_assemblies.mix( DVPOLISH.out.assemblies )
