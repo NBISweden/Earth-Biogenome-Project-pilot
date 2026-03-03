@@ -12,7 +12,6 @@ include { DVPOLISH_PBMM2_ALIGN              } from "../../../modules/local/dvpol
 include { SAMTOOLS_FAIDX                    } from "../../../modules/nf-core/samtools/faidx/main"
 include { SAMTOOLS_VIEW                     } from "../../../modules/nf-core/samtools/view/main"
 include { SAMTOOLS_INDEX                    } from "../../../modules/nf-core/samtools/index/main"
-include { SAMTOOLS_MERGE                    } from "../../../modules/nf-core/samtools/merge/main"
 include { DEEPVARIANT                       } from "../../../modules/nf-core/deepvariant/rundeepvariant/main"
 include { BCFTOOLS_VIEW                     } from "../../../modules/nf-core/bcftools/view/main"
 include { TABIX_TABIX as TABIX_TABIX        } from "../../../modules/nf-core/tabix/tabix/main"
@@ -28,11 +27,10 @@ outline:
 
 |- create pbmm2 index for assembly (1)
 |- create bed chunks for given assembly (1..n)
-|- align all read files to full assembly (1..m)
-    \- split each alignment file to contig according to bed chunks files (n*m)
-    |- in case of multiple read files (therefore optional) merge all read files that belong to same assembly chunk (1..n)
-    |- index merged alignment files (1..n)
-    |- call variants with DeepVartiant (1..n)
+|- align reads to full assembly (1)
+    \- split alignment by bed chunk regions (1..n)
+    |- index chunk alignment files (1..n)
+    |- call variants with DeepVariant (1..n)
     |- filter variants (PASS + homozygous) (1..n)
     |- create tabix index files  (1..n)
     |- merge all variants (1)
@@ -55,7 +53,6 @@ workflow DVPOLISH {
         primary: [meta + [haplotype: 'hap1'], assembly.pri_fasta]
         alternate: [meta + [haplotype: 'hap2'], assembly.alt_fasta]
     }.set { haplotype }
-
     all_haplotypes = params.use_phased ? haplotype.primary.mix( haplotype.alternate ) : haplotype.primary
 
     // Index assembly files
@@ -85,11 +82,8 @@ workflow DVPOLISH {
         DVPOLISH_PBMM2_INDEX.out.index,
         keySet: [ 'id', 'sample', 'haplotype' ],
         meta: 'lhs'
-    ).flatMap { meta, reads, assembly, index ->
-        reads instanceof List ?
-            reads.collect { [ meta, it, assembly, index ] } : [ [ meta, reads, assembly, index ] ]
-    }.multiMap { meta, reads, assembly, index ->
-        reads_ch: [ meta + [ readID: reads.baseName ], reads ]
+    ).multiMap { meta, reads, assembly, index ->
+        reads_ch: [ meta, reads ]
         assembly_ch: [ meta, assembly ]
         index_ch: [ meta, index ]
     }.set { input }
@@ -119,46 +113,25 @@ workflow DVPOLISH {
         alignment.bed_ch
     )
 
-    // Group BAMs on meta (i.e. mergeID + haplotype). BAMs from different readsets covering the same BED region are grouped
-    SAMTOOLS_VIEW.out.bam
-        .groupTuple(by:0)
-        .branch { _meta, bam_list ->
-            multiples: bam_list.size() > 1 // Multiple read files aligned to same region
-            singleton: true                // Single read file aligned to region
-        }
-        .set { bam_merge_ch }
-
-    // Merge any BAMs from different readsets aligned to the same region. key:bed file ID
-    SAMTOOLS_MERGE (
-        bam_merge_ch.multiples,
-        [ [], [] ],
-        [ [], [] ]
-    )
-
-    // Mix BAMs for indexing
-    bam_merge_ch.singleton
-        .map { meta, bam -> [ meta, bam[0] ] }
-        .mix( SAMTOOLS_MERGE.out.bam )
-        .set { bams_to_index }
-
-    // Index BAMS
+    // Index partitioned BAMs
     SAMTOOLS_INDEX(
-        bams_to_index
+        SAMTOOLS_VIEW.out.bam
     )
 
-    // Join indexed bams with corresponding BED files
-    bams_to_index
+    // Join partitioned bams with their indexes and corresponding BED files
+    SAMTOOLS_VIEW.out.bam
         .join( SAMTOOLS_INDEX.out.bai )
         .join( alignment.meta_bed_ch )
         .set { dv_bam_bai_bed_ch }
 
-    // Join each assembly with samtools index
-    asm_fai_ch = joinByMetaKeys (
+    // Join each assembly with the corresponding samtools index
+    joinByMetaKeys (
         all_haplotypes,
         SAMTOOLS_FAIDX.out.fai,
         keySet: [ 'sample', 'assembly', 'haplotype' ],
         meta: 'lhs'
-    )
+    ).set { asm_fai_ch }
+
     // Create DeepVariant input channel
     combineByMetaKeys (
         dv_bam_bai_bed_ch,
@@ -325,7 +298,6 @@ workflow DVPOLISH {
         DVPOLISH_PBMM2_INDEX.out.versions.first(),
         DVPOLISH_PBMM2_ALIGN.out.versions.first(),
         SAMTOOLS_VIEW.out.versions.first(),
-        SAMTOOLS_MERGE.out.versions.first(),
         SAMTOOLS_INDEX.out.versions.first(),
         DEEPVARIANT.out.versions.first(),
         BCFTOOLS_VIEW.out.versions.first(),
