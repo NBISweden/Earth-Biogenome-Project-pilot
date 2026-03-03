@@ -52,8 +52,8 @@ workflow DVPOLISH {
 
     // Create tagged channels for each available haplotype + mix
     ch_assemblies.multiMap { meta, assembly ->
-        primary: [meta + [haplotype: 'primary'], assembly.pri_fasta]
-        alternate: [meta + [haplotype: 'alternate'], assembly.alt_fasta]
+        primary: [meta + [haplotype: 'hap1'], assembly.pri_fasta]
+        alternate: [meta + [haplotype: 'hap2'], assembly.alt_fasta]
     }.set { haplotype }
 
     all_haplotypes = params.use_phased ? haplotype.primary.mix( haplotype.alternate ) : haplotype.primary
