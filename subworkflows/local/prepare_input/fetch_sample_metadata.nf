@@ -46,9 +46,9 @@ workflow FETCH_SAMPLE_METADATA {
         .map { input, _goat_meta, goat_tsv ->
             def updated_metadata = input
             if( goat_tsv ){
-                def species = goat_tsv.splitCsv( sep:"\t", header: true ).find { tsv -> tsv.scientific_name == input.sample.name }
-                assert species != null : "GOAT_TAXONSEARCH failed to retrieve species information"
-                def busco_lineages = goat_tsv.splitCsv( sep:"\t", header: true )
+                def species = goat_tsv.splitCsv( sep:"\t", header: true, quote: '"' ).find { tsv -> tsv.scientific_name == input.sample.name }
+                assert species != null : "Failed to parse species '${input.sample.name}' in GOAT_TAXONSEARCH output .tsv"
+                def busco_lineages = goat_tsv.splitCsv( sep:"\t", header: true, quote: '"' )
                     .findAll { row -> row.odb10_lineage }
                     .collect { row -> row.odb10_lineage }
                     .join(',')
