@@ -2,4 +2,3 @@ name: mitohifi_findmitoreference
 channels:
   - conda-forge
   - bioconda
-  - defaults
