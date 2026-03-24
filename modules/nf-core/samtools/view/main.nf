@@ -29,9 +29,6 @@ process SAMTOOLS_VIEW {
     def args2 = task.ext.args2 ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     def reference = fasta ? "--reference ${fasta}" : ""
-    // get rid of the qname path, we don't need this and we use 
-    // this to provide all corresponding bai-index files
-    //def readnames = qname ? "--qname-file ${qname}": ""
     def file_type = args.contains("--output-fmt sam") ? "sam" :
                     args.contains("--output-fmt bam") ? "bam" :
                     args.contains("--output-fmt cram") ? "cram" :
