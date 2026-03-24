@@ -12,7 +12,7 @@ include { DVPOLISH_PBMM2_ALIGN              } from "../../../modules/local/dvpol
 include { SAMTOOLS_FAIDX                    } from "../../../modules/nf-core/samtools/faidx/main"
 include { SAMTOOLS_VIEW                     } from "../../../modules/nf-core/samtools/view/main"
 include { SAMTOOLS_INDEX                    } from "../../../modules/nf-core/samtools/index/main"
-include { DEEPVARIANT                       } from "../../../modules/nf-core/deepvariant/rundeepvariant/main"
+include { DEEPVARIANT_RUNDEEPVARIANT        } from "../../../modules/nf-core/deepvariant/rundeepvariant/main"
 include { BCFTOOLS_VIEW                     } from "../../../modules/nf-core/bcftools/view/main"
 include { TABIX_TABIX as TABIX_TABIX        } from "../../../modules/nf-core/tabix/tabix/main"
 include { TABIX_TABIX as TABIX_TABIX_MERGED } from "../../../modules/nf-core/tabix/tabix/main"
@@ -149,16 +149,17 @@ workflow DVPOLISH {
     .set { dv_input }
 
     // run deepvariant on the chunked bam files
-    DEEPVARIANT(
+    DEEPVARIANT_RUNDEEPVARIANT(
         dv_input.bam_bai_bed_ch,    // tuple val(meta), path(input), path(index), path(intervals)
         dv_input.fasta_ch,          // tuple val(meta2), path(fasta)
         dv_input.fai_ch,            // tuple val(meta3), path(fai)
-        [ [], [] ]                  // tuple val(meta4), path(gzi)
+        [ [], [] ],                 // tuple val(meta4), path(gzi)
+        [ [], [] ]                  // tuple val(meta5), path(par_bed)
     )
 
     // Prepare channel with indexed vcf
-    DEEPVARIANT.out.vcf
-        .join(DEEPVARIANT.out.vcf_tbi, by:0)
+    DEEPVARIANT_RUNDEEPVARIANT.out.vcf
+        .join(DEEPVARIANT_RUNDEEPVARIANT.out.vcf_index, by:0)
         .set { bcftools_view_ch }
 
     // filter vcf files for PASS and homozygous variants
@@ -301,7 +302,7 @@ workflow DVPOLISH {
         DVPOLISH_PBMM2_ALIGN.out.versions.first(),
         SAMTOOLS_VIEW.out.versions.first(),
         SAMTOOLS_INDEX.out.versions.first(),
-        DEEPVARIANT.out.versions.first(),
+        DEEPVARIANT_RUNDEEPVARIANT.out.versions.first(),
         BCFTOOLS_VIEW.out.versions.first(),
         TABIX_TABIX.out.versions.first(),
         BCFTOOLS_MERGE.out.versions.first(),

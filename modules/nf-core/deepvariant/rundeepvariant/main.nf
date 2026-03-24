@@ -1,21 +1,26 @@
-process DEEPVARIANT {
+process DEEPVARIANT_RUNDEEPVARIANT {
     tag "$meta.id"
     label 'process_high'
 
-    container "docker.io/google/deepvariant:CL602468145"
+    // FIXME Conda is not supported at the moment
+    // https://github.com/bioconda/bioconda-recipes/pull/45214#issuecomment-1890937836
+    // BUG https://github.com/nf-core/modules/issues/1754
+    // BUG https://github.com/bioconda/bioconda-recipes/issues/30310
+    container "docker.io/google/deepvariant:1.9.0"
 
     input:
     tuple val(meta), path(input), path(index), path(intervals)
     tuple val(meta2), path(fasta)
     tuple val(meta3), path(fai)
     tuple val(meta4), path(gzi)
+    tuple val(meta5), path(par_bed)
 
     output:
-    tuple val(meta), path("${prefix}.vcf.gz")      ,  emit: vcf
-    tuple val(meta), path("${prefix}.vcf.gz.tbi")  ,  emit: vcf_tbi
-    tuple val(meta), path("${prefix}.g.vcf.gz")    ,  emit: gvcf
-    tuple val(meta), path("${prefix}.g.vcf.gz.tbi"),  emit: gvcf_tbi
-    path "versions.yml"                            ,  emit: versions
+    tuple val(meta), path("${prefix}.vcf.gz")             , emit: vcf
+    tuple val(meta), path("${prefix}.vcf.gz.{tbi,csi}")   , emit: vcf_index
+    tuple val(meta), path("${prefix}.g.vcf.gz")           , emit: gvcf
+    tuple val(meta), path("${prefix}.g.vcf.gz.{tbi,csi}") , emit: gvcf_index
+    path "versions.yml"                                   , emit: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -27,7 +32,8 @@ process DEEPVARIANT {
     }
     def args = task.ext.args ?: ''
     prefix = task.ext.prefix ?: "${meta.id}"
-    def regions = intervals ? "--regions=./${intervals}" : ""
+    def regions = intervals ? "--regions=${intervals}" : ""
+    def par_regions = par_bed ? "--par_regions_bed=${par_bed}" : ""
 
     """
     /opt/deepvariant/bin/run_deepvariant \\
@@ -37,7 +43,8 @@ process DEEPVARIANT {
         --output_gvcf=${prefix}.g.vcf.gz \\
         ${args} \\
         ${regions} \\
-        --intermediate_results_dir=intermediate_results \\
+        ${par_regions} \\
+        --intermediate_results_dir=tmp \\
         --num_shards=${task.cpus}
 
     cat <<-END_VERSIONS > versions.yml
@@ -53,9 +60,9 @@ process DEEPVARIANT {
     }
     prefix = task.ext.prefix ?: "${meta.id}"
     """
-    touch ${prefix}.vcf.gz
+    echo "" | gzip > ${prefix}.vcf.gz
     touch ${prefix}.vcf.gz.tbi
-    touch ${prefix}.g.vcf.gz
+    echo "" | gzip > ${prefix}.g.vcf.gz
     touch ${prefix}.g.vcf.gz.tbi
 
     cat <<-END_VERSIONS > versions.yml
