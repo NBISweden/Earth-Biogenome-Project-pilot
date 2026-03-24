@@ -43,6 +43,7 @@ workflow DVPOLISH {
     ch_assemblies // [ meta, assembly ]
     ch_hifi       // [ meta, hifi ]
     ch_meryl_hifi // [ meta, union.meryl ]
+    ch_chunk_size // string, e.g. '100.MB'
 
     main:
     ch_logs     = channel.empty()
@@ -63,7 +64,8 @@ workflow DVPOLISH {
 
     // Generate BED intervals partitioning each assembly into fixed-size regions
     DVPOLISH_CHUNKFA (
-        SAMTOOLS_FAIDX.out.fai
+        SAMTOOLS_FAIDX.out.fai,
+        ch_chunk_size
     )
 
     // Create minimap2 index for each assembly

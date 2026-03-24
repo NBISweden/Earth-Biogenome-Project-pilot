@@ -10,6 +10,7 @@ process DVPOLISH_CHUNKFA {
 
     input:
     tuple val(meta), path(fai)
+    val chunk_size
 
     output:
     tuple val(meta), path ("*.bed", arity: '1..*')        , emit: bed
@@ -21,32 +22,26 @@ process DVPOLISH_CHUNKFA {
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
+    def chunk_size_bytes = MemoryUnit.of(chunk_size).toBytes()
 
-    // Split the string by spaces, then iterate to create a map
-    // assumption all arguments are provided like key1 = value1 key2 = value2 ...
-    def args_map = [:]
-    args.replaceAll(' = ', '=').split().each {
-        def (key, value) = it.split('=')
-        args_map[key.trim()] = value.trim()
-    }
-    def chunk_size = MemoryUnit.of(args_map['chunk_size'] ?: '90MB').toBytes()
-    
     """
     # convert chunk size into base pairs
-    awk -v chunk_size_inBases=${chunk_size} -v prefix=$prefix 'BEGIN {
+    awk -v chunk_size_bases=${chunk_size_bytes} -v prefix=${prefix} '
+    BEGIN {
         block=1
-        cum_basecount=0
-    }{
+        cumulative_bases=0
+    }
+    {
         output_file = sprintf("%s_chunk_%d.bed", prefix, block)
         printf("%s\\t0\\t%s\\n", \$1, \$2) > output_file
-        cum_basecount+=\$2
+        cumulative_bases+=\$2
 
-        if (cum_basecount >= chunk_size_inBases)
-        {
-            cum_basecount=0
-            block+=1
+        if (cumulative_bases >= chunk_size_bases) {
+            cumulative_bases=0
+            block++
         }
-    }' $fai
+    }
+    ' ${fai}
 
     cat <<-END_VERSIONS > versions.yml
     "${task.process}":
