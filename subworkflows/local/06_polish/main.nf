@@ -82,7 +82,7 @@ workflow DVPOLISH {
             meta: 'rhs'
         ),
         DVPOLISH_PBMM2_INDEX.out.index,
-        keySet: [ 'id', 'sample', 'haplotype' ],
+        keySet: [ 'id', 'sample', 'assembly', 'haplotype' ],
         meta: 'lhs'
     ).multiMap { meta, reads, assembly, index ->
         reads_ch: [ meta, reads ]
