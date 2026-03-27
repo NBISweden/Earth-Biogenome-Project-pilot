@@ -195,7 +195,7 @@ workflow DVPOLISH {
     joinByMetaKeys (
         vcf_merge_ch.multiples,
         asm_fai_ch,
-        keySet: [ 'sample','assembly', 'haplotype' ],
+        keySet: [ 'id', 'sample', 'assembly', 'haplotype' ],
         meta: 'lhs'
     ).multiMap { meta, vcfs, tbis, fasta, fai ->
         vcf_tbis_ch:    [ meta, vcfs, tbis ]
