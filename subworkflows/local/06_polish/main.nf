@@ -138,7 +138,7 @@ workflow DVPOLISH {
     combineByMetaKeys (
         dv_bam_bai_bed_ch,
         asm_fai_ch,
-        keySet: [ 'sample', 'assembly', 'haplotype' ],
+        keySet: [ 'id', 'sample', 'assembly', 'haplotype' ],
         meta: 'lhs'
     )
     .multiMap { meta, bam, bai, bed, fasta, fai ->
