@@ -1,0 +1,52 @@
+Changes in component 'nf-core/meryl/unionsum'
+Changes in 'meryl/unionsum/main.nf':
+--- modules/nf-core/meryl/unionsum/main.nf
++++ modules/nf-core/meryl/unionsum/main.nf
+@@ -12,8 +12,8 @@
+     val kvalue
+ 
+     output:
+-    tuple val(meta), path("*.unionsum.meryldb"), emit: meryl_db
+-    path "versions.yml"                        , emit: versions
++    tuple val(meta), path("*.unionsum.meryl"), emit: meryl_db
++    path "versions.yml"                      , emit: versions
+ 
+     when:
+     task.ext.when == null || task.ext.when
+@@ -26,7 +26,7 @@
+         k=$kvalue \\
+         threads=$task.cpus \\
+         $args \\
+-        output ${prefix}.unionsum.meryldb \\
++        output ${prefix}.unionsum.meryl \\
+         $meryl_dbs
+ 
+     cat <<-END_VERSIONS > versions.yml
+@@ -39,7 +39,7 @@
+     def args = task.ext.args ?: ''
+     def prefix = task.ext.prefix ?: "${meta.id}"
+     """
+-    touch ${prefix}.unionsum.meryldb
++    touch ${prefix}.unionsum.meryl
+ 
+     cat <<-END_VERSIONS > versions.yml
+     "${task.process}":
+
+'modules/nf-core/meryl/unionsum/environment.yml' is unchanged
+Changes in 'meryl/unionsum/meta.yml':
+--- modules/nf-core/meryl/unionsum/meta.yml
++++ modules/nf-core/meryl/unionsum/meta.yml
+@@ -36,7 +36,7 @@
+   - meryl_db:
+       type: directory
+       description: A Meryl k-mer database that is the union sum of the input databases
+-      pattern: "*.unionsum.meryldb"
++      pattern: "*.unionsum.meryl"
+ authors:
+   - "@mahesh-panchal"
+ maintainers:
+
+'modules/nf-core/meryl/unionsum/tests/main.nf.test.snap' is unchanged
+'modules/nf-core/meryl/unionsum/tests/main.nf.test' is unchanged
+'modules/nf-core/meryl/unionsum/tests/tags.yml' is unchanged
+************************************************************
