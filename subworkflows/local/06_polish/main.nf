@@ -268,7 +268,7 @@ workflow DVPOLISH {
     combineByMetaKeys(
         unpolASM_merqQV_ch,
         polASM_merqQV_ch,
-        keySet: [ 'id', 'assembly', 'haplotype' ],
+        keySet: [ 'id', 'sample', 'assembly', 'haplotype' ],
         meta: 'rhs'
     )
     .multiMap { meta, unpol_asm, unpol_qv, pol_asm, pol_qv ->
