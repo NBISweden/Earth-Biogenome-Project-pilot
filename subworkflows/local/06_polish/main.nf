@@ -256,7 +256,7 @@ workflow DVPOLISH {
     unpolASM_merqQV_ch = combineByMetaKeys(
         all_haplotypes,
         MERQURY_INPUT_ASM.out.scaffold_qv,
-        keySet: [ 'id', 'assembly', 'haplotype' ],
+        keySet: [ 'id', 'sample', 'assembly', 'haplotype' ],
         meta: 'rhs'
     )
     polASM_merqQV_ch = combineByMetaKeys(
