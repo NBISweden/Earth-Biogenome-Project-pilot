@@ -262,7 +262,7 @@ workflow DVPOLISH {
     polASM_merqQV_ch = combineByMetaKeys(
         BCFTOOLS_CONSENSUS.out.fasta,
         MERQURY_POLISHED_ASM.out.scaffold_qv,
-        keySet: [ 'id', 'assembly', 'haplotype' ],
+        keySet: [ 'id', 'sample', 'assembly', 'haplotype' ],
         meta: 'rhs'
     )
     combineByMetaKeys(
