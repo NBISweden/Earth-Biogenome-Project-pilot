@@ -120,11 +120,10 @@
             "git_sha": "603ecbd9f45300c9788f197d2a15a005685b4220",
             "installed_by": ["modules"]
           },
-          "merqury": {
+          "merqury/merqury": {
             "branch": "master",
-            "git_sha": "3f5420aa22e00bd030a2556dfdffc9e164ec0ec5",
-            "installed_by": ["modules"],
-            "patch": "modules/nf-core/merqury/merqury.diff"
+            "git_sha": "2848f7bd74e32162b6b63c7de3fe27efbe71e5fd",
+            "installed_by": ["modules"]
           },
           "merquryfk/katcomp": {
             "branch": "master",

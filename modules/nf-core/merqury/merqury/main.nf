@@ -1,10 +1,11 @@
-process MERQURY {
+process MERQURY_MERQURY {
     tag "$meta.id"
     label 'process_low'
 
+    // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
-        'https://depot.galaxyproject.org/singularity/merqury:1.3--hdfd78af_4' :
+        'https://depot.galaxyproject.org/singularity/merqury:1.3--hdfd78af_4':
         'biocontainers/merqury:1.3--hdfd78af_4' }"
 
     input:
@@ -26,7 +27,10 @@ process MERQURY {
     tuple val(meta), path("${prefix}.qv")        , emit: assembly_qv
     tuple val(meta), path("${prefix}.*.qv")      , emit: scaffold_qv
     tuple val(meta), path("*.hist.ploidy")       , emit: read_ploidy
-    path "versions.yml"                          , emit: versions
+    tuple val(meta), path("*.hapmers.blob.png")  , emit: hapmers_blob_png           , optional: true
+    // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
+    tuple val("${task.process}"), val('merqury'), val('1.3')  , emit: versions_merqury, topic: versions
+    tuple val("${task.process}"), val('meryl')  , val('1.4.1'), emit: versions_meryl  , topic: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -34,8 +38,6 @@ process MERQURY {
     script:
     // def args = task.ext.args ?: ''
     prefix = task.ext.prefix ?: "${meta.id}"
-    def MERQURY_VERSION = "1.3"
-    def MERYL_VERSION = "1.4.1"
     """
     # Nextflow changes the container --entrypoint to /bin/bash (container default entrypoint: /usr/local/env-execute)
     # Check for container variable initialisation script and source it.
@@ -51,11 +53,25 @@ process MERQURY {
         $meryl_db \\
         $assembly \\
         $prefix
+    """
 
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        merqury: $MERQURY_VERSION
-        meryl: $MERYL_VERSION
-    END_VERSIONS
+    stub:
+    prefix = task.ext.prefix ?: "${meta.id}"
+    """
+    touch ${prefix}_only.bed
+    touch ${prefix}_only.wig
+    touch ${prefix}.completeness.stats
+    touch ${prefix}.dist_only.hist
+    touch ${prefix}.spectra-cn.fl.png
+    touch ${prefix}.spectra-cn.hist
+    touch ${prefix}.spectra-cn.ln.png
+    touch ${prefix}.spectra-cn.st.png
+    touch ${prefix}.spectra-asm.fl.png
+    touch ${prefix}.spectra-asm.hist
+    touch ${prefix}.spectra-asm.ln.png
+    touch ${prefix}.spectra-asm.st.png
+    touch ${prefix}.qv
+    touch ${prefix}.${prefix}.qv
+    touch ${prefix}.hist.ploidy
     """
 }
