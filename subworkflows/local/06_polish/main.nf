@@ -100,7 +100,7 @@ workflow DVPOLISH {
     combineByMetaKeys (
         DVPOLISH_PBMM2_ALIGN.out.bam_bai,
         DVPOLISH_CHUNKFA.out.bed.transpose(),
-        keySet: [ 'sample', 'assembly', 'haplotype' ],
+        keySet: [ 'id', 'sample', 'assembly', 'haplotype' ],
         meta: 'rhs'
     ).multiMap { meta, bam, bai, bed ->
         meta_bam_bai_ch:  [ meta + [ mergeID: bed.baseName ], bam, bai ]
