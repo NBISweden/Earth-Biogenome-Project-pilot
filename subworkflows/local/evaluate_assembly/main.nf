@@ -1,10 +1,10 @@
-include { combineByMetaKeys    } from "../../../modules/local/functions"
-include { getEachAssembly      } from "../../../modules/local/functions"
-include { getPrimaryAssembly   } from "../../../modules/local/functions"
-include { BUSCO_BUSCO as BUSCO } from "../../../modules/nf-core/busco/busco/main"
-include { MERQURYFK_MERQURYFK  } from "../../../modules/nf-core/merquryfk/merquryfk"
-include { MERQURY              } from "../../../modules/nf-core/merqury/main"
-include { GFASTATS             } from "../../../modules/nf-core/gfastats/main"
+include { combineByMetaKeys          } from "../../../modules/local/functions"
+include { getEachAssembly            } from "../../../modules/local/functions"
+include { getPrimaryAssembly         } from "../../../modules/local/functions"
+include { BUSCO_BUSCO as BUSCO       } from "../../../modules/nf-core/busco/busco/main"
+include { MERQURYFK_MERQURYFK        } from "../../../modules/nf-core/merquryfk/merquryfk"
+include { MERQURY_MERQURY as MERQURY } from "../../../modules/nf-core/merqury/merqury/main"
+include { GFASTATS                   } from "../../../modules/nf-core/gfastats/main"
 
 workflow EVALUATE_ASSEMBLY {
 
@@ -101,7 +101,6 @@ workflow EVALUATE_ASSEMBLY {
         .set { logs }
     MERQURYFK_MERQURYFK.out.versions.first().mix(
         GFASTATS.out.versions.first(),
-        MERQURY.out.versions.first(),
         BUSCO.out.versions.first()
     ).set { versions }
 

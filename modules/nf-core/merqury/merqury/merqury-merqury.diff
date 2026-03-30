@@ -1,0 +1,31 @@
+Changes in component 'nf-core/merqury/merqury'
+'modules/nf-core/merqury/merqury/environment.yml' is unchanged
+'modules/nf-core/merqury/merqury/meta.yml' is unchanged
+Changes in 'merqury/merqury/main.nf':
+--- modules/nf-core/merqury/merqury/main.nf
++++ modules/nf-core/merqury/merqury/main.nf
+@@ -5,8 +5,8 @@
+     // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
+     conda "${moduleDir}/environment.yml"
+     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
+-        'https://depot.galaxyproject.org/singularity/merqury:1.3--hdfd78af_1':
+-        'biocontainers/merqury:1.3--hdfd78af_1' }"
++        'https://depot.galaxyproject.org/singularity/merqury:1.3--hdfd78af_4':
++        'biocontainers/merqury:1.3--hdfd78af_4' }"
+ 
+     input:
+     tuple val(meta), path(meryl_db), path(assembly)
+@@ -29,7 +29,8 @@
+     tuple val(meta), path("*.hist.ploidy")       , emit: read_ploidy
+     tuple val(meta), path("*.hapmers.blob.png")  , emit: hapmers_blob_png           , optional: true
+     // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
+-    tuple val("${task.process}"), val('merqury'), val('1.3'), emit: versions_merqury, topic: versions
++    tuple val("${task.process}"), val('merqury'), val('1.3')  , emit: versions_merqury, topic: versions
++    tuple val("${task.process}"), val('meryl')  , val('1.4.1'), emit: versions_meryl  , topic: versions
+ 
+     when:
+     task.ext.when == null || task.ext.when
+
+'modules/nf-core/merqury/merqury/tests/main.nf.test.snap' is unchanged
+'modules/nf-core/merqury/merqury/tests/main.nf.test' is unchanged
+************************************************************

@@ -3,23 +3,23 @@
  * https://git.mpi-cbg.de/assembly/programs/polishing
 */
 
-include { constructAssemblyRecord           } from "../../../modules/local/functions"
-include { joinByMetaKeys                    } from "../../../modules/local/functions"
-include { combineByMetaKeys                 } from "../../../modules/local/functions"
-include { DVPOLISH_CHUNKFA                  } from "../../../modules/local/dvpolish/chunkfa"
-include { DVPOLISH_PBMM2_INDEX              } from "../../../modules/local/dvpolish/pbmm2_index"
-include { DVPOLISH_PBMM2_ALIGN              } from "../../../modules/local/dvpolish/pbmm2_align"
-include { SAMTOOLS_FAIDX                    } from "../../../modules/nf-core/samtools/faidx/main"
-include { SAMTOOLS_VIEW                     } from "../../../modules/nf-core/samtools/view/main"
-include { DEEPVARIANT_RUNDEEPVARIANT        } from "../../../modules/nf-core/deepvariant/rundeepvariant/main"
-include { BCFTOOLS_VIEW                     } from "../../../modules/nf-core/bcftools/view/main"
-include { TABIX_TABIX as TABIX_TABIX        } from "../../../modules/nf-core/tabix/tabix/main"
-include { TABIX_TABIX as TABIX_TABIX_MERGED } from "../../../modules/nf-core/tabix/tabix/main"
-include { BCFTOOLS_MERGE                    } from "../../../modules/nf-core/bcftools/merge/main"
-include { BCFTOOLS_CONSENSUS                } from "../../../modules/nf-core/bcftools/consensus/main"
-include { MERQURY as MERQURY_INPUT_ASM      } from "../../../modules/nf-core/merqury/main"
-include { MERQURY as MERQURY_POLISHED_ASM   } from "../../../modules/nf-core/merqury/main"
-include { DVPOLISH_CREATE_FINALASM          } from "../../../modules/local/dvpolish/createFinalAsm"
+include { constructAssemblyRecord                 } from "../../../modules/local/functions"
+include { joinByMetaKeys                          } from "../../../modules/local/functions"
+include { combineByMetaKeys                       } from "../../../modules/local/functions"
+include { DVPOLISH_CHUNKFA                        } from "../../../modules/local/dvpolish/chunkfa"
+include { DVPOLISH_PBMM2_INDEX                    } from "../../../modules/local/dvpolish/pbmm2_index"
+include { DVPOLISH_PBMM2_ALIGN                    } from "../../../modules/local/dvpolish/pbmm2_align"
+include { SAMTOOLS_FAIDX                          } from "../../../modules/nf-core/samtools/faidx/main"
+include { SAMTOOLS_VIEW                           } from "../../../modules/nf-core/samtools/view/main"
+include { DEEPVARIANT_RUNDEEPVARIANT              } from "../../../modules/nf-core/deepvariant/rundeepvariant/main"
+include { BCFTOOLS_VIEW                           } from "../../../modules/nf-core/bcftools/view/main"
+include { TABIX_TABIX as TABIX_TABIX              } from "../../../modules/nf-core/tabix/tabix/main"
+include { TABIX_TABIX as TABIX_TABIX_MERGED       } from "../../../modules/nf-core/tabix/tabix/main"
+include { BCFTOOLS_MERGE                          } from "../../../modules/nf-core/bcftools/merge/main"
+include { BCFTOOLS_CONSENSUS                      } from "../../../modules/nf-core/bcftools/consensus/main"
+include { MERQURY_MERQURY as MERQURY_INPUT_ASM    } from "../../../modules/nf-core/merqury/merqury/main"
+include { MERQURY_MERQURY as MERQURY_POLISHED_ASM } from "../../../modules/nf-core/merqury/merqury/main"
+include { DVPOLISH_CREATE_FINALASM                } from "../../../modules/local/dvpolish/createFinalAsm"
 
 /*
 outline:
@@ -301,8 +301,6 @@ workflow DVPOLISH {
         BCFTOOLS_MERGE.out.versions.first(),
         TABIX_TABIX_MERGED.out.versions.first(),
         BCFTOOLS_CONSENSUS.out.versions.first(),
-        MERQURY_INPUT_ASM.out.versions.first(),
-        MERQURY_POLISHED_ASM.out.versions.first(),
         DVPOLISH_CREATE_FINALASM.out.versions.first()
     )
 
