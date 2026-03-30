@@ -11,7 +11,6 @@ include { DVPOLISH_PBMM2_INDEX              } from "../../../modules/local/dvpol
 include { DVPOLISH_PBMM2_ALIGN              } from "../../../modules/local/dvpolish/pbmm2_align"
 include { SAMTOOLS_FAIDX                    } from "../../../modules/nf-core/samtools/faidx/main"
 include { SAMTOOLS_VIEW                     } from "../../../modules/nf-core/samtools/view/main"
-include { SAMTOOLS_INDEX                    } from "../../../modules/nf-core/samtools/index/main"
 include { DEEPVARIANT_RUNDEEPVARIANT        } from "../../../modules/nf-core/deepvariant/rundeepvariant/main"
 include { BCFTOOLS_VIEW                     } from "../../../modules/nf-core/bcftools/view/main"
 include { TABIX_TABIX as TABIX_TABIX        } from "../../../modules/nf-core/tabix/tabix/main"
@@ -296,7 +295,6 @@ workflow DVPOLISH {
         DVPOLISH_CHUNKFA.out.versions.first(),
         DVPOLISH_PBMM2_INDEX.out.versions.first(),
         DVPOLISH_PBMM2_ALIGN.out.versions.first(),
-        SAMTOOLS_INDEX.out.versions.first(),
         DEEPVARIANT_RUNDEEPVARIANT.out.versions.first(),
         BCFTOOLS_VIEW.out.versions.first(),
         TABIX_TABIX.out.versions.first(),
