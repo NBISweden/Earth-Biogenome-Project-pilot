@@ -105,24 +105,20 @@ workflow DVPOLISH {
     ).multiMap { meta, bam, bai, bed ->
         meta_bam_bai_ch:  [ meta + [ mergeID: bed.baseName ], bam, bai ]
         meta_bed_ch:      [ meta + [ mergeID: bed.baseName ], bed ]
-        bed_ch:             bed
     }.set { alignment }
 
     // Split alignment bam by BED coordinates
     SAMTOOLS_VIEW (
         alignment.meta_bam_bai_ch,
+        [ [],[],[] ],
         [ [],[] ],
-        alignment.bed_ch
-    )
-
-    // Index partitioned BAMs
-    SAMTOOLS_INDEX(
-        SAMTOOLS_VIEW.out.bam
+        alignment.meta_bed_ch,
+        'bai'
     )
 
     // Join partitioned bams with their indexes and corresponding BED files
     SAMTOOLS_VIEW.out.bam
-        .join( SAMTOOLS_INDEX.out.bai )
+        .join( SAMTOOLS_VIEW.out.bai )
         .join( alignment.meta_bed_ch )
         .set { dv_bam_bai_bed_ch }
 
@@ -300,7 +296,6 @@ workflow DVPOLISH {
         DVPOLISH_CHUNKFA.out.versions.first(),
         DVPOLISH_PBMM2_INDEX.out.versions.first(),
         DVPOLISH_PBMM2_ALIGN.out.versions.first(),
-        SAMTOOLS_VIEW.out.versions.first(),
         SAMTOOLS_INDEX.out.versions.first(),
         DEEPVARIANT_RUNDEEPVARIANT.out.versions.first(),
         BCFTOOLS_VIEW.out.versions.first(),
