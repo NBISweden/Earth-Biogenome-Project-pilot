@@ -3,6 +3,8 @@
 // Functions
 include { assembliesFromStage as preassembledInput          } from "./modules/local/functions"
 include { setAssemblyStage                                  } from "./modules/local/functions"
+include { workflowVersionToYAML                             } from "./modules/local/functions"
+include { softwareVersionsToYAML                            } from "./modules/local/functions"
 // Data import
 include { PREPARE_INPUT                                     } from "./subworkflows/local/prepare_input/main"
 // Database preparation
@@ -269,7 +271,6 @@ workflow {
             ]
         },
         ch_multiqc_files,
-        ch_versions,
         [
             diagnostics: "debug" in workflow.profile.tokenize(","),
             nuclear_assembly_mode: params.nuclear_assembly_mode,
@@ -278,7 +279,38 @@ workflow {
             [(step): step in params.steps.tokenize(",")]
         }
     )
+    ch_versions = ch_versions.mix(
+        ASSEMBLY_REPORT.out.versions
+    )
 
+    // Collate and save software versions
+    def topic_versions = Channel.topic("versions")
+        .distinct()
+        .branch { entry ->
+            versions_file: entry instanceof Path
+            versions_tuple: true
+        }
+
+    def topic_versions_string = topic_versions.versions_tuple
+        .map { process, tool, version ->
+            [ process, "  ${tool}: ${version}" ]
+        }
+        .groupTuple(by:0)
+        .map { process, tool_versions ->
+            tool_versions.unique().sort()
+            "${process}:\n${tool_versions.join('\n')}"
+        }
+
+    softwareVersionsToYAML(ch_versions.mix(topic_versions.versions_file))
+        .mix(topic_versions_string)
+        .collectFile(
+            storeDir: "${params.outdir}/10_report",
+            name: 'versions.yml',
+            sort: true,
+            newLine: true
+        ).set { ch_collated_versions }
+
+    // Completion message
     workflow.onComplete = {
         if( workflow.success ){
             log.info("""
