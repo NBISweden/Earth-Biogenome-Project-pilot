@@ -130,7 +130,7 @@ workflow DVPOLISH {
     joinByMetaKeys (
         all_haplotypes,
         SAMTOOLS_FAIDX.out.fai,
-        keySet: [ 'sample', 'assembly', 'haplotype' ],
+        keySet: [ 'id', 'sample', 'assembly', 'haplotype' ],
         meta: 'lhs'
     ).set { asm_fai_ch }
 
