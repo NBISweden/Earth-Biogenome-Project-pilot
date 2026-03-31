@@ -228,12 +228,12 @@
           },
           "seqkit/stats": {
             "branch": "master",
-            "git_sha": "9fe7867a4f012db581d7bd560228ded1074eb0e5",
+            "git_sha": "bf70cbf44b42ff4a81afcb673fcef604f5ef3a85",
             "installed_by": ["modules"]
           },
           "seqtk/cutn": {
             "branch": "master",
-            "git_sha": "666652151335353eef2fcd58880bcef5bc2928e1",
+            "git_sha": "a46713779030a5f508117080cbf4b693dd4c6e33",
             "installed_by": ["modules"]
           },
           "star/align": {
@@ -250,7 +250,7 @@
           },
           "tabix/tabix": {
             "branch": "master",
-            "git_sha": "3f5420aa22e00bd030a2556dfdffc9e164ec0ec5",
+            "git_sha": "524a7d5ef99a0cbfb4feec8bf7062eb6a531931a",
             "installed_by": ["modules"]
           },
           "tidk/plot": {

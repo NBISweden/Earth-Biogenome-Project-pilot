@@ -22,9 +22,7 @@ workflow INSPECT_DATA {
     GENOME_PROPERTIES ( hifi_histogram )
     COMPARE_LIBRARIES ( hifi_histogram.join( hic_histogram ) )
     ch_versions =  GENOME_PROPERTIES.out.versions.mix(
-        COMPARE_LIBRARIES.out.versions,
-        SEQKIT_HIFI_STATS.out.versions.first(),
-        SEQKIT_HIC_STATS.out.versions.first(),
+        COMPARE_LIBRARIES.out.versions
     )
 
     GENOME_PROPERTIES.out.logs

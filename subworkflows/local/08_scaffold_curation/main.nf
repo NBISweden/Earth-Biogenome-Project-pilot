@@ -239,7 +239,6 @@ workflow SCAFFOLD_CURATION {
 
     // Gap-track: create bedtrack
     SEQTK_CUTN(ch_primary_assembly)
-    ch_versions  = ch_versions.mix( SEQTK_CUTN.out.versions )
 
     // Gap-track: create beddb- and bed-gap tracks
     joinByMetaKeys(

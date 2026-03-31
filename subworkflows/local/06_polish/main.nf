@@ -176,7 +176,7 @@ workflow DVPOLISH {
         .map { meta, vcf -> [ meta - meta.subMap( 'mergeID' ), vcf ] }
         .groupTuple(by:0)
         .set { filt_vcf_list_ch }
-    TABIX_TABIX.out.tbi
+    TABIX_TABIX.out.index
         .map { meta, tbi -> [ meta - meta.subMap( 'mergeID' ), tbi ] }
         .groupTuple( by:0 )
         .set { filt_tbi_list_ch }
@@ -210,7 +210,7 @@ workflow DVPOLISH {
     vcf_plus_index_ch = vcf_merge_ch.singleton
         .map { meta, vcf, idx  -> [ meta, vcf[0], idx[0] ] }
         .mix(BCFTOOLS_MERGE.out.vcf
-        .join(TABIX_TABIX_MERGED.out.tbi)
+        .join(TABIX_TABIX_MERGED.out.index)
     )
     vcf_plus_index_plus_assembly_ch = joinByMetaKeys (
         vcf_plus_index_ch,
@@ -293,8 +293,6 @@ workflow DVPOLISH {
         DVPOLISH_CHUNKFA.out.versions.first(),
         DVPOLISH_PBMM2_INDEX.out.versions.first(),
         DVPOLISH_PBMM2_ALIGN.out.versions.first(),
-        TABIX_TABIX.out.versions.first(),
-        TABIX_TABIX_MERGED.out.versions.first(),
         DVPOLISH_CREATE_FINALASM.out.versions.first()
     )
 
