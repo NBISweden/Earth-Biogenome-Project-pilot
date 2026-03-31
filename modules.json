@@ -122,9 +122,8 @@
           },
           "merqury/merqury": {
             "branch": "master",
-            "git_sha": "2848f7bd74e32162b6b63c7de3fe27efbe71e5fd",
-            "installed_by": ["modules"],
-            "patch": "modules/nf-core/merqury/merqury/merqury-merqury.diff"
+            "git_sha": "b4efa75bc2e8e40641b75a3757a408cb60707dbe",
+            "installed_by": ["modules"]
           },
           "merquryfk/katcomp": {
             "branch": "master",
