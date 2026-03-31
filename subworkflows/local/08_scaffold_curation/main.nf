@@ -9,7 +9,6 @@ include { BIOBAMBAM_BAMMARKDUPLICATES2          } from "../../../modules/nf-core
 include { SAMTOOLS_FAIDX                        } from "../../../modules/nf-core/samtools/faidx/main"
 include { SAMTOOLS_MERGE as SAMTOOLS_MERGE_HIC  } from "../../../modules/nf-core/samtools/merge/main"
 include { SAMTOOLS_MERGE as SAMTOOLS_MERGE_HIFI } from "../../../modules/nf-core/samtools/merge/main"
-include { SAMTOOLS_SORT                         } from "../../../modules/nf-core/samtools/sort/main"
 include { BAM2BED_SORT                          } from "../../../modules/local/hic_curation/bam2bed_sort"
 include { COOLER_CLOAD                          } from "../../../modules/nf-core/cooler/cload/main"
 include { COOLER_ZOOMIFY                        } from "../../../modules/nf-core/cooler/zoomify/main"
