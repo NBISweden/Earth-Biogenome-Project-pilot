@@ -85,7 +85,6 @@ workflow {
     BUILD_MERYL_HIFI_DATABASE ( PREPARE_INPUT.out.hifi )
     BUILD_MERYL_HIC_DATABASE ( CONVERT_FASTQ_CRAM.out.fastq )
     ch_versions = ch_versions.mix(
-        CONVERT_FASTQ_CRAM.out.versions,
         BUILD_FASTK_HIFI_DATABASE.out.versions,
         BUILD_FASTK_HIC_DATABASE.out.versions,
         BUILD_MERYL_HIFI_DATABASE.out.versions,

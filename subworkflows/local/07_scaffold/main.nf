@@ -34,8 +34,8 @@ workflow SCAFFOLD {
     BWAMEM2_INDEX_SCAFFOLD ( ch_to_scaffold )
 
     SAMTOOLS_FAIDX (
-        ch_to_scaffold,
-        [ [ ], [ ] ]
+        ch_to_scaffold.map { meta, assembly -> [ meta, assembly, [] ] }, // [ meta, fasta, fai ]
+        false                                                            // get_sizes
     )
 
     combineByMetaKeys( // Combine (Hi-C + index) with (BWA_INDEX + Assembly)
@@ -123,8 +123,7 @@ workflow SCAFFOLD {
     logs = PAIRTOOLS.out.stat
         .flatten()
 
-    versions = SAMTOOLS_FAIDX.out.versions.first().mix(
-        PAIRTOOLS.out.versions.first(),
+    versions = PAIRTOOLS.out.versions.first().mix(
         YAHS.out.versions.first()
     )
 

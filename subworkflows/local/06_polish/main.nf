@@ -57,8 +57,8 @@ workflow DVPOLISH {
 
     // Index assembly files
     SAMTOOLS_FAIDX (
-        all_haplotypes,
-        [ [] , [] ]
+        all_haplotypes.map { meta, assembly -> [ meta, assembly, [] ] }, // [ meta, fasta, fai ]
+        false                                                            // get_sizes
     )
 
     // Generate BED intervals partitioning each assembly into fixed-size regions
@@ -290,7 +290,6 @@ workflow DVPOLISH {
         .map { _meta, file -> file }
 
     ch_versions = ch_versions.mix(
-        SAMTOOLS_FAIDX.out.versions.first(),
         DVPOLISH_CHUNKFA.out.versions.first(),
         DVPOLISH_PBMM2_INDEX.out.versions.first(),
         DVPOLISH_PBMM2_ALIGN.out.versions.first(),

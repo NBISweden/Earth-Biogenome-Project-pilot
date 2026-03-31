@@ -35,20 +35,20 @@ workflow SCAFFOLD_CURATION {
     main:
 
     ch_versions  = channel.empty()
+    ch_primary_assembly = getPrimaryAssembly(ch_assemblies)
 
-    BWAMEM2_INDEX ( getPrimaryAssembly(ch_assemblies) )
+    BWAMEM2_INDEX ( ch_primary_assembly )
 
     SAMTOOLS_FAIDX (
-        getPrimaryAssembly(ch_assemblies), // [meta, fasta]
-        [ [ ], [ ] ]                       // [meta2, fai]
+        ch_primary_assembly.map { meta, assembly -> [ meta, assembly, [] ] }, // [ meta, fasta, fai ]
+        false                                                                 // get_sizes
     )
-    ch_versions  = ch_versions.mix( SAMTOOLS_FAIDX.out.versions )
 
     combineByMetaKeys( // Combine (Hi-C + index) with ( BWA index + Assembly )
         ch_hic,
         joinByMetaKeys( // Join BWA index with Assembly
             BWAMEM2_INDEX.out.index,
-            getPrimaryAssembly( ch_assemblies ),
+            ch_primary_assembly,
             keySet: ['id','sample','assembly'],
             meta: 'merge'
         ),
@@ -140,7 +140,7 @@ workflow SCAFFOLD_CURATION {
 
     // create pretext maps
     joinByMetaKeys(joinByMetaKeys(
-            getPrimaryAssembly(ch_assemblies),
+            ch_primary_assembly,
             SAMTOOLS_FAIDX.out.fai,
             keySet: ['id','sample','assembly'],
             meta: 'lhs'
@@ -159,14 +159,13 @@ workflow SCAFFOLD_CURATION {
         pretext_ch.bam,
         pretext_ch.fasta_fai
     )
-    ch_versions  = ch_versions.mix( PRETEXTMAP.out.versions )
 
     // create tracks for PretextMap:
     // coverage, gap, telomer
 
     combineByMetaKeys(
         ch_hifi,
-        getPrimaryAssembly( ch_assemblies ),
+        ch_primary_assembly,
         keySet: ['id','sample'],
         meta: 'rhs'
     )
@@ -177,8 +176,7 @@ workflow SCAFFOLD_CURATION {
     .set{ asm_hifi_ch }
 
     // Coverage-track: create minimap2 index
-    MINIMAP2_INDEX(getPrimaryAssembly( ch_assemblies ))
-    ch_versions  = ch_versions.mix( MINIMAP2_INDEX.out.versions )
+    MINIMAP2_INDEX(ch_primary_assembly)
 
     // Coverage-track: align HiFi reads
     MINIMAP2_ALIGN(
@@ -208,7 +206,7 @@ workflow SCAFFOLD_CURATION {
 
     combineByMetaKeys(
         ch_hifi,
-        getPrimaryAssembly( ch_assemblies ),
+        ch_primary_assembly,
         keySet: ['id','sample'],
         meta: 'rhs'
     )
@@ -241,7 +239,7 @@ workflow SCAFFOLD_CURATION {
     ch_versions  = ch_versions.mix( BAM2COVERAGE_TRACKS.out.versions )
 
     // Gap-track: create bedtrack
-    SEQTK_CUTN(getPrimaryAssembly( ch_assemblies ))
+    SEQTK_CUTN(ch_primary_assembly)
     ch_versions  = ch_versions.mix( SEQTK_CUTN.out.versions )
 
     // Gap-track: create beddb- and bed-gap tracks
@@ -265,13 +263,13 @@ workflow SCAFFOLD_CURATION {
 
     // Telomer-track: create track
     TIDK_SEARCH_BEDGRAPH(
-        getPrimaryAssembly( ch_assemblies ),
+        ch_primary_assembly,
         params.telomer_motif
     )
     ch_versions  = ch_versions.mix( TIDK_SEARCH_BEDGRAPH.out.versions )
 
     TIDK_SEARCH_TSV(
-        getPrimaryAssembly( ch_assemblies ),
+        ch_primary_assembly,
         params.telomer_motif
     )
     ch_versions  = ch_versions.mix( TIDK_SEARCH_TSV.out.versions )
