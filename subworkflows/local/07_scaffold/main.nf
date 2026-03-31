@@ -94,16 +94,12 @@ workflow SCAFFOLD {
         ),
         keySet: ['id','sample','assembly','haplotype'],
         meta: 'rhs'
-    ).multiMap{ meta, bam, fasta, fai ->
-        bam:   [ meta, bam ]
-        fasta: [ fasta ]
-        fai:   [ fai ]
+    ).map{ meta, bam, fasta, fai ->
+        [ meta, fasta, fai, bam, [] ] // yahs input map: [ meta, fasta, fai, hic_map, agp ]
     }.set{ yahs_input }
 
     YAHS(
-        yahs_input.bam,
-        yahs_input.fasta,
-        yahs_input.fai
+        yahs_input
     )
 
     ch_scaffolded_haplotypes = YAHS.out.scaffolds_fasta
@@ -123,9 +119,7 @@ workflow SCAFFOLD {
     logs = PAIRTOOLS.out.stat
         .flatten()
 
-    versions = PAIRTOOLS.out.versions.first().mix(
-        YAHS.out.versions.first()
-    )
+    versions = PAIRTOOLS.out.versions.first()
 
     emit:
     assemblies = ch_scaffolded_assemblies
