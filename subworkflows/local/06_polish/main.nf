@@ -193,26 +193,23 @@ workflow DVPOLISH {
         keySet: [ 'id', 'sample', 'assembly', 'haplotype' ],
         meta: 'lhs'
     ).multiMap { meta, vcfs, tbis, fasta, fai ->
-        vcf_tbis_ch:    [ meta, vcfs, tbis ]
-        fasta_ch:       [ meta, fasta ]
-        fai_ch:         [ meta, fai ]
+        vcf_tbis_ch:    [ meta, vcfs, tbis, [] ] // empty path for 'bed' input
+        fasta_ch:       [ meta, fasta, fai ]
     }.set { bcf_input }
     BCFTOOLS_MERGE(
         bcf_input.vcf_tbis_ch,
-        bcf_input.fasta_ch,
-        bcf_input.fai_ch,
-        [] // path(bed)
+        bcf_input.fasta_ch
     )
 
     // index merged vcf file
     TABIX_TABIX_MERGED(
-        BCFTOOLS_MERGE.out.merged_variants
+        BCFTOOLS_MERGE.out.vcf
     )
 
     // Prepare input for consensus step
     vcf_plus_index_ch = vcf_merge_ch.singleton
         .map { meta, vcf, idx  -> [ meta, vcf[0], idx[0] ] }
-        .mix(BCFTOOLS_MERGE.out.merged_variants
+        .mix(BCFTOOLS_MERGE.out.vcf
         .join(TABIX_TABIX_MERGED.out.tbi)
     )
     vcf_plus_index_plus_assembly_ch = joinByMetaKeys (
@@ -220,7 +217,9 @@ workflow DVPOLISH {
         all_haplotypes,
         keySet: [ 'sample', 'assembly', 'haplotype' ],
         meta: 'lhs'
-    )
+    ).map { meta, vcf, tbi, fasta ->
+        tuple(meta, vcf, tbi, fasta, []) // Add empty path for 'mask' input
+    }
 
     // create consensus sequence
     BCFTOOLS_CONSENSUS(
@@ -296,11 +295,8 @@ workflow DVPOLISH {
         DVPOLISH_PBMM2_INDEX.out.versions.first(),
         DVPOLISH_PBMM2_ALIGN.out.versions.first(),
         DEEPVARIANT_RUNDEEPVARIANT.out.versions.first(),
-        BCFTOOLS_VIEW.out.versions.first(),
         TABIX_TABIX.out.versions.first(),
-        BCFTOOLS_MERGE.out.versions.first(),
         TABIX_TABIX_MERGED.out.versions.first(),
-        BCFTOOLS_CONSENSUS.out.versions.first(),
         DVPOLISH_CREATE_FINALASM.out.versions.first()
     )
 
