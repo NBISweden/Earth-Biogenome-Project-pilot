@@ -154,7 +154,7 @@ workflow DVPOLISH {
 
     // Prepare channel with indexed vcf
     DEEPVARIANT_RUNDEEPVARIANT.out.vcf
-        .join(DEEPVARIANT_RUNDEEPVARIANT.out.vcf_index, by:0)
+        .join(DEEPVARIANT_RUNDEEPVARIANT.out.vcf_tbi, by:0)
         .set { bcftools_view_ch }
 
     // filter vcf files for PASS and homozygous variants
@@ -294,7 +294,6 @@ workflow DVPOLISH {
         DVPOLISH_CHUNKFA.out.versions.first(),
         DVPOLISH_PBMM2_INDEX.out.versions.first(),
         DVPOLISH_PBMM2_ALIGN.out.versions.first(),
-        DEEPVARIANT_RUNDEEPVARIANT.out.versions.first(),
         TABIX_TABIX.out.versions.first(),
         TABIX_TABIX_MERGED.out.versions.first(),
         DVPOLISH_CREATE_FINALASM.out.versions.first()

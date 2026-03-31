@@ -57,7 +57,7 @@
           },
           "deepvariant/rundeepvariant": {
             "branch": "master",
-            "git_sha": "dd78204eb24332ec3cdd512fa9a83898f9728842",
+            "git_sha": "ff05d8eb10c1191d87119ff6cfcbbc8ef110afdf",
             "installed_by": ["modules"]
           },
           "fastk/fastk": {
@@ -80,12 +80,12 @@
           },
           "fastp": {
             "branch": "master",
-            "git_sha": "81880787133db07d9b4c1febd152c090eb8325dc",
+            "git_sha": "1fb5a73bce8e4ac7079b0a9461b23d11e877ad14",
             "installed_by": ["modules"]
           },
           "fastqc": {
             "branch": "master",
-            "git_sha": "b1966f36ec9de31927b2603d8f499960b2a4c294",
+            "git_sha": "79b36b51048048374b642289bfe9e591ef56fe05",
             "installed_by": ["modules"]
           },
           "genescopefk": {

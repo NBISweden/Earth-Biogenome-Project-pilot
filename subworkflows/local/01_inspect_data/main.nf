@@ -25,7 +25,6 @@ workflow INSPECT_DATA {
         COMPARE_LIBRARIES.out.versions,
         SEQKIT_HIFI_STATS.out.versions.first(),
         SEQKIT_HIC_STATS.out.versions.first(),
-        FASTQC.out.versions.first()
     )
 
     GENOME_PROPERTIES.out.logs

@@ -10,11 +10,10 @@ workflow CONVERT_FASTQ_CRAM {
     main:
     // Filter
     FASTP(
-        ch_fastq.filter { bool_trim_fastq },
-        [],
+        ch_fastq.filter { bool_trim_fastq }.map { meta, fastq -> tuple(meta, fastq, []) },
         false,
         false,
-        false,
+        false
     )
 
     // Convert to cram
@@ -24,9 +23,8 @@ workflow CONVERT_FASTQ_CRAM {
     SAMTOOLS_INDEX(SAMTOOLS_IMPORT.out.cram)
 
     // Versions
-    FASTP.out.versions.first().mix(
-        SAMTOOLS_IMPORT.out.versions.first(),
-        SAMTOOLS_INDEX.out.versions.first(),
+    SAMTOOLS_IMPORT.out.versions.first().mix(
+        SAMTOOLS_INDEX.out.versions.first()
     ).set { versions }
 
     emit:
