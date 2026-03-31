@@ -72,10 +72,6 @@ workflow FETCH_SAMPLE_METADATA {
             updated_metadata
         }
 
-    GOAT_TAXONSEARCH.out.versions
-    .set { versions }
-
     emit:
     metadata = ch_metadata
-    versions
 }

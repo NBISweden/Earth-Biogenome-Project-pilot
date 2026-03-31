@@ -94,11 +94,6 @@
             "installed_by": ["modules"],
             "patch": "modules/nf-core/genescopefk/genescopefk.diff"
           },
-          "genomescope2": {
-            "branch": "master",
-            "git_sha": "c95215baf20e6d8cf2ae0e8411d03c5d9ef21d4a",
-            "installed_by": ["modules"]
-          },
           "gfastats": {
             "branch": "master",
             "git_sha": "8bc54984b57a02c8712d48274b90c1161bf2c996",
@@ -107,17 +102,12 @@
           },
           "goat/taxonsearch": {
             "branch": "master",
-            "git_sha": "f06ea9b058c2e4af141245ccff58ea5f65808d1a",
+            "git_sha": "489e6605fe7d8843c10408880e27f5bb2c14aff1",
             "installed_by": ["modules"]
           },
           "hifiasm": {
             "branch": "master",
             "git_sha": "41dfa3f7c0ffabb96a6a813fe321c6d1cc5b6e46",
-            "installed_by": ["modules"]
-          },
-          "kraken2/kraken2": {
-            "branch": "master",
-            "git_sha": "603ecbd9f45300c9788f197d2a15a005685b4220",
             "installed_by": ["modules"]
           },
           "merqury/merqury": {
