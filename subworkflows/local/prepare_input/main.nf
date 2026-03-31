@@ -200,9 +200,7 @@ workflow PREPARE_INPUT {
         .set { isoseq_fastx_ch }
 
     // versions
-    FETCH_SAMPLE_METADATA.out.versions.mix(
-        SAMTOOLS_FASTA.out.versions.first()
-    ).set { versions }
+    SAMTOOLS_FASTA.out.versions.first().set { versions }
 
     emit:
     sample_meta = FETCH_SAMPLE_METADATA.out.metadata.map { data -> data.subMap('sample') }

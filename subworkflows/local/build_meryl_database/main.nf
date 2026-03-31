@@ -13,8 +13,7 @@ workflow BUILD_MERYL_DATABASE {
     MERYL_HISTOGRAM ( MERYL_UNIONSUM.out.meryl_db, params.meryl.kmer_size )
 
     MERYL_COUNT.out.versions.first().mix(
-        MERYL_UNIONSUM.out.versions.first(),
-        MERYL_HISTOGRAM.out.versions.first()
+        MERYL_UNIONSUM.out.versions.first()
     ).set { versions }
 
     emit:

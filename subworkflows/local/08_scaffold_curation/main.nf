@@ -172,7 +172,7 @@ workflow SCAFFOLD_CURATION {
     )
     .multiMap { meta, hifi_reads, fasta ->
         hifi_reads: [ meta, hifi_reads ]
-        reference : fasta
+        reference : [ meta, fasta ]
     }
     .set{ asm_hifi_ch }
 
@@ -185,10 +185,10 @@ workflow SCAFFOLD_CURATION {
         asm_hifi_ch.hifi_reads, // [ meta, reads ]
         asm_hifi_ch.reference,  // reference
         1,                      // bam_format
+        [],                     // bam_index_extension
         0,                      // cigar_paf_format
         0                       // cigar_ba,
     )
-    ch_versions  = ch_versions.mix( MINIMAP2_ALIGN.out.versions )
 
     // Coverage-track: merge hifi-bam files (if multiple hifi reads are present)
     MINIMAP2_ALIGN.out.bam

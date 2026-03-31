@@ -3,5 +3,7 @@
 channels:
   - conda-forge
   - bioconda
+
 dependencies:
-  - bioconda::meryl=1.4.1=h4ac6f70_0
+  - bioconda::minimap2=2.29
+  - bioconda::samtools=1.21
