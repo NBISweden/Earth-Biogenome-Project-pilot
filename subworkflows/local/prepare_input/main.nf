@@ -202,8 +202,7 @@ workflow PREPARE_INPUT {
 
     // versions
     FETCH_SAMPLE_METADATA.out.versions.mix(
-        SAMTOOLS_FASTA.out.versions.first(),
-        MERGE_PACBIO.out.versions.first(),
+        SAMTOOLS_FASTA.out.versions.first()
     ).set { versions }
 
     emit:

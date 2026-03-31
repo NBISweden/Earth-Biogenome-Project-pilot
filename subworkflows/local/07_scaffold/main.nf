@@ -123,9 +123,7 @@ workflow SCAFFOLD {
     logs = PAIRTOOLS.out.stat
         .flatten()
 
-    versions = BWAMEM2_INDEX_SCAFFOLD.out.versions.first().mix(
-        SAMTOOLS_FAIDX.out.versions.first(),
-        BWAMEM2_MEM_SCAFFOLD.out.versions.first(),
+    versions = SAMTOOLS_FAIDX.out.versions.first().mix(
         PAIRTOOLS.out.versions.first(),
         YAHS.out.versions.first()
     )

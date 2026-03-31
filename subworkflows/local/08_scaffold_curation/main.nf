@@ -37,7 +37,6 @@ workflow SCAFFOLD_CURATION {
     ch_versions  = channel.empty()
 
     BWAMEM2_INDEX ( getPrimaryAssembly(ch_assemblies) )
-    ch_versions  = ch_versions.mix( BWAMEM2_INDEX.out.versions )
 
     SAMTOOLS_FAIDX (
         getPrimaryAssembly(ch_assemblies), // [meta, fasta]
@@ -63,7 +62,6 @@ workflow SCAFFOLD_CURATION {
     }.set{ bwamem2_input }
 
     BWAMEM2_MEM_CURATION (bwamem2_input.reads, bwamem2_input.index, bwamem2_input.fasta, false)
-    ch_versions  = ch_versions.mix( BWAMEM2_MEM_CURATION.out.versions.first() )
 
     // filter alignments
     FILTER_FIVE_END(BWAMEM2_MEM_CURATION.out.bam)
@@ -102,7 +100,6 @@ workflow SCAFFOLD_CURATION {
 
     // dedupliucate bam file
     BIOBAMBAM_BAMMARKDUPLICATES2(dedup_bam)
-    ch_versions  = ch_versions.mix( BIOBAMBAM_BAMMARKDUPLICATES2.out.versions )
 
     // convert bam to sorted bed file
     BAM2BED_SORT(BIOBAMBAM_BAMMARKDUPLICATES2.out.bam)

@@ -22,7 +22,7 @@
           },
           "biobambam/bammarkduplicates2": {
             "branch": "master",
-            "git_sha": "41dfa3f7c0ffabb96a6a813fe321c6d1cc5b6e46",
+            "git_sha": "aef75083111cea684bafb6c27cdba8a8d0916638",
             "installed_by": ["modules"]
           },
           "busco/busco": {
@@ -32,17 +32,17 @@
           },
           "bwamem2/index": {
             "branch": "master",
-            "git_sha": "06c8865e36741e05ad32ef70ab3fac127486af48",
+            "git_sha": "5dd46a36fca68d6ad1a6b22ec47adc8c6863717d",
             "installed_by": ["modules"]
           },
           "bwamem2/mem": {
             "branch": "master",
-            "git_sha": "06c8865e36741e05ad32ef70ab3fac127486af48",
+            "git_sha": "8325a8155a77a336a613a504b8e4d6cea7a2344a",
             "installed_by": ["modules"]
           },
           "cat/cat": {
             "branch": "master",
-            "git_sha": "81f27e75847087865299cc46605deb3b09b4e0a2",
+            "git_sha": "7ed72ef972290b93d0bdd7c60ff00a693250f77a",
             "installed_by": ["modules"]
           },
           "cooler/cload": {
