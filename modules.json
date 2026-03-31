@@ -27,7 +27,7 @@
           },
           "busco/busco": {
             "branch": "master",
-            "git_sha": "36c6c8445284e021d95ce30cdf743baef66b21aa",
+            "git_sha": "3984c94cb6783f36e97df11b1b4ed0d32bfe0de7",
             "installed_by": ["modules"]
           },
           "bwamem2/index": {
@@ -47,12 +47,12 @@
           },
           "cooler/cload": {
             "branch": "master",
-            "git_sha": "666652151335353eef2fcd58880bcef5bc2928e1",
+            "git_sha": "5d491ae33d61ab37e13850951b92ae7d6e3f4e31",
             "installed_by": ["modules"]
           },
           "cooler/zoomify": {
             "branch": "master",
-            "git_sha": "666652151335353eef2fcd58880bcef5bc2928e1",
+            "git_sha": "5d491ae33d61ab37e13850951b92ae7d6e3f4e31",
             "installed_by": ["modules"]
           },
           "deepvariant/rundeepvariant": {

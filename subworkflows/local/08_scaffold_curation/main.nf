@@ -123,22 +123,20 @@ workflow SCAFFOLD_CURATION {
         meta: 'lhs'
     )
     .multiMap { meta, pairs, fake_index, cool_bin, chrom_sizes ->
-        cload_in     : [ meta, pairs, fake_index, cool_bin ]
-        chrom_sizes  : chrom_sizes
+        cload_in     : [ meta, pairs, fake_index ]
+        chrom_sizes  : [ meta, chrom_sizes ]
+        cool_bin     : cool_bin
     }
     .set { cooler_cload_ch }
 
     COOLER_CLOAD(
         cooler_cload_ch.cload_in,
-        cooler_cload_ch.chrom_sizes
+        cooler_cload_ch.chrom_sizes,
+        'pairs',
+        cooler_cload_ch.cool_bin
     )
-    ch_versions  = ch_versions.mix( COOLER_CLOAD.out.versions )
 
-    COOLER_CLOAD.out.cool.map { meta, cool, _cool_bin ->  [ meta, cool ] }
-    .set { cooler_zoomify_ch }
-
-    COOLER_ZOOMIFY(cooler_zoomify_ch)
-    ch_versions  = ch_versions.mix( COOLER_ZOOMIFY.out.versions )
+    COOLER_ZOOMIFY(COOLER_CLOAD.out.cool)
 
     // create pretext maps
     joinByMetaKeys(joinByMetaKeys(

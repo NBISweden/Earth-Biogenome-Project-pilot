@@ -99,9 +99,9 @@ workflow EVALUATE_ASSEMBLY {
         )
         .map { _meta, file -> file }
         .set { logs }
+
     MERQURYFK_MERQURYFK.out.versions.first().mix(
-        GFASTATS.out.versions.first(),
-        BUSCO.out.versions.first()
+        GFASTATS.out.versions.first()
     ).set { versions }
 
     emit:
