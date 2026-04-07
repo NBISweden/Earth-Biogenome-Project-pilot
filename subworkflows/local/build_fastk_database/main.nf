@@ -24,12 +24,10 @@ workflow BUILD_FASTK_DATABASE {
         ktab: [ meta, ktab ]
         prof: [ meta, prof ]
     }
-    versions_ch = FASTK_FASTK.out.versions.first().mix( FASTK_MERGE.out.versions.first() )
 
     emit:
     fastk_histogram = fk_single.hist.mix(FASTK_MERGE.out.hist)
     fastk_ktab      = fk_single.ktab.mix(FASTK_MERGE.out.ktab)
     fastk_hist_ktab = fk_single.hist.mix(FASTK_MERGE.out.hist).join(fk_single.ktab.mix(FASTK_MERGE.out.ktab))
-    versions        = versions_ch
 
 }

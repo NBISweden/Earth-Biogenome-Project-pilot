@@ -40,8 +40,7 @@ workflow GENOME_PROPERTIES {
     .map { _meta, img -> img }
     .set { logs }
 
-    FASTK_HISTEX.out.versions.first().mix(
-        GENESCOPEFK.out.versions.first(),
+    GENESCOPEFK.out.versions.first().mix(
         SMUDGEPLOT.out.versions.first(),
         MERQURYFK_KATGC.out.versions.first()
     ).set { versions }

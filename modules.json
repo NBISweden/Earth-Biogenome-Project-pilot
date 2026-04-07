@@ -62,19 +62,19 @@
           },
           "fastk/fastk": {
             "branch": "master",
-            "git_sha": "29e87a37ae1887fc8289f2f56775604a71715cb9",
+            "git_sha": "4a2e3a7b7af922aa5b94b00c2e78175be15787a2",
             "installed_by": ["modules"],
             "patch": "modules/nf-core/fastk/fastk/fastk-fastk.diff"
           },
           "fastk/histex": {
             "branch": "master",
-            "git_sha": "ed67f2fadd6d2a155b296f728e6b1f8c92ddc1a6",
+            "git_sha": "1838663f8c38ccd7833be0df0e53a26b7c72b567",
             "installed_by": ["modules"],
             "patch": "modules/nf-core/fastk/histex/fastk-histex.diff"
           },
           "fastk/merge": {
             "branch": "master",
-            "git_sha": "8c4542e5d421c4690cf1fa6ec729e9304763fdaf",
+            "git_sha": "1838663f8c38ccd7833be0df0e53a26b7c72b567",
             "installed_by": ["modules"],
             "patch": "modules/nf-core/fastk/merge/fastk-merge.diff"
           },
