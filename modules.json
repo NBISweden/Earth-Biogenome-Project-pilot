@@ -161,7 +161,7 @@
           },
           "mitohifi/findmitoreference": {
             "branch": "master",
-            "git_sha": "3f5420aa22e00bd030a2556dfdffc9e164ec0ec5",
+            "git_sha": "04ebef67e44788d024e0636fb79308016559d1e7",
             "installed_by": ["modules"],
             "patch": "modules/nf-core/mitohifi/findmitoreference/mitohifi-findmitoreference.diff"
           },

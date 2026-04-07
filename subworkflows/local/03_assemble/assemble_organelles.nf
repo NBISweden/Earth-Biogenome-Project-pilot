@@ -24,8 +24,7 @@ workflow ASSEMBLE_ORGANELLES {
     // Run mitohifi assembly
     mitohifi_ch = ch_input_data
         .combine(
-            MITOHIFI_FINDMITOREFERENCE.out.fasta
-                .join(MITOHIFI_FINDMITOREFERENCE.out.gb),
+            MITOHIFI_FINDMITOREFERENCE.out.reference,
             by: 0
         )
         .multiMap { meta, data, mitofa, mitogb ->
@@ -52,7 +51,8 @@ workflow ASSEMBLE_ORGANELLES {
 
     // Dot plots
     // Reference vs final mitohifi mitogenome channel
-    ch_ref_vs_final = MITOHIFI_FINDMITOREFERENCE.out.fasta
+    ch_ref_vs_final = MITOHIFI_FINDMITOREFERENCE.out.reference
+        .map { meta, fasta, _gb -> [ meta, fasta ] }
         .join(
             MITOHIFI_MITOHIFI.out.fasta,
             by: 0
@@ -99,7 +99,6 @@ workflow ASSEMBLE_ORGANELLES {
 
     // Versions
     ch_versions = ch_versions.mix(
-        MITOHIFI_FINDMITOREFERENCE.out.versions.first(),
         MITOHIFI_MITOHIFI.out.versions.first(),
         OATK_SELECTHMM.out.versions.first(),
         OATK.out.versions.first(),
