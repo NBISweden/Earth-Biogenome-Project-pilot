@@ -222,12 +222,6 @@
             "git_sha": "2057a0a8dbd67000d08613a556570aa7184a7c89",
             "installed_by": ["modules"]
           },
-          "seqkit/seq": {
-            "branch": "master",
-            "git_sha": "2be41ca2cc780eca4293d1b0dd3850b0b7ac40a3",
-            "installed_by": ["modules"],
-            "patch": "modules/nf-core/seqkit/seq/seqkit-seq.diff"
-          },
           "seqkit/stats": {
             "branch": "master",
             "git_sha": "bf70cbf44b42ff4a81afcb673fcef604f5ef3a85",
