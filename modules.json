@@ -109,7 +109,8 @@
           "hifiasm": {
             "branch": "master",
             "git_sha": "41dfa3f7c0ffabb96a6a813fe321c6d1cc5b6e46",
-            "installed_by": ["modules"]
+            "installed_by": ["modules"],
+            "patch": "modules/nf-core/hifiasm/hifiasm.diff"
           },
           "merqury/merqury": {
             "branch": "master",
@@ -224,7 +225,8 @@
           "seqkit/seq": {
             "branch": "master",
             "git_sha": "2be41ca2cc780eca4293d1b0dd3850b0b7ac40a3",
-            "installed_by": ["modules"]
+            "installed_by": ["modules"],
+            "patch": "modules/nf-core/seqkit/seq/seqkit-seq.diff"
           },
           "seqkit/stats": {
             "branch": "master",
