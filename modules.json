@@ -91,15 +91,14 @@
           },
           "genescopefk": {
             "branch": "master",
-            "git_sha": "3f908700a03ca2fa388f794914f89be977ce5740",
+            "git_sha": "0110646d0f733d87d8996260cf87d91b7ea2651c",
             "installed_by": ["modules"],
             "patch": "modules/nf-core/genescopefk/genescopefk.diff"
           },
           "gfastats": {
             "branch": "master",
-            "git_sha": "8bc54984b57a02c8712d48274b90c1161bf2c996",
-            "installed_by": ["modules"],
-            "patch": "modules/nf-core/gfastats/gfastats.diff"
+            "git_sha": "2f0e26ad3b4e26fde157496e8de2b98ec44679c7",
+            "installed_by": ["modules"]
           },
           "goat/taxonsearch": {
             "branch": "master",
@@ -137,9 +136,8 @@
           },
           "meryl/count": {
             "branch": "master",
-            "git_sha": "2910aa889fd3497727d87854148a0e0aa1105da3",
-            "installed_by": ["modules"],
-            "patch": "modules/nf-core/meryl/count/meryl-count.diff"
+            "git_sha": "43f0c26fd70298d296a27ce3a68f1c0f7530f600",
+            "installed_by": ["modules"]
           },
           "meryl/histogram": {
             "branch": "master",
@@ -148,9 +146,8 @@
           },
           "meryl/unionsum": {
             "branch": "master",
-            "git_sha": "b7f584e61c35c138a5717f837f4da9b838e290a7",
-            "installed_by": ["modules"],
-            "patch": "modules/nf-core/meryl/unionsum/meryl-unionsum.diff"
+            "git_sha": "2848f7bd74e32162b6b63c7de3fe27efbe71e5fd",
+            "installed_by": ["modules"]
           },
           "minimap2/align": {
             "branch": "master",

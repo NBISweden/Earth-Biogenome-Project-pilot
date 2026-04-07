@@ -84,10 +84,6 @@ workflow {
     BUILD_FASTK_HIC_DATABASE ( CONVERT_FASTQ_CRAM.out.fastq )
     BUILD_MERYL_HIFI_DATABASE ( PREPARE_INPUT.out.hifi )
     BUILD_MERYL_HIC_DATABASE ( CONVERT_FASTQ_CRAM.out.fastq )
-    ch_versions = ch_versions.mix(
-        BUILD_MERYL_HIFI_DATABASE.out.versions,
-        BUILD_MERYL_HIC_DATABASE.out.versions,
-    )
 
     // Data inspection
     ch_hifi_kmer_cov = PREPARE_INPUT.out.hifi_merged.map { meta, _reads -> tuple(meta, []) }
@@ -254,8 +250,7 @@ workflow {
         EVALUATE_ASSEMBLY.out.logs
     )
     ch_versions = ch_versions.mix(
-        COMPARE_ASSEMBLIES.out.versions,
-        EVALUATE_ASSEMBLY.out.versions
+        COMPARE_ASSEMBLIES.out.versions
     )
 
     // Assembly report

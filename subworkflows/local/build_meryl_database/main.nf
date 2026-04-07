@@ -12,13 +12,8 @@ workflow BUILD_MERYL_DATABASE {
     MERYL_UNIONSUM ( MERYL_COUNT.out.meryl_db.transpose().groupTuple(), params.meryl.kmer_size )
     MERYL_HISTOGRAM ( MERYL_UNIONSUM.out.meryl_db, params.meryl.kmer_size )
 
-    MERYL_COUNT.out.versions.first().mix(
-        MERYL_UNIONSUM.out.versions.first()
-    ).set { versions }
-
     emit:
     histogram = MERYL_HISTOGRAM.out.hist
     uniondb   = MERYL_UNIONSUM.out.meryl_db
-    versions
 
 }

@@ -100,10 +100,6 @@ workflow EVALUATE_ASSEMBLY {
         .map { _meta, file -> file }
         .set { logs }
 
-    GFASTATS.out.versions.first()
-        .set { versions }
-
     emit:
     logs
-    versions
 }

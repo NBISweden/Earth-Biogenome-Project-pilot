@@ -2,7 +2,7 @@ Changes in component 'nf-core/genescopefk'
 Changes in 'genescopefk/main.nf':
 --- modules/nf-core/genescopefk/main.nf
 +++ modules/nf-core/genescopefk/main.nf
-@@ -3,20 +3,20 @@
+@@ -3,7 +3,7 @@
      label 'process_low'
  
      // WARN: Version information not provided by tool on CLI. Please update version string below when bumping container versions.
@@ -11,46 +11,45 @@ Changes in 'genescopefk/main.nf':
  
      input:
      tuple val(meta), path(fastk_histex_histogram)
- 
-     output:
--    tuple val(meta), path("*_linear_plot.png")            , emit: linear_plot
--    tuple val(meta), path("*_log_plot.png")               , emit: log_plot
--    tuple val(meta), path("*_model.txt")                  , emit: model
--    tuple val(meta), path("*_summary.txt")                , emit: summary
--    tuple val(meta), path("*_transformed_linear_plot.png"), emit: transformed_linear_plot
--    tuple val(meta), path("*_transformed_log_plot.png")   , emit: transformed_log_plot
--    tuple val(meta), env(KMERCOV)                         , emit: kmer_cov
--    path "versions.yml"                                   , emit: versions
-+    tuple val(meta), path("${prefix}_linear_plot.png")            , emit: linear_plot
-+    tuple val(meta), path("${prefix}_log_plot.png")               , emit: log_plot
-+    tuple val(meta), path("${prefix}_model.txt")                  , emit: model
-+    tuple val(meta), path("${prefix}_summary.txt")                , emit: summary
-+    tuple val(meta), path("${prefix}_transformed_linear_plot.png"), emit: transformed_linear_plot
-+    tuple val(meta), path("${prefix}_transformed_log_plot.png")   , emit: transformed_log_plot
-+    tuple val(meta), env('KMERCOV')                               , emit: kmer_cov
-+    path "versions.yml"                                           , emit: versions
+@@ -17,7 +17,8 @@
+     tuple val(meta), path("*_transformed_log_plot.png")   , emit: transformed_log_plot
+     tuple val(meta), path("*_genescopefk.log")            , emit: log
+     tuple val(meta), env('KMERCOV')                       , emit: kmer_cov
+-    tuple val("${task.process}"), val('genescopefk'), eval("R --version | sed '1!d; s/.*version //; s/ .*//'"), emit: versions_genescopefk, topic: versions
++    tuple val("${task.process}"), val('genescopefk'), val("380815c420f50171f9234a0fd1ff426b39829b91"), emit: versions_genescopefk, topic: versions
++    tuple val("${task.process}"), val('R'), eval("R --version | sed '1!d; s/.*version //; s/ .*//'"), emit: versions_r, topic: versions
  
      when:
      task.ext.when == null || task.ext.when
-@@ -28,7 +28,7 @@
-     }
- 
-     def args = task.ext.args ?: ''
--    def prefix = task.ext.prefix ?: "${meta.id}"
-+    prefix = task.ext.prefix ?: "${meta.id}"
-     def GENESCOPE_VERSION = '380815c420f50171f9234a0fd1ff426b39829b91' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
+@@ -31,13 +32,15 @@
+     def args   = task.ext.args   ?: ''
+     def prefix = task.ext.prefix ?: "${meta.id}"
      """
-     #! /usr/bin/env bash
-@@ -39,7 +39,7 @@
++    #! /usr/bin/env bash
++
+     GeneScopeFK.R \\
+         $args \\
+         --input $fastk_histex_histogram \\
          --output . \\
-         --name_prefix ${prefix}
+         --name_prefix ${prefix} > ${prefix}_genescopefk.log
  
--    printf -v KMERCOV "%.2f\\n" \$( grep "^kmercov" *_model.txt | cut -d" " -f2 )
+-    printf -v KMERCOV "%.2f" \$( grep "^kmercov" *_model.txt | cut -d" " -f2 )
 +    KMERCOV=\$( awk '/^kmercov/ {printf "%.2f", \$2}' *_model.txt )
+     """
  
-     cat <<-END_VERSIONS > versions.yml
-     "${task.process}":
+     stub:
+@@ -51,7 +54,7 @@
+     touch "${prefix}_transformed_log_plot.png"
+     touch "${prefix}_genescopefk.log"
+ 
+-    printf -v KMERCOV "%.2f" \$( grep "^kmercov" *_model.txt | cut -d" " -f2 )
++    KMERCOV=\$( awk '/^kmercov/ {printf "%.2f", \$2}' *_model.txt )
+     """
+ 
+ }
 
-'modules/nf-core/genescopefk/environment.yml' is unchanged
 'modules/nf-core/genescopefk/meta.yml' is unchanged
+'modules/nf-core/genescopefk/tests/main.nf.test.snap' is unchanged
+'modules/nf-core/genescopefk/tests/main.nf.test' is unchanged
+'modules/nf-core/genescopefk/tests/nextflow.config' is unchanged
 ************************************************************

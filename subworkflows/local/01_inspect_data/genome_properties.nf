@@ -40,9 +40,8 @@ workflow GENOME_PROPERTIES {
     .map { _meta, img -> img }
     .set { logs }
 
-    GENESCOPEFK.out.versions.first().mix(
-        SMUDGEPLOT.out.versions.first()
-    ).set { versions }
+    SMUDGEPLOT.out.versions.first()
+        .set { versions }
 
     emit:
     kmer_cov = GENESCOPEFK.out.kmer_cov
