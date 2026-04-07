@@ -28,8 +28,8 @@ workflow EVALUATE_ASSEMBLY {
             tuple(meta, hist, ktab, assembly, []) :
             tuple(meta, hist, ktab, assembly.head(), assembly.last())
         }, // [ meta, hist, ktab, assembly ]
-        [],
-        [],
+        [[], []], // mathaptab
+        [[], []]  // pathaptab
     )
 
     MERQURY (
@@ -100,9 +100,8 @@ workflow EVALUATE_ASSEMBLY {
         .map { _meta, file -> file }
         .set { logs }
 
-    MERQURYFK_MERQURYFK.out.versions.first().mix(
-        GFASTATS.out.versions.first()
-    ).set { versions }
+    GFASTATS.out.versions.first()
+        .set { versions }
 
     emit:
     logs

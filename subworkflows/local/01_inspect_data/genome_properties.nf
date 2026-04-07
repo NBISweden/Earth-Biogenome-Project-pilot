@@ -41,8 +41,7 @@ workflow GENOME_PROPERTIES {
     .set { logs }
 
     GENESCOPEFK.out.versions.first().mix(
-        SMUDGEPLOT.out.versions.first(),
-        MERQURYFK_KATGC.out.versions.first()
+        SMUDGEPLOT.out.versions.first()
     ).set { versions }
 
     emit:

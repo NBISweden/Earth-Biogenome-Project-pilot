@@ -2,13 +2,13 @@ process MERQURYFK_MERQURYFK {
     tag "$meta.id"
     label 'process_medium'
 
-    // WARN: Version information not provided by tool on CLI. Please update version string below when bumping container versions.
+    //conda "${moduleDir}/environment.yml"
     container 'ghcr.io/nbisweden/fastk_genescopefk_merquryfk:1.3'
 
     input:
-    tuple val(meta), path(fastk_hist),path(fastk_ktab),path(assembly),path(haplotigs)
-    path matktab                                                                        //optional
-    path patktab                                                                        //optional
+    tuple val(meta) , path(fastk_hist), path(fastk_ktab), path(assembly), path(haplotigs)
+    tuple val(meta2), path(mathaptab) // optional, trio mode
+    tuple val(meta3), path(pathaptab) // optional, trio mode
 
     output:
     tuple val(meta), path("${prefix}.completeness.stats")         , emit: stats
@@ -32,7 +32,11 @@ process MERQURYFK_MERQURYFK {
     tuple val(meta), path("${prefix}.hapmers.blob.{pdf,png}")     , emit: hapmers_blob,        optional: true
     tuple val(meta), path("${prefix}.false_duplications.tsv")     , emit: false_duplications
     tuple val(meta), path("${prefix}.spectra-cn.cni.gz")          , emit: cn_histogram
-    path "versions.yml"                                           , emit: versions
+    // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
+    tuple val("${task.process}"), val('merquryfk'), val('41451f8fb146158c5b747ae7915e69975c61ddd9'), emit: versions_merquryfk, topic: versions
+    // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
+    tuple val("${task.process}"), val('fastk'), val('1.2'), emit: versions_fastk, topic: versions
+    tuple val("${task.process}"), val('R'), eval('R --version | sed "1!d; s/.*version //; s/ .*//"'), emit: versions_r, topic: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -42,19 +46,22 @@ process MERQURYFK_MERQURYFK {
     if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
         error "MERQURYFK_MERQURYFK module does not support Conda. Please use Docker / Singularity / Podman instead."
     }
-    def args = task.ext.args ?: ''
-    prefix = task.ext.prefix ?: "${meta.id}"
-    def mat_ktab = matktab ? "${matktab.find{ it.toString().endsWith(".ktab") }}" : ''
-    def pat_ktab = patktab ? "${patktab.find{ it.toString().endsWith(".ktab") }}" : ''
-    def FASTK_VERSION = '0e24fb45b71c4e14382ae1e1bc063bf66ea4e112' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
-    def MERQURY_VERSION = '41451f8fb146158c5b747ae7915e69975c61ddd9' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
+    if([mathaptab, pathaptab].any() && ![mathaptab, pathaptab].every()) {
+        log.error("Error: Only one of the maternal and paternal hap tabs have been provided!")
+    }
+
+    def args        = task.ext.args ?: ''
+    prefix          = task.ext.prefix ?: "${meta.id}"
+    def fk_ktab     = fastk_ktab ? "${fastk_ktab.find { path -> path.toString().endsWith(".ktab") }}" : ''
+    def mat_hapktab = mathaptab  ? "${mathaptab.find { path -> path.toString().endsWith(".ktab") }}"  : ''
+    def pat_hapktab = pathaptab  ? "${pathaptab.find { path -> path.toString().endsWith(".ktab") }}"  : ''
     """
     MerquryFK \\
         $args \\
         -T$task.cpus \\
-        ${fastk_ktab.find{ it.toString().endsWith(".ktab") }} \\
-        ${mat_ktab} \\
-        ${pat_ktab} \\
+        ${fk_ktab} \\
+        ${mat_hapktab} \\
+        ${pat_hapktab} \\
         $assembly \\
         $haplotigs \\
         $prefix
@@ -71,29 +78,14 @@ process MERQURYFK_MERQURYFK {
         > ${prefix}.false_duplications.tsv
 
     gzip ${prefix}.spectra-cn.cni
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        fastk: $FASTK_VERSION
-        merquryfk: $MERQURY_VERSION
-        r: \$( R --version | sed '1!d; s/.*version //; s/ .*//' )
-    END_VERSIONS
     """
 
     stub:
     prefix = task.ext.prefix ?: "${meta.id}"
-    def FASTK_VERSION = '0e24fb45b71c4e14382ae1e1bc063bf66ea4e112' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
-    def MERQURY_VERSION = '41451f8fb146158c5b747ae7915e69975c61ddd9' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
     """
     touch ${prefix}.completeness.stats
     touch ${prefix}.qv
     touch ${prefix}._.qv
     touch ${prefix}._only.bed
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        fastk: $FASTK_VERSION
-        merquryfk: $MERQURY_VERSION
-        r: \$( R --version | sed '1!d; s/.*version //; s/ .*//' )
-    END_VERSIONS
     """
 }

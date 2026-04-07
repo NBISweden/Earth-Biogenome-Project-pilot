@@ -119,19 +119,19 @@
           },
           "merquryfk/katcomp": {
             "branch": "master",
-            "git_sha": "6f150e1503c0826c21fedf1fa566cdbecbe98ec7",
+            "git_sha": "1838663f8c38ccd7833be0df0e53a26b7c72b567",
             "installed_by": ["modules"],
             "patch": "modules/nf-core/merquryfk/katcomp/merquryfk-katcomp.diff"
           },
           "merquryfk/katgc": {
             "branch": "master",
-            "git_sha": "6f150e1503c0826c21fedf1fa566cdbecbe98ec7",
+            "git_sha": "1838663f8c38ccd7833be0df0e53a26b7c72b567",
             "installed_by": ["modules"],
             "patch": "modules/nf-core/merquryfk/katgc/merquryfk-katgc.diff"
           },
           "merquryfk/merquryfk": {
             "branch": "master",
-            "git_sha": "666652151335353eef2fcd58880bcef5bc2928e1",
+            "git_sha": "1838663f8c38ccd7833be0df0e53a26b7c72b567",
             "installed_by": ["modules"],
             "patch": "modules/nf-core/merquryfk/merquryfk/merquryfk-merquryfk.diff"
           },

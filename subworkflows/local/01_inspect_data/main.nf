@@ -21,9 +21,7 @@ workflow INSPECT_DATA {
     // Generate K-mer histogram
     GENOME_PROPERTIES ( hifi_histogram )
     COMPARE_LIBRARIES ( hifi_histogram.join( hic_histogram ) )
-    ch_versions =  GENOME_PROPERTIES.out.versions.mix(
-        COMPARE_LIBRARIES.out.versions
-    )
+    ch_versions =  GENOME_PROPERTIES.out.versions
 
     GENOME_PROPERTIES.out.logs
         .mix(
