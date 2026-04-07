@@ -77,21 +77,21 @@ workflow SCAFFOLD_CURATION {
 
     // merge bam files in case multiple HIC paired-end libraries are present
     TWOREADCOMBINER_FIXMATE_SORT.out.bam
-        .map { meta, bam_list -> [ meta - meta.subMap( 'pair_id' ), bam_list, [] ] } // meta, bam_list, index_list
+        .map { meta, bam_list -> [ meta - meta.subMap( 'pair_id' ), bam_list ] }
         .groupTuple()
-        .branch { _meta, bam_list, _index_list ->
+        .branch { _meta, bam_list ->
             multiples: bam_list.size() > 1
             singleton: true
         }
     .set { merge_bam }
 
     SAMTOOLS_MERGE_HIC(
-        merge_bam.multiples,
+        merge_bam.multiples.map { meta, bam_list -> [ meta, bam_list, [] ] }, // meta, bam_list, index_list
         [ [], [], [], [] ]             // [meta2, fasta, fai, gzi]
     )
 
     merge_bam.singleton
-        .map { meta, bam, _index_list -> [ meta ] + bam }
+        .map { meta, bam -> [ meta ] + bam }
         .mix( SAMTOOLS_MERGE_HIC.out.bam)
         .set { dedup_bam }
 
@@ -187,16 +187,16 @@ workflow SCAFFOLD_CURATION {
 
     // Coverage-track: merge hifi-bam files (if multiple hifi reads are present)
     MINIMAP2_ALIGN.out.bam
-        .map { meta, bam_list -> [ meta, bam_list, [] ] } // meta, bam_list, index_list
+        .map { meta, bam_list -> [ meta, bam_list ] }
         .groupTuple()
-        .branch { _meta, bam_list, _index_list ->
+        .branch { _meta, bam_list ->
             multiples: bam_list.size() > 1
             singleton: true
         }
     .set { merge_hifi_bam }
 
     SAMTOOLS_MERGE_HIFI(
-        merge_hifi_bam.multiples,
+        merge_hifi_bam.multiples.map { meta, bam_list -> [ meta, bam_list, [] ] }, // meta, bam_list, index_list
         [ [], [], [], [] ]            // [meta2, fasta, fai, gzi]
     )
 
@@ -214,7 +214,7 @@ workflow SCAFFOLD_CURATION {
 
     joinByMetaKeys(
         merge_hifi_bam.singleton
-            .map { meta, bam, _index_list -> [ meta ] + bam }
+            .map { meta, bam -> [ meta ] + bam }
             .mix( SAMTOOLS_MERGE_HIFI.out.bam),
         CREATE_CHROMOSOME_SIZES_FILE.out.sizes,
         keySet: ['id','sample','assembly'],
