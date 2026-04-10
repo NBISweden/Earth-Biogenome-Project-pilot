@@ -13,8 +13,6 @@ workflow ASSEMBLE_ORGANELLES {
     ch_oatkdb        // Path: /path/to/oatkdb
 
     main:
-    ch_versions = channel.empty()
-
     ch_input_data = ch_assembly_mode == 'contigs' ? ch_assemblies : ch_reads
     ch_meta_data = ch_input_data.map { meta, _data -> [ meta, meta.sample.name ] }.unique()
 
@@ -95,15 +93,8 @@ workflow ASSEMBLE_ORGANELLES {
         .map { _meta, log -> log }
         .set { logs }
 
-    // Versions
-    ch_versions = ch_versions.mix(
-        OATK_SELECTHMM.out.versions.first(),
-        DNADOTPLOT.out.versions.first()
-    )
-
     emit:
     // TODO: emit filtered assembly, or contig list to purge. Also emit from 03_assemble.
     mito_assemblies = ch_mito_assemblies
     logs
-    versions = ch_versions
 }

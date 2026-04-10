@@ -14,7 +14,9 @@ process ITERATIVE_PURGEDUPS {
     tuple val(meta), path("purged/*.purged.fa")   , emit: purged
     tuple val(meta), path("purged/*.haplotigs.fa"), emit: haplotigs
     tuple val(meta), path("logs/*")               , emit: logs
-    path "versions.yml"                           , emit: versions
+    tuple val("${task.process}"), val('minimap2'), eval('minimap2 --version 2>&1'), emit: versions_minimap2, topic: versions
+    tuple val("${task.process}"), val('purge_dups'), eval('purge_dups -h |& sed "3!d; s/.*: //"'), emit: versions_purge_dups, topic: versions
+    tuple val("${task.process}"), val('seqkit'), eval('seqkit version | cut -d" " -f2'), emit: versions_seqkit, topic: versions
 
     script:
     def prefix              = task.ext.prefix ?: "${meta.id}"
@@ -130,12 +132,5 @@ process ITERATIVE_PURGEDUPS {
         # Copy haplotigs as hap2 for Merqury
         cp purged/${prefix}_hap1.haplotigs.fa purged/${prefix}_hap2.purged.fa
     fi
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        minimap2: \$(minimap2 --version 2>&1)
-        purge_dups: \$(purge_dups -h |& sed '3!d; s/.*: //')
-        seqkit: \$(seqkit version | cut -d' ' -f2)
-    END_VERSIONS
     """
 }

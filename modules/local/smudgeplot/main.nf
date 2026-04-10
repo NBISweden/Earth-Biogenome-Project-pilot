@@ -18,7 +18,9 @@ process SMUDGEPLOT {
     tuple val(meta), path("*_smudgeplot.{png,pdf}")      , emit: smudgeplot
     tuple val(meta), path("*_smudgeplot_log10.{png,pdf}"), emit: smudgeplot_log10
     tuple val(meta), path("*_smudgeplot_report.json")    , emit: smudgeplot_report_json, optional: true
-    path "versions.yml"                                  , emit: versions
+    tuple val("${task.process}"), val('smudgeplot'), eval('smudgeplot --version 2>&1 | sed "s/.* v//"'), emit: versions_smudgeplot, topic: versions
+    // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
+    tuple val("${task.process}"), val('fastk'), val('1.1'), emit: versions_fastk, topic: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -31,7 +33,6 @@ process SMUDGEPLOT {
     def args = task.ext.args ?: ''
     def args2 = task.ext.args2 ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    def FASTK_VERSION = '1.1' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
     """
     export MPLCONFIGDIR=tmp
     smudgeplot \\
@@ -46,11 +47,5 @@ process SMUDGEPLOT {
         $args2 \\
         -o $prefix \\
         ${prefix}.smu
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        smudgeplot: \$(smudgeplot --version 2>&1 | sed 's/.* v//')
-        fastk: $FASTK_VERSION
-    END_VERSIONS
     """
 }

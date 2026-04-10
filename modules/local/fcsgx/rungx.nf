@@ -17,7 +17,8 @@ process FCSGX_RUNGX {
     tuple val(meta), path("*.fcs_gx_report.txt"), emit: fcs_gx_report
     tuple val(meta), path("*.taxonomy.rpt")     , emit: taxonomy_report
     tuple val(meta), path("*.hits.tsv.gz")      , emit: hits, optional: true
-    path "versions.yml"                         , emit: versions
+    // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
+    tuple val("${task.process}"), val('fcs_gx'), val('0.5.4'), emit: versions_fcsgx, topic: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -26,7 +27,6 @@ process FCSGX_RUNGX {
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     def database = ramdisk_path ?: gxdb // maxForks set to 1 to limit concurrent execution corruption
-    def VERSION = '0.5.4' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
     (ramdisk_path ?
     """
     if test -d "${database}"; then
@@ -50,10 +50,5 @@ process FCSGX_RUNGX {
         --out-basename $prefix \\
         --out-dir . \\
         $args
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        fcs_gx: $VERSION
-    END_VERSIONS
     """
 }

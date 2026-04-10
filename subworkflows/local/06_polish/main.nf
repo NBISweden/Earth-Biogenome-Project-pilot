@@ -46,7 +46,6 @@ workflow DVPOLISH {
 
     main:
     ch_logs     = channel.empty()
-    ch_versions = channel.empty()
 
     // Create tagged channels for each available haplotype + mix
     ch_assemblies.multiMap { meta, assembly ->
@@ -289,16 +288,8 @@ workflow DVPOLISH {
         )
         .map { _meta, file -> file }
 
-    ch_versions = ch_versions.mix(
-        DVPOLISH_CHUNKFA.out.versions.first(),
-        DVPOLISH_PBMM2_INDEX.out.versions.first(),
-        DVPOLISH_PBMM2_ALIGN.out.versions.first(),
-        DVPOLISH_CREATE_FINALASM.out.versions.first()
-    )
-
     emit:
     assemblies = ch_polished_assemblies
     logs       = ch_logs
-    versions   = ch_versions
 
 }

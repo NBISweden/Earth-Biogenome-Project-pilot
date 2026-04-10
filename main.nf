@@ -97,7 +97,6 @@ workflow {
         )
         ch_hifi_kmer_cov = INSPECT_DATA.out.hifi_kmer_cov
         ch_multiqc_files = ch_multiqc_files.mix( INSPECT_DATA.out.logs )
-        ch_versions = ch_versions.mix( INSPECT_DATA.out.versions )
     }
 
     // Preprocess data
@@ -120,7 +119,6 @@ workflow {
         ch_evaluate_assemblies = ch_evaluate_assemblies.mix( ASSEMBLE.out.raw_assemblies )
         ch_raw_assemblies = ASSEMBLE.out.raw_assemblies
         ch_multiqc_files = ch_multiqc_files.mix( ASSEMBLE.out.logs )
-        ch_versions = ch_versions.mix( ASSEMBLE.out.versions )
     } else {
         ch_raw_assemblies = channel.empty() // No assemblies from a previous stage
     }
@@ -138,7 +136,6 @@ workflow {
         ch_evaluate_assemblies = ch_evaluate_assemblies.mix( DECONTAMINATE.out.assemblies )
         ch_cleaned_assemblies = DECONTAMINATE.out.assemblies
         ch_multiqc_files = ch_multiqc_files.mix( DECONTAMINATE.out.logs )
-        ch_versions = ch_versions.mix(DECONTAMINATE.out.versions)
     } else {
         ch_cleaned_assemblies = ch_to_screen
     }
@@ -160,7 +157,6 @@ workflow {
         ch_evaluate_assemblies = ch_evaluate_assemblies.mix( PURGE_DUPLICATES.out.assemblies )
         ch_purged_assemblies = PURGE_DUPLICATES.out.assemblies
         ch_multiqc_files = ch_multiqc_files.mix( PURGE_DUPLICATES.out.logs )
-        ch_versions = ch_versions.mix( PURGE_DUPLICATES.out.versions )
     } else {
         ch_purged_assemblies = ch_to_purge
     }
@@ -184,7 +180,6 @@ workflow {
         ch_evaluate_assemblies = ch_evaluate_assemblies.mix( DVPOLISH.out.assemblies )
         ch_polished_assemblies = DVPOLISH.out.assemblies
         ch_multiqc_files = ch_multiqc_files.mix( DVPOLISH.out.logs )
-        ch_versions = ch_versions.mix(DVPOLISH.out.versions)
     } else {
         ch_polished_assemblies = ch_to_polish
     }
@@ -205,7 +200,6 @@ workflow {
         ch_evaluate_assemblies = ch_evaluate_assemblies.mix( SCAFFOLD.out.assemblies )
         ch_scaffolded_assemblies = SCAFFOLD.out.assemblies
         ch_multiqc_files = ch_multiqc_files.mix( SCAFFOLD.out.logs )
-        ch_versions = ch_versions.mix( SCAFFOLD.out.versions )
     } else {
         ch_scaffolded_assemblies = ch_to_scaffold
     }
@@ -224,7 +218,6 @@ workflow {
             CONVERT_FASTQ_CRAM.out.fastq,
             PREPARE_INPUT.out.hifi
         )
-        ch_versions = ch_versions.mix( SCAFFOLD_CURATION.out.versions )
     }
     preassembledInput( PREPARE_INPUT.out.assemblies, 'curated' ).dump(tag: 'Assemblies: Curated')
 
@@ -267,9 +260,6 @@ workflow {
         ] + workflow_permitted_stages.collectEntries{ step ->
             [(step): step in params.steps.tokenize(",")]
         }
-    )
-    ch_versions = ch_versions.mix(
-        ASSEMBLY_REPORT.out.versions
     )
 
     // Collate and save software versions

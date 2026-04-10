@@ -16,7 +16,8 @@ process QUARTO_NOTEBOOK {
     path "${prefix}.html", arity: '1', emit: html
     path "${prefix}.md"  , arity: '1', emit: github_markdown
     path "multiqc*.html" , arity: '1', emit: multiqc_summary
-    path "versions.yml"  , arity: '1', emit: versions
+    tuple val("${task.process}"), val('quarto'), eval('quarto --version'), emit: versions_quarto, topic: versions
+    tuple val("${task.process}"), val('multiqc'), eval('multiqc --version | sed "1!d; s/.*version //"'), emit: versions_multiqc, topic: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -45,11 +46,5 @@ process QUARTO_NOTEBOOK {
         $notebook \\
         --execute-params params.yml \\
         $args
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        quarto: \$(quarto --version)
-        multiqc: \$(multiqc --version | sed '1!d; s/.*version //')
-    END_VERSIONS
     """
 }

@@ -14,7 +14,8 @@ process FCSGX_CLEAN {
     output:
     tuple val(meta), path("*.clean.fasta")       , emit: clean_fasta
     tuple val(meta), path("*.contaminants.fasta"), emit: contaminants_fasta
-    path "versions.yml"                          , emit: versions
+    // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
+    tuple val("${task.process}"), val('fcs_gx'), val('0.5.4'), emit: versions_fcsgx, topic: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -22,7 +23,6 @@ process FCSGX_CLEAN {
     script:
     def prefix = task.ext.prefix ?: "${meta.id}"
     def infile = assembly.name.endsWith('.gz') ? "<( gzip -dc $assembly )" : assembly
-    def VERSION = '0.5.4' // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
     """
     gx \\
         clean-genome \\
@@ -30,10 +30,5 @@ process FCSGX_CLEAN {
         --action-report $action_report \\
         --output ${prefix}.clean.fasta \\
         --contam-fasta-out ${prefix}.contaminants.fasta
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        fcs_gx: $VERSION
-    END_VERSIONS
     """
 }

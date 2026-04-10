@@ -10,7 +10,7 @@ process CREATE_TELOMER_BIGWIG_TRACK {
 
     output:
     tuple val(meta), path("*_telomer.bw"), emit: bw
-    path "versions.yml"                  , emit: versions
+    tuple val("${task.process}"), val('bedGraphToBigWig'), eval("bedGraphToBigWig |& sed '1!d; s/.* v //; s/ .*//'"), topic: versions, emit: versions_bedgraphtobigwig
 
     when:
     task.ext.when == null || task.ext.when
@@ -21,10 +21,5 @@ process CREATE_TELOMER_BIGWIG_TRACK {
     """
     sort -k1,1V -k2,2n -k3,3n ${args} ${bedgraph} > ${bedgraph}_sorted.bedgraph
     bedGraphToBigWig ${bedgraph}_sorted.bedgraph ${chrom_sizes} ${prefix}_telomer.bw;
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        bedGraphToBigWig: \$(bedGraphToBigWig |& sed '1!d; s/.* v //; s/ .*//')
-    END_VERSIONS
     """
 }

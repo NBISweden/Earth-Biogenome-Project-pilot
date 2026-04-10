@@ -12,14 +12,12 @@ workflow ASSEMBLE {
     main:
     ch_raw_assemblies = channel.empty()
     ch_logs           = channel.empty()
-    ch_versions       = channel.empty()
 
     // Nuclear assembly
     if ( nuclear_assembly_mode ) {
         ASSEMBLE_HIFI( hifi_reads, hic_reads )
         ch_raw_assemblies = ASSEMBLE_HIFI.out.assemblies
         ch_logs = ch_logs.mix(ASSEMBLE_HIFI.out.logs)
-        ch_versions = ch_versions.mix( ASSEMBLE_HIFI.out.versions )
     } // else nuclear_assembly_mode == false
 
     // Organelle assembly
@@ -34,12 +32,10 @@ workflow ASSEMBLE {
             oatkdb                   // oatk: hmm database
         )
         ch_logs     = ch_logs.mix(ASSEMBLE_ORGANELLES.out.logs)
-        ch_versions = ch_versions.mix(ASSEMBLE_ORGANELLES.out.versions)
         // TODO: filter organelle contigs from primary assembly
     } // else organelle_assembly_mode == 'none'
 
     emit:
     raw_assemblies = ch_raw_assemblies
     logs           = ch_logs
-    versions       = ch_versions
 }

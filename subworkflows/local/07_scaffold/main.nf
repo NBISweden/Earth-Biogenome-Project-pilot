@@ -119,10 +119,7 @@ workflow SCAFFOLD {
     logs = PAIRTOOLS.out.stat
         .flatten()
 
-    versions = PAIRTOOLS.out.versions.first()
-
     emit:
     assemblies = ch_scaffolded_assemblies
     logs
-    versions
 }

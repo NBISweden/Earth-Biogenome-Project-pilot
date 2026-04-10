@@ -33,7 +33,6 @@ workflow SCAFFOLD_CURATION {
 
     main:
 
-    ch_versions  = channel.empty()
     ch_primary_assembly = getPrimaryAssembly(ch_assemblies)
 
     BWAMEM2_INDEX ( ch_primary_assembly )
@@ -64,7 +63,6 @@ workflow SCAFFOLD_CURATION {
 
     // filter alignments
     FILTER_FIVE_END(BWAMEM2_MEM_CURATION.out.bam)
-    ch_versions  = ch_versions.mix( FILTER_FIVE_END.out.versions.first() )
 
     // combine reads
     FILTER_FIVE_END.out.bam
@@ -73,7 +71,6 @@ workflow SCAFFOLD_CURATION {
     .set { combine_input }
 
     TWOREADCOMBINER_FIXMATE_SORT(combine_input)
-    ch_versions  = ch_versions.mix( TWOREADCOMBINER_FIXMATE_SORT.out.versions.first() )
 
     // merge bam files in case multiple HIC paired-end libraries are present
     TWOREADCOMBINER_FIXMATE_SORT.out.bam
@@ -100,11 +97,9 @@ workflow SCAFFOLD_CURATION {
 
     // convert bam to sorted bed file
     BAM2BED_SORT(BIOBAMBAM_BAMMARKDUPLICATES2.out.bam)
-    ch_versions  = ch_versions.mix( BAM2BED_SORT.out.versions )
 
     // create chrome sizes file from fai file
     CREATE_CHROMOSOME_SIZES_FILE(SAMTOOLS_FAIDX.out.fai, params.hic_map_sort_by)
-    ch_versions  = ch_versions.mix( CREATE_CHROMOSOME_SIZES_FILE.out.versions )
 
     // create cooler files
     // tuple val(meta), path(pairs), path(index), val(cool_bin)
@@ -232,7 +227,6 @@ workflow SCAFFOLD_CURATION {
         bam2coverage_ch.chrom_sizes,
         params.hifi_coverage_cap
     )
-    ch_versions  = ch_versions.mix( BAM2COVERAGE_TRACKS.out.versions )
 
     // Gap-track: create bedtrack
     SEQTK_CUTN(ch_primary_assembly)
@@ -254,24 +248,20 @@ workflow SCAFFOLD_CURATION {
         bed2gap_ch.bed,
         bed2gap_ch.chrom_sizes
     )
-    ch_versions  = ch_versions.mix( CREATE_GAP_TRACKS.out.versions )
 
     // Telomer-track: create track
     TIDK_SEARCH_BEDGRAPH(
         ch_primary_assembly,
         params.telomer_motif
     )
-    ch_versions  = ch_versions.mix( TIDK_SEARCH_BEDGRAPH.out.versions )
 
     TIDK_SEARCH_TSV(
         ch_primary_assembly,
         params.telomer_motif
     )
-    ch_versions  = ch_versions.mix( TIDK_SEARCH_TSV.out.versions )
 
     // Telomer-track: create plot - thats not really necessary, but nice to have
     TIDK_PLOT(TIDK_SEARCH_TSV.out.tsv)
-    ch_versions  = ch_versions.mix( TIDK_PLOT.out.versions )
 
     // Telomer-track: convert telomer bedgraph into beddb file that can be ingested into HiGlass
     joinByMetaKeys(
@@ -290,7 +280,6 @@ workflow SCAFFOLD_CURATION {
         bedgraph_telomer_ch.bedgraph,
         bedgraph_telomer_ch.chrom_sizes
     )
-    ch_versions  = ch_versions.mix( CREATE_TELOMER_BIGWIG_TRACK.out.versions )
 
     // ingest coverage, gap and telomer track into Pretext
     // for each assembly always join:
@@ -314,8 +303,5 @@ workflow SCAFFOLD_CURATION {
     .set { pretext_tracks_ch }
 
     PRETEXT_TRACKS_INGESTION(pretext_tracks_ch)
-    ch_versions  = ch_versions.mix( PRETEXT_TRACKS_INGESTION.out.versions )
 
-    emit:
-    versions   = ch_versions
 }

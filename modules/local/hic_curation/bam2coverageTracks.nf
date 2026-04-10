@@ -14,8 +14,10 @@ process BAM2COVERAGE_TRACKS {
     tuple val(meta), path("*_coverage.bw")             , emit: bigwig
     tuple val(meta), path("*_coverage_capped.bed")     , emit: capped_bed
     tuple val(meta), path("*_coverage_capped.bw")      , emit: capped_bigwig
-
-    path "versions.yml"              , emit: versions
+    tuple val("${task.process}"), val('samtools'), eval('samtools --version | sed "1!d; s/samtools //"'), emit: versions_samtools, topic: versions
+    tuple val("${task.process}"), val('bedtools'), eval("bedtools --version | sed -e 's/bedtools v//g'"), topic: versions, emit: versions_bedtools
+    tuple val("${task.process}"), val('sort'), eval("sort --version | sed '1!d; s/.* //'"), topic: versions, emit: versions_sort
+    tuple val("${task.process}"), val('awk'), eval("awk --version | sed '1!d; s/mawk //; s/ .*//'"), topic: versions, emit: versions_awk
 
     when:
     task.ext.when == null || task.ext.when
@@ -39,13 +41,5 @@ process BAM2COVERAGE_TRACKS {
     awk -v COVERAGE_CAP=$hifi_coverage_cap 'BEGIN {FS = " "; OFS = "\t";}{if(int(\$4)>COVERAGE_CAP){print \$1,\$2,\$3,COVERAGE_CAP} else {print \$1,\$2,\$3,\$4}}' > ${prefix}_coverage_capped.bed
     # convert bed to bigwig
     bedGraphToBigWig ${prefix}_coverage_capped.bed ${chrom_sizes} ${prefix}_coverage_capped.bw
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        samtools: \$(samtools --version | sed '1!d; s/.* //')
-        bedtools: \$(bedtools --version | sed 's/.*v//')
-        sort: \$(sort --version | sed '1!d; s/.* //')
-        awk: \$(awk --version | sed '1!d; s/mawk //; s/ .*//')
-    END_VERSIONS
     """
 }

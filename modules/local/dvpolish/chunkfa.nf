@@ -12,7 +12,7 @@ process DVPOLISH_CHUNKFA {
 
     output:
     tuple val(meta), path ("*.bed", arity: '1..*')        , emit: bed
-    path "versions.yml"                                   , emit: versions
+    tuple val("${task.process}"), val('mawk'), eval("awk -W version |& sed '1!d; s/mawk //; s/ .*//'"), topic: versions, emit: versions_mawk
 
     when:
     task.ext.when == null || task.ext.when
@@ -40,11 +40,6 @@ process DVPOLISH_CHUNKFA {
         }
     }
     ' ${fai}
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        mawk: \$(awk -W version |& sed '1!d; s/mawk //; s/ .*//')
-    END_VERSIONS
     """
 
     stub:
@@ -52,10 +47,5 @@ process DVPOLISH_CHUNKFA {
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
     touch ${prefix}_chunk_1.bed
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        mawk: \$(awk -W version |& sed '1!d; s/mawk //; s/ .*//')
-    END_VERSIONS
     """
 }

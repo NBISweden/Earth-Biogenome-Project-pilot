@@ -42,10 +42,7 @@ workflow PURGE_DUPLICATES {
     logs = ITERATIVE_PURGEDUPS.out.logs
         .flatMap { _meta, file -> file }
 
-    versions = ITERATIVE_PURGEDUPS.out.versions
-
     emit:
     assemblies = ch_purged_assemblies
     logs
-    versions
 }

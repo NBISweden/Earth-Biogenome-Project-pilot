@@ -10,7 +10,7 @@ process DNADOTPLOT {
 
     output:
     tuple val(meta), path("*.svg"), emit: svg
-    path "versions.yml"           , emit: versions
+    tuple val("${task.process}"), val('dnadotplot'), eval("dnadotplot --version | sed 's/dnadotplot //'"), topic: versions, emit: versions_dnadotplot
 
     when:
     task.ext.when == null || task.ext.when
@@ -24,10 +24,5 @@ process DNADOTPLOT {
         -1 $ref \\
         -2 $query \\
         -o seq1-${ref.baseName}_seq2-${query.baseName}.${experiment}.svg
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        dnadotplot: \$(dnadotplot --version | sed "s/dnadotplot //")
-    END_VERSIONS
     """
 }

@@ -14,7 +14,7 @@ process OATK_SELECTHMM {
     output:
     tuple path("mito/*_mito.fam"), path("mito/*_mito.fam.h3f"), path("mito/*_mito.fam.h3i"), path("mito/*_mito.fam.h3m"), path("mito/*_mito.fam.h3p"), emit: mito_hmm, optional: true
     tuple path("pltd/*_pltd.fam"), path("pltd/*_pltd.fam.h3f"), path("pltd/*_pltd.fam.h3i"), path("pltd/*_pltd.fam.h3m"), path("pltd/*_pltd.fam.h3p"), emit: pltd_hmm, optional: true
-    path "versions.yml", emit: versions
+    tuple val("${task.process}"), val('oatk'), eval("oatk --version"), emit: versions_oatk, topic: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -38,10 +38,5 @@ process OATK_SELECTHMM {
         find -L ${oatkdb} -type f -name "\${taxa}_mito.*" -exec cp "{}" mito \\;
         find -L ${oatkdb} -type f -name "\${taxa}_pltd.*" -exec cp "{}" pltd \\;
     fi
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        oatk: \$(oatk --version)
-    END_VERSIONS
     """
 }

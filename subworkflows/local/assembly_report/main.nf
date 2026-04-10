@@ -30,9 +30,7 @@ workflow ASSEMBLY_REPORT {
         mqc_files.collect().dump(tag:'MultiQC', pretty: true),
         channel.value(report_params.collect{ k, v -> "$k: ${v}" }.join('\n')).collectFile(),
     )
-    QUARTO_NOTEBOOK.out.versions.first().set { versions }
 
     emit:
     report = QUARTO_NOTEBOOK.out.html
-    versions
 }
