@@ -19,7 +19,7 @@ process MITOHIFI_MITOHIFI {
     tuple val(meta), path("*final_mitogenome.gff")           , emit: gff                        , optional: true
     tuple val(meta), path("*all_potential_contigs.fa")       , emit: all_potential_contigs      , optional: true
     tuple val(meta), path("*contigs_annotations.png")        , emit: contigs_annotations        , optional: true
-    tuple val(meta), path("*contigs_circularization/")       , emit: contigs_circularization    , optional: true
+    tuple val(meta), path("contigs_circularization/")       , emit: contigs_circularization    , optional: true
     tuple val(meta), path("contigs_filtering/")              , emit: contigs_filtering          , optional: true
     tuple val(meta), path("coverage_mapping/")               , emit: coverage_mapping           , optional: true
     tuple val(meta), path("*coverage_plot.png")              , emit: coverage_plot              , optional: true
