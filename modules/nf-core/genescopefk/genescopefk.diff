@@ -35,9 +35,12 @@ Changes in 'genescopefk/main.nf':
  
      when:
      task.ext.when == null || task.ext.when
-@@ -31,13 +32,15 @@
+@@ -29,15 +30,17 @@
+     }
+ 
      def args   = task.ext.args   ?: ''
-     def prefix = task.ext.prefix ?: "${meta.id}"
+-    def prefix = task.ext.prefix ?: "${meta.id}"
++    prefix = task.ext.prefix ?: "${meta.id}"
      """
 +    #! /usr/bin/env bash
 +
