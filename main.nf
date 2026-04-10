@@ -249,9 +249,6 @@ workflow {
         COMPARE_ASSEMBLIES.out.logs,
         EVALUATE_ASSEMBLY.out.logs
     )
-    ch_versions = ch_versions.mix(
-        COMPARE_ASSEMBLIES.out.versions
-    )
 
     // Assembly report
     ASSEMBLY_REPORT(

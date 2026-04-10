@@ -98,7 +98,6 @@ workflow ASSEMBLE_ORGANELLES {
     // Versions
     ch_versions = ch_versions.mix(
         OATK_SELECTHMM.out.versions.first(),
-        OATK.out.versions.first(),
         DNADOTPLOT.out.versions.first()
     )
 

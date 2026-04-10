@@ -1,4 +1,7 @@
-Changes in module 'nf-core/quast'
+Changes in component 'nf-core/quast'
+'modules/nf-core/quast/environment.yml' is unchanged
+'modules/nf-core/quast/meta.yml' is unchanged
+Changes in 'quast/main.nf':
 --- modules/nf-core/quast/main.nf
 +++ modules/nf-core/quast/main.nf
 @@ -9,8 +9,8 @@
@@ -13,4 +16,6 @@ Changes in module 'nf-core/quast'
      output:
      tuple val(meta), path("${prefix}")                   , emit: results
 
+'modules/nf-core/quast/tests/main.nf.test.snap' is unchanged
+'modules/nf-core/quast/tests/main.nf.test' is unchanged
 ************************************************************
