@@ -12,23 +12,23 @@ process MITOHIFI_MITOHIFI {
     val mito_code
 
     output:
-    tuple val(meta), path("final_mitogenome.fasta")         , emit: fasta                      , optional: true
-    tuple val(meta), path("potential_*/*/*.rotated.fa")     , emit: all_candidates_fa          , optional: true
-    tuple val(meta), path("contigs_stats.tsv")              , emit: stats                      , optional: true
-    tuple val(meta), path("final_mitogenome.gb")            , emit: gb                         , optional: true
-    tuple val(meta), path("final_mitogenome.gff")           , emit: gff                        , optional: true
-    tuple val(meta), path("all_potential_contigs.fa")       , emit: all_potential_contigs      , optional: true
-    tuple val(meta), path("contigs_annotations.png")        , emit: contigs_annotations        , optional: true
-    tuple val(meta), path("contigs_circularization/")       , emit: contigs_circularization    , optional: true
-    tuple val(meta), path("contigs_filtering/")             , emit: contigs_filtering          , optional: true
-    tuple val(meta), path("coverage_mapping/")              , emit: coverage_mapping           , optional: true
-    tuple val(meta), path("coverage_plot.png")              , emit: coverage_plot              , optional: true
-    tuple val(meta), path("final_mitogenome.annotation.png"), emit: final_mitogenome_annotation, optional: true
-    tuple val(meta), path("final_mitogenome_choice/")       , emit: final_mitogenome_choice    , optional: true
-    tuple val(meta), path("final_mitogenome.coverage.png")  , emit: final_mitogenome_coverage  , optional: true
-    tuple val(meta), path("potential_contigs/")             , emit: potential_contigs          , optional: true
-    tuple val(meta), path("reads_mapping_and_assembly/")    , emit: reads_mapping_and_assembly , optional: true
-    tuple val(meta), path("shared_genes.tsv")               , emit: shared_genes               , optional: true
+    tuple val(meta), path("*final_mitogenome.fasta")         , emit: fasta                      , optional: true
+    tuple val(meta), path("potential_*/*/*.rotated.fa")      , emit: all_candidates_fa          , optional: true
+    tuple val(meta), path("*contigs_stats.tsv")              , emit: stats                      , optional: true
+    tuple val(meta), path("*final_mitogenome.gb")            , emit: gb                         , optional: true
+    tuple val(meta), path("*final_mitogenome.gff")           , emit: gff                        , optional: true
+    tuple val(meta), path("*all_potential_contigs.fa")       , emit: all_potential_contigs      , optional: true
+    tuple val(meta), path("*contigs_annotations.png")        , emit: contigs_annotations        , optional: true
+    tuple val(meta), path("*contigs_circularization/")       , emit: contigs_circularization    , optional: true
+    tuple val(meta), path("contigs_filtering/")              , emit: contigs_filtering          , optional: true
+    tuple val(meta), path("coverage_mapping/")               , emit: coverage_mapping           , optional: true
+    tuple val(meta), path("*coverage_plot.png")              , emit: coverage_plot              , optional: true
+    tuple val(meta), path("*final_mitogenome.annotation.png"), emit: final_mitogenome_annotation, optional: true
+    tuple val(meta), path("final_mitogenome_choice/")        , emit: final_mitogenome_choice    , optional: true
+    tuple val(meta), path("*final_mitogenome.coverage.png")  , emit: final_mitogenome_coverage  , optional: true
+    tuple val(meta), path("potential_contigs/")              , emit: potential_contigs          , optional: true
+    tuple val(meta), path("*reads_mapping_and_assembly/")    , emit: reads_mapping_and_assembly , optional: true
+    tuple val(meta), path("*shared_genes.tsv")               , emit: shared_genes               , optional: true
     // WARN: Incorrect version information is provided by tool on CLI. Please update this string when bumping container versions.
     // old version command: \$(mitohifi.py -v | sed 's/.* //')
     tuple val("${task.process}"), val('mitohifi'), eval('echo 3.2.3'), emit: versions_mitohifi, topic: versions
