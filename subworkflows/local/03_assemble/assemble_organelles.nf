@@ -29,14 +29,12 @@ workflow ASSEMBLE_ORGANELLES {
         )
         .multiMap { meta, data, mitofa, mitogb ->
             input: [ meta, ch_assembly_mode == "contigs" ? data.pri_fasta : data ] // contigs ? data = Channel<Map> : data = Channel<Path>.
-            reference: mitofa
-            genbank: mitogb
+            reference: [ meta, mitofa, mitogb ]
             mito_code: meta.sample.mito_code
         }
     MITOHIFI_MITOHIFI(
         mitohifi_ch.input,
         mitohifi_ch.reference,
-        mitohifi_ch.genbank,
         ch_assembly_mode[0], // mode: 'c'/'r'
         mitohifi_ch.mito_code,
     )
@@ -99,7 +97,6 @@ workflow ASSEMBLE_ORGANELLES {
 
     // Versions
     ch_versions = ch_versions.mix(
-        MITOHIFI_MITOHIFI.out.versions.first(),
         OATK_SELECTHMM.out.versions.first(),
         OATK.out.versions.first(),
         DNADOTPLOT.out.versions.first()
