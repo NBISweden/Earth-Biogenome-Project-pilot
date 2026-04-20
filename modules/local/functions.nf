@@ -164,7 +164,7 @@ def deepMergeMaps(Map lhs, Map rhs) {
 }
 
 
-// Generate workflow version string
+// Generate workflow version string. This function was adopted from the nf-core pipeline template: https://github.com/nf-core/tools/tree/main/nf_core/pipeline-template
 def getWorkflowVersion() {
     def version_string = "" as String
     if (workflow.manifest.version) {
@@ -180,14 +180,14 @@ def getWorkflowVersion() {
     return version_string
 }
 
-// Get software versions for pipeline
+// Get software versions for pipeline. This function was adopted from the nf-core pipeline template: https://github.com/nf-core/tools/tree/main/nf_core/pipeline-template
 def processVersionsFromYAML(yaml_file) {
     def yaml = new org.yaml.snakeyaml.Yaml()
     def versions = yaml.load(yaml_file)
     return yaml.dumpAsMap(versions).trim()
 }
 
-// Get workflow version for pipeline
+// Get workflow version for pipeline. This function was adopted from the nf-core pipeline template: https://github.com/nf-core/tools/tree/main/nf_core/pipeline-template
 def workflowVersionToYAML() {
     return """
     Workflow:
@@ -196,7 +196,7 @@ def workflowVersionToYAML() {
     """.stripIndent().trim()
 }
 
-// Get channel of software versions used in pipeline in YAML format
+// Get channel of software versions used in pipeline in YAML format. This function was adopted from the nf-core pipeline template: https://github.com/nf-core/tools/tree/main/nf_core/pipeline-template
 def softwareVersionsToYAML(ch_versions) {
     return ch_versions.unique().map { version -> processVersionsFromYAML(version) }.unique().mix(Channel.of(workflowVersionToYAML()))
 }

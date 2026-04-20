@@ -262,7 +262,7 @@ workflow {
         }
     )
 
-    // Collate and save software versions
+    // Collate and save software versions (this section was adapted from the nf-core pipeline template: https://github.com/nf-core/tools/tree/main/nf_core/pipeline-template)
     def topic_versions = Channel.topic("versions")
         .distinct()
         .branch { entry ->
@@ -287,7 +287,7 @@ workflow {
             name: 'versions.yml',
             sort: true,
             newLine: true
-        ).set { ch_collated_versions }
+        )
 
     // Completion message
     workflow.onComplete = {
