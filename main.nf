@@ -3,8 +3,6 @@
 // Functions
 include { assembliesFromStage as preassembledInput          } from "./modules/local/functions"
 include { setAssemblyStage                                  } from "./modules/local/functions"
-include { workflowVersionToYAML                             } from "./modules/local/functions"
-include { softwareVersionsToYAML                            } from "./modules/local/functions"
 // Data import
 include { PREPARE_INPUT                                     } from "./subworkflows/local/prepare_input/main"
 // Database preparation
@@ -35,6 +33,8 @@ include { EVALUATE_ASSEMBLY                                 } from "./subworkflo
 include { ALIGN_RNASEQ                                      } from "./subworkflows/local/09_align_rnaseq/main"
 // Report
 include { ASSEMBLY_REPORT                                   } from "./subworkflows/local/assembly_report/main"
+// Tool versions report
+include { REPORT_VERSIONS                                   } from "./subworkflows/local/version_report/main"
 
 /*
  * Development: See docs/development to understand the workflow programming model and
@@ -262,32 +262,12 @@ workflow {
         }
     )
 
-    // Collate and save software versions (this section was adapted from the nf-core pipeline template: https://github.com/nf-core/tools/tree/main/nf_core/pipeline-template)
-    def topic_versions = Channel.topic("versions")
-        .distinct()
-        .branch { entry ->
-            versions_file: entry instanceof Path
-            versions_tuple: true
-        }
-
-    def topic_versions_string = topic_versions.versions_tuple
-        .map { process, tool, version ->
-            [ process, "  ${tool}: ${version}" ]
-        }
-        .groupTuple(by:0)
-        .map { process, tool_versions ->
-            tool_versions.unique().sort()
-            "${process}:\n${tool_versions.join('\n')}"
-        }
-
-    softwareVersionsToYAML(ch_versions.mix(topic_versions.versions_file))
-        .mix(topic_versions_string)
-        .collectFile(
-            storeDir: "${params.outdir}/10_report",
-            name: 'versions.yml',
-            sort: true,
-            newLine: true
-        )
+    // Version reporting
+    REPORT_VERSIONS(
+        channel.topic("versions"),
+        ch_versions,
+        params.outdir
+    )
 
     // Completion message
     workflow.onComplete = {
