@@ -7,6 +7,7 @@ workflow ASSEMBLY_REPORT {
     take:
     notebook      // Channel: [ meta:Map, notebook:Path, aux_files:Path ]
     logs          // Channel: Path
+    versions      // Channel: Path
     report_params // Object: Map
 
     main:
@@ -22,7 +23,8 @@ workflow ASSEMBLY_REPORT {
     REPORT_GENOMETRAITS( notebook.map{ meta, _notebook, _aux -> meta } )
     def mqc_files = logs.mix(
         REPORT_DTOL.out.tsv,
-        REPORT_GENOMETRAITS.out.tsv
+        REPORT_GENOMETRAITS.out.tsv,
+        versions
     )
 
     QUARTO_NOTEBOOK(

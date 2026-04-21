@@ -6,7 +6,6 @@ workflow REPORT_VERSIONS {
     take:
     versions_topic_ch
     versions_heredoc_ch
-    outdir
 
     main:
     // Code adapted from the nf-core pipeline template: https://github.com/nf-core/tools/tree/main/nf_core/pipeline-template)
@@ -34,13 +33,12 @@ workflow REPORT_VERSIONS {
     softwareVersionsToYAML(versions_heredoc_ch.mix(topic_type.file))
         .mix(topic_versions_string)
         .collectFile(
-            storeDir: "${outdir}/10_report",
-            name: 'versions.yml',
+            name: 'assembly_mqc_versions.yml',
             sort: true,
             newLine: true
-        ).set { versions_report_ch }
+        ).set { multiqc_versions_report_ch }
 
     emit:
-    versions_report_ch
+    multiqc_versions_report_ch
 
 }

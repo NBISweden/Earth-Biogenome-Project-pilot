@@ -31,10 +31,10 @@ include { COMPARE_ASSEMBLIES                                } from "./subworkflo
 include { EVALUATE_ASSEMBLY                                 } from "./subworkflows/local/evaluate_assembly/main"
 // Align RNAseq
 include { ALIGN_RNASEQ                                      } from "./subworkflows/local/09_align_rnaseq/main"
-// Report
-include { ASSEMBLY_REPORT                                   } from "./subworkflows/local/assembly_report/main"
 // Tool versions report
 include { REPORT_VERSIONS                                   } from "./subworkflows/local/version_report/main"
+// Assembly report
+include { ASSEMBLY_REPORT                                   } from "./subworkflows/local/assembly_report/main"
 
 /*
  * Development: See docs/development to understand the workflow programming model and
@@ -243,6 +243,12 @@ workflow {
         EVALUATE_ASSEMBLY.out.logs
     )
 
+    // Version reporting
+    REPORT_VERSIONS(
+        channel.topic("versions"),
+        ch_versions
+    )
+
     // Assembly report
     ASSEMBLY_REPORT(
         PREPARE_INPUT.out.sample_meta.map{ meta ->
@@ -253,6 +259,7 @@ workflow {
             ]
         },
         ch_multiqc_files,
+        REPORT_VERSIONS.out.multiqc_versions_report_ch,
         [
             diagnostics: "debug" in workflow.profile.tokenize(","),
             nuclear_assembly_mode: params.nuclear_assembly_mode,
@@ -260,13 +267,6 @@ workflow {
         ] + workflow_permitted_stages.collectEntries{ step ->
             [(step): step in params.steps.tokenize(",")]
         }
-    )
-
-    // Version reporting
-    REPORT_VERSIONS(
-        channel.topic("versions"),
-        ch_versions,
-        params.outdir
     )
 
     // Completion message
