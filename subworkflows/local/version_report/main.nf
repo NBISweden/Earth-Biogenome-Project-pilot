@@ -1,4 +1,3 @@
-include { workflowVersionToYAML  } from "../../../modules/local/nf-core-utilities.nf"
 include { softwareVersionsToYAML } from "../../../modules/local/nf-core-utilities.nf"
 
 workflow REPORT_VERSIONS {
