@@ -3,7 +3,7 @@ include { softwareVersionsToYAML } from "../../../modules/local/nf-core-utilitie
 workflow REPORT_VERSIONS {
 
     take:
-    versions
+    versions  // Channel: <Path> / tuple( <String>, <String>, <Number> )
 
     main:
     // Code adapted from the nf-core pipeline template: https://github.com/nf-core/tools/tree/main/nf_core/pipeline-template)
