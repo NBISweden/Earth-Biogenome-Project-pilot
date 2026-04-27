@@ -3,7 +3,6 @@
 // include { UNTAR as UNTAR_TAXONOMY } from "../../../modules/nf-core/untar/main"
 // include { TAXONKIT_NAME2LINEAGE   } from "../../../modules/local/taxonkit/name2lineage"
 include { FETCH_SAMPLE_METADATA   } from "./fetch_sample_metadata"
-// include { GOAT_TAXONSEARCH        } from "../../../modules/nf-core/goat/taxonsearch/main"
 include { SAMTOOLS_FASTA          } from "../../../modules/local/samtools/fasta/main"
 include { CAT_CAT as MERGE_PACBIO } from "../../../modules/nf-core/cat/cat/main"
 
@@ -200,12 +199,6 @@ workflow PREPARE_INPUT {
         .transpose()
         .set { isoseq_fastx_ch }
 
-    // versions
-    FETCH_SAMPLE_METADATA.out.versions.mix(
-        SAMTOOLS_FASTA.out.versions.first(),
-        MERGE_PACBIO.out.versions.first(),
-    ).set { versions }
-
     emit:
     sample_meta = FETCH_SAMPLE_METADATA.out.metadata.map { data -> data.subMap('sample') }
     assemblies  = assembly_ch.dump( tag: 'Input: Assemblies', pretty: true )
@@ -214,7 +207,6 @@ workflow PREPARE_INPUT {
     hifi_merged = sample_fastx.single.mix( MERGE_PACBIO.out.file_out )
     rnaseq      = rnaseq_fastx_ch.dump( tag: 'Input: Illumina RnaSeq', pretty: true )
     isoseq      = isoseq_fastx_ch.dump( tag: 'Input: PacBio IsoSeq', pretty: true )
-    versions
 }
 
 def readYAML( yamlfile ) {

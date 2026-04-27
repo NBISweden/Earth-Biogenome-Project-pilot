@@ -35,13 +35,7 @@ workflow DECONTAMINATE {
         .map{ _meta, log -> log }
         .set{ logs }
 
-    FCSGX_FETCHDB.out.versions.mix(
-        FCSGX_RUNGX.out.versions,
-        FCSGX_CLEAN.out.versions,
-    ).set { versions }
-
     emit:
     assemblies = ch_cleaned_assemblies
     logs
-    versions
 }

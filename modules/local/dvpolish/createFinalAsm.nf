@@ -14,7 +14,7 @@ process DVPOLISH_CREATE_FINALASM {
     output:
     tuple val(meta), path('*.fasta.gz')     , emit: fasta_gz
     tuple val(meta), path('*_selection.tsv'), emit: dvpolish_selection_tsv
-    path  "versions.yml"                    , emit: versions
+    tuple val("${task.process}"), val('samtools'), eval('samtools --version | sed "1!d; s/samtools //"'), emit: versions_samtools, topic: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -69,10 +69,5 @@ process DVPOLISH_CREATE_FINALASM {
         echo -e "\$CONTIG\\t\$SOURCE\\t\${UNPOL_LINE[1]}\\t\${POL_LINE[1]}\\t\${UNPOL_LINE[3]}\\t\${POL_LINE[3]}" >> ${prefix}_selection.tsv
 
     done < ${unpol_merqury_csv} 3< ${pol_merqury_csv} | bgzip -@ ${task.cpus} -c > ${prefix}.fasta.gz
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        samtools: \$(samtools --version | sed '1!d; s/^samtools //')
-    END_VERSIONS
     """
 }

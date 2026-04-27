@@ -9,7 +9,7 @@ process PRETEXT_TRACKS_INGESTION {
 
     output:
     tuple val(meta), path("*_wTracks.pretext"), emit: hitile
-    path "versions.yml"                       , emit: versions
+    tuple val("${task.process}"), val('PretextGraph'), eval("PretextGraph | sed '2!d; s/.* //'"), emit: versions_pretextGraph, topic: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -31,10 +31,5 @@ process PRETEXT_TRACKS_INGESTION {
     else
         mv ${prefix}_cov.pretext ${prefix}_wTracks.pretext
     fi
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        PretextGraph: \$( PretextGraph | sed '2!d; s/.* //' )
-    END_VERSIONS
     """
 }

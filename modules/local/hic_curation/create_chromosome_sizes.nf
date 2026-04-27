@@ -10,7 +10,8 @@ process CREATE_CHROMOSOME_SIZES_FILE {
 
     output:
     tuple val(meta), path("*.sizes")  , emit: sizes
-    path "versions.yml"               , emit: versions
+    tuple val("${task.process}"), val('sort'), eval("sort --version | sed '1!d; s/.* //'"), topic: versions, emit: versions_sort
+    tuple val("${task.process}"), val('awk'), eval("awk --version | sed '1!d; s/mawk //; s/ .*//'"), topic: versions, emit: versions_awk
 
     when:
     task.ext.when == null || task.ext.when
@@ -30,11 +31,5 @@ process CREATE_CHROMOSOME_SIZES_FILE {
     else
         awk '{print \$1\"\t\"\$2}' ${fai} > ${prefix}.sizes
     fi
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        sort: \$(sort --version | sed '1!d; s/.* //')
-        awk: \$(awk --version | sed '1!d; s/mawk //; s/ .*//')
-    END_VERSIONS
     """
 }

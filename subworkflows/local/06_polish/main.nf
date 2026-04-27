@@ -3,24 +3,23 @@
  * https://git.mpi-cbg.de/assembly/programs/polishing
 */
 
-include { constructAssemblyRecord           } from "../../../modules/local/functions"
-include { joinByMetaKeys                    } from "../../../modules/local/functions"
-include { combineByMetaKeys                 } from "../../../modules/local/functions"
-include { DVPOLISH_CHUNKFA                  } from "../../../modules/local/dvpolish/chunkfa"
-include { DVPOLISH_PBMM2_INDEX              } from "../../../modules/local/dvpolish/pbmm2_index"
-include { DVPOLISH_PBMM2_ALIGN              } from "../../../modules/local/dvpolish/pbmm2_align"
-include { SAMTOOLS_FAIDX                    } from "../../../modules/nf-core/samtools/faidx/main"
-include { SAMTOOLS_VIEW                     } from "../../../modules/nf-core/samtools/view/main"
-include { SAMTOOLS_INDEX                    } from "../../../modules/nf-core/samtools/index/main"
-include { DEEPVARIANT_RUNDEEPVARIANT        } from "../../../modules/nf-core/deepvariant/rundeepvariant/main"
-include { BCFTOOLS_VIEW                     } from "../../../modules/nf-core/bcftools/view/main"
-include { TABIX_TABIX as TABIX_TABIX        } from "../../../modules/nf-core/tabix/tabix/main"
-include { TABIX_TABIX as TABIX_TABIX_MERGED } from "../../../modules/nf-core/tabix/tabix/main"
-include { BCFTOOLS_MERGE                    } from "../../../modules/nf-core/bcftools/merge/main"
-include { BCFTOOLS_CONSENSUS                } from "../../../modules/nf-core/bcftools/consensus/main"
-include { MERQURY as MERQURY_INPUT_ASM      } from "../../../modules/nf-core/merqury/main"
-include { MERQURY as MERQURY_POLISHED_ASM   } from "../../../modules/nf-core/merqury/main"
-include { DVPOLISH_CREATE_FINALASM          } from "../../../modules/local/dvpolish/createFinalAsm"
+include { constructAssemblyRecord                 } from "../../../modules/local/functions"
+include { joinByMetaKeys                          } from "../../../modules/local/functions"
+include { combineByMetaKeys                       } from "../../../modules/local/functions"
+include { DVPOLISH_CHUNKFA                        } from "../../../modules/local/dvpolish/chunkfa"
+include { DVPOLISH_PBMM2_INDEX                    } from "../../../modules/local/dvpolish/pbmm2_index"
+include { DVPOLISH_PBMM2_ALIGN                    } from "../../../modules/local/dvpolish/pbmm2_align"
+include { SAMTOOLS_FAIDX                          } from "../../../modules/nf-core/samtools/faidx/main"
+include { SAMTOOLS_VIEW                           } from "../../../modules/nf-core/samtools/view/main"
+include { DEEPVARIANT_RUNDEEPVARIANT              } from "../../../modules/nf-core/deepvariant/rundeepvariant/main"
+include { BCFTOOLS_VIEW                           } from "../../../modules/nf-core/bcftools/view/main"
+include { TABIX_TABIX as TABIX_TABIX              } from "../../../modules/nf-core/tabix/tabix/main"
+include { TABIX_TABIX as TABIX_TABIX_MERGED       } from "../../../modules/nf-core/tabix/tabix/main"
+include { BCFTOOLS_MERGE                          } from "../../../modules/nf-core/bcftools/merge/main"
+include { BCFTOOLS_CONSENSUS                      } from "../../../modules/nf-core/bcftools/consensus/main"
+include { MERQURY_MERQURY as MERQURY_INPUT_ASM    } from "../../../modules/nf-core/merqury/merqury/main"
+include { MERQURY_MERQURY as MERQURY_POLISHED_ASM } from "../../../modules/nf-core/merqury/merqury/main"
+include { DVPOLISH_CREATE_FINALASM                } from "../../../modules/local/dvpolish/createFinalAsm"
 
 /*
 outline:
@@ -47,7 +46,6 @@ workflow DVPOLISH {
 
     main:
     ch_logs     = channel.empty()
-    ch_versions = channel.empty()
 
     // Create tagged channels for each available haplotype + mix
     ch_assemblies.multiMap { meta, assembly ->
@@ -58,8 +56,8 @@ workflow DVPOLISH {
 
     // Index assembly files
     SAMTOOLS_FAIDX (
-        all_haplotypes,
-        [ [] , [] ]
+        all_haplotypes.map { meta, assembly -> [ meta, assembly, [] ] }, // [ meta, fasta, fai ]
+        false                                                            // get_sizes
     )
 
     // Generate BED intervals partitioning each assembly into fixed-size regions
@@ -105,24 +103,20 @@ workflow DVPOLISH {
     ).multiMap { meta, bam, bai, bed ->
         meta_bam_bai_ch:  [ meta + [ mergeID: bed.baseName ], bam, bai ]
         meta_bed_ch:      [ meta + [ mergeID: bed.baseName ], bed ]
-        bed_ch:             bed
     }.set { alignment }
 
     // Split alignment bam by BED coordinates
     SAMTOOLS_VIEW (
         alignment.meta_bam_bai_ch,
+        [ [],[],[] ],
         [ [],[] ],
-        alignment.bed_ch
-    )
-
-    // Index partitioned BAMs
-    SAMTOOLS_INDEX(
-        SAMTOOLS_VIEW.out.bam
+        alignment.meta_bed_ch,
+        'bai'
     )
 
     // Join partitioned bams with their indexes and corresponding BED files
     SAMTOOLS_VIEW.out.bam
-        .join( SAMTOOLS_INDEX.out.bai )
+        .join( SAMTOOLS_VIEW.out.bai )
         .join( alignment.meta_bed_ch )
         .set { dv_bam_bai_bed_ch }
 
@@ -159,7 +153,7 @@ workflow DVPOLISH {
 
     // Prepare channel with indexed vcf
     DEEPVARIANT_RUNDEEPVARIANT.out.vcf
-        .join(DEEPVARIANT_RUNDEEPVARIANT.out.vcf_index, by:0)
+        .join(DEEPVARIANT_RUNDEEPVARIANT.out.vcf_tbi, by:0)
         .set { bcftools_view_ch }
 
     // filter vcf files for PASS and homozygous variants
@@ -181,7 +175,7 @@ workflow DVPOLISH {
         .map { meta, vcf -> [ meta - meta.subMap( 'mergeID' ), vcf ] }
         .groupTuple(by:0)
         .set { filt_vcf_list_ch }
-    TABIX_TABIX.out.tbi
+    TABIX_TABIX.out.index
         .map { meta, tbi -> [ meta - meta.subMap( 'mergeID' ), tbi ] }
         .groupTuple( by:0 )
         .set { filt_tbi_list_ch }
@@ -198,34 +192,33 @@ workflow DVPOLISH {
         keySet: [ 'id', 'sample', 'assembly', 'haplotype' ],
         meta: 'lhs'
     ).multiMap { meta, vcfs, tbis, fasta, fai ->
-        vcf_tbis_ch:    [ meta, vcfs, tbis ]
-        fasta_ch:       [ meta, fasta ]
-        fai_ch:         [ meta, fai ]
+        vcf_tbis_ch:    [ meta, vcfs, tbis, [] ] // empty path for 'bed' input
+        fasta_ch:       [ meta, fasta, fai ]
     }.set { bcf_input }
     BCFTOOLS_MERGE(
         bcf_input.vcf_tbis_ch,
-        bcf_input.fasta_ch,
-        bcf_input.fai_ch,
-        [] // path(bed)
+        bcf_input.fasta_ch
     )
 
     // index merged vcf file
     TABIX_TABIX_MERGED(
-        BCFTOOLS_MERGE.out.merged_variants
+        BCFTOOLS_MERGE.out.vcf
     )
 
     // Prepare input for consensus step
     vcf_plus_index_ch = vcf_merge_ch.singleton
         .map { meta, vcf, idx  -> [ meta, vcf[0], idx[0] ] }
-        .mix(BCFTOOLS_MERGE.out.merged_variants
-        .join(TABIX_TABIX_MERGED.out.tbi)
+        .mix(BCFTOOLS_MERGE.out.vcf
+        .join(TABIX_TABIX_MERGED.out.index)
     )
     vcf_plus_index_plus_assembly_ch = joinByMetaKeys (
         vcf_plus_index_ch,
         all_haplotypes,
         keySet: [ 'sample', 'assembly', 'haplotype' ],
         meta: 'lhs'
-    )
+    ).map { meta, vcf, tbi, fasta ->
+        tuple(meta, vcf, tbi, fasta, []) // Add empty path for 'mask' input
+    }
 
     // create consensus sequence
     BCFTOOLS_CONSENSUS(
@@ -295,27 +288,8 @@ workflow DVPOLISH {
         )
         .map { _meta, file -> file }
 
-    ch_versions = ch_versions.mix(
-        SAMTOOLS_FAIDX.out.versions.first(),
-        DVPOLISH_CHUNKFA.out.versions.first(),
-        DVPOLISH_PBMM2_INDEX.out.versions.first(),
-        DVPOLISH_PBMM2_ALIGN.out.versions.first(),
-        SAMTOOLS_VIEW.out.versions.first(),
-        SAMTOOLS_INDEX.out.versions.first(),
-        DEEPVARIANT_RUNDEEPVARIANT.out.versions.first(),
-        BCFTOOLS_VIEW.out.versions.first(),
-        TABIX_TABIX.out.versions.first(),
-        BCFTOOLS_MERGE.out.versions.first(),
-        TABIX_TABIX_MERGED.out.versions.first(),
-        BCFTOOLS_CONSENSUS.out.versions.first(),
-        MERQURY_INPUT_ASM.out.versions.first(),
-        MERQURY_POLISHED_ASM.out.versions.first(),
-        DVPOLISH_CREATE_FINALASM.out.versions.first()
-    )
-
     emit:
     assemblies = ch_polished_assemblies
     logs       = ch_logs
-    versions   = ch_versions
 
 }

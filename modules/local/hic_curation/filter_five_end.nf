@@ -8,8 +8,9 @@ process FILTER_FIVE_END {
     tuple val(meta), path(bam)
 
     output:
-    tuple val(meta), path("*.bam")  , emit: bam
-    path "versions.yml"             , emit: versions
+    tuple val(meta), path("*.bam"), emit: bam
+    tuple val("${task.process}"), val('samtools'), eval('samtools --version | sed "1!d; s/samtools //"'), emit: versions_samtools, topic: versions
+
 
     when:
     task.ext.when == null || task.ext.when
@@ -21,10 +22,5 @@ process FILTER_FIVE_END {
     samtools view -h -@ $task.cpus ${bam} | \\
     filter_five_end.pl | \\
     samtools view -@ $task.cpus -Sb - > ${prefix}.bam
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        samtools: \$(samtools --version | sed '1!d; s/.* //')
-    END_VERSIONS
     """
 }

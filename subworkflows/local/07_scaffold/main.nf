@@ -34,8 +34,8 @@ workflow SCAFFOLD {
     BWAMEM2_INDEX_SCAFFOLD ( ch_to_scaffold )
 
     SAMTOOLS_FAIDX (
-        ch_to_scaffold,
-        [ [ ], [ ] ]
+        ch_to_scaffold.map { meta, assembly -> [ meta, assembly, [] ] }, // [ meta, fasta, fai ]
+        false                                                            // get_sizes
     )
 
     combineByMetaKeys( // Combine (Hi-C + index) with (BWA_INDEX + Assembly)
@@ -94,16 +94,12 @@ workflow SCAFFOLD {
         ),
         keySet: ['id','sample','assembly','haplotype'],
         meta: 'rhs'
-    ).multiMap{ meta, bam, fasta, fai ->
-        bam:   [ meta, bam ]
-        fasta: [ fasta ]
-        fai:   [ fai ]
+    ).map{ meta, bam, fasta, fai ->
+        [ meta, fasta, fai, bam, [] ] // yahs input map: [ meta, fasta, fai, hic_map, agp ]
     }.set{ yahs_input }
 
     YAHS(
-        yahs_input.bam,
-        yahs_input.fasta,
-        yahs_input.fai
+        yahs_input
     )
 
     ch_scaffolded_haplotypes = YAHS.out.scaffolds_fasta
@@ -123,15 +119,7 @@ workflow SCAFFOLD {
     logs = PAIRTOOLS.out.stat
         .flatten()
 
-    versions = BWAMEM2_INDEX_SCAFFOLD.out.versions.first().mix(
-        SAMTOOLS_FAIDX.out.versions.first(),
-        BWAMEM2_MEM_SCAFFOLD.out.versions.first(),
-        PAIRTOOLS.out.versions.first(),
-        YAHS.out.versions.first()
-    )
-
     emit:
     assemblies = ch_scaffolded_assemblies
     logs
-    versions
 }

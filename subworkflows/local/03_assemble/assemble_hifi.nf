@@ -90,11 +90,8 @@ workflow ASSEMBLE_HIFI {
     HIFIASM.out.log
         .map { _meta, log -> log }
         .set { logs }
-    versions_ch = HIFIASM.out.versions.first()
-        .mix( GFATOOLS_GFA2FA.out.versions.first() )
 
     emit:
     assemblies = assemblies_ch
     logs
-    versions = versions_ch
 }

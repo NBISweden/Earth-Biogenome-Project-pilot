@@ -26,7 +26,7 @@ process OATK {
     tuple val(meta), path("*utg.gfa")           , emit: initial_gfa, optional: true
     tuple val(meta), path("*utg.multiplex.gfa") , emit: multiplex_gfa, optional: true
     tuple val(meta), path("*utg.unzip.gfa")     , emit: unzip_gfa, optional: true
-    path "versions.yml"                         , emit: versions
+    tuple val("${task.process}"), val('oatk'), eval("oatk --version 2>&1"), topic: versions, emit: versions_oatk
 
     when:
     task.ext.when == null || task.ext.when
@@ -50,10 +50,5 @@ process OATK {
         -t $task.cpus \\
         -o ${prefix} \\
         $reads
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        oatk : \$(oatk --version 2>&1)
-    END_VERSIONS
     """
 }

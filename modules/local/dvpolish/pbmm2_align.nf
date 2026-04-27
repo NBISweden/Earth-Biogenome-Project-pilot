@@ -14,7 +14,7 @@ process DVPOLISH_PBMM2_ALIGN {
 
     output:
     tuple val(meta), path("*.bam"), path("*.bai"), emit: bam_bai
-    path "versions.yml"           , emit: versions
+    tuple val("${task.process}"), val('pbmm2'), eval("pbmm2 --version 2>&1 | sed '1!d; s/pbmm2 //'"), emit: versions_pbmm2, topic: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -30,10 +30,5 @@ process DVPOLISH_PBMM2_ALIGN {
         "$index" \\
         "$reads" \\
         ${out_name_part1}_${out_name_part2}.bam
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        pbmm2: \$(pbmm2 --version 2>&1 | sed '1!d; s/pbmm2 //')
-    END_VERSIONS
     """
 }

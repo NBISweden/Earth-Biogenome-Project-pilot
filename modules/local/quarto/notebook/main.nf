@@ -47,9 +47,9 @@ process QUARTO_NOTEBOOK {
         $args
 
     cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        quarto: \$(quarto --version)
-        multiqc: \$(multiqc --version | sed '1!d; s/.*version //')
+    ${task.process}:
+      quarto: \$(quarto --version)
+      multiqc: \$(multiqc --version | sed '1!d; s/.*version //')
     \$(cat log_files/assembly_mqc_versions.yml)
     END_VERSIONS
     """

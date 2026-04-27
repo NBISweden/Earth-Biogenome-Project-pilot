@@ -14,7 +14,7 @@ process TIDK_SEARCH {
     output:
     tuple val(meta), path("*.tsv")          , emit: tsv         , optional: true
     tuple val(meta), path("*.bedgraph")     , emit: bedgraph    , optional: true
-    path "versions.yml"                     , emit: versions
+    tuple val("${task.process}"), val('tidk'), eval("tidk --version | sed 's/tidk //'"), emit: versions_tidk, topic: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -40,11 +40,6 @@ process TIDK_SEARCH {
         tidk/${prefix}_telomeric_repeat_windows.bedgraph \\
         ${prefix}.bedgraph \\
         || echo "BEDGRAPH file was not produced"
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        tidk: \$(tidk --version | sed 's/tidk //')
-    END_VERSIONS
     """
 
     stub:
@@ -53,10 +48,5 @@ process TIDK_SEARCH {
     def extension = args.contains("--extension bedgraph") ? 'bedgraph' : 'tsv'
     """
     touch ${prefix}.${extension}
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        tidk: \$(tidk --version | sed 's/tidk //')
-    END_VERSIONS
     """
 }

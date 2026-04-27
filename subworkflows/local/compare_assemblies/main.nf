@@ -14,13 +14,11 @@ workflow COMPARE_ASSEMBLIES {
         params.reference ? file( params.reference, checkIfExists: true ) : [],
         []              // No GFF
     )
-    versions_ch = QUAST.out.versions
     QUAST.out.tsv
         .map { _meta, tsv -> tsv }
         .set { logs }
 
     emit:
-    versions = versions_ch
     logs
 
 }

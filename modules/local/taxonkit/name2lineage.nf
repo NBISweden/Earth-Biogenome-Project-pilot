@@ -13,7 +13,7 @@ process TAXONKIT_NAME2LINEAGE {
 
     output:
     tuple val(meta), path("*.tsv"), emit: tsv
-    path "versions.yml"           , emit: versions
+    tuple val("${task.process}"), val('taxonkit'), eval('taxonkit version | sed "s/.* v//"'), emit: versions_taxonkit, topic: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -36,10 +36,5 @@ process TAXONKIT_NAME2LINEAGE {
         --data-dir $taxdb \\
         --threads $task.cpus \\
         --out-file ${prefix}.tsv
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        taxonkit: \$( taxonkit version | sed 's/.* v//' )
-    END_VERSIONS
     """
 }

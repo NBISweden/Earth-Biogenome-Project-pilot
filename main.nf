@@ -31,7 +31,9 @@ include { COMPARE_ASSEMBLIES                                } from "./subworkflo
 include { EVALUATE_ASSEMBLY                                 } from "./subworkflows/local/evaluate_assembly/main"
 // Align RNAseq
 include { ALIGN_RNASEQ                                      } from "./subworkflows/local/09_align_rnaseq/main"
-// Report
+// Tool versions report
+include { REPORT_VERSIONS                                   } from "./subworkflows/local/version_report/main"
+// Assembly report
 include { ASSEMBLY_REPORT                                   } from "./subworkflows/local/assembly_report/main"
 
 /*
@@ -66,7 +68,6 @@ workflow {
 
     // Setup sink channels
     ch_multiqc_files = channel.value( file(params.multiqc_assembly_report_config, checkIfExists: true) )
-    ch_versions      = channel.empty()
 
     // Read in data
     PREPARE_INPUT (
@@ -82,13 +83,6 @@ workflow {
     BUILD_FASTK_HIC_DATABASE ( CONVERT_FASTQ_CRAM.out.fastq )
     BUILD_MERYL_HIFI_DATABASE ( PREPARE_INPUT.out.hifi )
     BUILD_MERYL_HIC_DATABASE ( CONVERT_FASTQ_CRAM.out.fastq )
-    ch_versions = ch_versions.mix(
-        CONVERT_FASTQ_CRAM.out.versions,
-        BUILD_FASTK_HIFI_DATABASE.out.versions,
-        BUILD_FASTK_HIC_DATABASE.out.versions,
-        BUILD_MERYL_HIFI_DATABASE.out.versions,
-        BUILD_MERYL_HIC_DATABASE.out.versions,
-    )
 
     // Data inspection
     ch_hifi_kmer_cov = PREPARE_INPUT.out.hifi_merged.map { meta, _reads -> tuple(meta, []) }
@@ -102,7 +96,6 @@ workflow {
         )
         ch_hifi_kmer_cov = INSPECT_DATA.out.hifi_kmer_cov
         ch_multiqc_files = ch_multiqc_files.mix( INSPECT_DATA.out.logs )
-        ch_versions = ch_versions.mix( INSPECT_DATA.out.versions )
     }
 
     // Preprocess data
@@ -125,7 +118,6 @@ workflow {
         ch_evaluate_assemblies = ch_evaluate_assemblies.mix( ASSEMBLE.out.raw_assemblies )
         ch_raw_assemblies = ASSEMBLE.out.raw_assemblies
         ch_multiqc_files = ch_multiqc_files.mix( ASSEMBLE.out.logs )
-        ch_versions = ch_versions.mix( ASSEMBLE.out.versions )
     } else {
         ch_raw_assemblies = channel.empty() // No assemblies from a previous stage
     }
@@ -143,7 +135,6 @@ workflow {
         ch_evaluate_assemblies = ch_evaluate_assemblies.mix( DECONTAMINATE.out.assemblies )
         ch_cleaned_assemblies = DECONTAMINATE.out.assemblies
         ch_multiqc_files = ch_multiqc_files.mix( DECONTAMINATE.out.logs )
-        ch_versions = ch_versions.mix(DECONTAMINATE.out.versions)
     } else {
         ch_cleaned_assemblies = ch_to_screen
     }
@@ -165,7 +156,6 @@ workflow {
         ch_evaluate_assemblies = ch_evaluate_assemblies.mix( PURGE_DUPLICATES.out.assemblies )
         ch_purged_assemblies = PURGE_DUPLICATES.out.assemblies
         ch_multiqc_files = ch_multiqc_files.mix( PURGE_DUPLICATES.out.logs )
-        ch_versions = ch_versions.mix( PURGE_DUPLICATES.out.versions )
     } else {
         ch_purged_assemblies = ch_to_purge
     }
@@ -189,7 +179,6 @@ workflow {
         ch_evaluate_assemblies = ch_evaluate_assemblies.mix( DVPOLISH.out.assemblies )
         ch_polished_assemblies = DVPOLISH.out.assemblies
         ch_multiqc_files = ch_multiqc_files.mix( DVPOLISH.out.logs )
-        ch_versions = ch_versions.mix(DVPOLISH.out.versions)
     } else {
         ch_polished_assemblies = ch_to_polish
     }
@@ -210,7 +199,6 @@ workflow {
         ch_evaluate_assemblies = ch_evaluate_assemblies.mix( SCAFFOLD.out.assemblies )
         ch_scaffolded_assemblies = SCAFFOLD.out.assemblies
         ch_multiqc_files = ch_multiqc_files.mix( SCAFFOLD.out.logs )
-        ch_versions = ch_versions.mix( SCAFFOLD.out.versions )
     } else {
         ch_scaffolded_assemblies = ch_to_scaffold
     }
@@ -229,7 +217,6 @@ workflow {
             CONVERT_FASTQ_CRAM.out.fastq,
             PREPARE_INPUT.out.hifi
         )
-        ch_versions = ch_versions.mix( SCAFFOLD_CURATION.out.versions )
     }
     preassembledInput( PREPARE_INPUT.out.assemblies, 'curated' ).dump(tag: 'Assemblies: Curated')
 
@@ -254,9 +241,10 @@ workflow {
         COMPARE_ASSEMBLIES.out.logs,
         EVALUATE_ASSEMBLY.out.logs
     )
-    ch_versions = ch_versions.mix(
-        COMPARE_ASSEMBLIES.out.versions,
-        EVALUATE_ASSEMBLY.out.versions
+
+    // Version reporting
+    REPORT_VERSIONS(
+        channel.topic("versions")
     )
 
     // Assembly report
@@ -269,7 +257,7 @@ workflow {
             ]
         },
         ch_multiqc_files,
-        ch_versions,
+        REPORT_VERSIONS.out.multiqc_versions_report_ch,
         [
             diagnostics: "debug" in workflow.profile.tokenize(","),
             nuclear_assembly_mode: params.nuclear_assembly_mode,
@@ -279,6 +267,7 @@ workflow {
         }
     )
 
+    // Completion message
     workflow.onComplete = {
         if( workflow.success ){
             log.info("""

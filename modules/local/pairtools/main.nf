@@ -20,7 +20,8 @@ process PAIRTOOLS {
     tuple val(meta), path("*.crai")             , emit: crai, optional:true
     tuple val(meta), path("*.csi")              , emit: csi , optional:true
     path "*.stat"                               , emit: stat
-    path "versions.yml"                         , emit: versions
+    tuple val("${task.process}"), val('samtools'), eval('samtools --version | sed "1!d; s/samtools //"'), emit: versions_samtools, topic: versions
+    tuple val("${task.process}"), val('pairtools'), eval("pairtools --version 2>&1 | sed 's/pairtools, version //'"), emit: versions_pairtools, topic: versions
 
     when:
     task.ext.when == null || task.ext.when
@@ -84,11 +85,5 @@ process PAIRTOOLS {
         -
 
     rm -f "\${TEMP_FILES[@]}"
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        pairtools: \$(pairtools --version 2>&1 | sed 's/pairtools, version //')
-        samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
-    END_VERSIONS
     """
 }

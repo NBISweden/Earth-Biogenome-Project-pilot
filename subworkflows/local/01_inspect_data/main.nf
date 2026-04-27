@@ -21,12 +21,6 @@ workflow INSPECT_DATA {
     // Generate K-mer histogram
     GENOME_PROPERTIES ( hifi_histogram )
     COMPARE_LIBRARIES ( hifi_histogram.join( hic_histogram ) )
-    ch_versions =  GENOME_PROPERTIES.out.versions.mix(
-        COMPARE_LIBRARIES.out.versions,
-        SEQKIT_HIFI_STATS.out.versions.first(),
-        SEQKIT_HIC_STATS.out.versions.first(),
-        FASTQC.out.versions.first()
-    )
 
     GENOME_PROPERTIES.out.logs
         .mix(
@@ -40,5 +34,4 @@ workflow INSPECT_DATA {
     emit:
     hifi_kmer_cov = GENOME_PROPERTIES.out.kmer_cov
     logs
-    versions = ch_versions
 }

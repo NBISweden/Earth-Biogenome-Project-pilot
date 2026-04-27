@@ -13,7 +13,8 @@ process MERYL_COUNT {
 
     output:
     tuple val(meta), path("*.meryl")    , emit: meryl_db
-    path "versions.yml"                 , emit: versions
+    tuple val("${task.process}"), val('meryl'), eval("meryl --version |& sed 's/meryl //'"), emit: versions_meryl, topic: versions
+
 
     when:
     task.ext.when == null || task.ext.when
@@ -21,35 +22,24 @@ process MERYL_COUNT {
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
-    def red_mem = task.memory.multiply(0.9).toGiga()
+    def reduced_mem = task.memory.multiply(0.9).toGiga()
     """
-    for READ in $reads; do
+    for READ in ${reads}; do
         meryl count \\
-            k=$kvalue \\
-            threads=$task.cpus \\
-            memory=$red_mem \\
-            $args \\
+            k=${kvalue} \\
+            threads=${task.cpus} \\
+            memory=${reduced_mem} \\
+            ${args} \\
             \$READ \\
-            output read.\${READ%.f*}.meryl
+            output ${prefix}.\${READ%.f*}.meryl
     done
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        meryl: \$( meryl --version |& sed 's/meryl //' )
-    END_VERSIONS
     """
 
     stub:
-    def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    for READ in $reads; do
-        touch read.\${READ%.f*}.meryl
+    for READ in ${reads}; do
+        touch ${prefix}.\${READ%.f*}.meryl
     done
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        meryl: \$( meryl --version |& sed 's/meryl //' )
-    END_VERSIONS
     """
 }

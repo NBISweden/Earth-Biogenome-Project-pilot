@@ -11,8 +11,8 @@ process CREATE_GAP_TRACKS {
     output:
     tuple val(meta), path("*_gaps.bedgraph")           , emit: bedgraph
     tuple val(meta), path("*_gaps.bedgraph.beddb")     , emit: beddb
-
-    path "versions.yml"              , emit: versions
+    tuple val("${task.process}"), val('sort'), eval("sort --version | sed '1!d; s/.* //'"), topic: versions, emit: versions_sort
+    tuple val("${task.process}"), val('awk'), eval("awk --version | sed '1!d; s/mawk //; s/ .*//'"), topic: versions, emit: versions_awk
 
     when:
     task.ext.when == null || task.ext.when
@@ -28,11 +28,5 @@ process CREATE_GAP_TRACKS {
     sort -k1,1V -k2,2n -k3,3n --parallel=${task.cpus} ${args} > ${prefix}_gaps.bedgraph
     # create sorted.bedgraph.beddb which can be ingested to HiGlass
     clodius aggregate bedfile ${args2} --chromsizes-filename ${chrom_sizes} ${prefix}_gaps.bedgraph
-
-    cat <<-END_VERSIONS > versions.yml
-    "${task.process}":
-        sort: \$(sort --version | sed '1!d; s/.* //')
-        awk: \$(awk --version | sed '1!d; s/mawk //; s/ .*//')
-    END_VERSIONS
     """
 }

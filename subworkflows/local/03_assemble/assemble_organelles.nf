@@ -13,8 +13,6 @@ workflow ASSEMBLE_ORGANELLES {
     ch_oatkdb        // Path: /path/to/oatkdb
 
     main:
-    ch_versions = channel.empty()
-
     ch_input_data = ch_assembly_mode == 'contigs' ? ch_assemblies : ch_reads
     ch_meta_data = ch_input_data.map { meta, _data -> [ meta, meta.sample.name ] }.unique()
 
@@ -24,20 +22,17 @@ workflow ASSEMBLE_ORGANELLES {
     // Run mitohifi assembly
     mitohifi_ch = ch_input_data
         .combine(
-            MITOHIFI_FINDMITOREFERENCE.out.fasta
-                .join(MITOHIFI_FINDMITOREFERENCE.out.gb),
+            MITOHIFI_FINDMITOREFERENCE.out.reference,
             by: 0
         )
         .multiMap { meta, data, mitofa, mitogb ->
             input: [ meta, ch_assembly_mode == "contigs" ? data.pri_fasta : data ] // contigs ? data = Channel<Map> : data = Channel<Path>.
-            reference: mitofa
-            genbank: mitogb
+            reference: [ meta, mitofa, mitogb ]
             mito_code: meta.sample.mito_code
         }
     MITOHIFI_MITOHIFI(
         mitohifi_ch.input,
         mitohifi_ch.reference,
-        mitohifi_ch.genbank,
         ch_assembly_mode[0], // mode: 'c'/'r'
         mitohifi_ch.mito_code,
     )
@@ -52,7 +47,8 @@ workflow ASSEMBLE_ORGANELLES {
 
     // Dot plots
     // Reference vs final mitohifi mitogenome channel
-    ch_ref_vs_final = MITOHIFI_FINDMITOREFERENCE.out.fasta
+    ch_ref_vs_final = MITOHIFI_FINDMITOREFERENCE.out.reference
+        .map { meta, fasta, _gb -> [ meta, fasta ] }
         .join(
             MITOHIFI_MITOHIFI.out.fasta,
             by: 0
@@ -97,18 +93,8 @@ workflow ASSEMBLE_ORGANELLES {
         .map { _meta, log -> log }
         .set { logs }
 
-    // Versions
-    ch_versions = ch_versions.mix(
-        MITOHIFI_FINDMITOREFERENCE.out.versions.first(),
-        MITOHIFI_MITOHIFI.out.versions.first(),
-        OATK_SELECTHMM.out.versions.first(),
-        OATK.out.versions.first(),
-        DNADOTPLOT.out.versions.first()
-    )
-
     emit:
     // TODO: emit filtered assembly, or contig list to purge. Also emit from 03_assemble.
     mito_assemblies = ch_mito_assemblies
     logs
-    versions = ch_versions
 }

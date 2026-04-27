@@ -1,7 +1,9 @@
-Changes in module 'nf-core/star/genomegenerate'
+Changes in component 'nf-core/star/genomegenerate'
+'modules/nf-core/star/genomegenerate/meta.yml' is unchanged
+Changes in 'star/genomegenerate/main.nf':
 --- modules/nf-core/star/genomegenerate/main.nf
 +++ modules/nf-core/star/genomegenerate/main.nf
-@@ -9,7 +9,7 @@
+@@ -9,11 +9,13 @@
  
      input:
      tuple val(meta), path(fasta)
@@ -10,7 +12,14 @@ Changes in module 'nf-core/star/genomegenerate'
  
      output:
      tuple val(meta), path("star")  , emit: index
-@@ -29,7 +29,7 @@
+-    path "versions.yml"            , emit: versions
++    tuple val("${task.process}"), val('star'), eval('STAR --version | sed -e "s/STAR_//g"'), emit: versions_star, topic: versions
++    tuple val("${task.process}"), val('samtools'), eval("samtools --version | sed -n '1s/samtools //p'"), emit: versions_samtools, topic: versions
++    tuple val("${task.process}"), val('gawk'), eval("gawk --version | sed -n '1{s/GNU Awk //;s/,.*//;p}'"), emit: versions_gawk, topic: versions
+ 
+     when:
+     task.ext.when == null || task.ext.when
+@@ -29,17 +31,10 @@
              --runMode genomeGenerate \\
              --genomeDir star/ \\
              --genomeFastaFiles $fasta \\
@@ -19,7 +28,17 @@ Changes in module 'nf-core/star/genomegenerate'
              --runThreadN $task.cpus \\
              $memory \\
              $args
-@@ -51,7 +51,7 @@
+-
+-        cat <<-END_VERSIONS > versions.yml
+-        "${task.process}":
+-            star: \$(STAR --version | sed -e "s/STAR_//g")
+-            samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
+-            gawk: \$(echo \$(gawk --version 2>&1) | sed 's/^.*GNU Awk //; s/, .*\$//')
+-        END_VERSIONS
+         """
+     } else {
+         """
+@@ -51,18 +46,11 @@
              --runMode genomeGenerate \\
              --genomeDir star/ \\
              --genomeFastaFiles $fasta \\
@@ -28,5 +47,29 @@ Changes in module 'nf-core/star/genomegenerate'
              --runThreadN $task.cpus \\
              --genomeSAindexNbases \$NUM_BASES \\
              $memory \\
+             $args
+-
+-        cat <<-END_VERSIONS > versions.yml
+-        "${task.process}":
+-            star: \$(STAR --version | sed -e "s/STAR_//g")
+-            samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
+-            gawk: \$(echo \$(gawk --version 2>&1) | sed 's/^.*GNU Awk //; s/, .*\$//')
+-        END_VERSIONS
+         """
+     }
+ 
+@@ -85,12 +73,5 @@
+     touch star/sjdbList.fromGTF.out.tab
+     touch star/sjdbList.out.tab
+     touch star/transcriptInfo.tab
+-
+-    cat <<-END_VERSIONS > versions.yml
+-    "${task.process}":
+-        star: \$(STAR --version | sed -e "s/STAR_//g")
+-        samtools: \$(echo \$(samtools --version 2>&1) | sed 's/^.*samtools //; s/Using.*\$//')
+-        gawk: \$(echo \$(gawk --version 2>&1) | sed 's/^.*GNU Awk //; s/, .*\$//')
+-    END_VERSIONS
+     """
+ }
 
 ************************************************************
