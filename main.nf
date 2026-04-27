@@ -68,7 +68,6 @@ workflow {
 
     // Setup sink channels
     ch_multiqc_files = channel.value( file(params.multiqc_assembly_report_config, checkIfExists: true) )
-    ch_versions      = channel.empty()
 
     // Read in data
     PREPARE_INPUT (
@@ -245,8 +244,7 @@ workflow {
 
     // Version reporting
     REPORT_VERSIONS(
-        channel.topic("versions"),
-        ch_versions
+        channel.topic("versions")
     )
 
     // Assembly report

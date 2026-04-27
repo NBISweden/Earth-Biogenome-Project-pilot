@@ -3,14 +3,13 @@ include { softwareVersionsToYAML } from "../../../modules/local/nf-core-utilitie
 workflow REPORT_VERSIONS {
 
     take:
-    versions_topic_ch
-    versions_heredoc_ch
+    versions
 
     main:
     // Code adapted from the nf-core pipeline template: https://github.com/nf-core/tools/tree/main/nf_core/pipeline-template)
 
     // Branch topic versions by data structure
-    def topic_type = versions_topic_ch
+    def topic_type = versions
         .distinct()
         .branch { entry ->
             file: entry instanceof Path
@@ -29,7 +28,7 @@ workflow REPORT_VERSIONS {
         }
 
     // Mix all versions channels and convert to YAML
-    softwareVersionsToYAML(versions_heredoc_ch.mix(topic_type.file))
+    softwareVersionsToYAML(topic_type.file)
         .mix(topic_versions_string)
         .collectFile(
             name: 'assembly_mqc_versions.yml',
