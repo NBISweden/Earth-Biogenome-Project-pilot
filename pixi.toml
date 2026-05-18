@@ -2,7 +2,14 @@
 name = "Swedish Earth Biogenome Project Assembly Pipeline"
 version = "0.1.0"
 description = "A de novo genome assembly pipeline"
-authors = ["Mahesh Binzer-Panchal <mahesh.binzer-panchal@nbis.se>"]
+authors = [
+    "Mahesh Binzer-Panchal <mahesh.binzer-panchal@nbis.se>",
+    "Cormac Kinsella <cormac.kinsella@nbis.se>",
+    "Martin Pippel <martin.pippel@nbis.se>",
+    "André Soares <andre.soares@nbis.se>",
+    "Guilherme Dias <guilherme.dias@nbis.se>",
+    "Lucile Soler <lucile.soler@nbis.se>"
+]
 channels = ["conda-forge", "bioconda"]
 platforms = ["linux-64", "osx-64", "osx-arm64"]
 
@@ -16,16 +23,11 @@ nftest-docker = "nf-test test tests/main.nf.test --verbose"
 nftest-singularity = "nf-test test tests/main.nf.test --verbose --profile singularity"
 # Clean up
 clean-work = "nextflow clean -f -before last && find work/ -type d -empty -delete"
-clean-nf = "git clean -fX && rm -rf .nextflow/ work/ .lineage/"
-clean-results = "rm -rf results/"
-clean-nftest = "rm -rf .nf-test/"
-clean-all = { depends-on = [ "clean-nf", "clean-results", "clean-nftest" ] }
+clean-all = "git clean -e .pixi -e .vscode -e database_cache -fdx"
 # Stage data dependencies
 fetch-oatkdb = { cmd = "mkdir -p database_cache && cd database_cache && git clone --depth 1 https://github.com/c-zhou/OatkDB.git", outputs = [ "database_cache/OatkDB" ] }
 
 [dependencies]
-nextflow = ">=25.10.2,<26"
-nf-core = ">=3.5.2,<4"
-gh = ">=2.83.1,<3"
-questionary = ">=2.1.1,<3"
-tree = ">=2.2.1,<3"
+nextflow = ">=26.4.1,<27"
+nf-core = ">=4.0.2,<5"
+nf-test = ">=0.9.5,<0.10"
