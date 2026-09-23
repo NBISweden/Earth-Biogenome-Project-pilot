@@ -7,10 +7,9 @@ forward from this release. Format loosely follows
 ## [1.0.0] - 2026-09-23
 
 First tagged release. This formalizes the pipeline's current state rather
-than marking a fresh rewrite: multiple institutions across the Earth
-Biogenome Project / ERGA community already run this pipeline in production
-for de novo genome assembly and curation handoff, ahead of it having a
-version number attached.
+than marking a fresh rewrite: NBIS/SciLifeLab already runs this pipeline in
+production for de novo genome assembly and curation handoff, ahead of it
+having a version number attached.
 
 ### Included
 
