@@ -19,4 +19,5 @@ results/
 .DS_Store
 .screenrc
 .vscode/
+*.code-workspace
 dockerfiles/build_*
