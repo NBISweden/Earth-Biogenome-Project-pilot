@@ -48,7 +48,7 @@ process GENESCOPEFK {
     """
     touch "${prefix}_linear_plot.png"
     touch "${prefix}_log_plot.png"
-    touch "${prefix}_model.txt"
+    echo "kmercov 20.00" > "${prefix}_model.txt"
     touch "${prefix}_summary.txt"
     touch "${prefix}_transformed_linear_plot.png"
     touch "${prefix}_transformed_log_plot.png"

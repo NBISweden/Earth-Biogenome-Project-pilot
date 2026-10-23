@@ -1,4 +1,6 @@
 Changes in component 'nf-core/hifiasm'
+'modules/nf-core/hifiasm/environment.yml' is unchanged
+'modules/nf-core/hifiasm/meta.yml' is unchanged
 Changes in 'hifiasm/main.nf':
 --- modules/nf-core/hifiasm/main.nf
 +++ modules/nf-core/hifiasm/main.nf
@@ -11,10 +13,16 @@ Changes in 'hifiasm/main.nf':
          }
      }
      """
+@@ -89,7 +89,6 @@
+     touch ${prefix}.hic.lk.bin
+     touch ${prefix}.bp.p_ctg.gfa
+     touch ${prefix}.p_utg.gfa
+-    touch ${prefix}.p_ctg.gfa
+     touch ${prefix}.a_ctg.gfa
+     touch ${prefix}.bp.hap1.p_ctg.gfa
+     touch ${prefix}.bp.hap2.p_ctg.gfa
 
-'modules/nf-core/hifiasm/environment.yml' is unchanged
-'modules/nf-core/hifiasm/meta.yml' is unchanged
 'modules/nf-core/hifiasm/tests/main.nf.test.snap' is unchanged
-'modules/nf-core/hifiasm/tests/main.nf.test' is unchanged
 'modules/nf-core/hifiasm/tests/nextflow.config' is unchanged
+'modules/nf-core/hifiasm/tests/main.nf.test' is unchanged
 ************************************************************

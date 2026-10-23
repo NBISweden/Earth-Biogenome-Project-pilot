@@ -89,7 +89,6 @@ process HIFIASM {
     touch ${prefix}.hic.lk.bin
     touch ${prefix}.bp.p_ctg.gfa
     touch ${prefix}.p_utg.gfa
-    touch ${prefix}.p_ctg.gfa
     touch ${prefix}.a_ctg.gfa
     touch ${prefix}.bp.hap1.p_ctg.gfa
     touch ${prefix}.bp.hap2.p_ctg.gfa
