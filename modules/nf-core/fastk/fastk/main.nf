@@ -1,39 +1,57 @@
+nextflow.enable.types = true
+
 process FASTK_FASTK {
-    tag "$meta.id"
+    tag "${id}"
     label 'process_medium'
+
+    ext [
+        args: { fastk_args ?: '' },
+        prefix: { output_prefix ?: "${id}" }
+    ]
 
     // WARN: Version information not provided by tool on CLI. Please update version string below when bumping container versions.
     //conda "${moduleDir}/environment.yml"
     container 'ghcr.io/nbisweden/fastk_genescopefk_merquryfk:1.3'
 
     input:
-    tuple val(meta), path(reads)
+    record(
+        id: String,
+        meta: Record?,
+        reads: List<Path>,
+        fastk_args: String?,
+        output_prefix: String?
+    )
 
     output:
-    tuple val(meta), path("*.hist")                      , emit: hist
-    tuple val(meta), path("*.log" )                      , emit: log
-    tuple val(meta), path("*.ktab*", hidden: true)       , emit: ktab, optional: true
-    tuple val(meta), path("*.{prof,pidx}*", hidden: true), emit: prof, optional: true
+    record(
+        id: id,
+        meta: meta,
+        hist: file("*.hist"),
+        log: file("*.log"),
+        ktab: files("*.ktab*", hidden: true, optional: true),
+        prof: files("*.{prof,pidx}*", hidden: true, optional: true)
+    )
+
+    topic:
     // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
-    tuple val("${task.process}"), val('fastk'), val('1.2'), emit: versions_fastk, topic: versions
+    tuple(task.process, 'fastk', '1.2') >> 'versions'
 
     script:
     // Exit if running this module with -profile conda / -profile mamba
     if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
         error "FASTK_FASTK module does not support Conda. Please use Docker / Singularity / Podman instead."
     }
-    def args      = task.ext.args ?: ''
-    def prefix    = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix
     """
     mkdir tmp_uncompressed
 
     FastK \\
-        $args \\
+        ${task.ext.args} \\
         -T$task.cpus \\
         -Ptmp_uncompressed \\
         -M${task.memory.toGiga()} \\
         -N${prefix}_fk \\
-        $reads \\
+        ${reads.join(' ')} \\
         1>${prefix}.fastK.log 2>&1
 
     find . -name '*.ktab*' -exec chmod a+r {} \\;
@@ -42,8 +60,8 @@ process FASTK_FASTK {
     """
 
     stub:
-    def args       = task.ext.args ?: ''
-    def prefix     = task.ext.prefix ?: "${meta.id}"
+    def args       = task.ext.args
+    def prefix     = task.ext.prefix
     def touch_ktab = args.contains('-t') ? "touch ${prefix}.ktab .${prefix}.ktab.1" : ''
     def touch_prof = args.contains('-p') ? "touch ${prefix}.prof .${prefix}.pidx.1" : ''
     """
@@ -57,6 +75,6 @@ process FASTK_FASTK {
         -T$task.cpus \\
         -M${task.memory.toGiga()} \\
         -N${prefix}_fk \\
-        $reads" 1>${prefix}.fastK.log 2>&1
+        ${reads.join(' ')}" 1>${prefix}.fastK.log 2>&1
     """
 }

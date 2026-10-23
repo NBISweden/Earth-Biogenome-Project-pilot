@@ -75,27 +75,39 @@ workflow {
     )
     ch_evaluate_assemblies = PREPARE_INPUT.out.assemblies
 
+    // Typed inputs: [ meta, reads ] tuples to records
+    ch_hifi_reads = PREPARE_INPUT.out.hifi.map { meta, reads -> record(id: meta.id, meta: record(meta), reads: [ reads ].flatten()) }
+    ch_hic_reads  = PREPARE_INPUT.out.hic.map { meta, reads -> record(id: meta.id, meta: record(meta), reads: [ reads ].flatten()) }
+    def fastk_kmer_size = params.fastk?.kmer_size ?: 31
+    def meryl_kmer_size = params.meryl.kmer_size
     // Create Cram and trim
-    CONVERT_FASTQ_CRAM ( PREPARE_INPUT.out.hic, params.hic_type.startsWith('arima') )
+    CONVERT_FASTQ_CRAM ( ch_hic_reads, params.hic_type.startsWith('arima'), params.hic_type )
+    ch_hic_fastq = CONVERT_FASTQ_CRAM.out.fastq
+    // Legacy channel: [ meta, fastq ]
+    ch_hic_fastq_tuple = ch_hic_fastq.map { r -> tuple([:] + r.meta, r.reads) }
     // Build necessary databases
     // TODO: Migrate back to Meryl. Genome inspection missing KATGC and SMUDGEPLOT for meryldb
-    BUILD_FASTK_HIFI_DATABASE ( PREPARE_INPUT.out.hifi )
-    BUILD_FASTK_HIC_DATABASE ( CONVERT_FASTQ_CRAM.out.fastq )
-    BUILD_MERYL_HIFI_DATABASE ( PREPARE_INPUT.out.hifi )
-    BUILD_MERYL_HIC_DATABASE ( CONVERT_FASTQ_CRAM.out.fastq )
+    ch_fastk_hifi = BUILD_FASTK_HIFI_DATABASE ( ch_hifi_reads, 'hifi', fastk_kmer_size )
+    ch_fastk_hic  = BUILD_FASTK_HIC_DATABASE ( ch_hic_fastq, 'hic', fastk_kmer_size )
+    ch_meryl_hifi = BUILD_MERYL_HIFI_DATABASE ( ch_hifi_reads, 'hifi', meryl_kmer_size )
+    BUILD_MERYL_HIC_DATABASE ( ch_hic_fastq, 'hic', meryl_kmer_size )
+    // Legacy channels: [ meta, hist, ktab ] and [ meta, meryl_db ]
+    ch_fastk_hifi_tuple = ch_fastk_hifi.map { d -> tuple([:] + d.meta, d.hist, d.ktab) }
+    ch_meryl_hifi_tuple = ch_meryl_hifi.uniondb.map { u -> tuple([:] + u.meta, u.meryl_db) }
 
     // Data inspection
     ch_hifi_kmer_cov = PREPARE_INPUT.out.hifi_merged.map { meta, _reads -> tuple(meta, []) }
     if ( 'inspect' in workflow_steps ) {
         // QC Steps
-        INSPECT_DATA(
-            PREPARE_INPUT.out.hifi,
-            PREPARE_INPUT.out.hic,
-            BUILD_FASTK_HIFI_DATABASE.out.fastk_hist_ktab,
-            BUILD_FASTK_HIC_DATABASE.out.fastk_hist_ktab
+        ch_inspect = INSPECT_DATA(
+            ch_hifi_reads,
+            ch_hic_reads,
+            ch_fastk_hifi,
+            ch_fastk_hic,
+            params.genescopefk?.kmer_size ?: 31
         )
-        ch_hifi_kmer_cov = INSPECT_DATA.out.hifi_kmer_cov
-        ch_multiqc_files = ch_multiqc_files.mix( INSPECT_DATA.out.logs )
+        ch_hifi_kmer_cov = ch_inspect.hifi_kmer_cov.map { r -> tuple([:] + r.meta, r.kmer_cov) }
+        ch_multiqc_files = ch_multiqc_files.mix( ch_inspect.logs )
     }
 
     // Preprocess data
@@ -173,7 +185,7 @@ workflow {
         DVPOLISH (
             ch_to_polish,
             PREPARE_INPUT.out.hifi_merged,
-            BUILD_MERYL_HIFI_DATABASE.out.uniondb,
+            ch_meryl_hifi_tuple,
             params.chunk_size
         )
         ch_evaluate_assemblies = ch_evaluate_assemblies.mix( DVPOLISH.out.assemblies )
@@ -194,7 +206,7 @@ workflow {
     if ( 'scaffold' in workflow_steps ) {
         SCAFFOLD (
             ch_to_scaffold,
-            CONVERT_FASTQ_CRAM.out.fastq
+            ch_hic_fastq_tuple
         )
         ch_evaluate_assemblies = ch_evaluate_assemblies.mix( SCAFFOLD.out.assemblies )
         ch_scaffolded_assemblies = SCAFFOLD.out.assemblies
@@ -214,7 +226,7 @@ workflow {
     if ( 'curate' in workflow_steps ) {
         SCAFFOLD_CURATION (
             ch_to_curate,
-            CONVERT_FASTQ_CRAM.out.fastq,
+            ch_hic_fastq_tuple,
             PREPARE_INPUT.out.hifi
         )
     }
@@ -234,8 +246,8 @@ workflow {
     EVALUATE_ASSEMBLY (
         ch_evaluate_assemblies
             .toList().flatMap(), // Introduce bottleneck to delay evaluation until previous steps are performed
-        BUILD_FASTK_HIFI_DATABASE.out.fastk_hist_ktab,
-        BUILD_MERYL_HIFI_DATABASE.out.uniondb
+        ch_fastk_hifi_tuple,
+        ch_meryl_hifi_tuple
     )
     ch_multiqc_files = ch_multiqc_files.mix(
         COMPARE_ASSEMBLIES.out.logs,

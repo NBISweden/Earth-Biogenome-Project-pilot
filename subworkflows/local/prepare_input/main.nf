@@ -176,8 +176,12 @@ workflow PREPARE_INPUT {
             bam_ch: filename.toString().endsWith(".bam")
             fastx_ch: true // assume everything else is fastx
         }.set { hifi }
-    SAMTOOLS_FASTA ( hifi.bam_ch )
-    hifi.fastx_ch.mix( SAMTOOLS_FASTA.out.fasta )
+    fasta_from_bam = SAMTOOLS_FASTA (
+        hifi.bam_ch.map { meta, bam ->
+            record(id: "${meta.id}:${bam.baseName}", meta: record(meta), single_end: meta.single_end, bam: bam, output_prefix: bam.baseName)
+        }
+    ).flatMap { r -> r.fasta.collect { fasta -> tuple([:] + r.meta, fasta) } }
+    hifi.fastx_ch.mix( fasta_from_bam )
         .set { hifi_fastx_ch }
     sample_fastx = hifi_fastx_ch.groupTuple()
         .branch { meta, fastx ->
@@ -186,7 +190,11 @@ workflow PREPARE_INPUT {
             multi: true
                 return [ meta, fastx ]
         }
-    MERGE_PACBIO( sample_fastx.multi )
+    merged_pacbio = MERGE_PACBIO (
+        sample_fastx.multi.map { meta, fastx ->
+            record(id: meta.id, meta: record(meta), files_in: fastx, output_prefix: "${meta.id}_mergedpb.fasta.gz")
+        }
+    ).map { r -> tuple([:] + r.meta, r.file_out) }
 
     // Prepare RNAseq channel
     input.rnaseq_ch.filter { item -> !item.isEmpty() }
@@ -204,7 +212,7 @@ workflow PREPARE_INPUT {
     assemblies  = assembly_ch.dump( tag: 'Input: Assemblies', pretty: true )
     hic         = hic_fastx_ch.dump( tag: 'Input: Hi-C', pretty: true )
     hifi        = hifi_fastx_ch.dump( tag: 'Input: PacBio HiFi', pretty: true )
-    hifi_merged = sample_fastx.single.mix( MERGE_PACBIO.out.file_out )
+    hifi_merged = sample_fastx.single.mix( merged_pacbio )
     rnaseq      = rnaseq_fastx_ch.dump( tag: 'Input: Illumina RnaSeq', pretty: true )
     isoseq      = isoseq_fastx_ch.dump( tag: 'Input: PacBio IsoSeq', pretty: true )
 }

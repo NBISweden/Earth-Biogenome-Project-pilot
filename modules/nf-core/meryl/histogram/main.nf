@@ -1,6 +1,13 @@
+nextflow.enable.types = true
+
 process MERYL_HISTOGRAM {
-    tag "$meta.id"
+    tag "${id}"
     label 'process_low'
+
+    ext [
+        args: { meryl_args ?: '' },
+        prefix: { output_prefix ?: "${id}" }
+    ]
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -8,28 +15,37 @@ process MERYL_HISTOGRAM {
         'biocontainers/meryl:1.4.1--h4ac6f70_0' }"
 
     input:
-    tuple val(meta), path(meryl_db)
-    val kvalue
+    record(
+        id: String,
+        meta: Record?,
+        meryl_db: Path,
+        kvalue: Integer,
+        meryl_args: String?,
+        output_prefix: String?
+    )
 
     output:
-    tuple val(meta), path("*.hist"), emit: hist
-    tuple val("${task.process}"), val('meryl'), eval("meryl --version |& sed 's/meryl //'"), emit: versions_meryl, topic: versions
+    record(
+        id: id,
+        meta: meta,
+        hist: file("*.hist")
+    )
+
+    topic:
+    tuple(task.process, 'meryl', eval("meryl --version |& sed 's/meryl //'")) >> 'versions'
 
     script:
-    def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
     """
     meryl histogram \\
         k=$kvalue \\
         threads=$task.cpus \\
         memory=${task.memory.toGiga()} \\
-        $args \\
-        $meryl_db > ${prefix}.hist
+        ${task.ext.args} \\
+        $meryl_db > ${task.ext.prefix}.hist
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    touch ${prefix}.hist
+    touch ${task.ext.prefix}.hist
     """
 }

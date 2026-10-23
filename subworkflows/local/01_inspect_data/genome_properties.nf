@@ -1,13 +1,23 @@
-#! /usr/bin/env nextflow
+nextflow.enable.types = true
+
 include { FASTK_HISTEX    } from "../../../modules/nf-core/fastk/histex/main"
 include { GENESCOPEFK     } from "../../../modules/nf-core/genescopefk/main"
 include { SMUDGEPLOT      } from "../../../modules/local/smudgeplot/main"
 include { MERQURYFK_KATGC } from "../../../modules/nf-core/merquryfk/katgc/main"
 
+record FastkDatabase {
+    id  : String
+    meta: Record
+    hist: Path
+    ktab: List<Path>
+    prof: List<Path>
+}
+
 workflow GENOME_PROPERTIES {
 
     take:
-    fastk_hist_ktab // [ meta, fastk_hist, fastk_ktab ]
+    fastk_database: Channel<FastkDatabase>
+    kmer_size     : Integer // GenomeScope k-mer length
 
     /* Genome properties workflow:
         - Estimate genome depth of coverage from reads
@@ -16,31 +26,51 @@ workflow GENOME_PROPERTIES {
     */
     main:
     // Generate GenomeScope Profile
-    FASTK_HISTEX ( fastk_hist_ktab.map { meta, hist, _ktab -> [ meta, hist ] } )
-    GENESCOPEFK ( FASTK_HISTEX.out.hist )
+    histex = FASTK_HISTEX(
+        fastk_database.map { d -> record(id: d.id, meta: d.meta, histogram: d.hist, histex_args: '-G', output_prefix: "${d.id}_histex") }
+    )
+    genescope = GENESCOPEFK(
+        histex.map { h ->
+            record(
+                id: h.id,
+                meta: h.meta,
+                histogram: h.hist,
+                genescopefk_args: "--kmer_length ${kmer_size} --ploidy ${h.meta.sample.ploidy ?: 1}"
+            )
+        }
+    )
 
     // Generate Smudgeplot
-    SMUDGEPLOT (
-        fastk_hist_ktab.map { meta, _hist, ktab -> [meta, ktab] },
-        // the genomescopefk kmer value = mean value of the heterozygous peak
-        // smudgeplot -L advice = avoid cutting off the monoploid peak, thus / 2
-        GENESCOPEFK.out.kmer_cov.map { _meta, kmercov -> ((kmercov as Double) / 2).round() }
+    // the genomescopefk kmer value = mean value of the heterozygous peak
+    // smudgeplot -L advice = avoid cutting off the monoploid peak, thus / 2
+    smudgeplot = SMUDGEPLOT(
+        fastk_database
+            .map { d -> record(id: d.id, ktab: d.ktab) }
+            .join(genescope.map { g -> record(id: g.id, meta: g.meta, kmer_cov: g.kmer_cov) }, by: 'id')
+            .map { s ->
+                record(
+                    id: s.id,
+                    meta: s.meta,
+                    fastk_ktab: s.ktab,
+                    smudgeplot_threshold: Math.round(s.kmer_cov.toDouble() / 2),
+                    smudgeplot_args2: "--json_report --format png",
+                    output_prefix: s.id
+                )
+            }
     )
 
     // Generage GC plot
-    MERQURYFK_KATGC ( fastk_hist_ktab )
-
-    GENESCOPEFK.out.linear_plot.mix (
-        GENESCOPEFK.out.log_plot,
-        GENESCOPEFK.out.transformed_linear_plot,
-        GENESCOPEFK.out.transformed_log_plot,
-        SMUDGEPLOT.out.smudgeplot,
-        MERQURYFK_KATGC.out.stacked_gc_plot_png
+    katgc = MERQURYFK_KATGC(
+        fastk_database.map { d -> record(id: d.id, meta: d.meta, fastk_hist: d.hist, fastk_ktab: d.ktab, output_prefix: "${d.id}_katgc") }
     )
-    .map { _meta, img -> img }
-    .set { logs }
+
+    logs = genescope
+        .flatMap { g -> [ g.linear_plot, g.log_plot, g.transformed_linear_plot, g.transformed_log_plot ] }
+        .mix(smudgeplot.map { s -> s.smudgeplot })
+        .mix(katgc.map { k -> k.stacked_gc_plot_png })
+        .filter { f -> f != null }
 
     emit:
-    kmer_cov = GENESCOPEFK.out.kmer_cov
-    logs
+    kmer_cov: Channel<Record> = genescope.map { g -> record(id: g.id, meta: g.meta, kmer_cov: g.kmer_cov) }
+    logs    : Channel<Path>   = logs
 }

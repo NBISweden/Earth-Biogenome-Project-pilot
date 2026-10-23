@@ -1,6 +1,13 @@
+nextflow.enable.types = true
+
 process MERYL_UNIONSUM {
-    tag "$meta.id"
+    tag "${id}"
     label 'process_low'
+
+    ext [
+        args: { meryl_args ?: '' },
+        prefix: { output_prefix ?: "${id}" }
+    ]
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -8,29 +15,38 @@ process MERYL_UNIONSUM {
         'biocontainers/meryl:1.4.1--h4ac6f70_0' }"
 
     input:
-    tuple val(meta), path(meryl_dbs)
-    val kvalue
+    record(
+        id: String,
+        meta: Record?,
+        meryl_dbs: List<Path>,
+        kvalue: Integer,
+        meryl_args: String?,
+        output_prefix: String?
+    )
 
     output:
-    tuple val(meta), path("*.unionsum.meryl"), emit: meryl_db
-    tuple val("${task.process}"), val('meryl'), eval("meryl --version |& sed 's/meryl //'"), emit: versions_meryl, topic: versions
+    record(
+        id: id,
+        meta: meta,
+        meryl_db: file("*.unionsum.meryl")
+    )
+
+    topic:
+    tuple(task.process, 'meryl', eval("meryl --version |& sed 's/meryl //'")) >> 'versions'
 
     script:
-    def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
     """
     meryl union-sum \\
         k=$kvalue \\
         threads=$task.cpus \\
         memory=${task.memory.toGiga()} \\
-        $args \\
-        output ${prefix}.unionsum.meryl \\
-        $meryl_dbs
+        ${task.ext.args} \\
+        output ${task.ext.prefix}.unionsum.meryl \\
+        ${meryl_dbs.join(' ')}
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    touch ${prefix}.unionsum.meryl
+    touch ${task.ext.prefix}.unionsum.meryl
     """
 }
