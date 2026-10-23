@@ -1,41 +1,59 @@
+nextflow.enable.types = true
+
 include { ASSEMBLE_HIFI       } from "./assemble_hifi"
 include { ASSEMBLE_ORGANELLES } from "./assemble_organelles"
 
+record Reads {
+    id   : String
+    meta : Record
+    reads: List<Path>
+}
+
+record Assembly {
+    id       : String  // meta.assembly.build
+    meta     : Record  // sample meta data, including meta.assembly
+    pri_fasta: Path
+    alt_fasta: Path?
+    pri_gfa  : Path?
+    alt_gfa  : Path?
+}
+
 workflow ASSEMBLE {
     take:
-    hifi_reads              // Channel: [ meta, hifi_reads ]
-    hic_reads               // Channel: [ meta, hic_reads ]
-    oatkdb                  // Path: /path/to/oatkdb
-    nuclear_assembly_mode   // Boolean: assemble chromosomes
-    organelle_assembly_mode // Enum: [ contigs, reads, or none ]
+    hifi_reads              : Channel<Reads> // One merged reads file per sample
+    hic_reads               : Channel<Reads>
+    oatkdb                  : Path?          // /path/to/oatkdb
+    nuclear_assembly_mode   : Boolean        // assemble chromosomes
+    organelle_assembly_mode : String         // enum: contigs, reads, or none
+    hifiasm_configs         : Map<String,String>
+    hifiasm_with_hic        : Boolean
+    use_phased              : Boolean
 
     main:
-    ch_raw_assemblies = channel.empty()
-    ch_logs           = channel.empty()
+    if ( organelle_assembly_mode == 'contigs' && !nuclear_assembly_mode ) {
+        error "Organelle assembly in 'contigs' mode requires 'nuclear_assembly_mode = true'"
+    }
+    organelles = organelle_assembly_mode in ['contigs', 'reads']
 
     // Nuclear assembly
-    if ( nuclear_assembly_mode ) {
-        ASSEMBLE_HIFI( hifi_reads, hic_reads )
-        ch_raw_assemblies = ASSEMBLE_HIFI.out.assemblies
-        ch_logs = ch_logs.mix(ASSEMBLE_HIFI.out.logs)
-    } // else nuclear_assembly_mode == false
+    nuclear = ASSEMBLE_HIFI(
+        hifi_reads.filter { _r -> nuclear_assembly_mode },
+        hic_reads,
+        hifiasm_configs,
+        hifiasm_with_hic,
+        use_phased
+    )
 
     // Organelle assembly
-    if ( organelle_assembly_mode in ['contigs', 'reads'] ) {
-        if ( organelle_assembly_mode == 'contigs' && !nuclear_assembly_mode ) {
-            error "Organelle assembly in 'contigs' mode requires 'nuclear_assembly_mode = true'"
-        }
-        ASSEMBLE_ORGANELLES(
-            hifi_reads,              // mitohifi + oatk: [ meta, reads ]
-            ch_raw_assemblies,       // mitohifi + oatk: [ meta, assembly_map ]
-            organelle_assembly_mode, // mitohifi + oatk: mode
-            oatkdb                   // oatk: hmm database
-        )
-        ch_logs     = ch_logs.mix(ASSEMBLE_ORGANELLES.out.logs)
+    organelle = ASSEMBLE_ORGANELLES(
+        hifi_reads.filter { _r -> organelles },        // mitohifi + oatk: reads
+        nuclear.assemblies.filter { _a -> organelles }, // mitohifi + oatk: assemblies
+        organelle_assembly_mode,                        // mitohifi + oatk: mode
+        oatkdb                                          // oatk: hmm database
         // TODO: filter organelle contigs from primary assembly
-    } // else organelle_assembly_mode == 'none'
+    )
 
     emit:
-    raw_assemblies = ch_raw_assemblies
-    logs           = ch_logs
+    raw_assemblies: Channel<Assembly> = nuclear.assemblies
+    logs          : Channel<Path>     = nuclear.logs.mix(organelle.logs)
 }

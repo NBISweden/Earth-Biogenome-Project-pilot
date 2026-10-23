@@ -1,97 +1,138 @@
-include { combineByMetaKeys } from "../../../modules/local/functions"
-include { HIFIASM           } from "../../../modules/nf-core/hifiasm/main"
-include { GFATOOLS_GFA2FA   } from "../../../modules/local/gfatools/gfa2fa"
-include { deepMergeMaps     } from "../../../modules/local/functions"
+nextflow.enable.types = true
+
+include { HIFIASM         } from "../../../modules/nf-core/hifiasm/main"
+include { GFATOOLS_GFA2FA } from "../../../modules/local/gfatools/gfa2fa"
+
+record Reads {
+    id   : String
+    meta : Record
+    reads: List<Path>
+}
+
+record Assembly {
+    id       : String  // meta.assembly.build
+    meta     : Record  // sample meta data, including meta.assembly
+    pri_fasta: Path
+    alt_fasta: Path?
+    pri_gfa  : Path?
+    alt_gfa  : Path?
+}
+
+record HifiasmInput {
+    id          : String
+    meta        : Record
+    reads       : List<Path>
+    hifiasm_args: String
+    hic_read1   : List<Path>
+    hic_read2   : List<Path>
+}
+
+def hifiasmInput(id: String, meta: Record, reads: List<Path>, hifiasm_args: String, hic_read1: List<Path>, hic_read2: List<Path>) -> HifiasmInput {
+    return record(id: id, meta: meta, reads: reads, hifiasm_args: hifiasm_args, hic_read1: hic_read1, hic_read2: hic_read2)
+}
+
+// Add the hifiasm configuration and the assembly build to the sample meta data
+def assemblyMeta(meta: Record, key: String, args: String) -> Record {
+    return meta + record(
+        settings: meta.settings + [ hifiasm: [ id: key, args: args ] ],
+        assembly: [ assembler: 'hifiasm', stage: 'raw', id: key, build: "hifiasm-raw-${key}" ]
+    )
+}
 
 workflow ASSEMBLE_HIFI {
     take:
-    hifi_reads     // [ meta, fastx ]
-    hic_reads      // [ meta, hic]
+    hifi_reads      : Channel<Reads>
+    hic_reads       : Channel<Reads>
+    hifiasm_configs : Map<String,String> // [ build_id: "hifiasm args" ]. Empty for a single default build.
+    hifiasm_with_hic: Boolean
+    use_phased      : Boolean
 
     main:
-    // Add build ID.
-    reads_ch = hifi_reads
-        .flatMap { meta, reads ->
-            if (params.hifiasm) {
-                params.hifiasm.collect { key, value -> [ deepMergeMaps(meta,
-                    [
-                        settings: [ hifiasm: [ id: key, args: value ] ],
-                        assembly: [ assembler: 'hifiasm', stage: 'raw', id: key, build: "hifiasm-raw-$key" ]
-                    ]
-                    ), reads, [] ]
-                }
-            } else {
-                def key = "default"
-                [ [ deepMergeMaps(meta,
-                    [
-                        settings: [ hifiasm: [ id: key, args: "" ] ],
-                        assembly: [ assembler: 'hifiasm', stage: 'raw', id: key, build: "hifiasm-raw-$key" ]
-                    ]
-                    ), reads, [] ]
-                ]
-            }
+    // One assembly per hifiasm configuration
+    builds = hifi_reads.flatMap { r ->
+        def configs = hifiasm_configs ?: [ 'default': '' ]
+        configs.keySet().collect { key ->
+            record(
+                id: "hifiasm-raw-${key}",
+                sample_id: r.id,
+                meta: assemblyMeta(r.meta, key, configs[key]),
+                reads: r.reads,
+                hifiasm_args: configs[key]
+            )
+        }.toList()
+    }
+
+    // Hi-C reads of a sample, in pair order
+    hic_by_sample = hic_reads
+        .map { r -> tuple(r.id, r) }
+        .groupBy()
+        .map { sample_id, pairs ->
+            def sorted = pairs.toSorted { a, b -> a.meta.pair_id <=> b.meta.pair_id }
+            record(
+                sample_id: sample_id,
+                hic_read1: sorted.collect { p -> p.reads.first() }.toList(),
+                hic_read2: sorted.collect { p -> p.reads.last() }.toList()
+            )
         }
-    if( params.hifiasm_with_hic ){
-        ch_hifiasm_input = combineByMetaKeys(
-            reads_ch,
-            hic_reads.map{ meta, hic ->
-                tuple(meta.subMap(meta.keySet() - ['pair_id']), hic.first(), hic.last())
-            }.groupTuple(),
-            keySet: ['id','sample'],
-            meta: 'lhs'
+
+    inputs = builds
+        .filter { _b -> !hifiasm_with_hic }
+        .map { b -> hifiasmInput(b.id, b.meta, b.reads, b.hifiasm_args, [], []) }
+        .mix(
+            builds
+                .filter { _b -> hifiasm_with_hic }
+                .join(hic_by_sample, by: 'sample_id')
+                .map { b -> hifiasmInput(b.id, b.meta, b.reads, b.hifiasm_args, b.hic_read1, b.hic_read2) }
         )
-        .multiMap { meta, hifi, ul_ont, hic1, hic2 ->
-            long_reads : tuple(meta, hifi, ul_ont)
-            short_reads: tuple(meta, hic1, hic2)
+
+    hifiasm = HIFIASM(
+        inputs.map { i ->
+            record(
+                id: i.id,
+                meta: i.meta,
+                long_reads: i.reads,
+                ul_reads: [],
+                paternal_kmer_dump: null,
+                maternal_kmer_dump: null,
+                hic_read1: i.hic_read1,
+                hic_read2: i.hic_read2,
+                bin_files: [],
+                hifiasm_args: i.hifiasm_args
+            )
         }
-        HIFIASM(
-            ch_hifiasm_input.long_reads,
-            [[],[],[]], // meta, paternal k-mers, maternal k-mers
-            ch_hifiasm_input.short_reads, // meta, Hi-C r1, Hi-C r2
-            [[], []],   // meta, bin files
-        )
-    } else {
-        HIFIASM(
-            reads_ch,
-            [[],[],[]], // meta, paternal k-mers, maternal k-mers
-            [[],[],[]], // meta, Hi-C r1, Hi-C r2
-            [[], []],   // meta, bin files
+    )
+
+    // Convert the contig graphs to fasta
+    fastas = GFATOOLS_GFA2FA(
+        hifiasm.flatMap { h ->
+            def gfas = use_phased ? [ h.hap1_contigs, h.hap2_contigs ] : [ h.primary_contigs ]
+            gfas.findAll { g -> g != null }.collect { g -> record(id: h.id, meta: h.meta, gfa: g, output_prefix: g.baseName) }.toList()
+        }
+    )
+
+    gfas = hifiasm.map { h ->
+        record(
+            id: h.id,
+            pri_gfa: use_phased ? h.hap1_contigs : h.primary_contigs,
+            alt_gfa: use_phased ? h.hap2_contigs : null
         )
     }
-    raw_assembly_ch = params.use_phased ? HIFIASM.out.hap1_contigs.mix( HIFIASM.out.hap2_contigs ) : HIFIASM.out.primary_contigs
-    GFATOOLS_GFA2FA( raw_assembly_ch )
 
-    gfa_ch = params.use_phased ?
-        HIFIASM.out.hap1_contigs
-            .join( HIFIASM.out.hap2_contigs )
-            .map { meta, pgfa, mgfa -> [ meta, [ pgfa, mgfa ] ] } :
-        HIFIASM.out.primary_contigs
-    assemblies_ch = GFATOOLS_GFA2FA.out.fasta.groupTuple( sort: { fa -> fa.name } )
-        .join( gfa_ch )
-        .map { meta, fasta, gfa ->
-            [ meta, meta.assembly + (
-                params.use_phased ?
-                [
-                    pri_fasta: fasta[0],
-                    alt_fasta: fasta[1],
-                    pri_gfa: gfa[0],
-                    alt_gfa: gfa[1]
-                ] :
-                [
-                    pri_fasta: fasta[0],
-                    alt_fasta: null,
-                    pri_gfa: gfa,
-                    alt_gfa: null
-                ]
-            ) ]
+    assemblies = fastas
+        .map { f -> tuple(f.id, f) }
+        .groupBy()
+        .map { id, results ->
+            def sorted = results.toSorted { a, b -> a.fasta.name <=> b.fasta.name }
+            record(
+                id: id,
+                meta: sorted[0].meta,
+                pri_fasta: sorted[0].fasta,
+                alt_fasta: sorted.size() > 1 ? sorted[1].fasta : null
+            )
         }
-        .dump( tag: "Assemblies: Pre-purge", pretty: true )
-
-    HIFIASM.out.log
-        .map { _meta, log -> log }
-        .set { logs }
+        .join(gfas, by: 'id')
 
     emit:
-    assemblies = assemblies_ch
-    logs
+    assemblies: Channel<Assembly> = assemblies
+    logs      : Channel<Path>     = hifiasm.map { h -> h.log }
 }

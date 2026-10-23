@@ -1,6 +1,13 @@
+nextflow.enable.types = true
+
 process GFATOOLS_GFA2FA {
-    tag "$meta.id"
+    tag "${id}"
     label 'process_single'
+
+    ext [
+        args: { gfatools_args ?: '' },
+        prefix: { output_prefix ?: "${id}" }
+    ]
 
     conda "bioconda::gfatools=0.5"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -8,26 +15,35 @@ process GFATOOLS_GFA2FA {
         'biocontainers/gfatools:0.5--he4a0461_4' }"
 
     input:
-    tuple val(meta), path(gfa)
+    record(
+        id: String,
+        meta: Record?,
+        gfa: Path,
+        gfatools_args: String?,
+        output_prefix: String?
+    )
 
     output:
-    tuple val(meta), path("*.fasta.gz"), emit: fasta
-    tuple val("${task.process}"), val('gfatools'), eval("gfatools version | sed '1!d; s/.* //'"), topic: versions, emit: versions_gfatools
+    record(
+        id: id,
+        meta: meta,
+        fasta: file("*.fasta.gz")
+    )
+
+    topic:
+    tuple(task.process, 'gfatools', eval("gfatools version | sed '1!d; s/.* //'")) >> 'versions'
 
     script:
-    def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
     """
     gfatools \\
         gfa2fa \\
-        $args \\
+        ${task.ext.args} \\
         $gfa \\
-        | gzip -c > ${prefix}.fasta.gz
+        | gzip -c > ${task.ext.prefix}.fasta.gz
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    echo "" | gzip > ${prefix}.fasta.gz
+    echo "" | gzip > ${task.ext.prefix}.fasta.gz
     """
 }

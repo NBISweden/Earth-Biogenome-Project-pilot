@@ -1,7 +1,13 @@
+nextflow.enable.types = true
+
 process MITOHIFI_FINDMITOREFERENCE {
-    tag "$species"
+    tag "${species}"
     label 'process_single'
-    secret secrets.NCBI_API_KEY ? "NCBI_API_KEY" : ""
+    secret secrets.NCBI_API_KEY ? "NCBI_API_KEY" : null
+
+    ext [
+        args: { mitohifi_args ?: '' }
+    ]
 
     // NOTE: An optional NCBI API key can be supplied to MITOHIFI_FINDMITOREFERENCE.
     // This should be set using Nextflow's secrets functionality:
@@ -13,13 +19,25 @@ process MITOHIFI_FINDMITOREFERENCE {
     container 'ghcr.io/marcelauliano/mitohifi:3.2.3'
 
     input:
-    tuple val(meta), val(species)
+    record(
+        id: String,
+        meta: Record?,
+        species: String,
+        mitohifi_args: String?
+    )
 
     output:
-    tuple val(meta), path("*.fasta"), path("*.gb"), emit: reference, optional: true
+    record(
+        id: id,
+        meta: meta,
+        fasta: file("*.fasta", optional: true),
+        gb: file("*.gb", optional: true)
+    )
+
+    topic:
     // WARN: Incorrect version information is provided by tool on CLI. Please update this string when bumping container versions.
     // old version command: \$(mitohifi.py -v | sed 's/.* //')
-    tuple val("${task.process}"), val('mitohifi'), eval('echo 3.2.3'), emit: versions_mitohifi, topic: versions
+    tuple(task.process, 'mitohifi', eval('echo 3.2.3')) >> 'versions'
 
     script:
     // Exit if running this module with -profile conda / -profile mamba
@@ -27,7 +45,6 @@ process MITOHIFI_FINDMITOREFERENCE {
         error "MitoHiFi module does not support Conda. Please use Docker / Singularity instead."
     }
 
-    def args         = task.ext.args ?: ''
     def ncbi_api_key = secrets.NCBI_API_KEY ? "--ncbi-api-key \$NCBI_API_KEY" : ""
     """
     # override workflow exit on findMitoReference.py error (issues: #277, #171, #220)
@@ -36,7 +53,7 @@ process MITOHIFI_FINDMITOREFERENCE {
         ${ncbi_api_key} \\
         --species "$species" \\
         --outfolder . \\
-        $args
+        ${task.ext.args}
     set -e
 
     # Test for mitohifi reference files:

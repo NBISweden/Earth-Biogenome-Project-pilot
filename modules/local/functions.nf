@@ -162,3 +162,39 @@ Add the missing keys from rhs to lhs map.
 def deepMergeMaps(Map lhs, Map rhs) {
     lhs.collectEntries { k, v -> rhs[k] instanceof Map ? [ (k): deepMergeMaps(v, rhs[k] ) ] : [ (k): rhs[k]?:v ] } + rhs.subMap(rhs.keySet()-lhs.keySet())
 }
+
+
+/*
+Convert a typed Assembly record channel to the legacy [ meta, assembly_map ] channel.
+The meta map includes meta.assembly (assembler, stage, id, build).
+*/
+def assemblyRecordsToTuples( assemblies ) {
+    assemblies.map { a ->
+        def meta = [:] + a.meta
+        [
+            meta,
+            meta.assembly.subMap(['assembler','stage','id','build']) + [
+                pri_fasta: a.pri_fasta,
+                alt_fasta: a.alt_fasta,
+                pri_gfa  : a.pri_gfa,
+                alt_gfa  : a.alt_gfa
+            ]
+        ]
+    }
+}
+
+/*
+Convert the legacy [ meta, assembly_map ] channel to a typed Assembly record channel.
+*/
+def assemblyTuplesToRecords( assemblies ) {
+    assemblies.map { meta, asm ->
+        record(
+            id       : meta.assembly.build,
+            meta     : record(meta),
+            pri_fasta: asm.pri_fasta,
+            alt_fasta: asm.alt_fasta,
+            pri_gfa  : asm.pri_gfa,
+            alt_gfa  : asm.alt_gfa
+        )
+    }
+}

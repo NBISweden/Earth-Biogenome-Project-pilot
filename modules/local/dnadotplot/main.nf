@@ -1,22 +1,41 @@
+nextflow.enable.types = true
+
 process DNADOTPLOT {
-    tag "$meta.id"
+    tag "${id}"
     label 'process_low'
+
+    ext [
+        args: { dnadotplot_args ?: '' }
+    ]
+
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'oras://community.wave.seqera.io/library/dnadotplot:0.1.4--aa4389449e8456fc' :
         'community.wave.seqera.io/library/dnadotplot:0.1.4--165aba59778a399e' }"
 
     input:
-    tuple val(meta), path(ref), path(query), val(experiment)
+    record(
+        id: String,
+        meta: Record?,
+        ref: Path,
+        query: Path,
+        experiment: String,
+        dnadotplot_args: String?
+    )
 
     output:
-    tuple val(meta), path("*.svg"), emit: svg
-    tuple val("${task.process}"), val('dnadotplot'), eval("dnadotplot --version | sed 's/dnadotplot //'"), topic: versions, emit: versions_dnadotplot
+    record(
+        id: id,
+        meta: meta,
+        svg: file("*.svg")
+    )
+
+    topic:
+    tuple(task.process, 'dnadotplot', eval("dnadotplot --version | sed 's/dnadotplot //'")) >> 'versions'
 
     script:
-    def args = task.ext.args ?: ''
     """
     dnadotplot \\
-        $args \\
+        ${task.ext.args} \\
         -1 $ref \\
         -2 $query \\
         -o seq1-${ref.baseName}_seq2-${query.baseName}.${experiment}.svg

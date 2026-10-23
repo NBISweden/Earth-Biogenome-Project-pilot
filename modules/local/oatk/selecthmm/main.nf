@@ -1,3 +1,5 @@
+nextflow.enable.types = true
+
 process OATK_SELECTHMM {
     tag "${species}"
     label 'process_single'
@@ -8,13 +10,24 @@ process OATK_SELECTHMM {
         : 'biocontainers/oatk:1.0--h577a1d6_1'}"
 
     input:
-    tuple val(meta), val(species), val(lineage)
-    path oatkdb
+    record(
+        id: String,
+        meta: Record?,
+        species: String,
+        lineage: String,
+        oatkdb: Path
+    )
 
     output:
-    tuple path("mito/*_mito.fam"), path("mito/*_mito.fam.h3f"), path("mito/*_mito.fam.h3i"), path("mito/*_mito.fam.h3m"), path("mito/*_mito.fam.h3p"), emit: mito_hmm, optional: true
-    tuple path("pltd/*_pltd.fam"), path("pltd/*_pltd.fam.h3f"), path("pltd/*_pltd.fam.h3i"), path("pltd/*_pltd.fam.h3m"), path("pltd/*_pltd.fam.h3p"), emit: pltd_hmm, optional: true
-    tuple val("${task.process}"), val('oatk'), eval("oatk --version"), emit: versions_oatk, topic: versions
+    record(
+        id: id,
+        meta: meta,
+        mito_hmm: files("mito/*_mito.fam*", optional: true),
+        pltd_hmm: files("pltd/*_pltd.fam*", optional: true)
+    )
+
+    topic:
+    tuple(task.process, 'oatk', eval("oatk --version")) >> 'versions'
 
     script:
     """

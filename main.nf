@@ -3,6 +3,7 @@
 // Functions
 include { assembliesFromStage as preassembledInput          } from "./modules/local/functions"
 include { setAssemblyStage                                  } from "./modules/local/functions"
+include { assemblyRecordsToTuples                           } from "./modules/local/functions"
 // Data import
 include { PREPARE_INPUT                                     } from "./subworkflows/local/prepare_input/main"
 // Database preparation
@@ -120,16 +121,20 @@ workflow {
     // Assemble
     if ( 'assemble' in workflow_steps ) {
         // Run assemblers
-        ASSEMBLE (
-                PREPARE_INPUT.out.hifi_merged,
-                PREPARE_INPUT.out.hic,
-                params.oatkdb ? file(params.oatkdb, checkIfExists: true, type: 'dir') : channel.empty(),
+        ch_hifi_merged_reads = PREPARE_INPUT.out.hifi_merged.map { meta, reads -> record(id: meta.id, meta: record(meta), reads: [ reads ].flatten()) }
+        ch_assembled = ASSEMBLE (
+                ch_hifi_merged_reads,
+                ch_hic_reads,
+                params.oatkdb ? file(params.oatkdb, checkIfExists: true, type: 'dir') : null,
                 params.nuclear_assembly_mode,
-                params.organelle_assembly_mode
+                params.organelle_assembly_mode,
+                params.hifiasm ?: [:],
+                params.hifiasm_with_hic,
+                params.use_phased
         )
-        ch_evaluate_assemblies = ch_evaluate_assemblies.mix( ASSEMBLE.out.raw_assemblies )
-        ch_raw_assemblies = ASSEMBLE.out.raw_assemblies
-        ch_multiqc_files = ch_multiqc_files.mix( ASSEMBLE.out.logs )
+        ch_raw_assemblies = assemblyRecordsToTuples( ch_assembled.raw_assemblies )
+        ch_evaluate_assemblies = ch_evaluate_assemblies.mix( ch_raw_assemblies )
+        ch_multiqc_files = ch_multiqc_files.mix( ch_assembled.logs )
     } else {
         ch_raw_assemblies = channel.empty() // No assemblies from a previous stage
     }
