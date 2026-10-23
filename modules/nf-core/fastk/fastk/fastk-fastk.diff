@@ -1,4 +1,6 @@
 Changes in component 'nf-core/fastk/fastk'
+'modules/nf-core/fastk/fastk/environment.yml' is unchanged
+'modules/nf-core/fastk/fastk/meta.yml' is unchanged
 Changes in 'fastk/fastk/main.nf':
 --- modules/nf-core/fastk/fastk/main.nf
 +++ modules/nf-core/fastk/fastk/main.nf
@@ -15,9 +17,13 @@ Changes in 'fastk/fastk/main.nf':
  
      input:
      tuple val(meta), path(reads)
-@@ -23,18 +21,27 @@
-     task.ext.when == null || task.ext.when
+@@ -19,22 +17,28 @@
+     // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
+     tuple val("${task.process}"), val('fastk'), val('1.2'), emit: versions_fastk, topic: versions
  
+-    when:
+-    task.ext.when == null || task.ext.when
+-
      script:
 +    // Exit if running this module with -profile conda / -profile mamba
 +    if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
@@ -45,9 +51,7 @@ Changes in 'fastk/fastk/main.nf':
  
      stub:
 
-'modules/nf-core/fastk/fastk/environment.yml' is unchanged
-'modules/nf-core/fastk/fastk/meta.yml' is unchanged
 'modules/nf-core/fastk/fastk/tests/main.nf.test.snap' is unchanged
-'modules/nf-core/fastk/fastk/tests/main.nf.test' is unchanged
 'modules/nf-core/fastk/fastk/tests/nextflow.config' is unchanged
+'modules/nf-core/fastk/fastk/tests/main.nf.test' is unchanged
 ************************************************************

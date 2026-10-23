@@ -17,9 +17,6 @@ process FCSGX_CLEAN {
     // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
     tuple val("${task.process}"), val('fcs_gx'), val('0.5.4'), emit: versions_fcsgx, topic: versions
 
-    when:
-    task.ext.when == null || task.ext.when
-
     script:
     def prefix = task.ext.prefix ?: "${meta.id}"
     def infile = assembly.name.endsWith('.gz') ? "<( gzip -dc $assembly )" : assembly

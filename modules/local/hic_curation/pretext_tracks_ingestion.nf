@@ -11,9 +11,6 @@ process PRETEXT_TRACKS_INGESTION {
     tuple val(meta), path("*_wTracks.pretext"), emit: hitile
     tuple val("${task.process}"), val('PretextGraph'), eval("PretextGraph | sed '2!d; s/.* //'"), emit: versions_pretextGraph, topic: versions
 
-    when:
-    task.ext.when == null || task.ext.when
-
     script:
     def prefix = task.ext.prefix ?: "${meta.id}"
     """

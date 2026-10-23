@@ -1,0 +1,20 @@
+Changes in component 'nf-core/seqtk/cutn'
+'modules/nf-core/seqtk/cutn/environment.yml' is unchanged
+'modules/nf-core/seqtk/cutn/meta.yml' is unchanged
+Changes in 'seqtk/cutn/main.nf':
+--- modules/nf-core/seqtk/cutn/main.nf
++++ modules/nf-core/seqtk/cutn/main.nf
+@@ -13,9 +13,6 @@
+     output:
+     tuple val(meta), path("*.bed")    , emit: bed
+     tuple val("${task.process}"), val('seqtk'), eval("seqtk 2>&1 | sed -n 's/^Version: //p'"), emit: versions_seqtk, topic: versions
+-
+-    when:
+-    task.ext.when == null || task.ext.when
+ 
+     script:
+     def args = task.ext.args ?: ''
+
+'modules/nf-core/seqtk/cutn/tests/main.nf.test.snap' is unchanged
+'modules/nf-core/seqtk/cutn/tests/main.nf.test' is unchanged
+************************************************************

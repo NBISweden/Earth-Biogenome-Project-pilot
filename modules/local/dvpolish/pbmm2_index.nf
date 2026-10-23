@@ -14,9 +14,6 @@ process DVPOLISH_PBMM2_INDEX {
     tuple val(meta), path("*.mmi"), emit: index
     tuple val("${task.process}"), val('pbmm2'), eval("pbmm2 --version 2>&1 | sed '1!d; s/pbmm2 //'"), emit: versions_pbmm2, topic: versions
 
-    when:
-    task.ext.when == null || task.ext.when
-
     script:
     def args = task.ext.args ?: ''
     """

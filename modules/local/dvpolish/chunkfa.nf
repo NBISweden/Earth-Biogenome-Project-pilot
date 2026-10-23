@@ -14,9 +14,6 @@ process DVPOLISH_CHUNKFA {
     tuple val(meta), path ("*.bed", arity: '1..*')        , emit: bed
     tuple val("${task.process}"), val('mawk'), eval("awk -W version |& sed '1!d; s/mawk //; s/ .*//'"), topic: versions, emit: versions_mawk
 
-    when:
-    task.ext.when == null || task.ext.when
-
     script:
     def prefix = task.ext.prefix ?: "${meta.id}"
     def chunk_size_bytes = MemoryUnit.of(chunk_size).toBytes()

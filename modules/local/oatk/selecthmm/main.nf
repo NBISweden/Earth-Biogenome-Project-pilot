@@ -16,9 +16,6 @@ process OATK_SELECTHMM {
     tuple path("pltd/*_pltd.fam"), path("pltd/*_pltd.fam.h3f"), path("pltd/*_pltd.fam.h3i"), path("pltd/*_pltd.fam.h3m"), path("pltd/*_pltd.fam.h3p"), emit: pltd_hmm, optional: true
     tuple val("${task.process}"), val('oatk'), eval("oatk --version"), emit: versions_oatk, topic: versions
 
-    when:
-    task.ext.when == null || task.ext.when
-
     script:
     """
     # Search for most specific lineage match

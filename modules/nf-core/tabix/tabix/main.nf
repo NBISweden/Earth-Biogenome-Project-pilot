@@ -14,9 +14,6 @@ process TABIX_TABIX {
     tuple val(meta), path("*.{tbi,csi}"), emit: index
     tuple val("${task.process}"), val('tabix'), eval("tabix -h 2>&1 | grep -oP 'Version:\\s*\\K[^\\s]+'")   , topic: versions   , emit: versions_tabix
 
-    when:
-    task.ext.when == null || task.ext.when
-
     script:
     def args = task.ext.args ?: ''
     """

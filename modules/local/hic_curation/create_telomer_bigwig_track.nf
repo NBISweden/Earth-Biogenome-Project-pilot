@@ -12,9 +12,6 @@ process CREATE_TELOMER_BIGWIG_TRACK {
     tuple val(meta), path("*_telomer.bw"), emit: bw
     tuple val("${task.process}"), val('bedGraphToBigWig'), eval("bedGraphToBigWig |& sed '1!d; s/.* v //; s/ .*//'"), topic: versions, emit: versions_bedgraphtobigwig
 
-    when:
-    task.ext.when == null || task.ext.when
-
     script:
     def args   = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"

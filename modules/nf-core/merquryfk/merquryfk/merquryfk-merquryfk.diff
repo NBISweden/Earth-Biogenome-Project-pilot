@@ -17,7 +17,7 @@ Changes in 'merquryfk/merquryfk/main.nf':
  
      input:
      tuple val(meta) , path(fastk_hist), path(fastk_ktab), path(assembly), path(haplotigs)
-@@ -16,12 +14,26 @@
+@@ -16,20 +14,35 @@
      tuple val(meta), path("${prefix}.completeness.stats")         , emit: stats
      tuple val(meta), path("${prefix}.*_only.bed")                 , emit: bed
      tuple val(meta), path("${prefix}.*.qv")                       , emit: assembly_qv
@@ -48,9 +48,10 @@ Changes in 'merquryfk/merquryfk/main.nf':
      // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
      tuple val("${task.process}"), val('fastk'), val('1.2'), emit: versions_fastk, topic: versions
      tuple val("${task.process}"), val('R'), eval('R --version | sed "1!d; s/.*version //; s/ .*//"'), emit: versions_r, topic: versions
-@@ -30,6 +42,10 @@
-     task.ext.when == null || task.ext.when
  
+-    when:
+-    task.ext.when == null || task.ext.when
+-
      script:
 +    // Exit if running this module with -profile conda / -profile mamba
 +    if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
@@ -59,7 +60,7 @@ Changes in 'merquryfk/merquryfk/main.nf':
      if([mathaptab, pathaptab].any() && ![mathaptab, pathaptab].every()) {
          log.error("Error: Only one of the maternal and paternal hap tabs have been provided!")
      }
-@@ -49,6 +65,19 @@
+@@ -49,6 +62,19 @@
          $assembly \\
          $haplotigs \\
          $prefix
@@ -79,7 +80,7 @@ Changes in 'merquryfk/merquryfk/main.nf':
      """
  
      stub:
-@@ -58,5 +87,7 @@
+@@ -58,5 +84,7 @@
      touch ${prefix}.qv
      touch ${prefix}._.qv
      touch ${prefix}._only.bed

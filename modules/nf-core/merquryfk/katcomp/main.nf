@@ -22,9 +22,6 @@ process MERQURYFK_KATCOMP {
     tuple val("${task.process}"), val('fastk'), val('1.2'), emit: versions_fastk, topic: versions
     tuple val("${task.process}"), val('R'), eval('R --version | sed "1!d; s/.*version //; s/ .*//"'), emit: versions_r, topic: versions
 
-    when:
-    task.ext.when == null || task.ext.when
-
     script:
     if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
         error "MERQURYFK_KATCOMP module does not support Conda. Please use Docker / Singularity / Podman instead."

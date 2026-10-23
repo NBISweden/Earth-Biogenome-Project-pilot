@@ -1,8 +1,10 @@
 Changes in component 'nf-core/merquryfk/katcomp'
+'modules/nf-core/merquryfk/katcomp/environment.yml' is unchanged
+'modules/nf-core/merquryfk/katcomp/meta.yml' is unchanged
 Changes in 'merquryfk/katcomp/main.nf':
 --- modules/nf-core/merquryfk/katcomp/main.nf
 +++ modules/nf-core/merquryfk/katcomp/main.nf
-@@ -3,18 +3,21 @@
+@@ -3,26 +3,29 @@
      label 'process_medium'
  
      // WARN: Version information not provided by tool on CLI. Please update version string below when bumping container versions.
@@ -30,9 +32,10 @@ Changes in 'merquryfk/katcomp/main.nf':
      // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
      tuple val("${task.process}"), val('fastk'), val('1.2'), emit: versions_fastk, topic: versions
      tuple val("${task.process}"), val('R'), eval('R --version | sed "1!d; s/.*version //; s/ .*//"'), emit: versions_r, topic: versions
-@@ -23,6 +26,9 @@
-     task.ext.when == null || task.ext.when
  
+-    when:
+-    task.ext.when == null || task.ext.when
+-
      script:
 +    if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
 +        error "MERQURYFK_KATCOMP module does not support Conda. Please use Docker / Singularity / Podman instead."
@@ -41,9 +44,7 @@ Changes in 'merquryfk/katcomp/main.nf':
      def prefix    = task.ext.prefix ?: "${meta.id}"
      def input_fk1 = fastk1_ktab.find { path -> path.toString().endsWith(".ktab") }.getBaseName()
 
-'modules/nf-core/merquryfk/katcomp/environment.yml' is unchanged
-'modules/nf-core/merquryfk/katcomp/meta.yml' is unchanged
 'modules/nf-core/merquryfk/katcomp/tests/main.nf.test.snap' is unchanged
-'modules/nf-core/merquryfk/katcomp/tests/main.nf.test' is unchanged
 'modules/nf-core/merquryfk/katcomp/tests/nextflow.config' is unchanged
+'modules/nf-core/merquryfk/katcomp/tests/main.nf.test' is unchanged
 ************************************************************

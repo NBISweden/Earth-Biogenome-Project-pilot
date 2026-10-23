@@ -21,9 +21,6 @@ process MERQURYFK_KATGC {
     tuple val("${task.process}"), val('fastk'), val('1.2'), emit: versions_fastk, topic: versions
     tuple val("${task.process}"), val('R'), eval('R --version | sed "1!d; s/.*version //; s/ .*//"'), emit: versions_r, topic: versions
 
-    when:
-    task.ext.when == null || task.ext.when
-
     script:
     // Exit if running this module with -profile conda / -profile mamba
     if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {

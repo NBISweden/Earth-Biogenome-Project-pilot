@@ -3,7 +3,7 @@ Changes in component 'nf-core/star/genomegenerate'
 Changes in 'star/genomegenerate/main.nf':
 --- modules/nf-core/star/genomegenerate/main.nf
 +++ modules/nf-core/star/genomegenerate/main.nf
-@@ -9,11 +9,13 @@
+@@ -9,14 +9,13 @@
  
      input:
      tuple val(meta), path(fasta)
@@ -13,13 +13,16 @@ Changes in 'star/genomegenerate/main.nf':
      output:
      tuple val(meta), path("star")  , emit: index
 -    path "versions.yml"            , emit: versions
+-
+-    when:
+-    task.ext.when == null || task.ext.when
 +    tuple val("${task.process}"), val('star'), eval('STAR --version | sed -e "s/STAR_//g"'), emit: versions_star, topic: versions
 +    tuple val("${task.process}"), val('samtools'), eval("samtools --version | sed -n '1s/samtools //p'"), emit: versions_samtools, topic: versions
 +    tuple val("${task.process}"), val('gawk'), eval("gawk --version | sed -n '1{s/GNU Awk //;s/,.*//;p}'"), emit: versions_gawk, topic: versions
  
-     when:
-     task.ext.when == null || task.ext.when
-@@ -29,17 +31,10 @@
+     script:
+     def args = task.ext.args ?: ''
+@@ -29,17 +28,10 @@
              --runMode genomeGenerate \\
              --genomeDir star/ \\
              --genomeFastaFiles $fasta \\
@@ -38,7 +41,7 @@ Changes in 'star/genomegenerate/main.nf':
          """
      } else {
          """
-@@ -51,18 +46,11 @@
+@@ -51,18 +43,11 @@
              --runMode genomeGenerate \\
              --genomeDir star/ \\
              --genomeFastaFiles $fasta \\
@@ -58,7 +61,7 @@ Changes in 'star/genomegenerate/main.nf':
          """
      }
  
-@@ -85,12 +73,5 @@
+@@ -85,12 +70,5 @@
      touch star/sjdbList.fromGTF.out.tab
      touch star/sjdbList.out.tab
      touch star/transcriptInfo.tab

@@ -15,9 +15,6 @@ process TAXONKIT_NAME2LINEAGE {
     tuple val(meta), path("*.tsv"), emit: tsv
     tuple val("${task.process}"), val('taxonkit'), eval('taxonkit version | sed "s/.* v//"'), emit: versions_taxonkit, topic: versions
 
-    when:
-    task.ext.when == null || task.ext.when
-
     script:
     def args = task.ext.args ?: ''
     def args2 = task.ext.args2 ?: '-f "{k}"'

@@ -9,9 +9,6 @@ process TOL_SEARCH {
     val json                     , emit: json
     path "${taxid}_tol_info.json", emit: json_file
 
-    when:
-    task.ext.when == null || task.ext.when
-
     exec:
     def response = new URL("https://id.tol.sanger.ac.uk/api/v2/species?taxonomyId=$taxid").text
     def lazy_json = new groovy.json.JsonSlurper().parseText(response)

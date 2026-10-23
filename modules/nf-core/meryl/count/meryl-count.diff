@@ -1,0 +1,20 @@
+Changes in component 'nf-core/meryl/count'
+'modules/nf-core/meryl/count/environment.yml' is unchanged
+'modules/nf-core/meryl/count/meta.yml' is unchanged
+Changes in 'meryl/count/main.nf':
+--- modules/nf-core/meryl/count/main.nf
++++ modules/nf-core/meryl/count/main.nf
+@@ -15,9 +15,6 @@
+     tuple val(meta), path("*.meryl")    , emit: meryl_db
+     tuple val("${task.process}"), val('meryl'), eval("meryl --version |& sed 's/meryl //'"), emit: versions_meryl, topic: versions
+ 
+-
+-    when:
+-    task.ext.when == null || task.ext.when
+ 
+     script:
+     def args = task.ext.args ?: ''
+
+'modules/nf-core/meryl/count/tests/main.nf.test.snap' is unchanged
+'modules/nf-core/meryl/count/tests/main.nf.test' is unchanged
+************************************************************

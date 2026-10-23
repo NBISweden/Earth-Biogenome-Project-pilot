@@ -1,0 +1,21 @@
+Changes in component 'nf-core/cooler/cload'
+'modules/nf-core/cooler/cload/environment.yml' is unchanged
+'modules/nf-core/cooler/cload/meta.yml' is unchanged
+Changes in 'cooler/cload/main.nf':
+--- modules/nf-core/cooler/cload/main.nf
++++ modules/nf-core/cooler/cload/main.nf
+@@ -16,9 +16,6 @@
+     output:
+     tuple val(meta), path("*.cool"), emit: cool
+     tuple val("${task.process}"), val('cooler'), eval('cooler --version 2>&1 | sed "s/cooler, version //"'), emit: versions_cooler, topic: versions
+-
+-    when:
+-    task.ext.when == null || task.ext.when
+ 
+     script:
+     def args   = task.ext.args   ?: ''
+
+'modules/nf-core/cooler/cload/tests/main.nf.test.snap' is unchanged
+'modules/nf-core/cooler/cload/tests/nextflow.config' is unchanged
+'modules/nf-core/cooler/cload/tests/main.nf.test' is unchanged
+************************************************************

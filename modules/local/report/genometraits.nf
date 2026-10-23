@@ -8,9 +8,6 @@ process REPORT_GENOMETRAITS {
     output:
     path "Genome_traits.tsv", emit: tsv
 
-    when:
-    task.ext.when == null || task.ext.when
-
     exec:
     def trait_table = """\
         Genome traits\tExpected\tObserved

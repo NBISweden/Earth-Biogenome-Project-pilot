@@ -1,0 +1,20 @@
+Changes in component 'nf-core/pretextmap'
+'modules/nf-core/pretextmap/environment.yml' is unchanged
+'modules/nf-core/pretextmap/meta.yml' is unchanged
+Changes in 'pretextmap/main.nf':
+--- modules/nf-core/pretextmap/main.nf
++++ modules/nf-core/pretextmap/main.nf
+@@ -16,9 +16,6 @@
+     tuple val(meta), path("*.pretext")  , emit: pretext
+     tuple val("${task.process}"), val('PretextMap'), eval('PretextMap | sed "/Version/!d; s/.*Version //"'), emit: versions_pretextmap, topic: versions
+     tuple val("${task.process}"), val('samtools'), eval('samtools --version | sed "1!d; s/samtools //"'), emit: versions_samtools, topic: versions
+-
+-    when:
+-    task.ext.when == null || task.ext.when
+ 
+     script:
+     def args          = task.ext.args     ?: '' // PretextMap args
+
+'modules/nf-core/pretextmap/tests/main.nf.test.snap' is unchanged
+'modules/nf-core/pretextmap/tests/main.nf.test' is unchanged
+************************************************************

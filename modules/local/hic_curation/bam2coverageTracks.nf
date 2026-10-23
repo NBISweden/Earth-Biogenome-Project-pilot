@@ -19,9 +19,6 @@ process BAM2COVERAGE_TRACKS {
     tuple val("${task.process}"), val('sort'), eval("sort --version | sed '1!d; s/.* //'"), topic: versions, emit: versions_sort
     tuple val("${task.process}"), val('awk'), eval("awk --version | sed '1!d; s/mawk //; s/ .*//'"), topic: versions, emit: versions_awk
 
-    when:
-    task.ext.when == null || task.ext.when
-
     script:
     def args = task.ext.args ?: ''
     def args2 = task.ext.args2 ?: ''

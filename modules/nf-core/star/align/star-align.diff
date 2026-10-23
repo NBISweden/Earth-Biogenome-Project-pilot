@@ -25,7 +25,13 @@ Changes in 'star/align/main.nf':
  
      tuple val(meta), path('*d.out.bam')              , optional:true, emit: bam
      tuple val(meta), path('*sortedByCoord.out.bam')  , optional:true, emit: bam_sorted
-@@ -40,12 +42,13 @@
+@@ -34,18 +36,16 @@
+     tuple val(meta), path('*.wig')                   , optional:true, emit: wig
+     tuple val(meta), path('*.bg')                    , optional:true, emit: bedgraph
+ 
+-    when:
+-    task.ext.when == null || task.ext.when
+-
      script:
      def args = task.ext.args ?: ''
      def prefix = task.ext.prefix ?: "${meta.id}"
@@ -44,7 +50,7 @@ Changes in 'star/align/main.nf':
      def out_sam_type    = (args.contains('--outSAMtype')) ? '' : '--outSAMtype BAM Unsorted'
      def mv_unsorted_bam = (args.contains('--outSAMtype BAM Unsorted SortedByCoordinate')) ? "mv ${prefix}.Aligned.out.bam ${prefix}.Aligned.unsort.out.bam" : ''
      """
-@@ -69,13 +72,6 @@
+@@ -69,13 +69,6 @@
          mv ${prefix}.Unmapped.out.mate2 ${prefix}.unmapped_2.fastq
          gzip ${prefix}.unmapped_2.fastq
      fi
@@ -58,7 +64,7 @@ Changes in 'star/align/main.nf':
      """
  
      stub:
-@@ -98,12 +94,5 @@
+@@ -98,12 +91,5 @@
      touch ${prefix}.out.sam
      touch ${prefix}.Signal.UniqueMultiple.str1.out.wig
      touch ${prefix}.Signal.UniqueMultiple.str1.out.bg

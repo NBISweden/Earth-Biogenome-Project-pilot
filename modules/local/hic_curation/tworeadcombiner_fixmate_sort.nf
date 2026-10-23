@@ -13,9 +13,6 @@ process TWOREADCOMBINER_FIXMATE_SORT {
     tuple val("${task.process}"), val('perl'), eval("perl --version | sed '2!d; s/.*(v//; s/).*//'"), emit: versions_perl, topic: versions
     tuple val("${task.process}"), val('grep'), eval("grep --version | sed '1!d; s/.* //'"), emit: versions_grep, topic: versions
 
-    when:
-    task.ext.when == null || task.ext.when
-
     script:
     def args = task.ext.args ?: ''
     def args2 = task.ext.args2 ?: ''

@@ -12,6 +12,16 @@ Changes in 'samtools/import/main.nf':
  
      conda "${moduleDir}/environment.yml"
      container "${workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container
+@@ -15,9 +15,6 @@
+     tuple val(meta), path("*.bam"), emit: bam, optional: true
+     tuple val(meta), path("*.cram"), emit: cram, optional: true
+     tuple val("${task.process}"), val('samtools'), eval("samtools version | sed '1!d;s/.* //'"), topic: versions, emit: versions_samtools
+-
+-    when:
+-    task.ext.when == null || task.ext.when
+ 
+     script:
+     def args = task.ext.args ?: ''
 
 'modules/nf-core/samtools/import/tests/main.nf.test.snap' is unchanged
 'modules/nf-core/samtools/import/tests/main.nf.test' is unchanged

@@ -23,9 +23,6 @@ process PAIRTOOLS {
     tuple val("${task.process}"), val('samtools'), eval('samtools --version | sed "1!d; s/samtools //"'), emit: versions_samtools, topic: versions
     tuple val("${task.process}"), val('pairtools'), eval("pairtools --version 2>&1 | sed 's/pairtools, version //'"), emit: versions_pairtools, topic: versions
 
-    when:
-    task.ext.when == null || task.ext.when
-
     script:
     def args = task.ext.args ?: ''
     def args2 = task.ext.args2 ?: ''

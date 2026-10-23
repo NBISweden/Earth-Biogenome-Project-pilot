@@ -1,0 +1,21 @@
+Changes in component 'nf-core/samtools/faidx'
+'modules/nf-core/samtools/faidx/environment.yml' is unchanged
+'modules/nf-core/samtools/faidx/meta.yml' is unchanged
+Changes in 'samtools/faidx/main.nf':
+--- modules/nf-core/samtools/faidx/main.nf
++++ modules/nf-core/samtools/faidx/main.nf
+@@ -17,9 +17,6 @@
+     tuple val(meta), path("*.fai"), emit: fai, optional: true
+     tuple val(meta), path("*.gzi"), emit: gzi, optional: true
+     tuple val("${task.process}"), val('samtools'), eval("samtools version | sed '1!d;s/.* //'"), topic: versions, emit: versions_samtools
+-
+-    when:
+-    task.ext.when == null || task.ext.when
+ 
+     script:
+     def args = task.ext.args ?: ''
+
+'modules/nf-core/samtools/faidx/tests/main.nf.test.snap' is unchanged
+'modules/nf-core/samtools/faidx/tests/nextflow.config' is unchanged
+'modules/nf-core/samtools/faidx/tests/main.nf.test' is unchanged
+************************************************************

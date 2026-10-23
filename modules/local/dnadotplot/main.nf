@@ -12,9 +12,6 @@ process DNADOTPLOT {
     tuple val(meta), path("*.svg"), emit: svg
     tuple val("${task.process}"), val('dnadotplot'), eval("dnadotplot --version | sed 's/dnadotplot //'"), topic: versions, emit: versions_dnadotplot
 
-    when:
-    task.ext.when == null || task.ext.when
-
     script:
     def args = task.ext.args ?: ''
     """

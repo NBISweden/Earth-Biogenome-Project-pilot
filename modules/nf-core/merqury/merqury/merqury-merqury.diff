@@ -4,7 +4,17 @@ Changes in component 'nf-core/merqury/merqury'
 Changes in 'merqury/merqury/main.nf':
 --- modules/nf-core/merqury/merqury/main.nf
 +++ modules/nf-core/merqury/merqury/main.nf
-@@ -70,7 +70,7 @@
+@@ -30,9 +30,6 @@
+     tuple val(meta), path("*.hapmers.blob.png")  , emit: hapmers_blob_png           , optional: true
+     // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
+     tuple val("${task.process}"), val('merqury'), val('1.3'), emit: versions_merqury, topic: versions
+-
+-    when:
+-    task.ext.when == null || task.ext.when
+ 
+     script:
+     // def args = task.ext.args ?: ''
+@@ -70,7 +67,7 @@
      touch ${prefix}.spectra-asm.ln.png
      touch ${prefix}.spectra-asm.st.png
      touch ${prefix}.qv

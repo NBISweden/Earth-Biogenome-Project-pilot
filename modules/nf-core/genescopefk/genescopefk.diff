@@ -3,7 +3,7 @@ Changes in component 'nf-core/genescopefk'
 Changes in 'genescopefk/main.nf':
 --- modules/nf-core/genescopefk/main.nf
 +++ modules/nf-core/genescopefk/main.nf
-@@ -3,21 +3,22 @@
+@@ -3,24 +3,22 @@
      label 'process_low'
  
      // WARN: Version information not provided by tool on CLI. Please update version string below when bumping container versions.
@@ -30,12 +30,15 @@ Changes in 'genescopefk/main.nf':
 +    tuple val(meta), path("${prefix}_genescopefk.log")            , emit: log
      tuple val(meta), env('KMERCOV')                       , emit: kmer_cov
 -    tuple val("${task.process}"), val('genescopefk'), eval("R --version | sed '1!d; s/.*version //; s/ .*//'"), emit: versions_genescopefk, topic: versions
+-
+-    when:
+-    task.ext.when == null || task.ext.when
 +    tuple val("${task.process}"), val('genescopefk'), val("380815c420f50171f9234a0fd1ff426b39829b91"), emit: versions_genescopefk, topic: versions
 +    tuple val("${task.process}"), val('R'), eval("R --version | sed '1!d; s/.*version //; s/ .*//'"), emit: versions_r, topic: versions
  
-     when:
-     task.ext.when == null || task.ext.when
-@@ -29,29 +30,31 @@
+     script:
+     // Exit if running this module with -profile conda / -profile mamba
+@@ -29,29 +27,31 @@
      }
  
      def args   = task.ext.args   ?: ''

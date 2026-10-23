@@ -28,9 +28,6 @@ process OATK {
     tuple val(meta), path("*utg.unzip.gfa")     , emit: unzip_gfa, optional: true
     tuple val("${task.process}"), val('oatk'), eval("oatk --version 2>&1"), topic: versions, emit: versions_oatk
 
-    when:
-    task.ext.when == null || task.ext.when
-
     script:
     def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"

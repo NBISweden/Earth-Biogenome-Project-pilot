@@ -1,0 +1,20 @@
+Changes in component 'nf-core/deepvariant/rundeepvariant'
+'modules/nf-core/deepvariant/rundeepvariant/meta.yml' is unchanged
+Changes in 'deepvariant/rundeepvariant/main.nf':
+--- modules/nf-core/deepvariant/rundeepvariant/main.nf
++++ modules/nf-core/deepvariant/rundeepvariant/main.nf
+@@ -22,9 +22,6 @@
+     tuple val(meta), path("${prefix}.g.vcf.gz.tbi")      , emit: gvcf_tbi
+     tuple val(meta), path("${prefix}.visual_report.html"), emit: report, optional: true
+     tuple val("${task.process}"), val('deepvariant'), eval("/opt/deepvariant/bin/run_deepvariant --version | sed 's/^.*version //'"), topic: versions, emit: versions_deepvariant
+-
+-    when:
+-    task.ext.when == null || task.ext.when
+ 
+     script:
+     // Exit if running this module with -profile conda / -profile mamba
+
+'modules/nf-core/deepvariant/rundeepvariant/tests/main.nf.test.snap' is unchanged
+'modules/nf-core/deepvariant/rundeepvariant/tests/nextflow.config' is unchanged
+'modules/nf-core/deepvariant/rundeepvariant/tests/main.nf.test' is unchanged
+************************************************************

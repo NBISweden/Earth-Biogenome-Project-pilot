@@ -16,9 +16,6 @@ process SEQKIT_MERGE {
     tuple val(meta), path("${prefix}.*"), emit: fastx
     tuple val("${task.process}"), val('seqkit'), eval('seqkit version | cut -d" " -f2'), emit: versions_seqkit, topic: versions
 
-    when:
-    task.ext.when == null || task.ext.when
-
     script:
     def args = task.ext.args ?: ''
     def args2 = task.ext.args2 ?: ''

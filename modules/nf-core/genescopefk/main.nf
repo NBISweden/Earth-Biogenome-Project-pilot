@@ -20,9 +20,6 @@ process GENESCOPEFK {
     tuple val("${task.process}"), val('genescopefk'), val("380815c420f50171f9234a0fd1ff426b39829b91"), emit: versions_genescopefk, topic: versions
     tuple val("${task.process}"), val('R'), eval("R --version | sed '1!d; s/.*version //; s/ .*//'"), emit: versions_r, topic: versions
 
-    when:
-    task.ext.when == null || task.ext.when
-
     script:
     // Exit if running this module with -profile conda / -profile mamba
     if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {

@@ -1,0 +1,46 @@
+Changes in component 'nf-core/tidk/search'
+'modules/nf-core/tidk/search/environment.yml' is unchanged
+'modules/nf-core/tidk/search/meta.yml' is unchanged
+Changes in 'tidk/search/main.nf':
+--- modules/nf-core/tidk/search/main.nf
++++ modules/nf-core/tidk/search/main.nf
+@@ -14,10 +14,7 @@
+     output:
+     tuple val(meta), path("*.tsv")          , emit: tsv         , optional: true
+     tuple val(meta), path("*.bedgraph")     , emit: bedgraph    , optional: true
+-    path "versions.yml"                     , emit: versions
+-
+-    when:
+-    task.ext.when == null || task.ext.when
++    tuple val("${task.process}"), val('tidk'), eval("tidk --version | sed 's/tidk //'"), emit: versions_tidk, topic: versions
+ 
+     script:
+     def args = task.ext.args ?: ''
+@@ -40,11 +37,6 @@
+         tidk/${prefix}_telomeric_repeat_windows.bedgraph \\
+         ${prefix}.bedgraph \\
+         || echo "BEDGRAPH file was not produced"
+-
+-    cat <<-END_VERSIONS > versions.yml
+-    "${task.process}":
+-        tidk: \$(tidk --version | sed 's/tidk //')
+-    END_VERSIONS
+     """
+ 
+     stub:
+@@ -53,10 +45,5 @@
+     def extension = args.contains("--extension bedgraph") ? 'bedgraph' : 'tsv'
+     """
+     touch ${prefix}.${extension}
+-
+-    cat <<-END_VERSIONS > versions.yml
+-    "${task.process}":
+-        tidk: \$(tidk --version | sed 's/tidk //')
+-    END_VERSIONS
+     """
+ }
+
+'modules/nf-core/tidk/search/tests/main.nf.test.snap' is unchanged
+'modules/nf-core/tidk/search/tests/nextflow.config' is unchanged
+'modules/nf-core/tidk/search/tests/main.nf.test' is unchanged
+************************************************************

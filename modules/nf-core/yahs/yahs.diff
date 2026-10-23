@@ -1,0 +1,21 @@
+Changes in component 'nf-core/yahs'
+'modules/nf-core/yahs/environment.yml' is unchanged
+'modules/nf-core/yahs/meta.yml' is unchanged
+Changes in 'yahs/main.nf':
+--- modules/nf-core/yahs/main.nf
++++ modules/nf-core/yahs/main.nf
+@@ -19,9 +19,6 @@
+     tuple val(meta), path("${prefix}.bin")                   , emit: binary
+     tuple val(meta), path("${prefix}.log")                   , emit: log
+     tuple val("${task.process}"), val('yahs'), eval("yahs --version 2>&1"), emit: versions_yahs, topic: versions
+-
+-    when:
+-    task.ext.when == null || task.ext.when
+ 
+     script:
+     def args      = task.ext.args ?: ''
+
+'modules/nf-core/yahs/tests/main.nf.test.snap' is unchanged
+'modules/nf-core/yahs/tests/nextflow.config' is unchanged
+'modules/nf-core/yahs/tests/main.nf.test' is unchanged
+************************************************************

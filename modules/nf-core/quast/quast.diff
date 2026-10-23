@@ -15,6 +15,16 @@ Changes in 'quast/main.nf':
  
      output:
      tuple val(meta), path("${prefix}")                   , emit: results
+@@ -19,9 +19,6 @@
+     tuple val(meta), path("${prefix}_misassemblies.tsv") , optional: true , emit: misassemblies
+     tuple val(meta), path("${prefix}_unaligned.tsv")     , optional: true , emit: unaligned
+     tuple val("${task.process}"), val('quast'), eval('quast.py --version 2>&1 | grep "QUAST" | sed \'s/^.*QUAST v//; s/ .*\$//\''), emit: versions_quast, topic: versions
+-
+-    when:
+-    task.ext.when == null || task.ext.when
+ 
+     script:
+     def args      = task.ext.args   ?: ''
 
 'modules/nf-core/quast/tests/main.nf.test.snap' is unchanged
 'modules/nf-core/quast/tests/main.nf.test' is unchanged

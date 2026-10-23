@@ -1,0 +1,44 @@
+Changes in component 'nf-core/tidk/plot'
+'modules/nf-core/tidk/plot/environment.yml' is unchanged
+'modules/nf-core/tidk/plot/meta.yml' is unchanged
+Changes in 'tidk/plot/main.nf':
+--- modules/nf-core/tidk/plot/main.nf
++++ modules/nf-core/tidk/plot/main.nf
+@@ -12,10 +12,7 @@
+ 
+     output:
+     tuple val(meta), path("*.svg"), emit: svg
+-    path "versions.yml"           , emit: versions
+-
+-    when:
+-    task.ext.when == null || task.ext.when
++    tuple val("${task.process}"), val('tidk'), eval("tidk --version | sed 's/tidk //'"), emit: versions_tidk, topic: versions
+ 
+     script:
+     def args = task.ext.args ?: ''
+@@ -26,21 +23,11 @@
+         --output $prefix \\
+         $args \\
+         --tsv "$tsv"
+-
+-    cat <<-END_VERSIONS > versions.yml
+-    "${task.process}":
+-        tidk: \$(tidk --version | sed 's/tidk //')
+-    END_VERSIONS
+     """
+ 
+     stub:
+     def prefix = task.ext.prefix ?: "${meta.id}"
+     """
+     touch ${prefix}.svg
+-
+-    cat <<-END_VERSIONS > versions.yml
+-    "${task.process}":
+-        tidk: \$(tidk --version | sed 's/tidk //')
+-    END_VERSIONS
+     """
+ }
+
+'modules/nf-core/tidk/plot/tests/main.nf.test.snap' is unchanged
+'modules/nf-core/tidk/plot/tests/main.nf.test' is unchanged
+************************************************************

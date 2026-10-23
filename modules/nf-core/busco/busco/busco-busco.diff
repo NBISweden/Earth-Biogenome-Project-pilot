@@ -1,0 +1,21 @@
+Changes in component 'nf-core/busco/busco'
+'modules/nf-core/busco/busco/environment.yml' is unchanged
+'modules/nf-core/busco/busco/meta.yml' is unchanged
+Changes in 'busco/busco/main.nf':
+--- modules/nf-core/busco/busco/main.nf
++++ modules/nf-core/busco/busco/main.nf
+@@ -37,9 +37,6 @@
+     tuple val(meta), path("*-busco/*/run_*/busco_sequences/single_copy_busco_sequences/*.faa"), emit: single_copy_faa, optional: true
+     tuple val(meta), path("*-busco/*/run_*/busco_sequences/single_copy_busco_sequences/*.fna"), emit: single_copy_fna, optional: true
+     tuple val("${task.process}"), val('busco'), eval("busco --version 2> /dev/null | sed 's/BUSCO //g'"), emit: versions_busco, topic: versions
+-
+-    when:
+-    task.ext.when == null || task.ext.when
+ 
+     script:
+     if (mode !in ['genome', 'proteins', 'transcriptome']) {
+
+'modules/nf-core/busco/busco/tests/main.nf.test.snap' is unchanged
+'modules/nf-core/busco/busco/tests/nextflow.config' is unchanged
+'modules/nf-core/busco/busco/tests/main.nf.test' is unchanged
+************************************************************

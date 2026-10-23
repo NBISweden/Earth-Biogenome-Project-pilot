@@ -1,8 +1,10 @@
 Changes in component 'nf-core/fastk/histex'
+'modules/nf-core/fastk/histex/environment.yml' is unchanged
+'modules/nf-core/fastk/histex/meta.yml' is unchanged
 Changes in 'fastk/histex/main.nf':
 --- modules/nf-core/fastk/histex/main.nf
 +++ modules/nf-core/fastk/histex/main.nf
-@@ -3,16 +3,14 @@
+@@ -3,35 +3,34 @@
      label 'process_low'
  
      // WARN: Version information not provided by tool on CLI. Please update version string below when bumping container versions.
@@ -22,9 +24,9 @@ Changes in 'fastk/histex/main.nf':
      // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
      tuple val("${task.process}"), val('fastk'), val('1.2'), emit: versions_fastk, topic: versions
  
-@@ -20,18 +18,22 @@
-     task.ext.when == null || task.ext.when
- 
+-    when:
+-    task.ext.when == null || task.ext.when
+-
      script:
 +    // Exit if running this module with -profile conda / -profile mamba
 +    if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
@@ -48,8 +50,6 @@ Changes in 'fastk/histex/main.nf':
      """
  }
 
-'modules/nf-core/fastk/histex/environment.yml' is unchanged
-'modules/nf-core/fastk/histex/meta.yml' is unchanged
 'modules/nf-core/fastk/histex/tests/main.nf.test.snap' is unchanged
 'modules/nf-core/fastk/histex/tests/main.nf.test' is unchanged
 ************************************************************

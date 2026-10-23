@@ -1,0 +1,20 @@
+Changes in component 'nf-core/seqkit/stats'
+'modules/nf-core/seqkit/stats/environment.yml' is unchanged
+'modules/nf-core/seqkit/stats/meta.yml' is unchanged
+Changes in 'seqkit/stats/main.nf':
+--- modules/nf-core/seqkit/stats/main.nf
++++ modules/nf-core/seqkit/stats/main.nf
+@@ -13,9 +13,6 @@
+     output:
+     tuple val(meta), path("*.tsv"), emit: stats
+     tuple val("${task.process}"), val('seqkit'), eval("seqkit version | sed 's/^.*v//'"), emit: versions_seqkit, topic: versions
+-
+-    when:
+-    task.ext.when == null || task.ext.when
+ 
+     script:
+     def args = task.ext.args ?: '--all'
+
+'modules/nf-core/seqkit/stats/tests/main.nf.test.snap' is unchanged
+'modules/nf-core/seqkit/stats/tests/main.nf.test' is unchanged
+************************************************************

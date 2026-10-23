@@ -4,7 +4,17 @@ Changes in component 'nf-core/hifiasm'
 Changes in 'hifiasm/main.nf':
 --- modules/nf-core/hifiasm/main.nf
 +++ modules/nf-core/hifiasm/main.nf
-@@ -55,7 +55,7 @@
+@@ -26,9 +26,6 @@
+     tuple val(meta), path("${prefix}.stderr.log")                    , emit: log
+     tuple val("${task.process}"), val('hifiasm'), eval('hifiasm --version 2>&1'), emit: versions_hifiasm, topic: versions
+ 
+-    when:
+-    task.ext.when == null || task.ext.when
+-
+     script:
+     def args = task.ext.args ?: ''
+     prefix = task.ext.prefix ?: "${meta.id}"
+@@ -55,7 +52,7 @@
          if(![hic_read1, hic_read2].every()) {
              log.error("ERROR: Either the forward or reverse Hi-C reads are missing!")
          } else {
@@ -13,7 +23,7 @@ Changes in 'hifiasm/main.nf':
          }
      }
      """
-@@ -89,7 +89,6 @@
+@@ -89,7 +86,6 @@
      touch ${prefix}.hic.lk.bin
      touch ${prefix}.bp.p_ctg.gfa
      touch ${prefix}.p_utg.gfa

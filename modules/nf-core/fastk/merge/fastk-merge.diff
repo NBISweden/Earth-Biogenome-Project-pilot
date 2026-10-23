@@ -1,4 +1,6 @@
 Changes in component 'nf-core/fastk/merge'
+'modules/nf-core/fastk/merge/environment.yml' is unchanged
+'modules/nf-core/fastk/merge/meta.yml' is unchanged
 Changes in 'fastk/merge/main.nf':
 --- modules/nf-core/fastk/merge/main.nf
 +++ modules/nf-core/fastk/merge/main.nf
@@ -15,9 +17,13 @@ Changes in 'fastk/merge/main.nf':
  
      input:
      tuple val(meta), path(hist), path(ktab), path(prof)
-@@ -22,6 +20,10 @@
-     task.ext.when == null || task.ext.when
+@@ -18,10 +16,11 @@
+     // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
+     tuple val("${task.process}"), val('fastk'), val('1.2'), emit: versions_fastk, topic: versions
  
+-    when:
+-    task.ext.when == null || task.ext.when
+-
      script:
 +    // Exit if running this module with -profile conda / -profile mamba
 +    if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
@@ -27,9 +33,7 @@ Changes in 'fastk/merge/main.nf':
      def prefix        = task.ext.prefix ?: "${meta.id}"
      """
 
-'modules/nf-core/fastk/merge/environment.yml' is unchanged
-'modules/nf-core/fastk/merge/meta.yml' is unchanged
 'modules/nf-core/fastk/merge/tests/main.nf.test.snap' is unchanged
-'modules/nf-core/fastk/merge/tests/main.nf.test' is unchanged
 'modules/nf-core/fastk/merge/tests/nextflow.config' is unchanged
+'modules/nf-core/fastk/merge/tests/main.nf.test' is unchanged
 ************************************************************

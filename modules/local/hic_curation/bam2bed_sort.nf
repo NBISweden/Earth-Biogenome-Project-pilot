@@ -17,9 +17,6 @@ process BAM2BED_SORT {
     tuple val("${task.process}"), val('awk'), eval("awk --version | sed '1!d; s/mawk //; s/ .*//'"), topic: versions, emit: versions_awk
     tuple val("${task.process}"), val('paste'), eval("paste --version | sed '1!d; s/.* //'"), topic: versions, emit: versions_paste
 
-    when:
-    task.ext.when == null || task.ext.when
-
     script:
     def args = task.ext.args ?: ''
     def args2 = task.ext.args2 ?: ''

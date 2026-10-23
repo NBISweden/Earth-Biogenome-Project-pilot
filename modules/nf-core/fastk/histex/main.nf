@@ -14,9 +14,6 @@ process FASTK_HISTEX {
     // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
     tuple val("${task.process}"), val('fastk'), val('1.2'), emit: versions_fastk, topic: versions
 
-    when:
-    task.ext.when == null || task.ext.when
-
     script:
     // Exit if running this module with -profile conda / -profile mamba
     if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {

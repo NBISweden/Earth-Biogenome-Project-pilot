@@ -3,7 +3,7 @@ Changes in component 'nf-core/mitohifi/mitohifi'
 Changes in 'mitohifi/mitohifi/main.nf':
 --- modules/nf-core/mitohifi/mitohifi/main.nf
 +++ modules/nf-core/mitohifi/mitohifi/main.nf
-@@ -2,35 +2,36 @@
+@@ -2,70 +2,87 @@
      tag "$meta.id"
      label 'process_high'
  
@@ -50,6 +50,9 @@ Changes in 'mitohifi/mitohifi/main.nf':
 -    tuple val(meta), path("*reads_mapping_and_assembly")     , emit: reads_mapping_and_assembly, optional: true
 -    tuple val(meta), path("*shared_genes.tsv")               , emit: shared_genes, optional: true
 -    path  "versions.yml"                                     , emit: versions
+-
+-    when:
+-    task.ext.when == null || task.ext.when
 +    tuple val(meta), path("final_mitogenome_choice/")        , emit: final_mitogenome_choice    , optional: true
 +    tuple val(meta), path("*final_mitogenome.coverage.png")  , emit: final_mitogenome_coverage  , optional: true
 +    tuple val(meta), path("potential_contigs/")              , emit: potential_contigs          , optional: true
@@ -59,9 +62,6 @@ Changes in 'mitohifi/mitohifi/main.nf':
 +    // old version command: \$(mitohifi.py -v | sed 's/.* //')
 +    tuple val("${task.process}"), val('mitohifi'), eval('echo 3.2.3'), emit: versions_mitohifi, topic: versions
  
-     when:
-     task.ext.when == null || task.ext.when
-@@ -38,34 +39,53 @@
      script:
      // Exit if running this module with -profile conda / -profile mamba
      if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {

@@ -1,0 +1,21 @@
+Changes in component 'nf-core/cooler/zoomify'
+'modules/nf-core/cooler/zoomify/environment.yml' is unchanged
+'modules/nf-core/cooler/zoomify/meta.yml' is unchanged
+Changes in 'cooler/zoomify/main.nf':
+--- modules/nf-core/cooler/zoomify/main.nf
++++ modules/nf-core/cooler/zoomify/main.nf
+@@ -13,9 +13,6 @@
+     output:
+     tuple val(meta), path("*.mcool"), emit: mcool
+     tuple val("${task.process}"), val('cooler'), eval('cooler --version 2>&1 | sed "s/cooler, version //"'), emit: versions_cooler, topic: versions
+-
+-    when:
+-    task.ext.when == null || task.ext.when
+ 
+     script:
+     def args = task.ext.args ?: ''
+
+'modules/nf-core/cooler/zoomify/tests/main.nf.test.snap' is unchanged
+'modules/nf-core/cooler/zoomify/tests/nextflow.config' is unchanged
+'modules/nf-core/cooler/zoomify/tests/main.nf.test' is unchanged
+************************************************************

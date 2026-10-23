@@ -16,9 +16,6 @@ process DVPOLISH_CREATE_FINALASM {
     tuple val(meta), path('*_selection.tsv'), emit: dvpolish_selection_tsv
     tuple val("${task.process}"), val('samtools'), eval('samtools --version | sed "1!d; s/samtools //"'), emit: versions_samtools, topic: versions
 
-    when:
-    task.ext.when == null || task.ext.when
-
     script:
     def prefix     = task.ext.prefix ?: "${meta.id}"
     """
