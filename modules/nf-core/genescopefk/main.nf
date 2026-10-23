@@ -44,7 +44,7 @@ process GENESCOPEFK {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    prefix = task.ext.prefix ?: "${meta.id}"
     """
     touch "${prefix}_linear_plot.png"
     touch "${prefix}_log_plot.png"

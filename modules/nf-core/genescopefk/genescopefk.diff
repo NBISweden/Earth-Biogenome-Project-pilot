@@ -35,7 +35,7 @@ Changes in 'genescopefk/main.nf':
  
      when:
      task.ext.when == null || task.ext.when
-@@ -29,15 +30,17 @@
+@@ -29,19 +30,21 @@
      }
  
      def args   = task.ext.args   ?: ''
@@ -55,6 +55,11 @@ Changes in 'genescopefk/main.nf':
      """
  
      stub:
+-    def prefix = task.ext.prefix ?: "${meta.id}"
++    prefix = task.ext.prefix ?: "${meta.id}"
+     """
+     touch "${prefix}_linear_plot.png"
+     touch "${prefix}_log_plot.png"
 @@ -51,7 +54,7 @@
      touch "${prefix}_transformed_log_plot.png"
      touch "${prefix}_genescopefk.log"
@@ -66,6 +71,6 @@ Changes in 'genescopefk/main.nf':
  }
 
 'modules/nf-core/genescopefk/tests/main.nf.test.snap' is unchanged
-'modules/nf-core/genescopefk/tests/main.nf.test' is unchanged
 'modules/nf-core/genescopefk/tests/nextflow.config' is unchanged
+'modules/nf-core/genescopefk/tests/main.nf.test' is unchanged
 ************************************************************

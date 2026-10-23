@@ -21,6 +21,8 @@ dev = { cmd = "nextflow run main.nf -profile docker,test,debug --oatkdb database
 # Run nf-tests
 nftest-docker = "nf-test test tests/main.nf.test --verbose"
 nftest-singularity = "nf-test test tests/main.nf.test --verbose --profile singularity"
+# Lint
+lint = "nextflow lint -o concise -exclude .pixi -exclude .git -exclude work -exclude .nf-test -exclude results -exclude nf-test.config ."
 # Clean up
 clean-work = "nextflow clean -f -before last && find work/ -type d -empty -delete"
 clean-all = "git clean -e .pixi -e .vscode -e database_cache -fdx"
@@ -28,6 +30,6 @@ clean-all = "git clean -e .pixi -e .vscode -e database_cache -fdx"
 fetch-oatkdb = { cmd = "mkdir -p database_cache && cd database_cache && git clone --depth 1 https://github.com/c-zhou/OatkDB.git", outputs = [ "database_cache/OatkDB" ] }
 
 [dependencies]
-nextflow = ">=26.4.1,<27"
-nf-core = ">=4.0.2,<5"
+nextflow = ">=26.10.3,<27"
+nf-core = ">=4.2.0,<5"
 nf-test = ">=0.9.5,<0.10"
