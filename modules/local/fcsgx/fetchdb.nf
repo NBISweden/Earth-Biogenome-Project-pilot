@@ -27,4 +27,10 @@ process FCSGX_FETCHDB {
         --mft "${manifest.toUriString()}" \\
         --dir "$prefix"
     """
+
+    stub:
+    prefix = task.ext.prefix ?: "gxdb_$manifest.baseName"
+    """
+    mkdir ${prefix}
+    """
 }

@@ -87,5 +87,7 @@ process MERQURYFK_MERQURYFK {
     touch ${prefix}.qv
     touch ${prefix}._.qv
     touch ${prefix}._only.bed
+    touch ${prefix}.false_duplications.tsv
+    echo "" | gzip > ${prefix}.spectra-cn.cni.gz
     """
 }

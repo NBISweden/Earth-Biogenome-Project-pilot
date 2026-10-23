@@ -22,4 +22,10 @@ process CREATE_TELOMER_BIGWIG_TRACK {
     sort -k1,1V -k2,2n -k3,3n ${args} ${bedgraph} > ${bedgraph}_sorted.bedgraph
     bedGraphToBigWig ${bedgraph}_sorted.bedgraph ${chrom_sizes} ${prefix}_telomer.bw;
     """
+
+    stub:
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    """
+    touch ${prefix}_telomer.bw
+    """
 }

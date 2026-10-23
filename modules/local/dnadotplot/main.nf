@@ -25,4 +25,9 @@ process DNADOTPLOT {
         -2 $query \\
         -o seq1-${ref.baseName}_seq2-${query.baseName}.${experiment}.svg
     """
+
+    stub:
+    """
+    touch seq1-${ref.baseName}_seq2-${query.baseName}.${experiment}.svg
+    """
 }

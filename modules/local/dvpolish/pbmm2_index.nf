@@ -26,4 +26,9 @@ process DVPOLISH_PBMM2_INDEX {
         $fasta \\
         ${fasta.baseName}.mmi
     """
+
+    stub:
+    """
+    touch ${fasta.baseName}.mmi
+    """
 }

@@ -32,4 +32,10 @@ process PRETEXT_TRACKS_INGESTION {
         mv ${prefix}_cov.pretext ${prefix}_wTracks.pretext
     fi
     """
+
+    stub:
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    """
+    touch ${prefix}_wTracks.pretext
+    """
 }

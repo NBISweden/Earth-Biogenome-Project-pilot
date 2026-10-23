@@ -29,4 +29,10 @@ process CREATE_GAP_TRACKS {
     # create sorted.bedgraph.beddb which can be ingested to HiGlass
     clodius aggregate bedfile ${args2} --chromsizes-filename ${chrom_sizes} ${prefix}_gaps.bedgraph
     """
+
+    stub:
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    """
+    touch ${prefix}_gaps.bedgraph ${prefix}_gaps.bedgraph.beddb
+    """
 }

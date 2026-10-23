@@ -23,4 +23,10 @@ process FILTER_FIVE_END {
     filter_five_end.pl | \\
     samtools view -@ $task.cpus -Sb - > ${prefix}.bam
     """
+
+    stub:
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    """
+    touch ${prefix}.bam
+    """
 }

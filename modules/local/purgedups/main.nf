@@ -133,4 +133,19 @@ process ITERATIVE_PURGEDUPS {
         cp purged/${prefix}_hap1.haplotigs.fa purged/${prefix}_hap2.purged.fa
     fi
     """
+
+    stub:
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    """
+    mkdir -p purged logs
+    N_HAPS=0
+    for ASM in ${assemblies.join(' ')}; do
+        N_HAPS=\$((N_HAPS + 1))
+        touch purged/${prefix}_hap\${N_HAPS}.purged.fa purged/${prefix}_hap\${N_HAPS}.haplotigs.fa
+        touch logs/${prefix}_hap\${N_HAPS}.dups.bed
+    done
+    if [ "\${N_HAPS}" -eq 1 ]; then
+        touch purged/${prefix}_hap2.purged.fa
+    fi
+    """
 }

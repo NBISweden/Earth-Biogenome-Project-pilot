@@ -51,4 +51,11 @@ process OATK {
         -o ${prefix} \\
         $reads
     """
+
+    stub:
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    """
+    touch ${prefix}.mito.ctg.fasta ${prefix}.mito.ctg.bed ${prefix}.mito.gfa
+    touch ${prefix}.annot_mito.txt ${prefix}.utg.final.gfa ${prefix}.utg.clean.gfa
+    """
 }

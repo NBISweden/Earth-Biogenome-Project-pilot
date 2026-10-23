@@ -25,4 +25,10 @@ process TWOREADCOMBINER_FIXMATE_SORT {
     grep -v -e "^@HD" | \\
     samtools sort ${args2} -@${task.cpus} -T sort_tmp -o ${prefix}_comb.bam -
     """
+
+    stub:
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    """
+    touch ${prefix}_comb.bam
+    """
 }

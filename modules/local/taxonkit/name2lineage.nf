@@ -37,4 +37,10 @@ process TAXONKIT_NAME2LINEAGE {
         --threads $task.cpus \\
         --out-file ${prefix}.tsv
     """
+
+    stub:
+    def prefix = task.ext.prefix ?: "${meta.sample.name.replace(" ","_")}"
+    """
+    printf "%s\\t1\\tEukaryota\\n" "${meta.sample.name}" > ${prefix}.tsv
+    """
 }

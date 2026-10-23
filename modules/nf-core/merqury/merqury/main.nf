@@ -70,7 +70,7 @@ process MERQURY_MERQURY {
     touch ${prefix}.spectra-asm.ln.png
     touch ${prefix}.spectra-asm.st.png
     touch ${prefix}.qv
-    touch ${prefix}.${prefix}.qv
+    ${(assembly instanceof List ? assembly : [ assembly ]).collect { asm -> "touch ${prefix}.${asm.baseName}.qv" }.join('\n    ')}
     touch ${prefix}.hist.ploidy
     """
 }

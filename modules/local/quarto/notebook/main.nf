@@ -53,4 +53,10 @@ process QUARTO_NOTEBOOK {
     \$(cat log_files/assembly_mqc_versions.yml)
     END_VERSIONS
     """
+
+    stub:
+    prefix = task.ext.prefix ?: notebook.baseName
+    """
+    touch ${prefix}.html ${prefix}.md multiqc_stub.html versions.yml
+    """
 }

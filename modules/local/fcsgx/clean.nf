@@ -31,4 +31,10 @@ process FCSGX_CLEAN {
         --output ${prefix}.clean.fasta \\
         --contam-fasta-out ${prefix}.contaminants.fasta
     """
+
+    stub:
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    """
+    touch ${prefix}.clean.fasta ${prefix}.contaminants.fasta
+    """
 }

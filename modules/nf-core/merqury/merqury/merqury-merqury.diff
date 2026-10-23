@@ -1,0 +1,19 @@
+Changes in component 'nf-core/merqury/merqury'
+'modules/nf-core/merqury/merqury/environment.yml' is unchanged
+'modules/nf-core/merqury/merqury/meta.yml' is unchanged
+Changes in 'merqury/merqury/main.nf':
+--- modules/nf-core/merqury/merqury/main.nf
++++ modules/nf-core/merqury/merqury/main.nf
+@@ -70,7 +70,7 @@
+     touch ${prefix}.spectra-asm.ln.png
+     touch ${prefix}.spectra-asm.st.png
+     touch ${prefix}.qv
+-    touch ${prefix}.${prefix}.qv
++    ${(assembly instanceof List ? assembly : [ assembly ]).collect { asm -> "touch ${prefix}.${asm.baseName}.qv" }.join('\n    ')}
+     touch ${prefix}.hist.ploidy
+     """
+ }
+
+'modules/nf-core/merqury/merqury/tests/main.nf.test.snap' is unchanged
+'modules/nf-core/merqury/merqury/tests/main.nf.test' is unchanged
+************************************************************

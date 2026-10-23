@@ -42,4 +42,11 @@ process BAM2COVERAGE_TRACKS {
     # convert bed to bigwig
     bedGraphToBigWig ${prefix}_coverage_capped.bed ${chrom_sizes} ${prefix}_coverage_capped.bw
     """
+
+    stub:
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    """
+    touch ${prefix}_coverage.bed ${prefix}_coverage.bw
+    touch ${prefix}_coverage_capped.bed ${prefix}_coverage_capped.bw
+    """
 }

@@ -32,4 +32,10 @@ process CREATE_CHROMOSOME_SIZES_FILE {
         awk '{print \$1\"\t\"\$2}' ${fai} > ${prefix}.sizes
     fi
     """
+
+    stub:
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    """
+    touch ${prefix}.sizes
+    """
 }

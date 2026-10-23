@@ -86,4 +86,13 @@ process PAIRTOOLS {
 
     rm -f "\${TEMP_FILES[@]}"
     """
+
+    stub:
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    """
+    touch ${prefix}.split.pairs.gz
+    touch ${prefix}.split.pairs.bam
+    touch ${prefix}.pairsam.stat
+    touch ${prefix}_dedup.pairs.stat
+    """
 }

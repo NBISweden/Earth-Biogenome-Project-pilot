@@ -29,4 +29,11 @@ process SAMTOOLS_FASTA {
         $endedness \\
         $bam
     """
+
+    stub:
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    def endedness = meta.single_end ? "${prefix}.fasta.gz" : "${prefix}_1.fasta.gz ${prefix}_2.fasta.gz"
+    """
+    touch $endedness
+    """
 }

@@ -48,4 +48,13 @@ process SMUDGEPLOT {
         -o $prefix \\
         ${prefix}.smu
     """
+
+    stub:
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    """
+    touch ${prefix}.sma ${prefix}.smu ${prefix}.smudge_report.tsv
+    touch ${prefix}_centralities.png ${prefix}_centralities.txt
+    touch ${prefix}_smudgeplot.png ${prefix}_smudgeplot_log10.png
+    touch ${prefix}_smudgeplot_report.json
+    """
 }

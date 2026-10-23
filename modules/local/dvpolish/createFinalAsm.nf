@@ -70,4 +70,11 @@ process DVPOLISH_CREATE_FINALASM {
 
     done < ${unpol_merqury_csv} 3< ${pol_merqury_csv} | bgzip -@ ${task.cpus} -c > ${prefix}.fasta.gz
     """
+
+    stub:
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    """
+    echo "" | gzip > ${prefix}.fasta.gz
+    touch ${prefix}_selection.tsv
+    """
 }

@@ -31,4 +31,10 @@ process DVPOLISH_PBMM2_ALIGN {
         "$reads" \\
         ${out_name_part1}_${out_name_part2}.bam
     """
+
+    stub:
+    """
+    touch ${index.baseName}_${reads.name.endsWith(".gz") ? reads.getBaseName(2) : reads.baseName}.bam
+    touch ${index.baseName}_${reads.name.endsWith(".gz") ? reads.getBaseName(2) : reads.baseName}.bam.bai
+    """
 }

@@ -51,4 +51,11 @@ process FCSGX_RUNGX {
         --out-dir . \\
         $args
     """
+
+    stub:
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    """
+    touch ${prefix}.fcs_gx_report.txt ${prefix}.taxonomy.rpt
+    echo "" | gzip > ${prefix}.hits.tsv.gz
+    """
 }

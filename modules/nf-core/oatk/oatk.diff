@@ -26,19 +26,25 @@ Changes in 'oatk/main.nf':
  
      when:
      task.ext.when == null || task.ext.when
-@@ -50,10 +50,5 @@
+@@ -50,10 +50,12 @@
          -t $task.cpus \\
          -o ${prefix} \\
          $reads
--
++    """
+ 
 -    cat <<-END_VERSIONS > versions.yml
 -    "${task.process}":
 -        oatk : \$(oatk --version 2>&1)
 -    END_VERSIONS
++    stub:
++    def prefix = task.ext.prefix ?: "${meta.id}"
++    """
++    touch ${prefix}.mito.ctg.fasta ${prefix}.mito.ctg.bed ${prefix}.mito.gfa
++    touch ${prefix}.annot_mito.txt ${prefix}.utg.final.gfa ${prefix}.utg.clean.gfa
      """
  }
 
 'modules/nf-core/oatk/tests/main.nf.test.snap' is unchanged
-'modules/nf-core/oatk/tests/main.nf.test' is unchanged
 'modules/nf-core/oatk/tests/nextflow.config' is unchanged
+'modules/nf-core/oatk/tests/main.nf.test' is unchanged
 ************************************************************

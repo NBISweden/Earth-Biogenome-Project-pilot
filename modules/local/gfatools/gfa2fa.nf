@@ -27,4 +27,10 @@ process GFATOOLS_GFA2FA {
         $gfa \\
         | gzip -c > ${prefix}.fasta.gz
     """
+
+    stub:
+    def prefix = task.ext.prefix ?: "${meta.id}"
+    """
+    echo "" | gzip > ${prefix}.fasta.gz
+    """
 }

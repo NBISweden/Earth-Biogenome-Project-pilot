@@ -38,4 +38,11 @@ process SEQKIT_MERGE {
         ${args} \\
     ${call_gzip} > ${prefix}.${extension}
     """
+
+    stub:
+    prefix = task.ext.prefix ?: "${meta.id}"
+    def extension = out_ext ?: "fasta"
+    """
+    touch ${prefix}.${extension}
+    """
 }

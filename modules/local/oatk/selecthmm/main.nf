@@ -39,4 +39,12 @@ process OATK_SELECTHMM {
         find -L ${oatkdb} -type f -name "\${taxa}_pltd.*" -exec cp "{}" pltd \\;
     fi
     """
+
+    stub:
+    """
+    mkdir mito pltd
+    for EXT in fam fam.h3f fam.h3i fam.h3m fam.h3p; do
+        touch mito/stub_mito.\$EXT pltd/stub_pltd.\$EXT
+    done
+    """
 }
