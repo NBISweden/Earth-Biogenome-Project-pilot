@@ -1,6 +1,12 @@
+nextflow.enable.types = true
+
 process FCSGX_CLEAN {
-    tag "$meta.id"
+    tag "${id}"
     label 'process_low'
+
+    ext [
+        prefix: { output_prefix ?: "${id}" }
+    ]
 
     // WARN: Version information not provided by tool on CLI. Please update version string below when bumping container versions.
     conda "bioconda::ncbi-fcs-gx=0.5.4"
@@ -9,17 +15,29 @@ process FCSGX_CLEAN {
         'biocontainers/ncbi-fcs-gx:0.5.4--h4ac6f70_1' }"
 
     input:
-    tuple val(meta), path(assembly), path(action_report)
+    record(
+        id: String,
+        meta: Record?,
+        assembly: Path,
+        action_report: Path,
+        output_prefix: String?
+    )
 
     output:
-    tuple val(meta), path("*.clean.fasta")       , emit: clean_fasta
-    tuple val(meta), path("*.contaminants.fasta"), emit: contaminants_fasta
+    record(
+        id: id,
+        meta: meta,
+        clean_fasta: file("*.clean.fasta"),
+        contaminants_fasta: file("*.contaminants.fasta")
+    )
+
+    topic:
     // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
-    tuple val("${task.process}"), val('fcs_gx'), val('0.5.4'), emit: versions_fcsgx, topic: versions
+    tuple(task.process, 'fcs_gx', '0.5.4') >> 'versions'
 
     script:
-    def prefix = task.ext.prefix ?: "${meta.id}"
-    def infile = assembly.name.endsWith('.gz') ? "<( gzip -dc $assembly )" : assembly
+    def prefix = task.ext.prefix
+    def infile = assembly.name.endsWith('.gz') ? "<( gzip -dc $assembly )" : "${assembly}"
     """
     gx \\
         clean-genome \\
@@ -30,7 +48,7 @@ process FCSGX_CLEAN {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix
     """
     touch ${prefix}.clean.fasta ${prefix}.contaminants.fasta
     """

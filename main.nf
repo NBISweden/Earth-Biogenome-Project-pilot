@@ -4,6 +4,7 @@
 include { assembliesFromStage as preassembledInput          } from "./modules/local/functions"
 include { setAssemblyStage                                  } from "./modules/local/functions"
 include { assemblyRecordsToTuples                           } from "./modules/local/functions"
+include { assemblyTuplesToRecords                           } from "./modules/local/functions"
 // Data import
 include { PREPARE_INPUT                                     } from "./subworkflows/local/prepare_input/main"
 // Database preparation
@@ -119,9 +120,9 @@ workflow {
     }
 
     // Assemble
+    ch_hifi_merged_reads = PREPARE_INPUT.out.hifi_merged.map { meta, reads -> record(id: meta.id, meta: record(meta), reads: [ reads ].flatten()) }
     if ( 'assemble' in workflow_steps ) {
         // Run assemblers
-        ch_hifi_merged_reads = PREPARE_INPUT.out.hifi_merged.map { meta, reads -> record(id: meta.id, meta: record(meta), reads: [ reads ].flatten()) }
         ch_assembled = ASSEMBLE (
                 ch_hifi_merged_reads,
                 ch_hic_reads,
@@ -148,10 +149,15 @@ workflow {
         'decontaminated' // Set assembly stage now for filenaming
     ).dump(tag: 'Assemblies: to screen', pretty: true)
     if ( 'screen' in workflow_steps ) {
-        DECONTAMINATE( ch_to_screen )
-        ch_evaluate_assemblies = ch_evaluate_assemblies.mix( DECONTAMINATE.out.assemblies )
-        ch_cleaned_assemblies = DECONTAMINATE.out.assemblies
-        ch_multiqc_files = ch_multiqc_files.mix( DECONTAMINATE.out.logs )
+        ch_screened = DECONTAMINATE(
+            assemblyTuplesToRecords( ch_to_screen ),
+            params.fcs.database ? file(params.fcs.database, checkIfExists: true, type: 'dir') : null,
+            params.fcs.manifest,
+            params.fcs.ramdisk_path
+        )
+        ch_cleaned_assemblies = assemblyRecordsToTuples( ch_screened.assemblies )
+        ch_evaluate_assemblies = ch_evaluate_assemblies.mix( ch_cleaned_assemblies )
+        ch_multiqc_files = ch_multiqc_files.mix( ch_screened.logs )
     } else {
         ch_cleaned_assemblies = ch_to_screen
     }
@@ -165,14 +171,14 @@ workflow {
         'purged' // Set assembly stage now for filenaming
     ).dump(tag: 'Assemblies: to purge', pretty: true)
     if ( 'purge' in workflow_steps ) {
-        PURGE_DUPLICATES (
-            ch_to_purge,
-            PREPARE_INPUT.out.hifi_merged,
-            ch_hifi_kmer_cov
+        ch_purged = PURGE_DUPLICATES (
+            assemblyTuplesToRecords( ch_to_purge ),
+            ch_hifi_merged_reads,
+            ch_hifi_kmer_cov.map { meta, kmercov -> record(id: meta.id, kmer_cov: kmercov ? "${kmercov}" : null) }
         )
-        ch_evaluate_assemblies = ch_evaluate_assemblies.mix( PURGE_DUPLICATES.out.assemblies )
-        ch_purged_assemblies = PURGE_DUPLICATES.out.assemblies
-        ch_multiqc_files = ch_multiqc_files.mix( PURGE_DUPLICATES.out.logs )
+        ch_purged_assemblies = assemblyRecordsToTuples( ch_purged.assemblies )
+        ch_evaluate_assemblies = ch_evaluate_assemblies.mix( ch_purged_assemblies )
+        ch_multiqc_files = ch_multiqc_files.mix( ch_purged.logs )
     } else {
         ch_purged_assemblies = ch_to_purge
     }
