@@ -136,16 +136,16 @@ workflow PREPARE_INPUT {
         .dump( tag: 'Input: Meta', pretty: true )
         .multiMap { data ->
             assembly_ch    : ( data.assembly ? [ data.subMap('id','sample','settings') , data.assembly ] : [] )
-            hic_ch         : ( data.hic      ? [ data.subMap('id','sample','settings') + [ single_end: false ], data.hic.collect { [ file( it.read1, checkIfExists: true ), file( it.read2, checkIfExists: true ) ] } ] : [] )
-            hifi_ch        : ( data.hifi     ? [ data.subMap('id','sample','settings') + [ single_end: true ], data.hifi.collect { file( it.reads, checkIfExists: true ) } ] : [] )
-            rnaseq_ch      : ( data.rnaseq   ? [ data.subMap('id','sample','settings'), data.rnaseq.collect { it.reads ? file( it.reads, checkIfExists: true ) : [ file( it.read1, checkIfExists: true ), file( it.read2, checkIfExists: true ) ] } ] : [] )
-            isoseq_ch      : ( data.isoseq   ? [ data.subMap('id','sample','settings') + [ single_end: true ], data.isoseq.collect { file( it.reads, checkIfExists: true ) } ] : [] )
+            hic_ch         : ( data.hic      ? [ data.subMap('id','sample','settings') + [ single_end: false ], data.hic.collect { rec -> [ file( rec.read1, checkIfExists: true ), file( rec.read2, checkIfExists: true ) ] } ] : [] )
+            hifi_ch        : ( data.hifi     ? [ data.subMap('id','sample','settings') + [ single_end: true ], data.hifi.collect { rec -> file( rec.reads, checkIfExists: true ) } ] : [] )
+            rnaseq_ch      : ( data.rnaseq   ? [ data.subMap('id','sample','settings'), data.rnaseq.collect { rec -> rec.reads ? file( rec.reads, checkIfExists: true ) : [ file( rec.read1, checkIfExists: true ), file( rec.read2, checkIfExists: true ) ] } ] : [] )
+            isoseq_ch      : ( data.isoseq   ? [ data.subMap('id','sample','settings') + [ single_end: true ], data.isoseq.collect { rec -> file( rec.reads, checkIfExists: true ) } ] : [] )
         }
         .set{ input }
 
     // Convert assembly filename to files for correct staging
     input.assembly_ch
-        .filter { !it.isEmpty() }
+        .filter { item -> !item.isEmpty() }
         .transpose()     // Data is now [ sample, [ id:'assemblerX_build1', pri_fasta: '/path/to/primary_asm.fasta', alt_fasta: '/path/to/alternate_asm.fasta', pri_gfa: '/path/to/primary_asm.gfa', alt_gfa: '/path/to/alternate_asm.gfa' ]]
         .map { meta, assembly ->
             def asm = [
@@ -163,14 +163,14 @@ workflow PREPARE_INPUT {
         .set { assembly_ch }
 
     // Combine Hi-C channels
-    input.hic_ch.filter { !it.isEmpty() }
+    input.hic_ch.filter { item -> !item.isEmpty() }
         .flatMap { meta, hic_pairs -> hic_pairs.withIndex().collect{ pair, index -> [ meta + [pair_id: index], pair ] } }
         .set { hic_fastx_ch }
 
     // Prepare PacBio HiFi channel
     // Convert HiFi BAMS to FastQ
     input.hifi_ch
-        .filter { !it.isEmpty() }
+        .filter { item -> !item.isEmpty() }
         .transpose()   // Transform to [ [ id: 'sample_name'], file('/path/to/read')  ]
         .branch { _meta, filename ->
             bam_ch: filename.toString().endsWith(".bam")
@@ -189,13 +189,13 @@ workflow PREPARE_INPUT {
     MERGE_PACBIO( sample_fastx.multi )
 
     // Prepare RNAseq channel
-    input.rnaseq_ch.filter { !it.isEmpty() }
+    input.rnaseq_ch.filter { item -> !item.isEmpty() }
         .transpose()
         .map { meta, reads -> [ meta + [ single_end: reads instanceof Path ], reads ] }
         .set { rnaseq_fastx_ch }
 
     // Prepare Isoseq channel
-    input.isoseq_ch.filter { !it.isEmpty() }
+    input.isoseq_ch.filter { item -> !item.isEmpty() }
         .transpose()
         .set { isoseq_fastx_ch }
 

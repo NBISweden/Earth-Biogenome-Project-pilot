@@ -44,7 +44,7 @@ process STAR_ALIGN {
     def prefix = task.ext.prefix ?: "${meta.id}"
     def reads1 = []
     def reads2 = []
-    meta.single_end ? [reads].flatten().each{reads1 << it} : reads.eachWithIndex{ v, ix -> ( ix & 1 ? reads2 : reads1) << v }
+    meta.single_end ? [reads].flatten().each{ r -> reads1 << r } : reads.eachWithIndex{ v, ix -> ( ix & 1 ? reads2 : reads1) << v }
     def ignore_gtf      = star_ignore_sjdbgtf ? '' : "--sjdbGTFfile $gtf"
     def seq_platform_   = seq_platform ? "'PL:$seq_platform'" : ""
     def seq_center_     = seq_center ? "'CN:$seq_center'" : ""

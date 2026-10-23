@@ -41,7 +41,7 @@ process SMUDGEPLOT {
         -t ${task.cpus} \\
         -o $prefix \\
         -L $smudgeplot_threshold \\
-        ${fastk_ktab.find{ it.toString().endsWith(".ktab") }}
+        ${fastk_ktab.find{ f -> f.toString().endsWith(".ktab") }}
     smudgeplot \\
         all \\
         $args2 \\

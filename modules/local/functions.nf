@@ -19,25 +19,25 @@ def combineByMetaKeys( Map args = [:], lhs, rhs ){
     def combine_args = [ by: 0 ]
     if ( args.meta == 'lhs') {
         // Return meta map from lhs
-        return lhs.map{ [ it[0].subMap(args.keySet) ] + it }
-            .combine( combine_args, rhs.map{ [ it[0].subMap(args.keySet) ] + it.tail() } )
-            .map { it.tail() }
+        return lhs.map { row -> [ row[0].subMap(args.keySet) ] + row }
+            .combine( combine_args, rhs.map { row -> [ row[0].subMap(args.keySet) ] + row.tail() } )
+            .map { row -> row.tail() }
     } else if ( args.meta == 'rhs' ) {
         // Return meta map from rhs
         def restructure = { _key, clip, tail -> [ tail.removeAt(clip) ] + tail }
-        return lhs.map{ [ it[0].subMap(args.keySet), it.size()-1 ] + it.tail() }
-            .combine( combine_args, rhs.map{ [ it[0].subMap(args.keySet) ] + it } )
+        return lhs.map { row -> [ row[0].subMap(args.keySet), row.size()-1 ] + row.tail() }
+            .combine( combine_args, rhs.map { row -> [ row[0].subMap(args.keySet) ] + row } )
             .map { tuple -> restructure.call(tuple[0], tuple[1], tuple[2..-1]) }
     } else if ( args.meta == 'merge') {
         // Return merged meta map
         def restructure = { _key, clip, tail -> [ deepMergeMaps(tail.head(), tail.removeAt(clip)) ] + tail.tail() }
-        return lhs.map{ [ it[0].subMap(args.keySet), it.size() ] + it }
-            .combine( combine_args, rhs.map{ [ it[0].subMap(args.keySet) ] + it } )
+        return lhs.map { row -> [ row[0].subMap(args.keySet), row.size() ] + row }
+            .combine( combine_args, rhs.map { row -> [ row[0].subMap(args.keySet) ] + row } )
             .map { tuple -> restructure.call(tuple[0], tuple[1], tuple[2..-1]) }
     } else if ( args.meta == 'subset') {
         // Return meta keys subset
-        return lhs.map{ [ it[0].subMap(args.keySet) ] + it.tail() }
-            .combine( combine_args, rhs.map{ [ it[0].subMap(args.keySet) ] + it.tail() } )
+        return lhs.map { row -> [ row[0].subMap(args.keySet) ] + row.tail() }
+            .combine( combine_args, rhs.map { row -> [ row[0].subMap(args.keySet) ] + row.tail() } )
     } else {
         assert args.meta in ['lhs','rhs','merge','subset']
     }
@@ -63,25 +63,25 @@ def joinByMetaKeys( Map args = [:], lhs, rhs ) {
     def join_args = args.subMap(['remainder', 'failOnMismatch', 'failOnDuplicate']) + [ by: 0 ]
     if ( args.meta == 'lhs' ) {
         // Return meta map from lhs
-        return lhs.map{ [ it[0].subMap(args.keySet) ] + it }
-            .join( join_args, rhs.map{ [ it[0].subMap(args.keySet) ] + it.tail() } )
-            .map { it.tail() }
+        return lhs.map { row -> [ row[0].subMap(args.keySet) ] + row }
+            .join( join_args, rhs.map { row -> [ row[0].subMap(args.keySet) ] + row.tail() } )
+            .map { row -> row.tail() }
     } else if ( args.meta == 'rhs' ) {
         // Return meta map from rhs
         def restructure = { _key, clip, tail -> [ tail.removeAt(clip) ] + tail }
-        return lhs.map{ [ it[0].subMap(args.keySet), it.size()-1 ] + it.tail() }
-            .join( join_args, rhs.map{ [ it[0].subMap(args.keySet) ] + it } )
+        return lhs.map { row -> [ row[0].subMap(args.keySet), row.size()-1 ] + row.tail() }
+            .join( join_args, rhs.map { row -> [ row[0].subMap(args.keySet) ] + row } )
             .map { tuple -> restructure.call(tuple[0], tuple[1], tuple[2..-1]) }
     } else if ( args.meta == 'merge' ){
         // Return merged meta map
         def restructure = { _key, clip, tail -> [ deepMergeMaps(tail.head(), tail.removeAt(clip)) ] + tail.tail() }
-        return lhs.map{ [ it[0].subMap(args.keySet), it.size() ] + it }
-            .join( join_args, rhs.map{ [ it[0].subMap(args.keySet) ] + it } )
+        return lhs.map { row -> [ row[0].subMap(args.keySet), row.size() ] + row }
+            .join( join_args, rhs.map { row -> [ row[0].subMap(args.keySet) ] + row } )
             .map { tuple -> restructure.call(tuple[0], tuple[1], tuple[2..-1]) }
     } else if ( args.meta == 'subset' ) {
         // Return meta keys subset
-        return lhs.map{ [ it[0].subMap(args.keySet) ] + it.tail() }
-            .join( join_args, rhs.map{ [ it[0].subMap(args.keySet) ] + it.tail() } )
+        return lhs.map { row -> [ row[0].subMap(args.keySet) ] + row.tail() }
+            .join( join_args, rhs.map { row -> [ row[0].subMap(args.keySet) ] + row.tail() } )
     } else {
         assert args.meta in ['lhs','rhs','merge','subset']
     }

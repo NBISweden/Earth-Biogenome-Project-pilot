@@ -18,7 +18,6 @@ process DVPOLISH_CHUNKFA {
     task.ext.when == null || task.ext.when
 
     script:
-    def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     def chunk_size_bytes = MemoryUnit.of(chunk_size).toBytes()
 
@@ -43,7 +42,6 @@ process DVPOLISH_CHUNKFA {
     """
 
     stub:
-    def args = task.ext.args ?: ''
     def prefix = task.ext.prefix ?: "${meta.id}"
     """
     touch ${prefix}_chunk_1.bed

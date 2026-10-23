@@ -13,8 +13,8 @@ workflow ALIGN_RNASEQ {
         [] // No valid annotations for draft genome
     )
     STAR_GENOMEGENERATE.out.index
-        .map { meta, index -> def keylist = ['build']; [ meta.findAll { !(it.key in keylist) }, meta.subMap(keylist), index ] }
-        .combine( reads_ch.map { meta, reads -> [ meta.findAll { !(it.key in ['single_end'])}, reads ] }, by: 0 )
+        .map { meta, index -> def keylist = ['build']; [ meta.findAll { entry -> !(entry.key in keylist) }, meta.subMap(keylist), index ] }
+        .combine( reads_ch.map { meta, reads -> [ meta.findAll { entry -> !(entry.key in ['single_end']) }, reads ] }, by: 0 )
         .multiMap { sample_meta, build_meta, index, reads ->
             reads_ch: [ sample_meta + build_meta , reads ]
             index_ch: index
