@@ -1,6 +1,12 @@
+nextflow.enable.types = true
+
 process TABIX_TABIX {
-    tag "$meta.id"
+    tag "${id}"
     label 'process_single'
+
+    ext [
+        args: { tabix_args ?: '' }
+    ]
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -8,24 +14,34 @@ process TABIX_TABIX {
         'community.wave.seqera.io/library/htslib:1.21--ff8e28a189fbecaa' }"
 
     input:
-    tuple val(meta), path(tab)
+    record(
+        id: String,
+        meta: Record?,
+        tab: Path,
+        tabix_args: String?
+    )
 
     output:
-    tuple val(meta), path("*.{tbi,csi}"), emit: index
-    tuple val("${task.process}"), val('tabix'), eval("tabix -h 2>&1 | grep -oP 'Version:\\s*\\K[^\\s]+'")   , topic: versions   , emit: versions_tabix
+    record(
+        id: id,
+        meta: meta,
+        index: file("*.{tbi,csi}")
+    )
+
+    topic:
+    tuple(task.process, 'tabix', eval("tabix -h 2>&1 | grep -oP 'Version:\\s*\\K[^\\s]+'")) >> 'versions'
 
     script:
-    def args = task.ext.args ?: ''
     """
     tabix \\
         --threads $task.cpus \\
-        $args \\
+        ${task.ext.args} \\
         $tab
 
     """
+
     stub:
-    def args = task.ext.args ?: ''
-    def index = args.contains("-C ") || args.contains("--csi") ? "csi" : "tbi"
+    def index = task.ext.args.contains("-C ") || task.ext.args.contains("--csi") ? "csi" : "tbi"
     """
     touch ${tab}.${index}
     """

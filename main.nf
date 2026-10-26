@@ -85,17 +85,12 @@ workflow {
     // Create Cram and trim
     CONVERT_FASTQ_CRAM ( ch_hic_reads, params.hic_type.startsWith('arima'), params.hic_type )
     ch_hic_fastq = CONVERT_FASTQ_CRAM.out.fastq
-    // Legacy channel: [ meta, fastq ]
-    ch_hic_fastq_tuple = ch_hic_fastq.map { r -> tuple([:] + r.meta, r.reads) }
     // Build necessary databases
     // TODO: Migrate back to Meryl. Genome inspection missing KATGC and SMUDGEPLOT for meryldb
     ch_fastk_hifi = BUILD_FASTK_HIFI_DATABASE ( ch_hifi_reads, 'hifi', fastk_kmer_size )
     ch_fastk_hic  = BUILD_FASTK_HIC_DATABASE ( ch_hic_fastq, 'hic', fastk_kmer_size )
     ch_meryl_hifi = BUILD_MERYL_HIFI_DATABASE ( ch_hifi_reads, 'hifi', meryl_kmer_size )
     BUILD_MERYL_HIC_DATABASE ( ch_hic_fastq, 'hic', meryl_kmer_size )
-    // Legacy channels: [ meta, hist, ktab ] and [ meta, meryl_db ]
-    ch_fastk_hifi_tuple = ch_fastk_hifi.map { d -> tuple([:] + d.meta, d.hist, d.ktab) }
-    ch_meryl_hifi_tuple = ch_meryl_hifi.uniondb.map { u -> tuple([:] + u.meta, u.meryl_db) }
 
     // Data inspection
     ch_hifi_kmer_cov = PREPARE_INPUT.out.hifi_merged.map { meta, _reads -> tuple(meta, []) }
@@ -193,15 +188,16 @@ workflow {
     ).dump(tag: 'Assemblies: to polish', pretty: true)
     if ( 'polish' in workflow_steps ) {
         // Run polishers
-        DVPOLISH (
-            ch_to_polish,
-            PREPARE_INPUT.out.hifi_merged,
-            ch_meryl_hifi_tuple,
-            params.chunk_size
+        ch_polished = DVPOLISH (
+            assemblyTuplesToRecords( ch_to_polish ),
+            ch_hifi_merged_reads,
+            ch_meryl_hifi.uniondb,
+            MemoryUnit.of(params.chunk_size).toBytes(),
+            params.use_phased
         )
-        ch_evaluate_assemblies = ch_evaluate_assemblies.mix( DVPOLISH.out.assemblies )
-        ch_polished_assemblies = DVPOLISH.out.assemblies
-        ch_multiqc_files = ch_multiqc_files.mix( DVPOLISH.out.logs )
+        ch_polished_assemblies = assemblyRecordsToTuples( ch_polished.assemblies )
+        ch_evaluate_assemblies = ch_evaluate_assemblies.mix( ch_polished_assemblies )
+        ch_multiqc_files = ch_multiqc_files.mix( ch_polished.logs )
     } else {
         ch_polished_assemblies = ch_to_polish
     }
@@ -215,13 +211,16 @@ workflow {
         'scaffolded' // Set assembly stage now for filenaming
     ).dump(tag: 'Assemblies: to scaffold', pretty: true)
     if ( 'scaffold' in workflow_steps ) {
-        SCAFFOLD (
-            ch_to_scaffold,
-            ch_hic_fastq_tuple
+        ch_scaffolded = SCAFFOLD (
+            assemblyTuplesToRecords( ch_to_scaffold ),
+            ch_hic_fastq,
+            params.use_phased,
+            params.hic_type,
+            params.hic_bam_sorting
         )
-        ch_evaluate_assemblies = ch_evaluate_assemblies.mix( SCAFFOLD.out.assemblies )
-        ch_scaffolded_assemblies = SCAFFOLD.out.assemblies
-        ch_multiqc_files = ch_multiqc_files.mix( SCAFFOLD.out.logs )
+        ch_scaffolded_assemblies = assemblyRecordsToTuples( ch_scaffolded.assemblies )
+        ch_evaluate_assemblies = ch_evaluate_assemblies.mix( ch_scaffolded_assemblies )
+        ch_multiqc_files = ch_multiqc_files.mix( ch_scaffolded.logs )
     } else {
         ch_scaffolded_assemblies = ch_to_scaffold
     }
@@ -236,9 +235,14 @@ workflow {
     ).dump(tag: 'Assemblies: to curate', pretty: true)
     if ( 'curate' in workflow_steps ) {
         SCAFFOLD_CURATION (
-            ch_to_curate,
-            ch_hic_fastq_tuple,
-            PREPARE_INPUT.out.hifi
+            assemblyTuplesToRecords( ch_to_curate ),
+            ch_hic_fastq,
+            ch_hifi_reads,
+            params.hic_map_sort_by,
+            params.hic_map_qv,
+            params.cooler_bin_size,
+            params.hifi_coverage_cap,
+            params.telomer_motif
         )
     }
     preassembledInput( PREPARE_INPUT.out.assemblies, 'curated' ).dump(tag: 'Assemblies: Curated')
@@ -253,16 +257,25 @@ workflow {
     }
 
     // Evaluate assemblies
-    COMPARE_ASSEMBLIES ( ch_evaluate_assemblies )
-    EVALUATE_ASSEMBLY (
-        ch_evaluate_assemblies
-            .toList().flatMap(), // Introduce bottleneck to delay evaluation until previous steps are performed
-        ch_fastk_hifi_tuple,
-        ch_meryl_hifi_tuple
+    ch_to_evaluate = assemblyTuplesToRecords( ch_evaluate_assemblies )
+    ch_compared = COMPARE_ASSEMBLIES (
+        ch_to_evaluate,
+        params.reference ? file( params.reference, checkIfExists: true ) : null
+    )
+    ch_evaluated = EVALUATE_ASSEMBLY (
+        assemblyTuplesToRecords(
+            ch_evaluate_assemblies
+                .toList().flatMap() // Introduce bottleneck to delay evaluation until previous steps are performed
+        ),
+        ch_fastk_hifi,
+        ch_meryl_hifi.uniondb,
+        params.use_phased,
+        params.busco.max_lineages,
+        params.busco.lineages_db_path ? file( params.busco.lineages_db_path, checkIfExists: true ) : null
     )
     ch_multiqc_files = ch_multiqc_files.mix(
-        COMPARE_ASSEMBLIES.out.logs,
-        EVALUATE_ASSEMBLY.out.logs
+        ch_compared,
+        ch_evaluated
     )
 
     // Version reporting

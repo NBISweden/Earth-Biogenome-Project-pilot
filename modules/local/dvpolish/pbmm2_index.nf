@@ -1,5 +1,12 @@
+nextflow.enable.types = true
+
 process DVPOLISH_PBMM2_INDEX {
+    tag "${id}"
     label 'process_medium'
+
+    ext [
+        args: { pbmm2_args ?: '' }
+    ]
 
     // Note: the versions here need to match the versions used in pbmm2/align
     conda 'bioconda::pbmm2=1.13.1'
@@ -8,18 +15,28 @@ process DVPOLISH_PBMM2_INDEX {
         'biocontainers/pbmm2:1.13.1--h9ee0642_0' }"
 
     input:
-    tuple val(meta), path(fasta)
+    record(
+        id: String,
+        meta: Record?,
+        fasta: Path,
+        pbmm2_args: String?
+    )
 
     output:
-    tuple val(meta), path("*.mmi"), emit: index
-    tuple val("${task.process}"), val('pbmm2'), eval("pbmm2 --version 2>&1 | sed '1!d; s/pbmm2 //'"), emit: versions_pbmm2, topic: versions
+    record(
+        id: id,
+        meta: meta,
+        index: file("*.mmi")
+    )
+
+    topic:
+    tuple(task.process, 'pbmm2', eval("pbmm2 --version 2>&1 | sed '1!d; s/pbmm2 //'")) >> 'versions'
 
     script:
-    def args = task.ext.args ?: ''
     """
     pbmm2 index\\
         -j $task.cpus \\
-        $args \\
+        ${task.ext.args} \\
         $fasta \\
         ${fasta.baseName}.mmi
     """

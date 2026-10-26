@@ -4,16 +4,79 @@ Changes in component 'nf-core/yahs'
 Changes in 'yahs/main.nf':
 --- modules/nf-core/yahs/main.nf
 +++ modules/nf-core/yahs/main.nf
-@@ -19,9 +19,6 @@
-     tuple val(meta), path("${prefix}.bin")                   , emit: binary
-     tuple val(meta), path("${prefix}.log")                   , emit: log
-     tuple val("${task.process}"), val('yahs'), eval("yahs --version 2>&1"), emit: versions_yahs, topic: versions
--
+@@ -1,5 +1,7 @@
++nextflow.enable.types = true
++
+ process YAHS {
+-    tag "${meta.id}"
++    tag "${id}"
+     label 'process_high'
+ 
+     conda "${moduleDir}/environment.yml"
+@@ -7,25 +9,41 @@
+         'https://depot.galaxyproject.org/singularity/yahs:1.2.2--h577a1d6_1':
+         'biocontainers/yahs:1.2.2--h577a1d6_1' }"
+ 
++    ext [
++        args: { yahs_args ?: '' },
++        prefix: { output_prefix ?: "${id}" }
++    ]
++
+     input:
+-    tuple val(meta), path(fasta), path(fai), path(hic_map), path(agp)
++    record(
++        id: String,
++        meta: Record?,
++        fasta: Path,
++        fai: Path,
++        hic_map: Path,
++        agp: Path?,
++        yahs_args: String?,
++        output_prefix: String?
++    )
+ 
+     output:
+-    // note: typo in yahs file outputs - it writes "inital", not "initial"
+-    tuple val(meta), path("${prefix}_scaffolds_final.fa")    , emit: scaffolds_fasta   ,  optional: true
+-    tuple val(meta), path("${prefix}_scaffolds_final.agp")   , emit: scaffolds_agp     ,  optional: true
+-    tuple val(meta), path("${prefix}_{inital,no}_break*.agp"), emit: initial_break_agp ,  optional: true
+-    tuple val(meta), path("${prefix}_r*_*.agp")              , emit: round_agp         ,  optional: true
+-    tuple val(meta), path("${prefix}.bin")                   , emit: binary
+-    tuple val(meta), path("${prefix}.log")                   , emit: log
+-    tuple val("${task.process}"), val('yahs'), eval("yahs --version 2>&1"), emit: versions_yahs, topic: versions
++    record(
++        id: id,
++        meta: meta,
++        scaffolds_fasta: file("${task.ext.prefix}_scaffolds_final.fa", optional: true),
++        scaffolds_agp: file("${task.ext.prefix}_scaffolds_final.agp", optional: true),
++        initial_break_agp: files("${task.ext.prefix}_{inital,no}_break*.agp", optional: true),
++        round_agp: files("${task.ext.prefix}_r*_*.agp", optional: true),
++        binary: file("${task.ext.prefix}.bin"),
++        log: file("${task.ext.prefix}.log")
++    )
+ 
 -    when:
 -    task.ext.when == null || task.ext.when
++    topic:
++    tuple(task.process, 'yahs', eval("yahs --version 2>&1")) >> 'versions'
  
      script:
-     def args      = task.ext.args ?: ''
+-    def args      = task.ext.args ?: ''
+-    prefix        = task.ext.prefix ?: "${meta.id}"
++    def args      = task.ext.args
++    def prefix    = task.ext.prefix
+     def agp_input = agp ? "-a ${agp}" : ""
+     """
+     yahs \\
+@@ -38,7 +56,7 @@
+     """
+ 
+     stub:
+-    prefix = task.ext.prefix ?: "${meta.id}"
++    def prefix = task.ext.prefix
+     """
+     touch ${prefix}_scaffolds_final.fa
+     touch ${prefix}_scaffolds_final.agp
 
 'modules/nf-core/yahs/tests/main.nf.test.snap' is unchanged
 'modules/nf-core/yahs/tests/nextflow.config' is unchanged

@@ -1,23 +1,38 @@
+nextflow.enable.types = true
+
 process DVPOLISH_CHUNKFA {
-    tag "$meta.id"
+    tag "${id}"
     label 'process_single'
+
+    ext [
+        prefix: { output_prefix ?: "${id}" }
+    ]
+
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
         'https://depot.galaxyproject.org/singularity/ubuntu:20.04' :
         'nf-core/ubuntu:20.04' }"
 
-
     input:
-    tuple val(meta), path(fai)
-    val chunk_size
+    record(
+        id: String,
+        meta: Record?,
+        fai: Path,
+        chunk_size_bytes: Long,
+        output_prefix: String?
+    )
 
     output:
-    tuple val(meta), path ("*.bed", arity: '1..*')        , emit: bed
-    tuple val("${task.process}"), val('mawk'), eval("awk -W version |& sed '1!d; s/mawk //; s/ .*//'"), topic: versions, emit: versions_mawk
+    record(
+        id: id,
+        meta: meta,
+        bed: files("*.bed")
+    )
+
+    topic:
+    tuple(task.process, 'mawk', eval("awk -W version |& sed '1!d; s/mawk //; s/ .*//'")) >> 'versions'
 
     script:
-    def prefix = task.ext.prefix ?: "${meta.id}"
-    def chunk_size_bytes = MemoryUnit.of(chunk_size).toBytes()
-
+    def prefix = task.ext.prefix
     """
     # convert chunk size into base pairs
     awk -v chunk_size_bases=${chunk_size_bytes} -v prefix=${prefix} '
@@ -39,8 +54,7 @@ process DVPOLISH_CHUNKFA {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    touch ${prefix}_chunk_1.bed
+    touch ${task.ext.prefix}_chunk_1.bed
     """
 }

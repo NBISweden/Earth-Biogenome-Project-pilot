@@ -3,16 +3,100 @@ Changes in component 'nf-core/deepvariant/rundeepvariant'
 Changes in 'deepvariant/rundeepvariant/main.nf':
 --- modules/nf-core/deepvariant/rundeepvariant/main.nf
 +++ modules/nf-core/deepvariant/rundeepvariant/main.nf
-@@ -22,9 +22,6 @@
-     tuple val(meta), path("${prefix}.g.vcf.gz.tbi")      , emit: gvcf_tbi
-     tuple val(meta), path("${prefix}.visual_report.html"), emit: report, optional: true
-     tuple val("${task.process}"), val('deepvariant'), eval("/opt/deepvariant/bin/run_deepvariant --version | sed 's/^.*version //'"), topic: versions, emit: versions_deepvariant
--
+@@ -1,6 +1,13 @@
++nextflow.enable.types = true
++
+ process DEEPVARIANT_RUNDEEPVARIANT {
+-    tag "$meta.id"
++    tag "${id}"
+     label 'process_high'
++
++    ext [
++        args: { deepvariant_args ?: '' },
++        prefix: { output_prefix ?: "${id}" }
++    ]
+ 
+     // FIXME Conda is not supported at the moment
+     // https://github.com/bioconda/bioconda-recipes/pull/45214#issuecomment-1890937836
+@@ -9,30 +16,40 @@
+     container "docker.io/google/deepvariant:1.10.0"
+ 
+     input:
+-    tuple val(meta), path(input), path(index), path(intervals)
+-    tuple val(meta2), path(fasta)
+-    tuple val(meta3), path(fai)
+-    tuple val(meta4), path(gzi)
+-    tuple val(meta5), path(par_bed)
++    record(
++        id: String,
++        meta: Record?,
++        input: Path,
++        index: Path,
++        intervals: Path?,
++        fasta: Path,
++        fai: Path,
++        gzi: Path?,
++        par_bed: Path?,
++        deepvariant_args: String?,
++        output_prefix: String?
++    )
+ 
+     output:
+-    tuple val(meta), path("${prefix}.vcf.gz")            , emit: vcf
+-    tuple val(meta), path("${prefix}.vcf.gz.tbi")        , emit: vcf_tbi
+-    tuple val(meta), path("${prefix}.g.vcf.gz")          , emit: gvcf
+-    tuple val(meta), path("${prefix}.g.vcf.gz.tbi")      , emit: gvcf_tbi
+-    tuple val(meta), path("${prefix}.visual_report.html"), emit: report, optional: true
+-    tuple val("${task.process}"), val('deepvariant'), eval("/opt/deepvariant/bin/run_deepvariant --version | sed 's/^.*version //'"), topic: versions, emit: versions_deepvariant
++    record(
++        id: id,
++        meta: meta,
++        vcf: file("${task.ext.prefix}.vcf.gz"),
++        vcf_tbi: file("${task.ext.prefix}.vcf.gz.tbi"),
++        gvcf: file("${task.ext.prefix}.g.vcf.gz"),
++        gvcf_tbi: file("${task.ext.prefix}.g.vcf.gz.tbi"),
++        report: file("${task.ext.prefix}.visual_report.html", optional: true)
++    )
+ 
 -    when:
 -    task.ext.when == null || task.ext.when
++    topic:
++    tuple(task.process, 'deepvariant', eval("/opt/deepvariant/bin/run_deepvariant --version | sed 's/^.*version //'")) >> 'versions'
  
      script:
      // Exit if running this module with -profile conda / -profile mamba
+     if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
+         error "DEEPVARIANT module does not support Conda. Please use Docker / Singularity / Podman instead."
+     }
+-    def args = task.ext.args ?: ''
+-    prefix = task.ext.prefix ?: "${meta.id}"
++    def prefix = task.ext.prefix
+     def regions = intervals ? "--regions=${intervals}" : ""
+     def par_regions = par_bed ? "--par_regions_bed=${par_bed}" : ""
+ 
+@@ -42,7 +59,7 @@
+         --reads=${input} \\
+         --output_vcf=${prefix}.vcf.gz \\
+         --output_gvcf=${prefix}.g.vcf.gz \\
+-        ${args} \\
++        ${task.ext.args} \\
+         ${regions} \\
+         ${par_regions} \\
+         --intermediate_results_dir=tmp \\
+@@ -54,10 +71,11 @@
+     if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
+         error "DEEPVARIANT module does not support Conda. Please use Docker / Singularity / Podman instead."
+     }
+-    prefix = task.ext.prefix ?: "${meta.id}"
++    def prefix = task.ext.prefix
+     """
+     echo "stub" | gzip > ${prefix}.vcf.gz
+     echo "stub" | gzip > ${prefix}.vcf.gz.tbi
+     echo "stub" | gzip > ${prefix}.g.vcf.gz
+-    echo "stub" | gzip > ${prefix}.g.vcf.gz.tbi    """
++    echo "stub" | gzip > ${prefix}.g.vcf.gz.tbi
++    """
+ }
 
 'modules/nf-core/deepvariant/rundeepvariant/tests/main.nf.test.snap' is unchanged
 'modules/nf-core/deepvariant/rundeepvariant/tests/nextflow.config' is unchanged

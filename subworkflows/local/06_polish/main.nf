@@ -3,9 +3,8 @@
  * https://git.mpi-cbg.de/assembly/programs/polishing
 */
 
-include { constructAssemblyRecord                 } from "../../../modules/local/functions"
-include { joinByMetaKeys                          } from "../../../modules/local/functions"
-include { combineByMetaKeys                       } from "../../../modules/local/functions"
+nextflow.enable.types = true
+
 include { DVPOLISH_CHUNKFA                        } from "../../../modules/local/dvpolish/chunkfa"
 include { DVPOLISH_PBMM2_INDEX                    } from "../../../modules/local/dvpolish/pbmm2_index"
 include { DVPOLISH_PBMM2_ALIGN                    } from "../../../modules/local/dvpolish/pbmm2_align"
@@ -36,260 +35,289 @@ outline:
     |- create consensus sequence (1)
 */
 
+record Reads {
+    id   : String
+    meta : Record
+    reads: List<Path>
+}
+
+record MerylDatabase {
+    id      : String
+    meta    : Record
+    meryl_db: Path
+}
+
+record Assembly {
+    id       : String  // meta.assembly.build
+    meta     : Record  // sample meta data, including meta.assembly
+    pri_fasta: Path
+    alt_fasta: Path?
+    pri_gfa  : Path?
+    alt_gfa  : Path?
+}
+
+// One haplotype of an assembly. The id identifies the sample, the assembly build and the haplotype.
+record Haplotype {
+    id   : String
+    meta : Record  // includes meta.assembly and meta.haplotype
+    fasta: Path
+}
+
+def haplotypeKey(meta: Record) -> String {
+    return "${meta.id}:${meta.assembly.build}:${meta.haplotype}"
+}
+
+def haplotype(a: Assembly, hap: String, fasta: Path) -> Haplotype {
+    def meta = a.meta + record(haplotype: hap)
+    return record(id: haplotypeKey(meta), meta: meta, fasta: fasta)
+}
+
 workflow DVPOLISH {
 
     take:
-    ch_assemblies // [ meta, assembly ]
-    ch_hifi       // [ meta, hifi ]
-    ch_meryl_hifi // [ meta, union.meryl ]
-    ch_chunk_size // string, e.g. '100.MB'
+    assemblies      : Channel<Assembly>
+    hifi            : Channel<Reads>         // One merged reads file per sample
+    meryl_hifi      : Channel<MerylDatabase> // Union of the HiFi k-mer databases
+    chunk_size_bytes: Long                   // Size of the regions that are called separately
+    use_phased      : Boolean
 
     main:
-    ch_logs     = channel.empty()
-
-    // Create tagged channels for each available haplotype + mix
-    ch_assemblies.multiMap { meta, assembly ->
-        primary: [meta + [haplotype: 'hap1'], assembly.pri_fasta]
-        alternate: [meta + [haplotype: 'hap2'], assembly.alt_fasta]
-    }.set { haplotype }
-    all_haplotypes = params.use_phased ? haplotype.primary.mix( haplotype.alternate ) : haplotype.primary
+    // Create tagged channels for each available haplotype
+    haplotypes = assemblies.flatMap { a ->
+        def haps = use_phased
+            ? [ haplotype(a, 'hap1', a.pri_fasta), haplotype(a, 'hap2', a.alt_fasta) ]
+            : [ haplotype(a, 'hap1', a.pri_fasta) ]
+        haps.toList()
+    }
 
     // Index assembly files
-    SAMTOOLS_FAIDX (
-        all_haplotypes.map { meta, assembly -> [ meta, assembly, [] ] }, // [ meta, fasta, fai ]
-        false                                                            // get_sizes
+    faidx = SAMTOOLS_FAIDX(
+        haplotypes.map { h -> record(id: h.id, meta: h.meta, fasta: h.fasta, fai: null, get_sizes: false) }
     )
+    fai = faidx.map { f -> record(id: f.id, fai: f.fai) }
 
     // Generate BED intervals partitioning each assembly into fixed-size regions
-    DVPOLISH_CHUNKFA (
-        SAMTOOLS_FAIDX.out.fai,
-        ch_chunk_size
+    chunks = DVPOLISH_CHUNKFA(
+        faidx.map { f -> record(id: f.id, meta: f.meta, fai: f.fai, chunk_size_bytes: chunk_size_bytes, output_prefix: f.meta.id) }
     )
+    beds = chunks.flatMap { c -> c.bed.toList().collect { bed -> record(id: c.id, bed: bed) }.toList() }
 
     // Create minimap2 index for each assembly
-    DVPOLISH_PBMM2_INDEX (
-        all_haplotypes
+    index = DVPOLISH_PBMM2_INDEX(
+        haplotypes.map { h -> record(id: h.id, meta: h.meta, fasta: h.fasta) }
     )
 
-    // Create channel with assembly, reads, and minimap2 index
-    combineByMetaKeys (
-        combineByMetaKeys (
-            ch_hifi,
-            all_haplotypes,
-            keySet: [ 'id', 'sample' ],
-            meta: 'rhs'
-        ),
-        DVPOLISH_PBMM2_INDEX.out.index,
-        keySet: [ 'id', 'sample', 'assembly', 'haplotype' ],
-        meta: 'lhs'
-    ).multiMap { meta, reads, assembly, index ->
-        reads_ch: [ meta, reads ]
-        assembly_ch: [ meta, assembly ]
-        index_ch: [ meta, index ]
-    }.set { input }
-
     // Map reads with pbmm2
-    DVPOLISH_PBMM2_ALIGN (
-        input.reads_ch,
-        input.index_ch
+    aligned = DVPOLISH_PBMM2_ALIGN(
+        haplotypes
+            .map { h -> record(id: h.id, sample_id: h.meta.id, meta: h.meta) }
+            .join(hifi.map { r -> record(sample_id: r.id, reads: r.reads) }, by: 'sample_id')
+            .join(index.map { i -> record(id: i.id, index: i.index) }, by: 'id')
+            .map { x -> record(id: x.id, meta: x.meta, reads: x.reads[0], index: x.index, pbmm2_args: '-N 1 -l 4000') }
     )
 
     // Combine indexed bam with bed chunk file, tag by region (mergeID) and emit each region separately
-    combineByMetaKeys (
-        DVPOLISH_PBMM2_ALIGN.out.bam_bai,
-        DVPOLISH_CHUNKFA.out.bed.transpose(),
-        keySet: [ 'id', 'sample', 'assembly', 'haplotype' ],
-        meta: 'rhs'
-    ).multiMap { meta, bam, bai, bed ->
-        meta_bam_bai_ch:  [ meta + [ mergeID: bed.baseName ], bam, bai ]
-        meta_bed_ch:      [ meta + [ mergeID: bed.baseName ], bed ]
-    }.set { alignment }
+    chunk_inputs = aligned
+        .map { a -> record(id: a.id, meta: a.meta, bam: a.bam, bai: a.bai) }
+        .join(beds, by: 'id')
+        .join(haplotypes.map { h -> record(id: h.id, fasta: h.fasta) }, by: 'id')
+        .join(fai, by: 'id')
+        .map { x ->
+            record(
+                id: "${x.id}:${x.bed.baseName}",
+                meta: x.meta + record(mergeID: x.bed.baseName),
+                bam: x.bam,
+                bai: x.bai,
+                bed: x.bed,
+                fasta: x.fasta,
+                fai: x.fai
+            )
+        }
 
     // Split alignment bam by BED coordinates
-    SAMTOOLS_VIEW (
-        alignment.meta_bam_bai_ch,
-        [ [],[],[] ],
-        [ [],[] ],
-        alignment.meta_bed_ch,
-        'bai'
+    chunk_bams = SAMTOOLS_VIEW(
+        chunk_inputs.map { c ->
+            record(
+                id: c.id,
+                meta: c.meta,
+                input: c.bam,
+                index: c.bai,
+                fasta: null,
+                fai: null,
+                qname: null,
+                bed: c.bed,
+                index_format: 'bai',
+                samtools_args: "-bh -F 2308 -M",
+                samtools_args2: null,
+                output_prefix: "${c.bam.baseName}_${c.meta.mergeID}"
+            )
+        }
     )
-
-    // Join partitioned bams with their indexes and corresponding BED files
-    SAMTOOLS_VIEW.out.bam
-        .join( SAMTOOLS_VIEW.out.bai )
-        .join( alignment.meta_bed_ch )
-        .set { dv_bam_bai_bed_ch }
-
-    // Join each assembly with the corresponding samtools index
-    joinByMetaKeys (
-        all_haplotypes,
-        SAMTOOLS_FAIDX.out.fai,
-        keySet: [ 'id', 'sample', 'assembly', 'haplotype' ],
-        meta: 'lhs'
-    ).set { asm_fai_ch }
-
-    // Create DeepVariant input channel
-    combineByMetaKeys (
-        dv_bam_bai_bed_ch,
-        asm_fai_ch,
-        keySet: [ 'id', 'sample', 'assembly', 'haplotype' ],
-        meta: 'lhs'
-    )
-    .multiMap { meta, bam, bai, bed, fasta, fai ->
-        bam_bai_bed_ch: [ meta, bam, bai, bed ]
-        fasta_ch:       [ meta, fasta ]
-        fai_ch:         [ meta, fai ]
-    }
-    .set { dv_input }
 
     // run deepvariant on the chunked bam files
-    DEEPVARIANT_RUNDEEPVARIANT(
-        dv_input.bam_bai_bed_ch,    // tuple val(meta), path(input), path(index), path(intervals)
-        dv_input.fasta_ch,          // tuple val(meta2), path(fasta)
-        dv_input.fai_ch,            // tuple val(meta3), path(fai)
-        [ [], [] ],                 // tuple val(meta4), path(gzi)
-        [ [], [] ]                  // tuple val(meta5), path(par_bed)
+    calls = DEEPVARIANT_RUNDEEPVARIANT(
+        chunk_bams
+            .map { v -> record(id: v.id, meta: v.meta, bam: v.bam, bai: v.bai) }
+            .join(chunk_inputs.map { c -> record(id: c.id, bed: c.bed, fasta: c.fasta, fai: c.fai) }, by: 'id')
+            .map { x ->
+                record(
+                    id: x.id,
+                    meta: x.meta,
+                    input: x.bam,
+                    index: x.bai,
+                    intervals: x.bed,
+                    fasta: x.fasta,
+                    fai: x.fai,
+                    gzi: null,
+                    par_bed: null,
+                    deepvariant_args: "--model_type=PACBIO",
+                    output_prefix: x.bam.baseName
+                )
+            }
     )
-
-    // Prepare channel with indexed vcf
-    DEEPVARIANT_RUNDEEPVARIANT.out.vcf
-        .join(DEEPVARIANT_RUNDEEPVARIANT.out.vcf_tbi, by:0)
-        .set { bcftools_view_ch }
 
     // filter vcf files for PASS and homozygous variants
     // TODO add a minimim and maximum coverage filter ??? Needs to be tested
-    BCFTOOLS_VIEW (
-        bcftools_view_ch,
-        [], // path(regions)
-        [], // path(targets)
-        [] // path(samples)
+    filtered = BCFTOOLS_VIEW(
+        calls.map { c ->
+            record(
+                id: c.id,
+                meta: c.meta,
+                vcf: c.vcf,
+                index: c.vcf_tbi,
+                regions: null,
+                targets: null,
+                samples: null,
+                bcftools_args: "-f 'PASS' -i 'GT=\"1/1\"' --no-version -Oz",
+                output_prefix: "${c.vcf.name.replaceAll(/\.vcf\.gz$/, '')}_filt"
+            )
+        }
     )
 
     // Index vcf files
-    TABIX_TABIX(
-        BCFTOOLS_VIEW.out.vcf
+    indexed = TABIX_TABIX(
+        filtered.map { f -> record(id: f.id, meta: f.meta, tab: f.vcf) }
     )
 
     // in case of multiple vcf files, merge them prior to the consensus step
-    BCFTOOLS_VIEW.out.vcf
-        .map { meta, vcf -> [ meta - meta.subMap( 'mergeID' ), vcf ] }
-        .groupTuple(by:0)
-        .set { filt_vcf_list_ch }
-    TABIX_TABIX.out.index
-        .map { meta, tbi -> [ meta - meta.subMap( 'mergeID' ), tbi ] }
-        .groupTuple( by:0 )
-        .set { filt_tbi_list_ch }
-    filt_vcf_list_ch
-        .join( filt_tbi_list_ch, by:0 )
-        .branch { _meta, vcf_list, _vcf_index_list ->
-            multiples: vcf_list.size() > 1
-            singleton: true
-        }
-        .set { vcf_merge_ch }
-    joinByMetaKeys (
-        vcf_merge_ch.multiples,
-        asm_fai_ch,
-        keySet: [ 'id', 'sample', 'assembly', 'haplotype' ],
-        meta: 'lhs'
-    ).multiMap { meta, vcfs, tbis, fasta, fai ->
-        vcf_tbis_ch:    [ meta, vcfs, tbis, [] ] // empty path for 'bed' input
-        fasta_ch:       [ meta, fasta, fai ]
-    }.set { bcf_input }
-    BCFTOOLS_MERGE(
-        bcf_input.vcf_tbis_ch,
-        bcf_input.fasta_ch
+    vcf_groups = filtered
+        .map { f -> tuple(haplotypeKey(f.meta), f.vcf) }
+        .groupBy()
+        .map { key, vcfs -> record(id: key, vcfs: vcfs.toSorted()) }
+        .join(
+            indexed
+                .map { t -> tuple(haplotypeKey(t.meta), t.index) }
+                .groupBy()
+                .map { key, tbis -> record(id: key, tbis: tbis.toSorted()) },
+            by: 'id'
+        )
+
+    merged = BCFTOOLS_MERGE(
+        vcf_groups
+            .filter { g -> g.vcfs.size() > 1 }
+            .join(haplotypes.map { h -> record(id: h.id, meta: h.meta, fasta: h.fasta) }, by: 'id')
+            .join(fai, by: 'id')
+            .map { g ->
+                record(
+                    id: g.id,
+                    meta: g.meta,
+                    vcfs: g.vcfs,
+                    tbis: g.tbis,
+                    bed: null,
+                    fasta: g.fasta,
+                    fai: g.fai,
+                    bcftools_args: "--force-samples -Oz",
+                    output_prefix: g.meta.id
+                )
+            }
     )
 
     // index merged vcf file
-    TABIX_TABIX_MERGED(
-        BCFTOOLS_MERGE.out.vcf
+    merged_index = TABIX_TABIX_MERGED(
+        merged.map { m -> record(id: m.id, meta: m.meta, tab: m.vcf) }
     )
 
     // Prepare input for consensus step
-    vcf_plus_index_ch = vcf_merge_ch.singleton
-        .map { meta, vcf, idx  -> [ meta, vcf[0], idx[0] ] }
-        .mix(BCFTOOLS_MERGE.out.vcf
-        .join(TABIX_TABIX_MERGED.out.index)
-    )
-    vcf_plus_index_plus_assembly_ch = joinByMetaKeys (
-        vcf_plus_index_ch,
-        all_haplotypes,
-        keySet: [ 'sample', 'assembly', 'haplotype' ],
-        meta: 'lhs'
-    ).map { meta, vcf, tbi, fasta ->
-        tuple(meta, vcf, tbi, fasta, []) // Add empty path for 'mask' input
-    }
+    vcf_plus_index = vcf_groups
+        .filter { g -> g.vcfs.size() == 1 }
+        .map { g -> record(id: g.id, vcf: g.vcfs[0], tbi: g.tbis[0]) }
+        .mix(
+            merged
+                .map { m -> record(id: m.id, vcf: m.vcf) }
+                .join(merged_index.map { t -> record(id: t.id, tbi: t.index) }, by: 'id')
+        )
 
     // create consensus sequence
-    BCFTOOLS_CONSENSUS(
-        vcf_plus_index_plus_assembly_ch
+    consensus = BCFTOOLS_CONSENSUS(
+        vcf_plus_index
+            .join(haplotypes.map { h -> record(id: h.id, meta: h.meta, fasta: h.fasta) }, by: 'id')
+            .map { x ->
+                record(
+                    id: x.id,
+                    meta: x.meta,
+                    vcf: x.vcf,
+                    tbi: x.tbi,
+                    fasta: x.fasta,
+                    mask: null,
+                    bcftools_args: null,
+                    output_prefix: "${x.meta.id}_consensus"
+                )
+            }
     )
 
     // run merqury on input assembly
-    MERQURY_INPUT_ASM (
-        combineByMetaKeys (
-            ch_meryl_hifi,
-            all_haplotypes,
-            keySet: [ 'id', 'sample' ],
-            meta: 'rhs'
-        )
+    meryl = meryl_hifi.map { m -> record(sample_id: m.id, meryl_db: m.meryl_db) }
+    input_qv = MERQURY_INPUT_ASM(
+        haplotypes
+            .map { h -> record(id: h.id, sample_id: h.meta.id, meta: h.meta, fasta: h.fasta) }
+            .join(meryl, by: 'sample_id')
+            .map { x -> record(id: x.id, meta: x.meta, meryl_db: x.meryl_db, assembly: [ x.fasta ], output_prefix: x.meta.id) }
     )
 
     // run merqury on polished assembly
-    MERQURY_POLISHED_ASM (
-        combineByMetaKeys (
-            ch_meryl_hifi,
-            BCFTOOLS_CONSENSUS.out.fasta,
-            keySet: [ 'id', 'sample' ],
-            meta: 'rhs'
-        )
+    polished_qv = MERQURY_POLISHED_ASM(
+        consensus
+            .map { c -> record(id: c.id, sample_id: c.meta.id, meta: c.meta, fasta: c.fasta) }
+            .join(meryl, by: 'sample_id')
+            .map { x -> record(id: x.id, meta: x.meta, meryl_db: x.meryl_db, assembly: [ x.fasta ], output_prefix: x.meta.id) }
     )
 
-    // combine merqury results & assemblies
-    unpolASM_merqQV_ch = combineByMetaKeys(
-        all_haplotypes,
-        MERQURY_INPUT_ASM.out.scaffold_qv,
-        keySet: [ 'id', 'sample', 'assembly', 'haplotype' ],
-        meta: 'rhs'
-    )
-    polASM_merqQV_ch = combineByMetaKeys(
-        BCFTOOLS_CONSENSUS.out.fasta,
-        MERQURY_POLISHED_ASM.out.scaffold_qv,
-        keySet: [ 'id', 'sample', 'assembly', 'haplotype' ],
-        meta: 'rhs'
-    )
-    combineByMetaKeys(
-        unpolASM_merqQV_ch,
-        polASM_merqQV_ch,
-        keySet: [ 'id', 'sample', 'assembly', 'haplotype' ],
-        meta: 'rhs'
-    )
-    .multiMap { meta, unpol_asm, unpol_qv, pol_asm, pol_qv ->
-        unpolASM_qv_ch: [ meta, unpol_asm, unpol_qv ]
-        polASM_qv_ch: [ meta, pol_asm, pol_qv ]
-    }
-    .set { createFinalAsm }
-
-    DVPOLISH_CREATE_FINALASM(
-        createFinalAsm.unpolASM_qv_ch,
-        createFinalAsm.polASM_qv_ch,
+    // select the best contigs
+    final_asm = DVPOLISH_CREATE_FINALASM(
+        haplotypes
+            .map { h -> record(id: h.id, meta: h.meta, unpol_fasta: h.fasta) }
+            .join(input_qv.map { q -> record(id: q.id, unpol_merqury_csv: q.scaffold_qv.toList()[0]) }, by: 'id')
+            .join(consensus.map { c -> record(id: c.id, pol_fasta: c.fasta) }, by: 'id')
+            .join(polished_qv.map { q -> record(id: q.id, pol_merqury_csv: q.scaffold_qv.toList()[0]) }, by: 'id')
+            .map { x ->
+                record(
+                    id: x.id,
+                    meta: x.meta,
+                    unpol_fasta: x.unpol_fasta,
+                    unpol_merqury_csv: x.unpol_merqury_csv,
+                    pol_fasta: x.pol_fasta,
+                    pol_merqury_csv: x.pol_merqury_csv,
+                    output_prefix: "${x.unpol_fasta.name.replaceAll(/\.[^.]+\.[^.]+$/, '')}_dvpolish"
+                )
+            }
     )
 
-    ch_polished_assemblies = constructAssemblyRecord(
-        DVPOLISH_CREATE_FINALASM.out.fasta_gz
-            .map { meta, fasta ->
-                [ meta.subMap(meta.keySet()-['haplotype']), fasta ]
-            },
-        params.use_phased
-    )
-
-    ch_logs = ch_logs.mix(
-        DVPOLISH_CREATE_FINALASM.out.dvpolish_selection_tsv
-        )
-        .map { _meta, file -> file }
+    // Recombine the haplotypes of each assembly
+    assemblies_out = final_asm
+        .map { f -> tuple("${f.meta.id}:${f.meta.assembly.build}", f) }
+        .groupBy()
+        .map { key, results ->
+            def sorted = results.toSorted { a, b -> use_phased ? a.fasta_gz.name <=> b.fasta_gz.name : b.fasta_gz.name <=> a.fasta_gz.name }
+            record(
+                assembly_key: key,
+                pri_fasta: sorted[0].fasta_gz,
+                alt_fasta: sorted.size() > 1 ? sorted[1].fasta_gz : null
+            )
+        }
+        .join(assemblies.map { a -> record(assembly_key: "${a.meta.id}:${a.meta.assembly.build}", id: a.id, meta: a.meta) }, by: 'assembly_key')
+        .map { x -> record(id: x.id, meta: x.meta, pri_fasta: x.pri_fasta, alt_fasta: x.alt_fasta, pri_gfa: null, alt_gfa: null) }
 
     emit:
-    assemblies = ch_polished_assemblies
-    logs       = ch_logs
-
+    assemblies: Channel<Assembly> = assemblies_out
+    logs      : Channel<Path>     = final_asm.map { f -> f.dvpolish_selection_tsv }
 }

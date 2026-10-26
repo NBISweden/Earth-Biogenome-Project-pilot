@@ -1,5 +1,7 @@
+nextflow.enable.types = true
+
 process COOLER_CLOAD {
-    tag "${meta.id}"
+    tag "${id}"
     label 'process_high'
 
     conda "${moduleDir}/environment.yml"
@@ -7,19 +9,37 @@ process COOLER_CLOAD {
         'https://depot.galaxyproject.org/singularity/cooler:0.10.4--pyhdfd78af_0' :
         'biocontainers/cooler:0.10.4--pyhdfd78af_0' }"
 
+    ext [
+        args: { cooler_args ?: '' },
+        prefix: { output_prefix ?: "${id}" }
+    ]
+
     input:
-    tuple val(meta), path(contacts), path(index)
-    tuple val(meta2), path(chromsizes)
-    val(mode)
-    val(cool_bin)
+    record(
+        id: String,
+        meta: Record?,
+        contacts: Path,
+        index: Path?,
+        chromsizes: Path,
+        mode: String,
+        cool_bin: Integer,
+        cooler_args: String?,
+        output_prefix: String?
+    )
 
     output:
-    tuple val(meta), path("*.cool"), emit: cool
-    tuple val("${task.process}"), val('cooler'), eval('cooler --version 2>&1 | sed "s/cooler, version //"'), emit: versions_cooler, topic: versions
+    record(
+        id: id,
+        meta: meta,
+        cool: file("*.cool")
+    )
+
+    topic:
+    tuple(task.process, 'cooler', eval('cooler --version 2>&1 | sed "s/cooler, version //"')) >> 'versions'
 
     script:
     def args   = task.ext.args   ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: "${id}"
     def nproc  = mode in ["pairix", "tabix"] ? "--nproc ${task.cpus}" : ""
     """
     cooler cload ${mode} \\
@@ -31,7 +51,7 @@ process COOLER_CLOAD {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: "${id}"
     """
     touch ${prefix}.cool
     """

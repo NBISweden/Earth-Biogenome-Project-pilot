@@ -4,19 +4,55 @@ Changes in component 'nf-core/tidk/plot'
 Changes in 'tidk/plot/main.nf':
 --- modules/nf-core/tidk/plot/main.nf
 +++ modules/nf-core/tidk/plot/main.nf
-@@ -12,10 +12,7 @@
+@@ -1,5 +1,7 @@
++nextflow.enable.types = true
++
+ process TIDK_PLOT {
+-    tag "$meta.id"
++    tag "${id}"
+     label 'process_single'
+ 
+     conda "${moduleDir}/environment.yml"
+@@ -7,40 +9,44 @@
+         'https://depot.galaxyproject.org/singularity/tidk:0.2.41--hdbdd923_0':
+         'biocontainers/tidk:0.2.41--hdbdd923_0' }"
+ 
++    ext [
++        args: { tidk_args ?: '' },
++        prefix: { output_prefix ?: "${id}" }
++    ]
++
+     input:
+-    tuple val(meta), path(tsv)
++    record(
++        id: String,
++        meta: Record?,
++        tsv: Path,
++        tidk_args: String?,
++        output_prefix: String?
++    )
  
      output:
-     tuple val(meta), path("*.svg"), emit: svg
+-    tuple val(meta), path("*.svg"), emit: svg
 -    path "versions.yml"           , emit: versions
--
++    record(
++        id: id,
++        meta: meta,
++        svg: file("*.svg")
++    )
+ 
 -    when:
 -    task.ext.when == null || task.ext.when
-+    tuple val("${task.process}"), val('tidk'), eval("tidk --version | sed 's/tidk //'"), emit: versions_tidk, topic: versions
++    topic:
++    tuple(task.process, 'tidk', eval("tidk --version | sed 's/tidk //'")) >> 'versions'
  
      script:
      def args = task.ext.args ?: ''
-@@ -26,21 +23,11 @@
+-    def prefix = task.ext.prefix ?: "${meta.id}"
++    def prefix = task.ext.prefix ?: "${id}"
+     """
+     tidk \\
+         plot \\
          --output $prefix \\
          $args \\
          --tsv "$tsv"
@@ -28,7 +64,8 @@ Changes in 'tidk/plot/main.nf':
      """
  
      stub:
-     def prefix = task.ext.prefix ?: "${meta.id}"
+-    def prefix = task.ext.prefix ?: "${meta.id}"
++    def prefix = task.ext.prefix ?: "${id}"
      """
      touch ${prefix}.svg
 -

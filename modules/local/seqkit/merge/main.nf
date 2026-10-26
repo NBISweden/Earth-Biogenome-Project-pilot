@@ -1,5 +1,7 @@
+nextflow.enable.types = true
+
 process SEQKIT_MERGE {
-    tag "${meta.id}"
+    tag "${id}"
     label 'process_low'
     // File IO can be a bottleneck. See: https://bioinf.shenwei.me/seqkit/usage/#parallelization-of-cpu-intensive-jobs
 
@@ -8,22 +10,41 @@ process SEQKIT_MERGE {
         ? 'https://depot.galaxyproject.org/singularity/seqkit:2.9.0--h9ee0642_0'
         : 'biocontainers/seqkit:2.9.0--h9ee0642_0'}"
 
+    ext [
+        args: { seqkit_args ?: '' },
+        args2: { seqkit_args2 ?: '' },
+        prefix: { output_prefix ?: "${id}" }
+    ]
+
     input:
-    tuple val(meta), path(fastx)
-    val out_ext
+    record(
+        id: String,
+        meta: Record?,
+        fastx: List<Path>,
+        out_ext: String?,
+        seqkit_args: String?,
+        seqkit_args2: String?,
+        output_prefix: String?
+    )
 
     output:
-    tuple val(meta), path("${prefix}.*"), emit: fastx
-    tuple val("${task.process}"), val('seqkit'), eval('seqkit version | cut -d" " -f2'), emit: versions_seqkit, topic: versions
+    record(
+        id: id,
+        meta: meta,
+        fastx: file("${task.ext.prefix}.*")
+    )
+
+    topic:
+    tuple(task.process, 'seqkit', eval('seqkit version | cut -d" " -f2')) >> 'versions'
 
     script:
     def args = task.ext.args ?: ''
     def args2 = task.ext.args2 ?: ''
-    prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix
     def extension = out_ext ?: "fasta"
     def call_gzip = extension.endsWith('.gz') ? "| gzip -c ${args2}" : ''
     """
-    for FA in ${fastx}; do
+    for FA in ${fastx.join(' ')}; do
         LABEL=\$(echo "\$FA" | grep -o 'hap[0-9]\\+')
         seqkit \\
             replace \\
@@ -37,7 +58,7 @@ process SEQKIT_MERGE {
     """
 
     stub:
-    prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix
     def extension = out_ext ?: "fasta"
     """
     touch ${prefix}.${extension}

@@ -1,5 +1,7 @@
+nextflow.enable.types = true
+
 process QUAST {
-    tag "$meta.id"
+    tag "${id}"
     label 'process_medium'
 
     conda "${moduleDir}/environment.yml"
@@ -7,22 +9,39 @@ process QUAST {
         'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/a5/a515d04307ea3e0178af75132105cd36c87d0116c6f9daecf81650b973e870fd/data' :
         'community.wave.seqera.io/library/quast:5.3.0--755a216045b6dbdd' }"
 
+    ext [
+        args: { quast_args ?: '' },
+        prefix: { output_prefix ?: "${id}" }
+    ]
+
     input:
-    tuple val(meta) , path(consensus)
-    path(fasta)
-    path(gff)
+    record(
+        id: String,
+        meta: Record?,
+        consensus: List<Path>,
+        fasta: Path?,
+        gff: Path?,
+        quast_args: String?,
+        output_prefix: String?
+    )
 
     output:
-    tuple val(meta), path("${prefix}")                   , emit: results
-    tuple val(meta), path("${prefix}.tsv")               , emit: tsv
-    tuple val(meta), path("${prefix}_transcriptome.tsv") , optional: true , emit: transcriptome
-    tuple val(meta), path("${prefix}_misassemblies.tsv") , optional: true , emit: misassemblies
-    tuple val(meta), path("${prefix}_unaligned.tsv")     , optional: true , emit: unaligned
-    tuple val("${task.process}"), val('quast'), eval('quast.py --version 2>&1 | grep "QUAST" | sed \'s/^.*QUAST v//; s/ .*\$//\''), emit: versions_quast, topic: versions
+    record(
+        id: id,
+        meta: meta,
+        results: file("${task.ext.prefix}"),
+        tsv: file("${task.ext.prefix}.tsv"),
+        transcriptome: file("${task.ext.prefix}_transcriptome.tsv", optional: true),
+        misassemblies: file("${task.ext.prefix}_misassemblies.tsv", optional: true),
+        unaligned: file("${task.ext.prefix}_unaligned.tsv", optional: true)
+    )
+
+    topic:
+    tuple(task.process, 'quast', eval('quast.py --version 2>&1 | grep "QUAST" | sed \'s/^.*QUAST v//; s/ .*\$//\'')) >> 'versions'
 
     script:
-    def args      = task.ext.args   ?: ''
-    prefix        = task.ext.prefix ?: "${meta.id}"
+    def args      = task.ext.args
+    def prefix    = task.ext.prefix
     def features  = gff             ?  "--features $gff" : ''
     def reference = fasta           ?  "-r $fasta"       : ''
     """
@@ -42,7 +61,7 @@ process QUAST {
     """
 
     stub:
-    prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix
 
     """
     mkdir -p $prefix
@@ -67,7 +86,7 @@ process QUAST {
 
     ln -s $prefix/report.tsv ${prefix}.tsv
 
-    if [ $fasta ]; then
+    if [ ${fasta ? "${fasta}" : ''} ]; then
         touch $prefix/basic_stats/NGx_plot.pdf
         touch $prefix/basic_stats/gc.icarus.txt
 
@@ -113,7 +132,7 @@ process QUAST {
 
     fi
 
-    if ([ $fasta ] && [ $gff ]); then
+    if ([ ${fasta ? "${fasta}" : ''} ] && [ ${gff ? "${gff}" : ''} ]); then
         touch $prefix/genome_stats/features_cumulative_plot.pdf
         touch $prefix/genome_stats/features_frcurve_plot.pdf
     fi

@@ -1,5 +1,7 @@
+nextflow.enable.types = true
+
 process TIDK_SEARCH {
-    tag "$meta.id"
+    tag "${id}"
     label 'process_single'
 
     conda "${moduleDir}/environment.yml"
@@ -7,18 +9,35 @@ process TIDK_SEARCH {
         'https://depot.galaxyproject.org/singularity/tidk:0.2.41--hdbdd923_0':
         'biocontainers/tidk:0.2.41--hdbdd923_0' }"
 
+    ext [
+        args: { tidk_args ?: '' },
+        prefix: { output_prefix ?: "${id}" }
+    ]
+
     input:
-    tuple val(meta), path(fasta)
-    val string
+    record(
+        id: String,
+        meta: Record?,
+        fasta: Path,
+        string: String,
+        tidk_args: String?,
+        output_prefix: String?
+    )
 
     output:
-    tuple val(meta), path("*.tsv")          , emit: tsv         , optional: true
-    tuple val(meta), path("*.bedgraph")     , emit: bedgraph    , optional: true
-    tuple val("${task.process}"), val('tidk'), eval("tidk --version | sed 's/tidk //'"), emit: versions_tidk, topic: versions
+    record(
+        id: id,
+        meta: meta,
+        tsv: file("*.tsv", optional: true),
+        bedgraph: file("*.bedgraph", optional: true)
+    )
+
+    topic:
+    tuple(task.process, 'tidk', eval("tidk --version | sed 's/tidk //'")) >> 'versions'
 
     script:
     def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: "${id}"
     """
     tidk \\
         search \\
@@ -41,7 +60,7 @@ process TIDK_SEARCH {
 
     stub:
     def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: "${id}"
     def extension = args.contains("--extension bedgraph") ? 'bedgraph' : 'tsv'
     """
     touch ${prefix}.${extension}

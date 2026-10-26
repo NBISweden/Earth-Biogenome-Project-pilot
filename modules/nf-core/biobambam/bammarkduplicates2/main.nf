@@ -1,5 +1,7 @@
+nextflow.enable.types = true
+
 process BIOBAMBAM_BAMMARKDUPLICATES2 {
-    tag "${meta.id}"
+    tag "${id}"
     label 'process_medium'
 
     conda "${moduleDir}/environment.yml"
@@ -7,17 +9,34 @@ process BIOBAMBAM_BAMMARKDUPLICATES2 {
         ? 'https://depot.galaxyproject.org/singularity/biobambam:2.0.185--h85de650_1'
         : 'biocontainers/biobambam:2.0.185--h85de650_1'}"
 
+    ext [
+        args: { biobambam_args ?: '' },
+        prefix: { output_prefix ?: "${id}" }
+    ]
+
     input:
-    tuple val(meta), path(bam)
+    record(
+        id: String,
+        meta: Record?,
+        bam: Path,
+        biobambam_args: String?,
+        output_prefix: String?
+    )
 
     output:
-    tuple val(meta), path("*.bam"), emit: bam
-    tuple val(meta), path("*.metrics.txt"), emit: metrics
-    tuple val("${task.process}"), val('biobambam'), eval("bammarkduplicates2 --version |& sed '1!d; s/.*version //; s/.\$//'"), topic: versions, emit: versions_biobambam
+    record(
+        id: id,
+        meta: meta,
+        bam: file("*.bam"),
+        metrics: file("*.metrics.txt")
+    )
+
+    topic:
+    tuple(task.process, 'biobambam', eval("bammarkduplicates2 --version |& sed '1!d; s/.*version //; s/.\$//'")) >> 'versions'
 
     script:
     def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: "${id}"
     """
     bammarkduplicates2 \\
         ${args} \\
@@ -29,7 +48,7 @@ process BIOBAMBAM_BAMMARKDUPLICATES2 {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: "${id}"
     """
     touch ${prefix}.bam
     touch ${prefix}.metrics.txt

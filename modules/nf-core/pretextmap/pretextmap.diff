@@ -4,16 +4,75 @@ Changes in component 'nf-core/pretextmap'
 Changes in 'pretextmap/main.nf':
 --- modules/nf-core/pretextmap/main.nf
 +++ modules/nf-core/pretextmap/main.nf
-@@ -16,9 +16,6 @@
-     tuple val(meta), path("*.pretext")  , emit: pretext
-     tuple val("${task.process}"), val('PretextMap'), eval('PretextMap | sed "/Version/!d; s/.*Version //"'), emit: versions_pretextmap, topic: versions
-     tuple val("${task.process}"), val('samtools'), eval('samtools --version | sed "1!d; s/samtools //"'), emit: versions_samtools, topic: versions
--
+@@ -1,6 +1,7 @@
++nextflow.enable.types = true
+ 
+ process PRETEXTMAP {
+-    tag "$meta.id"
++    tag "${id}"
+     label 'process_low'
+ 
+     conda "${moduleDir}/environment.yml"
+@@ -8,24 +9,41 @@
+         'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/f6/f6b88d972aaf27c7e748e2c3b5ee86065dc5ed7824d7d13937c65844242211e2/data':
+         'community.wave.seqera.io/library/htslib_pretextmap_samtools:8a29f6d0f55f98f9' }"
+ 
++    ext [
++        args: { pretextmap_args ?: '' },
++        args2: { pretextmap_args2 ?: '' },
++        prefix: { output_prefix ?: "${id}" }
++    ]
++
+     input:
+-    tuple val(meta), path(input)
+-    tuple val(meta2), path(fasta), path(fai)
++    record(
++        id: String,
++        meta: Record?,
++        input: Path,
++        fasta: Path?,
++        fai: Path?,
++        pretextmap_args: String?,
++        pretextmap_args2: String?,
++        output_prefix: String?
++    )
+ 
+     output:
+-    tuple val(meta), path("*.pretext")  , emit: pretext
+-    tuple val("${task.process}"), val('PretextMap'), eval('PretextMap | sed "/Version/!d; s/.*Version //"'), emit: versions_pretextmap, topic: versions
+-    tuple val("${task.process}"), val('samtools'), eval('samtools --version | sed "1!d; s/samtools //"'), emit: versions_samtools, topic: versions
++    record(
++        id: id,
++        meta: meta,
++        pretext: file("*.pretext")
++    )
+ 
 -    when:
 -    task.ext.when == null || task.ext.when
++    topic:
++    tuple(task.process, 'PretextMap', eval('PretextMap | sed "/Version/!d; s/.*Version //"')) >> 'versions'
++    tuple(task.process, 'samtools', eval('samtools --version | sed "1!d; s/samtools //"')) >> 'versions'
  
      script:
      def args          = task.ext.args     ?: '' // PretextMap args
+     def args2         = task.ext.args2    ?: '' // Samtools view args
+-    def prefix        = task.ext.prefix   ?: "${meta.id}"
++    def prefix        = task.ext.prefix   ?: "${id}"
+     def reference     = fasta             ? "--reference ${fasta}" : ""
+-    def pairs_input   = input.toString().endsWith(".pairs.gz")
++    def pairs_input   = input.name.endsWith(".pairs.gz")
+     def input_command = pairs_input ? "zcat ${input}" : "samtools view $args2 $reference -h ${input}"
+     """
+     ${input_command} | PretextMap \\
+@@ -34,7 +52,7 @@
+     """
+ 
+     stub:
+-    def prefix      = task.ext.prefix ?: "${meta.id}"
++    def prefix      = task.ext.prefix ?: "${id}"
+     """
+     touch ${prefix}.pretext
+     """
 
 'modules/nf-core/pretextmap/tests/main.nf.test.snap' is unchanged
 'modules/nf-core/pretextmap/tests/main.nf.test' is unchanged

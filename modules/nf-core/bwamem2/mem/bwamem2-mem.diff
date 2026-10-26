@@ -4,16 +4,90 @@ Changes in component 'nf-core/bwamem2/mem'
 Changes in 'bwamem2/mem/main.nf':
 --- modules/nf-core/bwamem2/mem/main.nf
 +++ modules/nf-core/bwamem2/mem/main.nf
-@@ -21,9 +21,6 @@
-     tuple val(meta), path("*.csi"), emit: csi, optional: true
-     tuple val("${task.process}"), val('bwamem2'), eval('bwa-mem2 version | grep -o -E "[0-9]+(\\.[0-9]+)+"'), emit: versions_bwamem2, topic: versions
-     tuple val("${task.process}"), val('samtools'), eval("samtools version | sed '1!d;s/.* //'"), emit: versions_samtools, topic: versions
--
+@@ -1,5 +1,7 @@
++nextflow.enable.types = true
++
+ process BWAMEM2_MEM {
+-    tag "${meta.id}"
++    tag "${id}"
+     label 'process_high'
+ 
+     conda "${moduleDir}/environment.yml"
+@@ -7,28 +9,44 @@
+         ? 'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/e0/e05ce34b46ad42810eb29f74e4e304c0cb592b2ca15572929ed8bbaee58faf01/data'
+         : 'community.wave.seqera.io/library/bwa-mem2_htslib_samtools:db98f81f55b64113'}"
+ 
++    ext [
++        args: { bwamem2_args ?: '' },
++        args2: { bwamem2_args2 ?: '' },
++        prefix: { output_prefix ?: "${id}" }
++    ]
++
+     input:
+-    tuple val(meta), path(reads)
+-    tuple val(meta2), path(index)
+-    tuple val(meta3), path(fasta)
+-    val sort_bam
++    record(
++        id: String,
++        meta: Record?,
++        reads: List<Path>,
++        index: Path,
++        fasta: Path?,
++        sort_bam: Boolean,
++        bwamem2_args: String?,
++        bwamem2_args2: String?,
++        output_prefix: String?
++    )
+ 
+     output:
+-    tuple val(meta), path("*.sam"), emit: sam, optional: true
+-    tuple val(meta), path("*.bam"), emit: bam, optional: true
+-    tuple val(meta), path("*.cram"), emit: cram, optional: true
+-    tuple val(meta), path("*.crai"), emit: crai, optional: true
+-    tuple val(meta), path("*.csi"), emit: csi, optional: true
+-    tuple val("${task.process}"), val('bwamem2'), eval('bwa-mem2 version | grep -o -E "[0-9]+(\\.[0-9]+)+"'), emit: versions_bwamem2, topic: versions
+-    tuple val("${task.process}"), val('samtools'), eval("samtools version | sed '1!d;s/.* //'"), emit: versions_samtools, topic: versions
++    record(
++        id: id,
++        meta: meta,
++        sam: file("*.sam", optional: true),
++        bam: file("*.bam", optional: true),
++        cram: file("*.cram", optional: true),
++        crai: file("*.crai", optional: true),
++        csi: file("*.csi", optional: true)
++    )
+ 
 -    when:
 -    task.ext.when == null || task.ext.when
++    topic:
++    tuple(task.process, 'bwamem2', eval('bwa-mem2 version | grep -o -E "[0-9]+(\\.[0-9]+)+"')) >> 'versions'
++    tuple(task.process, 'samtools', eval("samtools version | sed '1!d;s/.* //'")) >> 'versions'
  
      script:
      def args = task.ext.args ?: ''
+     def args2 = task.ext.args2 ?: ''
+-    def prefix = task.ext.prefix ?: "${meta.id}"
++    def prefix = task.ext.prefix ?: "${id}"
+     def samtools_command = sort_bam ? 'sort' : 'view'
+ 
+     def extension_pattern = /(--output-fmt|-O)+\s+(\S+)/
+@@ -46,13 +64,13 @@
+         ${args} \\
+         -t ${task.cpus} \\
+         \$INDEX \\
+-        ${reads} \\
++        ${reads.join(' ')} \\
+         | samtools ${samtools_command} ${args2} -@ ${task.cpus} ${reference} -o ${prefix}.${extension} -
+     """
+ 
+     stub:
+     def args2 = task.ext.args2 ?: ''
+-    def prefix = task.ext.prefix ?: "${meta.id}"
++    def prefix = task.ext.prefix ?: "${id}"
+     def extension_pattern = /(--output-fmt|-O)+\s+(\S+)/
+     def extension_matcher = (args2 =~ extension_pattern)
+     def extension = extension_matcher.getCount() > 0 ? extension_matcher[0][2].toLowerCase() : "bam"
 
 'modules/nf-core/bwamem2/mem/tests/main.nf.test.snap' is unchanged
 'modules/nf-core/bwamem2/mem/tests/main.nf.test' is unchanged

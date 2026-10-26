@@ -1,57 +1,77 @@
+nextflow.enable.types = true
+
 process MERQURYFK_MERQURYFK {
-    tag "$meta.id"
+    tag "${id}"
     label 'process_medium'
 
     //conda "${moduleDir}/environment.yml"
     container 'ghcr.io/nbisweden/fastk_genescopefk_merquryfk:1.3'
 
+    ext [
+        args: { merquryfk_args ?: '' },
+        prefix: { output_prefix ?: "${id}" }
+    ]
+
     input:
-    tuple val(meta) , path(fastk_hist), path(fastk_ktab), path(assembly), path(haplotigs)
-    tuple val(meta2), path(mathaptab) // optional, trio mode
-    tuple val(meta3), path(pathaptab) // optional, trio mode
+    record(
+        id: String,
+        meta: Record?,
+        fastk_hist: Path,
+        fastk_ktab: List<Path>,
+        assembly: Path,
+        haplotigs: Path?,
+        mathaptab: List<Path>,
+        pathaptab: List<Path>,
+        merquryfk_args: String?,
+        output_prefix: String?
+    )
 
     output:
-    tuple val(meta), path("${prefix}.completeness.stats")         , emit: stats
-    tuple val(meta), path("${prefix}.*_only.bed")                 , emit: bed
-    tuple val(meta), path("${prefix}.*.qv")                       , emit: assembly_qv
-    tuple val(meta), path("${prefix}.*.spectra-cn.fl.{png,pdf}")  , emit: part_spectra_cn_fl,  optional: true
-    tuple val(meta), path("${prefix}.*.spectra-cn.ln.{png,pdf}")  , emit: part_spectra_cn_ln,  optional: true
-    tuple val(meta), path("${prefix}.*.spectra-cn.st.{png,pdf}")  , emit: part_spectra_cn_st,  optional: true
-    tuple val(meta), path("${prefix}.spectra-cn.fl.{png,pdf}")    , emit: full_spectra_cn_fl,  optional: true
-    tuple val(meta), path("${prefix}.spectra-cn.ln.{png,pdf}")    , emit: full_spectra_cn_ln,  optional: true
-    tuple val(meta), path("${prefix}.spectra-cn.st.{png,pdf}")    , emit: full_spectra_cn_st,  optional: true
-    tuple val(meta), path("${prefix}.qv")                         , emit: qv
-    tuple val(meta), path("${prefix}.spectra-asm.fl.{png,pdf}")   , emit: spectra_asm_fl,      optional: true
-    tuple val(meta), path("${prefix}.spectra-asm.ln.{png,pdf}")   , emit: spectra_asm_ln,      optional: true
-    tuple val(meta), path("${prefix}.spectra-asm.st.{png,pdf}")   , emit: spectra_asm_st,      optional: true
-    tuple val(meta), path("${prefix}.phased_block.bed")           , emit: phased_block_bed,    optional: true
-    tuple val(meta), path("${prefix}.phased_block.stats")         , emit: phased_block_stats,  optional: true
-    tuple val(meta), path("${prefix}.continuity.N.{pdf,png}")     , emit: continuity_N,        optional: true
-    tuple val(meta), path("${prefix}.block.N.{pdf,png}")          , emit: block_N,             optional: true
-    tuple val(meta), path("${prefix}.block.blob.{pdf,png}")       , emit: block_blob,          optional: true
-    tuple val(meta), path("${prefix}.hapmers.blob.{pdf,png}")     , emit: hapmers_blob,        optional: true
-    tuple val(meta), path("${prefix}.false_duplications.tsv")     , emit: false_duplications
-    tuple val(meta), path("${prefix}.spectra-cn.cni.gz")          , emit: cn_histogram
-    // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
-    tuple val("${task.process}"), val('merquryfk'), val('41451f8fb146158c5b747ae7915e69975c61ddd9'), emit: versions_merquryfk, topic: versions
-    // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
-    tuple val("${task.process}"), val('fastk'), val('1.2'), emit: versions_fastk, topic: versions
-    tuple val("${task.process}"), val('R'), eval('R --version | sed "1!d; s/.*version //; s/ .*//"'), emit: versions_r, topic: versions
+    record(
+        id: id,
+        meta: meta,
+        stats: file("${task.ext.prefix}.completeness.stats"),
+        bed: file("${task.ext.prefix}.*_only.bed"),
+        assembly_qv: file("${task.ext.prefix}.*.qv"),
+        part_spectra_cn_fl: file("${task.ext.prefix}.*.spectra-cn.fl.{png,pdf}", optional: true),
+        part_spectra_cn_ln: file("${task.ext.prefix}.*.spectra-cn.ln.{png,pdf}", optional: true),
+        part_spectra_cn_st: file("${task.ext.prefix}.*.spectra-cn.st.{png,pdf}", optional: true),
+        full_spectra_cn_fl: file("${task.ext.prefix}.spectra-cn.fl.{png,pdf}", optional: true),
+        full_spectra_cn_ln: file("${task.ext.prefix}.spectra-cn.ln.{png,pdf}", optional: true),
+        full_spectra_cn_st: file("${task.ext.prefix}.spectra-cn.st.{png,pdf}", optional: true),
+        qv: file("${task.ext.prefix}.qv"),
+        spectra_asm_fl: file("${task.ext.prefix}.spectra-asm.fl.{png,pdf}", optional: true),
+        spectra_asm_ln: file("${task.ext.prefix}.spectra-asm.ln.{png,pdf}", optional: true),
+        spectra_asm_st: file("${task.ext.prefix}.spectra-asm.st.{png,pdf}", optional: true),
+        phased_block_bed: file("${task.ext.prefix}.phased_block.bed", optional: true),
+        phased_block_stats: file("${task.ext.prefix}.phased_block.stats", optional: true),
+        continuity_N: file("${task.ext.prefix}.continuity.N.{pdf,png}", optional: true),
+        block_N: file("${task.ext.prefix}.block.N.{pdf,png}", optional: true),
+        block_blob: file("${task.ext.prefix}.block.blob.{pdf,png}", optional: true),
+        hapmers_blob: file("${task.ext.prefix}.hapmers.blob.{pdf,png}", optional: true),
+        false_duplications: file("${task.ext.prefix}.false_duplications.tsv"),
+        cn_histogram: file("${task.ext.prefix}.spectra-cn.cni.gz")
+    )
+
+    topic:
+    tuple(task.process, 'merquryfk', '41451f8fb146158c5b747ae7915e69975c61ddd9') >> 'versions'
+    tuple(task.process, 'fastk', '1.2') >> 'versions'
+    tuple(task.process, 'R', eval('R --version | sed "1!d; s/.*version //; s/ .*//"')) >> 'versions'
 
     script:
     // Exit if running this module with -profile conda / -profile mamba
     if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
         error "MERQURYFK_MERQURYFK module does not support Conda. Please use Docker / Singularity / Podman instead."
     }
-    if([mathaptab, pathaptab].any() && ![mathaptab, pathaptab].every()) {
+    if ((mathaptab || pathaptab) && !(mathaptab && pathaptab)) {
         log.error("Error: Only one of the maternal and paternal hap tabs have been provided!")
     }
 
-    def args        = task.ext.args ?: ''
-    prefix          = task.ext.prefix ?: "${meta.id}"
-    def fk_ktab     = fastk_ktab ? "${fastk_ktab.find { path -> path.toString().endsWith(".ktab") }}" : ''
-    def mat_hapktab = mathaptab  ? "${mathaptab.find { path -> path.toString().endsWith(".ktab") }}"  : ''
-    def pat_hapktab = pathaptab  ? "${pathaptab.find { path -> path.toString().endsWith(".ktab") }}"  : ''
+    def args        = task.ext.args
+    def prefix      = task.ext.prefix
+    def fk_ktab     = fastk_ktab ? "${fastk_ktab.find { path -> path.name.endsWith(".ktab") }}" : ''
+    def mat_hapktab = mathaptab  ? "${mathaptab.find { path -> path.name.endsWith(".ktab") }}"  : ''
+    def pat_hapktab = pathaptab  ? "${pathaptab.find { path -> path.name.endsWith(".ktab") }}"  : ''
     """
     MerquryFK \\
         $args \\
@@ -60,7 +80,7 @@ process MERQURYFK_MERQURYFK {
         ${mat_hapktab} \\
         ${pat_hapktab} \\
         $assembly \\
-        $haplotigs \\
+        ${haplotigs ? "${haplotigs}" : ''} \\
         $prefix
 
     # Providing 1 assembly outputs 1 cni that requires a rename
@@ -70,7 +90,7 @@ process MERQURYFK_MERQURYFK {
       mv ./*.spectra-cn.cni ${prefix}.spectra-cn.cni
     fi
 
-    awk -v asm_ploidy=${assembly instanceof List ? assembly.size() : 1} \\
+    awk -v asm_ploidy=1 \\
         -f $projectDir/bin/false_duplications.awk ${prefix}.spectra-cn.cni \\
         > ${prefix}.false_duplications.tsv
 
@@ -78,7 +98,7 @@ process MERQURYFK_MERQURYFK {
     """
 
     stub:
-    prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix
     """
     touch ${prefix}.completeness.stats
     touch ${prefix}.qv

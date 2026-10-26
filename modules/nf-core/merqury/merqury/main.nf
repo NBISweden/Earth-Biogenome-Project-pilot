@@ -1,6 +1,12 @@
+nextflow.enable.types = true
+
 process MERQURY_MERQURY {
-    tag "$meta.id"
+    tag "${id}"
     label 'process_low'
+
+    ext [
+        prefix: { output_prefix ?: "${id}" }
+    ]
 
     // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
     conda "${moduleDir}/environment.yml"
@@ -9,31 +15,41 @@ process MERQURY_MERQURY {
         'biocontainers/merqury:1.3--hdfd78af_4' }"
 
     input:
-    tuple val(meta), path(meryl_db), path(assembly)
+    record(
+        id: String,
+        meta: Record?,
+        meryl_db: Path,
+        assembly: List<Path>,
+        output_prefix: String?
+    )
 
     output:
-    tuple val(meta), path("*_only.bed")          , emit: assembly_only_kmers_bed
-    tuple val(meta), path("*_only.wig")          , emit: assembly_only_kmers_wig
-    tuple val(meta), path("*.completeness.stats"), emit: stats
-    tuple val(meta), path("*.dist_only.hist")    , emit: dist_hist
-    tuple val(meta), path("*.spectra-cn.fl.png") , emit: spectra_cn_fl_png
-    tuple val(meta), path("*.spectra-cn.hist")   , emit: spectra_cn_hist
-    tuple val(meta), path("*.spectra-cn.ln.png") , emit: spectra_cn_ln_png
-    tuple val(meta), path("*.spectra-cn.st.png") , emit: spectra_cn_st_png
-    tuple val(meta), path("*.spectra-asm.fl.png"), emit: spectra_asm_fl_png
-    tuple val(meta), path("*.spectra-asm.hist")  , emit: spectra_asm_hist
-    tuple val(meta), path("*.spectra-asm.ln.png"), emit: spectra_asm_ln_png
-    tuple val(meta), path("*.spectra-asm.st.png"), emit: spectra_asm_st_png
-    tuple val(meta), path("${prefix}.qv")        , emit: assembly_qv
-    tuple val(meta), path("${prefix}.*.qv")      , emit: scaffold_qv
-    tuple val(meta), path("*.hist.ploidy")       , emit: read_ploidy
-    tuple val(meta), path("*.hapmers.blob.png")  , emit: hapmers_blob_png           , optional: true
+    record(
+        id: id,
+        meta: meta,
+        assembly_only_kmers_bed: file("*_only.bed"),
+        assembly_only_kmers_wig: file("*_only.wig"),
+        stats: file("*.completeness.stats"),
+        dist_hist: file("*.dist_only.hist"),
+        spectra_cn_fl_png: file("*.spectra-cn.fl.png"),
+        spectra_cn_hist: file("*.spectra-cn.hist"),
+        spectra_cn_ln_png: file("*.spectra-cn.ln.png"),
+        spectra_cn_st_png: file("*.spectra-cn.st.png"),
+        spectra_asm_fl_png: file("*.spectra-asm.fl.png"),
+        spectra_asm_hist: file("*.spectra-asm.hist"),
+        spectra_asm_ln_png: file("*.spectra-asm.ln.png"),
+        spectra_asm_st_png: file("*.spectra-asm.st.png"),
+        assembly_qv: file("${task.ext.prefix}.qv"),
+        scaffold_qv: files("${task.ext.prefix}.*.qv"),
+        read_ploidy: file("*.hist.ploidy"),
+        hapmers_blob_png: file("*.hapmers.blob.png", optional: true)
+    )
+
+    topic:
     // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
-    tuple val("${task.process}"), val('merqury'), val('1.3'), emit: versions_merqury, topic: versions
+    tuple(task.process, 'merqury', '1.3') >> 'versions'
 
     script:
-    // def args = task.ext.args ?: ''
-    prefix = task.ext.prefix ?: "${meta.id}"
     """
     # Nextflow changes the container --entrypoint to /bin/bash (container default entrypoint: /usr/local/env-execute)
     # Check for container variable initialisation script and source it.
@@ -47,12 +63,12 @@ process MERQURY_MERQURY {
 
     merqury.sh \\
         $meryl_db \\
-        $assembly \\
-        $prefix
+        ${assembly.join(' ')} \\
+        ${task.ext.prefix}
     """
 
     stub:
-    prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix
     """
     touch ${prefix}_only.bed
     touch ${prefix}_only.wig
@@ -67,7 +83,7 @@ process MERQURY_MERQURY {
     touch ${prefix}.spectra-asm.ln.png
     touch ${prefix}.spectra-asm.st.png
     touch ${prefix}.qv
-    ${(assembly instanceof List ? assembly : [ assembly ]).collect { asm -> "touch ${prefix}.${asm.baseName}.qv" }.join('\n    ')}
+    ${assembly.collect { asm -> "touch ${prefix}.${asm.baseName}.qv" }.join('\n    ')}
     touch ${prefix}.hist.ploidy
     """
 }

@@ -4,16 +4,105 @@ Changes in component 'nf-core/minimap2/align'
 Changes in 'minimap2/align/main.nf':
 --- modules/nf-core/minimap2/align/main.nf
 +++ modules/nf-core/minimap2/align/main.nf
-@@ -21,9 +21,6 @@
-     tuple val(meta), path("*.bam")                       , optional: true, emit: bam
-     tuple val(meta), path("*.bam.${bam_index_extension}"), optional: true, emit: index
-     tuple val("${task.process}"), val("minimap2"), eval("minimap2 --version"), topic: versions, emit: versions_minimap2
--
+@@ -1,5 +1,7 @@
++nextflow.enable.types = true
++
+ process MINIMAP2_ALIGN {
+-    tag "$meta.id"
++    tag "${id}"
+     label 'process_high'
+ 
+     // Note: the versions here need to match the versions used in the mulled container below and minimap2/index
+@@ -8,37 +10,60 @@
+         'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/66/66dc96eff11ab80dfd5c044e9b3425f52d818847b9c074794cf0c02bfa781661/data' :
+         'community.wave.seqera.io/library/minimap2_samtools:33bb43c18d22e29c' }"
+ 
++    ext [
++        args: { minimap2_args ?: '' },
++        args2: { minimap2_args2 ?: '' },
++        args3: { minimap2_args3 ?: '' },
++        args4: { minimap2_args4 ?: '' },
++        prefix: { output_prefix ?: "${id}" }
++    ]
++
+     input:
+-    tuple val(meta), path(reads)
+-    tuple val(meta2), path(reference)
+-    val bam_format
+-    val bam_index_extension
+-    val cigar_paf_format
+-    val cigar_bam
++    record(
++        id: String,
++        meta: Record?,
++        reads: Path,
++        reference: Path?,
++        bam_format: Boolean,
++        bam_index_extension: String?,
++        cigar_paf_format: Boolean,
++        cigar_bam: Boolean,
++        minimap2_args: String?,
++        minimap2_args2: String?,
++        minimap2_args3: String?,
++        minimap2_args4: String?,
++        output_prefix: String?
++    )
+ 
+     output:
+-    tuple val(meta), path("*.paf")                       , optional: true, emit: paf
+-    tuple val(meta), path("*.bam")                       , optional: true, emit: bam
+-    tuple val(meta), path("*.bam.${bam_index_extension}"), optional: true, emit: index
+-    tuple val("${task.process}"), val("minimap2"), eval("minimap2 --version"), topic: versions, emit: versions_minimap2
++    record(
++        id: id,
++        meta: meta,
++        paf: file("*.paf", optional: true),
++        bam: file("*.bam", optional: true),
++        index: file("*.bam.*", optional: true)
++    )
+ 
 -    when:
 -    task.ext.when == null || task.ext.when
++    topic:
++    tuple(task.process, "minimap2", eval("minimap2 --version")) >> 'versions'
  
      script:
      def args  = task.ext.args ?: ''
+     def args2 = task.ext.args2 ?: ''
+     def args3 = task.ext.args3 ?: ''
+     def args4 = task.ext.args4 ?: ''
+-    def prefix = task.ext.prefix ?: "${meta.id}"
++    def prefix = task.ext.prefix ?: "${id}"
+     def bam_index = bam_index_extension ? "${prefix}.bam##idx##${prefix}.bam.${bam_index_extension} --write-index" : "${prefix}.bam"
+     def bam_output = bam_format ? "-a | samtools sort -@ ${task.cpus-1} -o ${bam_index} ${args2}" : "-o ${prefix}.paf"
+     def cigar_paf = cigar_paf_format && !bam_format ? "-c" : ''
+     def set_cigar_bam = cigar_bam && bam_format ? "-L" : ''
+-    def bam_input = "${reads.extension}".matches('sam|bam|cram')
++    def bam_input = ['sam', 'bam', 'cram'].contains(reads.extension)
+     def samtools_reset_fastq = bam_input ? "samtools reset --threads ${task.cpus-1} $args3 $reads | samtools fastq --threads ${task.cpus-1} $args4 |" : ''
+-    def query = bam_input ? "-" : reads
+-    def target = reference ?: (bam_input ? error("Error: minimap2/align BAM input mode requires reference") : reads)
++    def query = bam_input ? "-" : "${reads}"
++    if (bam_input && !reference) {
++        error("Error: minimap2/align BAM input mode requires reference")
++    }
++    def target = reference ? "${reference}" : "${reads}"
+     """
+     $samtools_reset_fastq \\
+     minimap2 \\
+@@ -52,10 +77,10 @@
+     """
+ 
+     stub:
+-    def prefix = task.ext.prefix ?: "${meta.id}"
++    def prefix = task.ext.prefix ?: "${id}"
+     def output_file = bam_format ? "${prefix}.bam" : "${prefix}.paf"
+     def bam_index = bam_index_extension ? "touch ${prefix}.bam.${bam_index_extension}" : ""
+-    def bam_input = "${reads.extension}".matches('sam|bam|cram')
++    def bam_input = ['sam', 'bam', 'cram'].contains(reads.extension)
+     if(bam_input && !reference) {
+         error("Error: minimap2/align BAM input mode requires reference!")
+ 	}
 
 'modules/nf-core/minimap2/align/tests/main.nf.test.snap' is unchanged
 'modules/nf-core/minimap2/align/tests/main.nf.test' is unchanged

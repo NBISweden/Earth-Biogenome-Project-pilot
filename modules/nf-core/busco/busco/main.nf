@@ -1,5 +1,7 @@
+nextflow.enable.types = true
+
 process BUSCO_BUSCO {
-    tag "${meta.id}"
+    tag "${id}"
     label 'process_medium'
 
     conda "${moduleDir}/environment.yml"
@@ -9,41 +11,57 @@ process BUSCO_BUSCO {
     // Note: one test had to be disabled when switching to Busco 6.0.0, cf https://github.com/nf-core/modules/pull/8781/files
     // Try to restore it when upgrading Busco to a later version
 
+    ext [
+        args: { busco_args ?: '' },
+        prefix: { output_prefix ?: "${id}-${lineage}" }
+    ]
+
     input:
-    tuple val(meta), path(fasta, stageAs: 'tmp_input/*')
-    // Required:    One of genome, proteins, or transcriptome
-    val mode
-    // Required:    lineage for checking against, or "auto/auto_prok/auto_euk" for enabling auto-lineage
-    val lineage
-    // Recommended: BUSCO lineages file - downloads if not set
-    path busco_lineages_path
-    // Optional:    BUSCO configuration file
-    path config_file
-    val clean_intermediates
+    record(
+        id: String,
+        meta: Record?,
+        fasta: Path,
+        mode: String,
+        lineage: String,
+        busco_lineages_path: Path?,
+        config_file: Path?,
+        clean_intermediates: Boolean,
+        busco_args: String?,
+        output_prefix: String?
+    )
+
+    stage:
+    stageAs fasta, 'tmp_input/*'
 
     output:
-    tuple val(meta), path("*-busco.batch_summary.txt"), emit: batch_summary
-    tuple val(meta), path("*-busco.batch_summary.failed.txt"), emit: batch_summary_failed, optional: true
-    tuple val(meta), path("short_summary.*.txt"), emit: short_summaries_txt, optional: true
-    tuple val(meta), path("short_summary.*.json"), emit: short_summaries_json, optional: true
-    tuple val(meta), path("*-busco.log"), emit: log, optional: true
-    tuple val(meta), path("*-busco/*/run_*/full_table.tsv"), emit: full_table, optional: true
-    tuple val(meta), path("*-busco/*/run_*/missing_busco_list.tsv"), emit: missing_busco_list, optional: true
-    tuple val(meta), path("*-busco/*/run_*/single_copy_proteins.faa"), emit: single_copy_proteins, optional: true
-    tuple val(meta), path("*-busco/*/run_*/busco_sequences"), emit: seq_dir, optional: true
-    tuple val(meta), path("*-busco/*/translated_proteins"), emit: translated_dir, optional: true
-    tuple val(meta), path("*-busco"), emit: busco_dir
-    tuple val(meta), path("busco_downloads/lineages/*"), emit: downloaded_lineages, optional: true
-    tuple val(meta), path("*-busco/*/run_*/busco_sequences/single_copy_busco_sequences/*.faa"), emit: single_copy_faa, optional: true
-    tuple val(meta), path("*-busco/*/run_*/busco_sequences/single_copy_busco_sequences/*.fna"), emit: single_copy_fna, optional: true
-    tuple val("${task.process}"), val('busco'), eval("busco --version 2> /dev/null | sed 's/BUSCO //g'"), emit: versions_busco, topic: versions
+    record(
+        id: id,
+        meta: meta,
+        batch_summary: file("*-busco.batch_summary.txt"),
+        batch_summary_failed: file("*-busco.batch_summary.failed.txt", optional: true),
+        short_summaries_txt: file("short_summary.*.txt", optional: true),
+        short_summaries_json: file("short_summary.*.json", optional: true),
+        log: file("*-busco.log", optional: true),
+        full_table: file("*-busco/*/run_*/full_table.tsv", optional: true),
+        missing_busco_list: file("*-busco/*/run_*/missing_busco_list.tsv", optional: true),
+        single_copy_proteins: file("*-busco/*/run_*/single_copy_proteins.faa", optional: true),
+        seq_dir: file("*-busco/*/run_*/busco_sequences", optional: true),
+        translated_dir: file("*-busco/*/translated_proteins", optional: true),
+        busco_dir: file("*-busco"),
+        downloaded_lineages: files("busco_downloads/lineages/*", optional: true),
+        single_copy_faa: files("*-busco/*/run_*/busco_sequences/single_copy_busco_sequences/*.faa", optional: true),
+        single_copy_fna: files("*-busco/*/run_*/busco_sequences/single_copy_busco_sequences/*.fna", optional: true)
+    )
+
+    topic:
+    tuple(task.process, 'busco', eval("busco --version 2> /dev/null | sed 's/BUSCO //g'")) >> 'versions'
 
     script:
     if (mode !in ['genome', 'proteins', 'transcriptome']) {
         error("Mode must be one of 'genome', 'proteins', or 'transcriptome'.")
     }
-    def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}-${lineage}"
+    def args = task.ext.args
+    def prefix = task.ext.prefix
     def busco_config = config_file ? "--config ${config_file}" : ''
     def busco_lineage = lineage in ['auto', 'auto_prok', 'auto_euk']
         ? lineage.replaceFirst('auto', '--auto-lineage').replaceAll('_', '-')
@@ -113,8 +131,8 @@ process BUSCO_BUSCO {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}-${lineage}"
-    def fasta_name = files(fasta).first().name - '.gz'
+    def prefix = task.ext.prefix
+    def fasta_name = fasta.name.replaceAll(/\.gz$/, '')
     """
     touch ${prefix}-busco.batch_summary.txt
     mkdir -p ${prefix}-busco/${fasta_name}/run_${lineage}/busco_sequences

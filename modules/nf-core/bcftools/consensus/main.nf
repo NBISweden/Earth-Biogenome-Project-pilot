@@ -1,6 +1,13 @@
+nextflow.enable.types = true
+
 process BCFTOOLS_CONSENSUS {
-    tag "${meta.id}"
+    tag "${id}"
     label 'process_medium'
+
+    ext [
+        args: { bcftools_args ?: '' },
+        prefix: { output_prefix ?: "${id}" }
+    ]
 
     conda "${moduleDir}/environment.yml"
     container "${workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container
@@ -8,29 +15,41 @@ process BCFTOOLS_CONSENSUS {
         : 'community.wave.seqera.io/library/bcftools_htslib:1.23.1--9f08ec665533d64a'}"
 
     input:
-    tuple val(meta), path(vcf), path(tbi), path(fasta), path(mask)
+    record(
+        id: String,
+        meta: Record?,
+        vcf: Path,
+        tbi: Path,
+        fasta: Path,
+        mask: Path?,
+        bcftools_args: String?,
+        output_prefix: String?
+    )
 
     output:
-    tuple val(meta), path('*.fa'), emit: fasta
-    tuple val("${task.process}"), val('bcftools'), eval("bcftools --version | sed '1!d; s/^.*bcftools //'"), topic: versions, emit: versions_bcftools
+    record(
+        id: id,
+        meta: meta,
+        fasta: file('*.fa')
+    )
+
+    topic:
+    tuple(task.process, 'bcftools', eval("bcftools --version | sed '1!d; s/^.*bcftools //'")) >> 'versions'
 
     script:
-    def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
     def masking = mask ? "-m ${mask}" : ""
     """
     cat ${fasta} \\
         | bcftools \\
             consensus \\
             ${vcf} \\
-            ${args} \\
+            ${task.ext.args} \\
             ${masking} \\
-            > ${prefix}.fa
+            > ${task.ext.prefix}.fa
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    touch ${prefix}.fa
+    touch ${task.ext.prefix}.fa
     """
 }

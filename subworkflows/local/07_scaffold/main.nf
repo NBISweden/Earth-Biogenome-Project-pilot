@@ -1,8 +1,5 @@
-include { constructAssemblyRecord                 } from "../../../modules/local/functions"
-include { getEachAssembly                         } from "../../../modules/local/functions"
-include { getPrimaryAssembly                      } from "../../../modules/local/functions"
-include { joinByMetaKeys                          } from "../../../modules/local/functions"
-include { combineByMetaKeys                       } from "../../../modules/local/functions"
+nextflow.enable.types = true
+
 include { BWAMEM2_INDEX as BWAMEM2_INDEX_SCAFFOLD } from "../../../modules/nf-core/bwamem2/index/main"
 include { BWAMEM2_MEM as BWAMEM2_MEM_SCAFFOLD     } from "../../../modules/nf-core/bwamem2/mem/main"
 include { SAMTOOLS_FAIDX                          } from "../../../modules/nf-core/samtools/faidx/main"
@@ -19,107 +16,165 @@ include { SEQKIT_MERGE as MERGE_HAPLOTYPES        } from "../../../modules/local
     The assembly should only be merged for curation.
  */
 
+record Reads {
+    id   : String
+    meta : Record
+    reads: List<Path>
+}
+
+record Assembly {
+    id       : String  // meta.assembly.build
+    meta     : Record  // sample meta data, including meta.assembly
+    pri_fasta: Path
+    alt_fasta: Path?
+    pri_gfa  : Path?
+    alt_gfa  : Path?
+}
+
+// Identifies the sample, assembly build and haplotype (if any)
+def haplotypeKey(meta: Record) -> String {
+    return "${meta.id}:${meta.assembly.build}:${meta.haplotype ?: ''}"
+}
+
+// File name prefix for the scaffolding of one haplotype
+def scaffoldPrefix(meta: Record) -> String {
+    return [ meta.id, meta.assembly.build, meta.haplotype ?: '' ].findAll { p -> p }.join('_')
+}
+
+def scaffoldInput(meta: Record, fasta: Path) -> Record {
+    return record(id: haplotypeKey(meta), meta: meta, fasta: fasta)
+}
+
 workflow SCAFFOLD {
     take:
-    ch_assemblies // [ meta, assembly ]
-    ch_hic        // [ meta, hic-pairs ]
+    assemblies  : Channel<Assembly>
+    hic         : Channel<Reads> // Hi-C read pairs
+    use_phased  : Boolean
+    hic_type    : String
+    hic_bam_sorting: String
 
     main:
-    ch_to_scaffold = params.use_phased ?
-        getEachAssembly(ch_assemblies)
-            .flatMap { meta, hap1_hap2 -> hap1_hap2.withIndex()
-                .collect { hap_asm, idx -> tuple( meta + [ haplotype: "hap${idx+1}" ], hap_asm ) }
+    // Scaffold each haplotype separately when phased
+    to_scaffold = assemblies.flatMap { a ->
+        def inputs = use_phased
+            ? [ scaffoldInput(a.meta + record(haplotype: 'hap1'), a.pri_fasta), scaffoldInput(a.meta + record(haplotype: 'hap2'), a.alt_fasta) ]
+            : [ scaffoldInput(a.meta, a.pri_fasta) ]
+        inputs.toList()
+    }
+
+    index = BWAMEM2_INDEX_SCAFFOLD(
+        to_scaffold.map { h -> record(id: h.id, meta: h.meta, fasta: h.fasta) }
+    )
+
+    faidx = SAMTOOLS_FAIDX(
+        to_scaffold.map { h -> record(id: h.id, meta: h.meta, fasta: h.fasta, fai: null, get_sizes: false) }
+    )
+
+    // Combine Hi-C reads with the BWA index and assembly
+    aligned = BWAMEM2_MEM_SCAFFOLD(
+        to_scaffold
+            .map { h -> record(id: h.id, sample_id: h.meta.id, meta: h.meta, fasta: h.fasta) }
+            .join(index.map { i -> record(id: i.id, index: i.index) }, by: 'id')
+            .join(hic.map { r -> record(sample_id: r.id, reads: r.reads) }, by: 'sample_id')
+            .map { x ->
+                record(
+                    id: x.id,
+                    meta: x.meta,
+                    reads: x.reads,
+                    index: x.index,
+                    fasta: x.fasta,
+                    sort_bam: false,
+                    bwamem2_args: '-SP -T0',
+                    bwamem2_args2: '',
+                    output_prefix: "${scaffoldPrefix(x.meta)}_${x.reads[0].name.replaceAll(/\.(fastq|fq)(\.gz)?$/, '')}"
+                )
             }
-        : getPrimaryAssembly(ch_assemblies)
-    BWAMEM2_INDEX_SCAFFOLD ( ch_to_scaffold )
-
-    SAMTOOLS_FAIDX (
-        ch_to_scaffold.map { meta, assembly -> [ meta, assembly, [] ] }, // [ meta, fasta, fai ]
-        false                                                            // get_sizes
     )
 
-    combineByMetaKeys( // Combine (Hi-C + index) with (BWA_INDEX + Assembly)
-        ch_hic,
-        joinByMetaKeys( // Join BWA index with Assembly
-            BWAMEM2_INDEX_SCAFFOLD.out.index,
-            ch_to_scaffold,
-            keySet: ['id','sample','assembly', 'haplotype'],
-            meta: 'rhs'
-        ),
-        keySet: ['id','sample'],
-        meta: 'rhs'
-    ).multiMap{ meta, hic_reads, index, fasta ->
-        reads: [ meta, hic_reads ]
-        index: [ meta, index ]
-        fasta: [ meta, fasta ]
-    }.set{ bwamem2_input }
-
-    BWAMEM2_MEM_SCAFFOLD (
-        bwamem2_input.reads,
-        bwamem2_input.index,
-        bwamem2_input.fasta,
-        false
+    chromsizes = EXTRACT_CHROMSIZES(
+        faidx.map { f -> record(id: f.id, meta: f.meta, faidx: f.fai) }
     )
-
-    EXTRACT_CHROMSIZES( SAMTOOLS_FAIDX.out.fai )
 
     // For each assembly, group hi-c alignment bams and combine with chrom sizes
-    joinByMetaKeys(
-        BWAMEM2_MEM_SCAFFOLD.out.bam.groupTuple()
-            .combine(EXTRACT_CHROMSIZES.out.chr_sizes, by: 0)
-            .map{ meta, hic_bam, chr_lengths -> [ meta, hic_bam, chr_lengths ] },
-        ch_to_scaffold,
-        keySet: ['id','sample','assembly','haplotype'],
-        meta: 'rhs'
-    ).multiMap{ meta, hic_bam, chr_lengths, fasta ->
-            hicbams: [ meta, hic_bam ]
-            lengths: chr_lengths
-            fasta:  fasta
-    }.set{ pairtools_input }
-
-    PAIRTOOLS (
-        pairtools_input.hicbams,
-        pairtools_input.lengths,
-        pairtools_input.fasta,
-        true    // sort_bam
+    pairs = PAIRTOOLS(
+        aligned
+            .map { a -> tuple(haplotypeKey(a.meta), a) }
+            .groupBy()
+            .map { key, alignments ->
+                record(id: key, meta: alignments.toList()[0].meta, bam: alignments.collect { a -> a.bam }.toList().toSorted())
+            }
+            .join(chromsizes.map { c -> record(id: c.id, chromsizes: c.chr_sizes) }, by: 'id')
+            .join(to_scaffold.map { h -> record(id: h.id, fasta: h.fasta) }, by: 'id')
+            .map { x ->
+                record(
+                    id: x.id,
+                    meta: x.meta,
+                    bam: x.bam,
+                    chromsizes: x.chromsizes,
+                    fasta: x.fasta,
+                    sort_bam: true,
+                    pairtools_args: "--min-mapq 20 --walks-policy 5unique --max-inter-align-gap 30",
+                    pairtools_args2: '--tmpdir=\$PWD',
+                    pairtools_args3: null,
+                    pairtools_args4: '--mark-dups',
+                    pairtools_args5: null,
+                    pairtools_args6: hic_bam_sorting == "by_coordinate" ? "--write-index" : "-n",
+                    output_prefix: scaffoldPrefix(x.meta)
+                )
+            }
     )
 
-    joinByMetaKeys( // Join bam with (assembly + fai)
-        PAIRTOOLS.out.bam, // FIXME: note this expects BAM, while module can output CRAM
-        joinByMetaKeys( // join assembly + fai
-            ch_to_scaffold,
-            SAMTOOLS_FAIDX.out.fai,
-            keySet: ['id','sample','assembly','haplotype'],
-            meta: 'rhs'
-        ),
-        keySet: ['id','sample','assembly','haplotype'],
-        meta: 'rhs'
-    ).map{ meta, bam, fasta, fai ->
-        [ meta, fasta, fai, bam, [] ] // yahs input map: [ meta, fasta, fai, hic_map, agp ]
-    }.set{ yahs_input }
-
-    YAHS(
-        yahs_input
+    // FIXME: note this expects BAM, while the module can output CRAM
+    scaffolds = YAHS(
+        pairs
+            .map { p -> record(id: p.id, meta: p.meta, hic_map: p.bam) }
+            .join(to_scaffold.map { h -> record(id: h.id, fasta: h.fasta) }, by: 'id')
+            .join(faidx.map { f -> record(id: f.id, fai: f.fai) }, by: 'id')
+            .map { x ->
+                record(
+                    id: x.id,
+                    meta: x.meta,
+                    fasta: x.fasta,
+                    fai: x.fai,
+                    hic_map: x.hic_map,
+                    agp: null,
+                    yahs_args: hic_type == "arima_v2" ? "-e GATC,GANTC,CTNAG,TTAA" : hic_type == "arima_v1" ? "-e GATC,GANTC" : "",
+                    output_prefix: scaffoldPrefix(x.meta)
+                )
+            }
     )
 
-    ch_scaffolded_haplotypes = YAHS.out.scaffolds_fasta
-            .map{ meta, fasta -> tuple( meta.subMap( meta.keySet() - ['haplotype'] ), fasta) }
-    ch_scaffolded_assemblies = constructAssemblyRecord(
-        ch_scaffolded_haplotypes,
-        params.use_phased
-    )
+    // Recombine the haplotypes of each assembly, primary first when phased
+    scaffolded = scaffolds
+        .filter { s -> s.scaffolds_fasta != null }
+        .map { s -> tuple("${s.meta.id}:${s.meta.assembly.build}", s.scaffolds_fasta) }
+        .groupBy()
+        .map { key, fastas ->
+            def sorted = fastas.toSorted { a, b -> use_phased ? a.name <=> b.name : b.name <=> a.name }
+            record(assembly_key: key, fastas: sorted)
+        }
+        .join(assemblies.map { a -> record(assembly_key: "${a.meta.id}:${a.meta.assembly.build}", id: a.id, meta: a.meta) }, by: 'assembly_key')
+
+    assemblies_out = scaffolded.map { x ->
+        record(id: x.id, meta: x.meta, pri_fasta: x.fastas[0], alt_fasta: x.fastas.size() > 1 ? x.fastas[1] : null, pri_gfa: null, alt_gfa: null)
+    }
 
     MERGE_HAPLOTYPES(
-        ch_scaffolded_haplotypes
-            .groupTuple(sort: { a, b -> a.name <=> b.name })
-            .filter { _meta, fa_list -> fa_list.size() > 1 },
-        "fasta.gz"
+        scaffolded
+            .filter { x -> x.fastas.size() > 1 }
+            .map { x ->
+                record(
+                    id: x.id,
+                    meta: x.meta,
+                    fastx: x.fastas.toSorted { a, b -> a.name <=> b.name },
+                    out_ext: "fasta.gz",
+                    seqkit_args: "-w 100",
+                    output_prefix: "${x.meta.id}_${x.meta.assembly.build}"
+                )
+            }
     )
 
-    logs = PAIRTOOLS.out.stat
-        .flatten()
-
     emit:
-    assemblies = ch_scaffolded_assemblies
-    logs
+    assemblies: Channel<Assembly> = assemblies_out
+    logs      : Channel<Path>     = pairs.flatMap { p -> p.stat.toList() }
 }
