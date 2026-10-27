@@ -13,17 +13,6 @@ record Assembly {
     alt_gfa  : Path?
 }
 
-record HaplotypeScreen {
-    id    : String
-    meta  : Record
-    taxid : String
-    fasta : Path
-}
-
-def screenInput(id: String, meta: Record, taxid: String, fasta: Path) -> HaplotypeScreen {
-    return record(id: id, meta: meta, taxid: taxid, fasta: fasta)
-}
-
 workflow DECONTAMINATE {
     take:
     assemblies   : Channel<Assembly>
@@ -32,8 +21,11 @@ workflow DECONTAMINATE {
     ramdisk_path : String?  // Copy the database here before running FCS-GX
 
     main:
+    // Fetch the database only when there are assemblies to screen and no local copy
     fetched = FCSGX_FETCHDB(
-        channel.of( record(id: 'fcsgx_database', manifest: fcs_manifest, output_prefix: null) )
+        assemblies
+            .map { _a -> record(id: 'fcsgx_database', manifest: fcs_manifest, output_prefix: null) }
+            .unique()
             .filter { _x -> !fcs_database }
     )
     // The local database, or the fetched one
@@ -51,7 +43,7 @@ workflow DECONTAMINATE {
         def taxid = "${a.meta.sample.tax_id}"
         def haplotypes = a.alt_fasta ? [ a.pri_fasta, a.alt_fasta ] : [ a.pri_fasta ]
         haplotypes.withIndex().collect { fasta, index ->
-            screenInput("${meta.assembly.build}-hap${index + 1}", meta + record(haplotype: index + 1), taxid, fasta)
+            record(id: "${meta.assembly.build}-hap${index + 1}", meta: meta + record(haplotype: index + 1), taxid: taxid, fasta: fasta)
         }.toList()
     }
 
