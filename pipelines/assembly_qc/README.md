@@ -34,8 +34,8 @@ nextflow run pipelines/assembly_qc -profile singularity -params-file qc_paramete
 ```
 
 The BUSCO lineages are not looked up from the sample: `busco.lineages` is required.
-Results are published under `<outdir>/assembly_qc` and, per tool, under the stage folders
-(`<outdir>/<stage>/busco`, `gfastats`, `merquryfk`).
+Results are published per tool under `<outdir>`: `merquryfk/<build>`, `busco/<build>`,
+`gfastats/<build>` and `quast`, where the build is `<assembler>-<stage>-<id>`.
 
 ## Test
 

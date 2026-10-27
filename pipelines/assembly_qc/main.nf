@@ -110,11 +110,26 @@ workflow {
     comparison = COMPARE_ASSEMBLIES( assemblies, params.reference )
 
     publish:
-    reports = evaluation.logs.mix(comparison.logs)
+    merquryfk = evaluation.merquryfk
+    busco     = evaluation.busco
+    gfastats  = evaluation.gfastats
+    quast     = comparison.quast
 }
 
 output {
-    reports: Channel<Path> {
-        path 'assembly_qc'
+    merquryfk: Channel<Record> {
+        path { r -> "merquryfk/${r.meta.assembly.build}" }
+    }
+    busco: Channel<Record> {
+        path { r ->
+            r.short_summaries_txt >> ("busco/${r.meta.assembly.build}/")
+            r.short_summaries_json >> ("busco/${r.meta.assembly.build}/")
+        }
+    }
+    gfastats: Channel<Record> {
+        path { r -> "gfastats/${r.meta.assembly.build}" }
+    }
+    quast: Channel<Record> {
+        path 'quast'
     }
 }
