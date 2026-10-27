@@ -27,6 +27,8 @@ forward from this release. Format loosely follows
   (`ENA_TAXQUERY` and `REPORT_DTOL` are removed).
 - 47 nf-core modules are patched with `nf-core modules patch` and tracked in
   `modules.json`.
+- The upstream tests of vendored nf-core modules (`modules/nf-core/**/tests/`)
+  are removed from git and gitignored. They are tested upstream.
 
 ### Added
 

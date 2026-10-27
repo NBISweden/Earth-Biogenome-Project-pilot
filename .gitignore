@@ -15,6 +15,10 @@ results/
 .nf-test.log
 .nf-test/
 
+# Upstream tests of vendored nf-core modules and subworkflows (tested in nf-core/modules)
+modules/nf-core/**/tests/
+subworkflows/nf-core/**/tests/
+
 # misc
 .DS_Store
 .screenrc

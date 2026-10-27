@@ -171,7 +171,7 @@ nf-core modules have no typed version upstream, so the converted modules are tra
 - **Stub run:** `pixi run nextflow run main.nf -profile docker,test -stub-run` completes 106 tasks. `pipelines/assembly_qc` has its own stub run on the tiny data (13 tasks), documented in its README.
 - **Real data:** a wasp data set (*Ancistrocerus nigricornis*, HiFi and Hi-C) ran on nac under SLURM and Singularity through `inspect` with the typed modules. A later run adds `assemble`.
 - **Default nf-test:** `tests/main.nf.test` and its snapshot have not been re-checked after this change. It runs about an hour per test on a laptop and needs an amd64 host.
-- **Module tests:** the tests under `modules/*/tests` are still the upstream tuple form. `nf-test.config` only runs `tests/`, so they are not run. Converting them needs regenerated snapshots.
+- **Module tests:** the upstream tests of the vendored nf-core modules (`modules/nf-core/**/tests/`, and `subworkflows/nf-core/**/tests/` if any are installed) are no longer tracked and are gitignored. They are tested upstream, are in the tuple form, and `nf-test.config` never ran them. `nf-core modules install` and `update` still write them locally, and `nf-core modules patch` records them as "removed" in the `.diff` trailer, which has no effect on patching.
 - nf-test needs `nft-utils@0.0.5`. If the download fails with HTTP 406, download the jar with `curl -L` into `.nf-test/plugins/nft-utils/0.0.5/`.
 
 ## Known limitations and follow-ups
