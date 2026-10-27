@@ -241,7 +241,8 @@ workflow {
         params.fcs.manifest ?: "https://ftp.ncbi.nlm.nih.gov/genomes/TOOLS/FCS/database/latest/all.manifest",
         params.fcs.ramdisk_path != null ? params.fcs.ramdisk_path : '/dev/shm/gxdb'
     )
-    cleaned_assemblies = ( enable.screen ? screen.assemblies : to_screen )
+    cleaned_assemblies = to_screen.filter { _a -> !enable.screen }
+        .mix(screen.assemblies.filter { _a -> enable.screen })
         .mix(input.assemblies.filter { a -> a.meta.assembly.stage == 'decontaminated' })
 
     // Purge duplicates
@@ -251,7 +252,8 @@ workflow {
         input.hifi_merged,
         kmer_cov
     )
-    purged_assemblies = ( enable.purge ? purge.assemblies : to_purge )
+    purged_assemblies = to_purge.filter { _a -> !enable.purge }
+        .mix(purge.assemblies.filter { _a -> enable.purge })
         .mix(input.assemblies.filter { a -> a.meta.assembly.stage == 'purged' })
 
     // Polish
@@ -263,7 +265,8 @@ workflow {
         chunkSizeBytes(params.chunk_size),
         params.use_phased
     )
-    polished_assemblies = ( enable.polish ? polish.assemblies : to_polish )
+    polished_assemblies = to_polish.filter { _a -> !enable.polish }
+        .mix(polish.assemblies.filter { _a -> enable.polish })
         .mix(input.assemblies.filter { a -> a.meta.assembly.stage == 'polished' })
 
     // Scaffold
@@ -275,7 +278,8 @@ workflow {
         params.hic_type,
         params.hic_bam_sorting
     )
-    scaffolded_assemblies = ( enable.scaffold ? scaffold.assemblies : to_scaffold )
+    scaffolded_assemblies = to_scaffold.filter { _a -> !enable.scaffold }
+        .mix(scaffold.assemblies.filter { _a -> enable.scaffold })
         .mix(input.assemblies.filter { a -> a.meta.assembly.stage == 'scaffolded' })
 
     // Curate
