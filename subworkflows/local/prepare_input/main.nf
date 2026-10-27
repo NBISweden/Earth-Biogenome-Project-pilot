@@ -1,15 +1,15 @@
-#! /usr/bin/env nextflow
+nextflow.enable.types = true
 
-// include { UNTAR as UNTAR_TAXONOMY } from "../../../modules/nf-core/untar/main"
-// include { TAXONKIT_NAME2LINEAGE   } from "../../../modules/local/taxonkit/name2lineage"
-include { FETCH_SAMPLE_METADATA   } from "./fetch_sample_metadata"
+include { GOAT_TAXONSEARCH        } from "../../../modules/nf-core/goat/taxonsearch/main"
 include { SAMTOOLS_FASTA          } from "../../../modules/local/samtools/fasta/main"
 include { CAT_CAT as MERGE_PACBIO } from "../../../modules/nf-core/cat/cat/main"
 
-/* params.input example sample sheet (samplesheet.yml)
+/* The input file is a YAML file (--input), for example:
 ```yaml
 sample:
   name: Species name
+  # Optional. Looked up in ENA and GOAT when missing:
+  # tax_id, genetic_code, mito_code, domain, lineage, genome_size, haploid_number, ploidy
 assembly:
   - assembler: hifiasm
     stage: raw
@@ -18,206 +18,213 @@ assembly:
     alt_fasta: /path/to/alternate_asm.fasta
     pri_gfa: /path/to/primary_asm.gfa
     alt_gfa: /path/to/alternate_asm.gfa
-  - assembler: ipa
-    stage: raw
-    id: uuid
-    pri_fasta: /path/to/primary_asm.fasta
-    alt_fasta: /path/to/alternate_asm.fasta
 hic:
   - read1: /path/to/read1.fastq.gz
     read2: /path/to/read2.fastq.gz
 hifi:
   - reads: /path/to/reads
 rnaseq:
-  - reads: /path/to/reads
+  - reads: /path/to/reads        # or read1 and read2
 isoseq:
   - reads: /path/to/reads
-mito_hmm:
-  - fam: /path/to/mito_hmm.fam
-    h3f: /path/to/mito_hmm.fam.h3f
-    h3i: /path/to/mito_hmm.fam.h3i
-    h3m: /path/to/mito_hmm.fam.h3m
-    h3p: /path/to/mito_hmm.fam.h3p
-plastid_hmm:
-  - fam: /path/to/plastid_hmm.fam
-    h3f: /path/to/plastid_hmm.fam.h3f
-    h3i: /path/to/plastid_hmm.fam.h3i
-    h3m: /path/to/plastid_hmm.fam.h3m
-    h3p: /path/to/plastid_hmm.fam.h3p
-```
-leads to the following YAML data structure
-```
-[
-    sample:[
-        name: Species name
-    ],
-    assembly:[
-        [
-            assembler: hifiasm,
-            stage: raw,
-            id: uuid,
-            pri_fasta: /path/to/primary_asm.fasta,
-            alt_fasta: /path/to/alternate_asm.fasta,
-            pri_gfa  : /path/to/primary_asm.gfa,
-            alt_gfa  : /path/to/alternate_asm.gfa
-        ],
-        [
-            assembler: ipa,
-            stage: raw,
-            id: uuid,
-            pri_fasta: /path/to/primary_asm.fasta,
-            alt_fasta: /path/to/alternate_asm.fasta
-        ]
-    ],
-    hic:[
-        read1: /path/to/read1.fastq.gz,
-        read2: /path/to/read2.fastq.gz
-    ],
-    hifi:[
-        reads: /path/to/reads
-    ],
-    rnaseq:[
-        reads: /path/to/reads
-    ],
-    isoseq:[
-        reads: /path/to/reads
-    ]
-]
 ```
 */
 
 /*
-Output meta map structure:
+The meta record of a sample:
 ```
-[
-    id: "Species_name", // Needed for nf-core modules functionality
-    single_end: true,   // Needed for nf-core modules functionality
-    sample: [
-        name: "Species name",
-        genome_size: 1234,     // GOAT
-        ploidy: 2,             // GOAT
-        chr_count: 13          // GOAT
-    ],
-    reads_hifi: [
-        single_end: true,
-        kmer_cov: 25
-    ],
-    reads_hic: [
-        single_end: false,
-        kmer_cov: 50
-    ]
-    settings: [
-        busco: [
-            lineages: auto     // GOAT
-        ]
-    ]
-    assembly: [
-        assembler: "hifiasm",
-        stage: "raw",
-        id: uuid
-    ]
-]
+id: "Species_name",
+sample: [ name: "Species name", genome_size: 1234, ploidy: 2, haploid_number: 13, tax_id: ..., ... ],
+settings: [ busco: [ lineages: "metazoa_odb10,..." ] ]
 ```
+Meta data of the reads adds single_end (and pair_id for Hi-C). Meta data of the assemblies adds
+assembly: [ assembler: "hifiasm", stage: "raw", id: uuid, build: "hifiasm-raw-uuid" ].
 */
+
+record Reads {
+    id   : String
+    meta : Record
+    reads: List<Path>
+}
+
+record Assembly {
+    id       : String  // meta.assembly.build
+    meta     : Record  // sample meta data, including meta.assembly
+    pri_fasta: Path
+    alt_fasta: Path?
+    pri_gfa  : Path?
+    alt_gfa  : Path?
+}
+
+def readYaml(yaml_file: Path) -> Map {
+    return new org.yaml.snakeyaml.Yaml().load(yaml_file.text) as Map
+}
+
+// Species taxonomy from ENA
+def fetchEnaTaxonomy(species_name: String) -> Map {
+    def encoded_name = java.net.URLEncoder.encode(species_name, 'UTF-8')
+    def response = file("https://www.ebi.ac.uk/ena/taxonomy/rest/scientific-name/${encoded_name}").text
+    def entries = new groovy.json.JsonSlurper().parseText(response) as List
+    return entries[0] as Map
+}
+
+// Complete the sample with the ENA taxonomy for the keys the user did not give
+def sampleFromEna(sample: Map) -> Map {
+    def ena_keys = [ 'tax_id', 'genetic_code', 'mito_code', 'domain', 'lineage' ]
+    if ( ena_keys.every { key -> sample[key] != null } ) {
+        return sample
+    }
+    def ena = fetchEnaTaxonomy(sample.name as String)
+    def lineage = ena['lineage'] as String
+    return sample + [
+        tax_id      : sample.tax_id ?: ena['taxId'],
+        genetic_code: sample.genetic_code ?: ena['geneticCode'],
+        mito_code   : sample.mito_code ?: ena['mitochondrialGeneticCode'],
+        domain      : sample.domain ?: lineage.tokenize(';')[0],
+        lineage     : sample.lineage ?: lineage
+    ]
+}
+
+// The sample meta record, with the genome properties and BUSCO lineages from GOAT when it was queried
+def sampleMeta(sample: Map, goat_tsv: Path?, busco_lineages: String?) -> Record {
+    def id = (sample.name as String).replace(" ", "_")
+    if ( goat_tsv == null ) {
+        return record(id: id, sample: sample, settings: [ busco: [ lineages: busco_lineages ] ])
+    }
+    def rows = goat_tsv.splitCsv( sep: "\t", header: true, quote: '"' )
+    def species = rows.find { row -> row.scientific_name == sample.name } as Map
+    assert species != null : "Failed to parse species '${sample.name}' in GOAT_TAXONSEARCH output .tsv"
+    def goat_lineages = rows.findAll { row -> row.odb10_lineage }.collect { row -> row.odb10_lineage }.join(',')
+    return record(
+        id      : id,
+        sample  : sample + [
+            genome_size   : sample.genome_size ?: species['genome_size'],
+            haploid_number: sample.haploid_number ?: species['haploid_number'],
+            ploidy        : sample.ploidy ?: species['ploidy']
+        ],
+        settings: [ busco: [ lineages: busco_lineages ?: goat_lineages ] ]
+    )
+}
 
 workflow PREPARE_INPUT {
 
     take:
-    infile
-    // taxdb
+    input         : Path    // YAML file with the sample and the data
+    busco_lineages: String? // Comma separated BUSCO lineages, or null to use GOAT
 
     main:
-    // Read in YAML
-    ch_input = channel.fromPath( infile, checkIfExists: true )
-        .map { file -> readYAML( file ) }
+    def data = readYaml(input)
+    def sample = sampleFromEna(data.sample as Map)
 
-    // Populate meta data
-    FETCH_SAMPLE_METADATA( ch_input ).metadata
-        .dump( tag: 'Input: Meta', pretty: true )
-        .multiMap { data ->
-            assembly_ch    : ( data.assembly ? [ data.subMap('id','sample','settings') , data.assembly ] : [] )
-            hic_ch         : ( data.hic      ? [ data.subMap('id','sample','settings') + [ single_end: false ], data.hic.collect { rec -> [ file( rec.read1, checkIfExists: true ), file( rec.read2, checkIfExists: true ) ] } ] : [] )
-            hifi_ch        : ( data.hifi     ? [ data.subMap('id','sample','settings') + [ single_end: true ], data.hifi.collect { rec -> file( rec.reads, checkIfExists: true ) } ] : [] )
-            rnaseq_ch      : ( data.rnaseq   ? [ data.subMap('id','sample','settings'), data.rnaseq.collect { rec -> rec.reads ? file( rec.reads, checkIfExists: true ) : [ file( rec.read1, checkIfExists: true ), file( rec.read2, checkIfExists: true ) ] } ] : [] )
-            isoseq_ch      : ( data.isoseq   ? [ data.subMap('id','sample','settings') + [ single_end: true ], data.isoseq.collect { rec -> file( rec.reads, checkIfExists: true ) } ] : [] )
+    // Look up the genome properties and BUSCO lineages in GOAT for eukaryotes, unless all is user defined
+    def goat_keys = [ 'genome_size', 'haploid_number', 'ploidy' ]
+    def use_goat = sample.domain == "Eukaryota" && ( !goat_keys.every { key -> sample[key] != null } || !busco_lineages )
+    goat = GOAT_TAXONSEARCH(
+        channel.of( record(id: (sample.name as String).replace(" ", "_"), taxon: sample.name as String, taxa_file: null, goat_args: "--lineage --variables odb10_lineage,haploid_number,genome_size,ploidy") )
+            .filter { _x -> use_goat }
+    )
+    metadata = goat
+        .map { g -> sampleMeta(sample, g.taxonsearch, busco_lineages) }
+        .mix(
+            channel.of(sample.name)
+                .filter { _x -> !use_goat }
+                .map { _x -> sampleMeta(sample, null, busco_lineages) }
+        )
+
+    // Assemblies supplied as input
+    def assembly_inputs = ( data.assembly ?: [] ) as List
+    assemblies = metadata.flatMap { m ->
+        assembly_inputs.collect { a ->
+            def asm = a as Map
+            def build = "${asm.assembler}-${asm.stage}-${asm.id}"
+            record(
+                id       : build,
+                meta     : m + record(assembly: [ assembler: asm.assembler, stage: asm.stage, id: asm.id, build: build ]),
+                pri_fasta: file(asm.pri_fasta as String, checkIfExists: true),
+                alt_fasta: asm.alt_fasta ? file(asm.alt_fasta as String, checkIfExists: true) : null,
+                pri_gfa  : asm.pri_gfa ? file(asm.pri_gfa as String, checkIfExists: true) : null,
+                alt_gfa  : asm.alt_gfa ? file(asm.alt_gfa as String, checkIfExists: true) : null
+            )
+        }.toList()
+    }
+
+    // Hi-C read pairs, numbered
+    def hic_inputs = ( data.hic ?: [] ) as List
+    hic = metadata.flatMap { m ->
+        (0..<hic_inputs.size()).collect { index ->
+            def pair = hic_inputs[index] as Map
+            record(
+                id   : m.id,
+                meta : m + record(single_end: false, pair_id: index),
+                reads: [ file(pair.read1 as String, checkIfExists: true), file(pair.read2 as String, checkIfExists: true) ]
+            )
+        }.toList()
+    }
+
+    // PacBio HiFi reads. Convert BAMs to FastQ
+    def hifi_files = ( data.hifi ?: [] ).collect { h -> file((h as Map).reads as String, checkIfExists: true) }.toList()
+    hifi_bam = metadata.flatMap { m ->
+        hifi_files
+            .findAll { f -> f.name.endsWith(".bam") }
+            .collect { bam -> record(id: "${m.id}:${bam.baseName}", meta: m + record(single_end: true), single_end: true, bam: bam, output_prefix: bam.baseName) }
+            .toList()
+    }
+    converted_bams = SAMTOOLS_FASTA( hifi_bam )
+    hifi_converted = converted_bams
+        .flatMap { r -> r.fasta.collect { fasta -> record(id: r.meta.id, meta: r.meta, reads: [ fasta ]) }.toList() }
+    hifi = metadata
+        .flatMap { m ->
+            hifi_files
+                .findAll { f -> !f.name.endsWith(".bam") } // assume everything else is fastx
+                .collect { f -> record(id: m.id, meta: m + record(single_end: true), reads: [ f ]) }
+                .toList()
         }
-        .set{ input }
+        .mix(hifi_converted)
 
-    // Convert assembly filename to files for correct staging
-    input.assembly_ch
-        .filter { item -> !item.isEmpty() }
-        .transpose()     // Data is now [ sample, [ id:'assemblerX_build1', pri_fasta: '/path/to/primary_asm.fasta', alt_fasta: '/path/to/alternate_asm.fasta', pri_gfa: '/path/to/primary_asm.gfa', alt_gfa: '/path/to/alternate_asm.gfa' ]]
-        .map { meta, assembly ->
-            def asm = [
-                assembler: assembly.assembler,
-                stage: assembly.stage,
-                id: assembly.id,
-                build: "${assembly.assembler}-${assembly.stage}-${assembly.id}",
-                pri_fasta: file( assembly.pri_fasta, checkIfExists: true ),
-                alt_fasta: ( assembly.alt_fasta ? file( assembly.alt_fasta, checkIfExists: true ) : null ),
-                pri_gfa  : ( assembly.pri_gfa ? file( assembly.pri_gfa, checkIfExists: true ) : null ),
-                alt_gfa  : ( assembly.alt_gfa ? file( assembly.alt_gfa, checkIfExists: true ) : null )
-            ]
-            [ meta + [ assembly: asm.subMap(['assembler','stage','id','build']) ], asm ]
+    // Merge the HiFi reads of a sample
+    hifi_by_sample = hifi
+        .map { r -> tuple(r.id, r) }
+        .groupBy()
+        .map { sample_id, results ->
+            def sorted = results.toList().toSorted { a, b -> a.reads[0].name <=> b.reads[0].name }
+            record(id: sample_id, meta: sorted[0].meta, reads: sorted.collect { r -> r.reads[0] }.toList())
         }
-        .set { assembly_ch }
+    merged = MERGE_PACBIO(
+        hifi_by_sample
+            .filter { s -> s.reads.size() > 1 }
+            .map { s -> record(id: s.id, meta: s.meta, files_in: s.reads, output_prefix: "${s.id}_mergedpb.fasta.gz") }
+    )
+    hifi_merged = hifi_by_sample
+        .filter { s -> s.reads.size() == 1 }
+        .map { s -> record(id: s.id, meta: s.meta, reads: s.reads) }
+        .mix(merged.map { m -> record(id: m.id, meta: m.meta, reads: [ m.file_out ]) })
 
-    // Combine Hi-C channels
-    input.hic_ch.filter { item -> !item.isEmpty() }
-        .flatMap { meta, hic_pairs -> hic_pairs.withIndex().collect{ pair, index -> [ meta + [pair_id: index], pair ] } }
-        .set { hic_fastx_ch }
+    // RNAseq reads: paired or single end
+    def rnaseq_inputs = ( data.rnaseq ?: [] ) as List
+    rnaseq = metadata.flatMap { m ->
+        rnaseq_inputs.collect { r ->
+            def rec = r as Map
+            def files = rec.reads
+                ? [ file(rec.reads as String, checkIfExists: true) ]
+                : [ file(rec.read1 as String, checkIfExists: true), file(rec.read2 as String, checkIfExists: true) ]
+            record(id: m.id, meta: m + record(single_end: files.size() == 1), reads: files)
+        }.toList()
+    }
 
-    // Prepare PacBio HiFi channel
-    // Convert HiFi BAMS to FastQ
-    input.hifi_ch
-        .filter { item -> !item.isEmpty() }
-        .transpose()   // Transform to [ [ id: 'sample_name'], file('/path/to/read')  ]
-        .branch { _meta, filename ->
-            bam_ch: filename.toString().endsWith(".bam")
-            fastx_ch: true // assume everything else is fastx
-        }.set { hifi }
-    fasta_from_bam = SAMTOOLS_FASTA (
-        hifi.bam_ch.map { meta, bam ->
-            record(id: "${meta.id}:${bam.baseName}", meta: record(meta), single_end: meta.single_end, bam: bam, output_prefix: bam.baseName)
-        }
-    ).flatMap { r -> r.fasta.collect { fasta -> tuple([:] + r.meta, fasta) } }
-    hifi.fastx_ch.mix( fasta_from_bam )
-        .set { hifi_fastx_ch }
-    sample_fastx = hifi_fastx_ch.groupTuple()
-        .branch { meta, fastx ->
-            single: fastx.size() == 1
-                return [ meta ] + fastx
-            multi: true
-                return [ meta, fastx ]
-        }
-    merged_pacbio = MERGE_PACBIO (
-        sample_fastx.multi.map { meta, fastx ->
-            record(id: meta.id, meta: record(meta), files_in: fastx, output_prefix: "${meta.id}_mergedpb.fasta.gz")
-        }
-    ).map { r -> tuple([:] + r.meta, r.file_out) }
-
-    // Prepare RNAseq channel
-    input.rnaseq_ch.filter { item -> !item.isEmpty() }
-        .transpose()
-        .map { meta, reads -> [ meta + [ single_end: reads instanceof Path ], reads ] }
-        .set { rnaseq_fastx_ch }
-
-    // Prepare Isoseq channel
-    input.isoseq_ch.filter { item -> !item.isEmpty() }
-        .transpose()
-        .set { isoseq_fastx_ch }
+    // Isoseq reads
+    def isoseq_inputs = ( data.isoseq ?: [] ) as List
+    isoseq = metadata.flatMap { m ->
+        isoseq_inputs.collect { r -> record(id: m.id, meta: m + record(single_end: true), reads: [ file((r as Map).reads as String, checkIfExists: true) ]) }.toList()
+    }
 
     emit:
-    sample_meta = FETCH_SAMPLE_METADATA.out.metadata.map { data -> data.subMap('sample') }
-    assemblies  = assembly_ch.dump( tag: 'Input: Assemblies', pretty: true )
-    hic         = hic_fastx_ch.dump( tag: 'Input: Hi-C', pretty: true )
-    hifi        = hifi_fastx_ch.dump( tag: 'Input: PacBio HiFi', pretty: true )
-    hifi_merged = sample_fastx.single.mix( merged_pacbio )
-    rnaseq      = rnaseq_fastx_ch.dump( tag: 'Input: Illumina RnaSeq', pretty: true )
-    isoseq      = isoseq_fastx_ch.dump( tag: 'Input: PacBio IsoSeq', pretty: true )
-}
-
-def readYAML( yamlfile ) {
-    // TODO: Validate sample file - nf-schema
-    return new org.yaml.snakeyaml.Yaml().load( new FileReader( yamlfile.toString() ) )
+    goat       : Channel<Record>   = goat
+    converted  : Channel<Record>   = converted_bams
+    metadata   : Channel<Record>   = metadata
+    assemblies : Channel<Assembly> = assemblies
+    hic        : Channel<Reads>    = hic
+    hifi       : Channel<Reads>    = hifi
+    hifi_merged: Channel<Reads>    = hifi_merged
+    rnaseq     : Channel<Reads>    = rnaseq
+    isoseq     : Channel<Reads>    = isoseq
 }

@@ -193,7 +193,7 @@ workflow SCAFFOLD_CURATION {
             }
     )
 
-    COOLER_ZOOMIFY(
+    zoomify = COOLER_ZOOMIFY(
         cool.map { c ->
             record(
                 id: c.id,
@@ -349,7 +349,7 @@ workflow SCAFFOLD_CURATION {
     )
 
     // Telomer-track: convert telomer bedgraph into beddb file that can be ingested into HiGlass
-    CREATE_TELOMER_BIGWIG_TRACK(
+    telomer_bigwig = CREATE_TELOMER_BIGWIG_TRACK(
         telomer_bedgraph
             .filter { t -> t.bedgraph != null }
             .join(sizes, by: 'id')
@@ -368,7 +368,7 @@ workflow SCAFFOLD_CURATION {
     // ingest coverage, gap and telomer track into Pretext
     // for each assembly always join:
     // 1-PretextMap with 1-CoverageTrack with 1-TelomereTrack with 1-GapTrack
-    PRETEXT_TRACKS_INGESTION(
+    pretext_tracks = PRETEXT_TRACKS_INGESTION(
         pretext
             .map { p -> record(id: p.id, meta: p.meta, pretext_in: p.pretext) }
             .join(coverage.map { c -> record(id: c.id, cov_bedgraph: c.capped_bed) }, by: 'id')
@@ -386,4 +386,11 @@ workflow SCAFFOLD_CURATION {
                 )
             }
     )
+
+    emit:
+    zoomify       : Channel<Record> = zoomify
+    coverage      : Channel<Record> = coverage
+    gaps          : Channel<Record> = gaps
+    telomer_bigwig: Channel<Record> = telomer_bigwig
+    pretext_tracks: Channel<Record> = pretext_tracks
 }

@@ -86,4 +86,6 @@ workflow DECONTAMINATE {
     emit:
     assemblies: Channel<Assembly> = assemblies_out
     logs      : Channel<Path>     = screened.map { r -> r.fcs_gx_report }
+    screened  : Channel<Record>   = screened
+    cleaned   : Channel<Record>   = cleaned
 }

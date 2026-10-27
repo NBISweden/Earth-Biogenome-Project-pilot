@@ -1,18 +1,24 @@
-include { TOL_SEARCH                 } from "../../../modules/local/tol/search"
-include { REPORT_DTOL                } from "../../../modules/local/report/dtol"
-include { REPORT_GENOMETRAITS        } from "../../../modules/local/report/genometraits"
-include { QUARTO_NOTEBOOK            } from "../../../modules/local/quarto/notebook/main.nf"
+nextflow.enable.types = true
+
+include { TOL_SEARCH          } from "../../../modules/local/tol/search"
+include { REPORT_GENOMETRAITS } from "../../../modules/local/report/genometraits"
+include { QUARTO_NOTEBOOK     } from "../../../modules/local/quarto/notebook/main.nf"
+include { WRITE_FILE          } from "../../../modules/local/report/write_file"
 
 workflow ASSEMBLY_REPORT {
     take:
-    notebook      // Channel: [ meta:Map, notebook:Path, aux_files:Path ]
-    logs          // Channel: Path
-    versions      // Channel: Path
-    report_params // Object: Map
+    metadata     : Channel<Record>   // The sample
+    notebook     : Path              // Quarto notebook
+    aux_files    : List<Path>        // Notebooks it includes
+    logs         : Channel<Path>
+    versions     : Value<Path>
+    report_params: Map<String,Boolean>
 
     main:
     // DTOL table
-    REPORT_DTOL( TOL_SEARCH( notebook.map{ meta, _notebook, _aux -> meta.sample.tax_id } ).json )
+    dtol = TOL_SEARCH(
+        metadata.map { m -> record(id: m.id, taxid: "${m.sample.tax_id}") }
+    )
 
     // Genome traits table
         // Expected vs Observed
@@ -20,19 +26,42 @@ workflow ASSEMBLY_REPORT {
         // Haploid Number // GOAT vs HiC
         // Ploidy         // GOAT vs HiC
         // Sample Sex     // GOAT vs HiC
-    REPORT_GENOMETRAITS( notebook.map{ meta, _notebook, _aux -> meta } )
-    def mqc_files = logs.mix(
-        REPORT_DTOL.out.tsv,
-        REPORT_GENOMETRAITS.out.tsv,
-        versions
+    traits = REPORT_GENOMETRAITS(
+        metadata.map { m ->
+            record(id: m.id, sample_name: m.sample.name, genome_size: "${m.sample.genome_size}", haploid_number: "${m.sample.haploid_number}", ploidy: "${m.sample.ploidy}")
+        }
     )
 
-    QUARTO_NOTEBOOK(
-        notebook.collect(),
-        mqc_files.collect().dump(tag:'MultiQC', pretty: true),
-        channel.value(report_params.collect{ k, v -> "$k: ${v}" }.join('\n')).collectFile(),
+    mqc_files = logs
+        .mix(dtol.map { d -> d.tsv })
+        .mix(traits.map { t -> t.tsv })
+        .collect()
+
+    params_file = WRITE_FILE(
+        channel.of( record(id: 'report_params', filename: 'params.yml', content: report_params.keySet().toList().collect { k -> "${k}: ${report_params[k]}" }.join('\n')) )
+    )
+
+    report = QUARTO_NOTEBOOK(
+        metadata
+            .map { m -> record(id: m.id, meta: m) }
+            .combine(mqc: mqc_files)
+            .combine(versions: versions)
+            .combine(params_file: params_file.map { p -> p.file }.collect().map { l -> l.toList()[0] })
+            .map { x ->
+                record(
+                    id: x.id,
+                    meta: x.meta,
+                    notebook: notebook,
+                    aux_files: aux_files,
+                    log_files: x.mqc.toList() + [ x.versions ],
+                    report_params: x.params_file,
+                    quarto_args: null,
+                    output_prefix: null
+                )
+            }
     )
 
     emit:
-    report = QUARTO_NOTEBOOK.out.html
+    report: Channel<Record> = report
+    dtol  : Channel<Record> = dtol
 }

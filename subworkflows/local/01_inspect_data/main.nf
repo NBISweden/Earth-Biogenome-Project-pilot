@@ -55,7 +55,7 @@ workflow INSPECT_DATA {
     )
 
     logs = genome_properties.logs
-        .mix(compare_libraries)
+        .mix(compare_libraries.logs)
         .mix(hifi_stats.map { s -> s.stats })
         .mix(hic_stats.map { s -> s.stats })
         .mix(fastqc.flatMap { f -> f.zip.toList() })
@@ -63,4 +63,11 @@ workflow INSPECT_DATA {
     emit:
     hifi_kmer_cov: Channel<Record> = genome_properties.kmer_cov
     logs         : Channel<Path>   = logs
+    seqkit_hifi  : Channel<Record> = hifi_stats
+    seqkit_hic   : Channel<Record> = hic_stats
+    fastqc       : Channel<Record> = fastqc
+    genescopefk  : Channel<Record> = genome_properties.genescopefk
+    smudgeplot   : Channel<Record> = genome_properties.smudgeplot
+    katgc        : Channel<Record> = genome_properties.katgc
+    katcomp      : Channel<Record> = compare_libraries.katcomp
 }

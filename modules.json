@@ -281,12 +281,6 @@
             "installed_by": ["modules"],
             "patch": "modules/nf-core/tidk/search/tidk-search.diff"
           },
-          "untar": {
-            "branch": "master",
-            "git_sha": "447f7bc0fa41dfc2400c8cad4c0291880dc060cf",
-            "installed_by": ["modules"],
-            "patch": "modules/nf-core/untar/untar.diff"
-          },
           "yahs": {
             "branch": "master",
             "git_sha": "b9837690be3f0296341829f656347d4662891daa",

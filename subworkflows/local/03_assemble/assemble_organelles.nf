@@ -142,4 +142,8 @@ workflow ASSEMBLE_ORGANELLES {
     // TODO: emit filtered assembly, or contig list to purge. Also emit from 03_assemble.
     mito_assemblies: Channel<Record> = mito_assemblies
     logs           : Channel<Path>   = logs
+    reference      : Channel<Record> = reference
+    mitohifi       : Channel<Record> = mitohifi
+    oatk           : Channel<Record> = oatk
+    dotplots       : Channel<Record> = dotplots
 }

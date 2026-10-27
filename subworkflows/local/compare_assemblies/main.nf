@@ -36,5 +36,6 @@ workflow COMPARE_ASSEMBLIES {
     )
 
     emit:
-    logs: Channel<Path> = quast.map { q -> q.tsv }
+    logs : Channel<Path>   = quast.map { q -> q.tsv }
+    quast: Channel<Record> = quast
 }

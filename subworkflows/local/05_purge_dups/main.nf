@@ -80,4 +80,5 @@ workflow PURGE_DUPLICATES {
     emit:
     assemblies: Channel<Assembly> = assemblies_out
     logs      : Channel<Path>     = purged.flatMap { p -> p.logs.toList() }
+    purged    : Channel<Record>   = purged
 }

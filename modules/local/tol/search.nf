@@ -1,23 +1,33 @@
+nextflow.enable.types = true
+
 process TOL_SEARCH {
-    tag "Taxid: $taxid"
+    tag "Taxid: ${taxid}"
     label 'process_single'
 
     input:
-    val taxid
+    record(
+        id: String,
+        taxid: String
+    )
 
     output:
-    val json                     , emit: json
-    path "${taxid}_tol_info.json", emit: json_file
+    record(
+        id: id,
+        json_file: file("${taxid}_tol_info.json"),
+        tsv: file("DToL.tsv")
+    )
 
     exec:
-    def response = new URL("https://id.tol.sanger.ac.uk/api/v2/species?taxonomyId=$taxid").text
-    def lazy_json = new groovy.json.JsonSlurper().parseText(response)
-    json = [
-        tol_id:  lazy_json.species[0]['tolIds'][0]?.tolId?: "No ToL ID",
-        species: lazy_json.species[0]['scientificName'],
-        taxClass:   lazy_json.species[0]['taxaClass'],
-        order:   lazy_json.species[0]['order'],
+    def response = file("https://id.tol.sanger.ac.uk/api/v2/species?taxonomyId=${taxid}").text
+    def lazy_json = new groovy.json.JsonSlurper().parseText(response) as Map
+    def species = (lazy_json.species as List)[0] as Map
+    def tol_ids = species['tolIds'] as List
+    def tol_id = tol_ids ? (tol_ids[0] as Map)['tolId'] : "No ToL ID"
+    def tol_table = [
+        "ToL ID\tSpecies\tClass\tOrder",
+        [ tol_id ?: "No ToL ID", species['scientificName'], species['taxaClass'], species['order'] ].join("\t")
     ]
     def jsonBuilder = new groovy.json.JsonBuilder(lazy_json)
     file("${task.workDir}/${taxid}_tol_info.json").text = jsonBuilder.toPrettyString()
+    file("${task.workDir}/DToL.tsv").text = tol_table.join('\n')
 }

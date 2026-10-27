@@ -80,5 +80,7 @@ workflow BUILD_FASTK_DATABASE {
     )
 
     emit:
-    database: Channel<FastkDatabase> = database
+    database    : Channel<FastkDatabase> = database
+    fastk_runs  : Channel<Record>        = counted
+    fastk_merged: Channel<Record>        = merged
 }

@@ -131,5 +131,9 @@ workflow EVALUATE_ASSEMBLY {
         .filter { f -> f != null }
 
     emit:
-    logs: Channel<Path> = logs
+    logs     : Channel<Path>   = logs
+    merquryfk: Channel<Record> = merquryfk
+    merqury  : Channel<Record> = merqury
+    busco    : Channel<Record> = busco
+    gfastats : Channel<Record> = gfastats
 }

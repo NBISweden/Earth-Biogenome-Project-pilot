@@ -101,7 +101,7 @@ workflow {
 
     evaluation = EVALUATE_ASSEMBLY(
         assemblies,
-        fastk,
+        fastk.database,
         meryl.uniondb,
         params.use_phased,
         params.busco.max_lineages ?: 3,
@@ -110,7 +110,7 @@ workflow {
     comparison = COMPARE_ASSEMBLIES( assemblies, params.reference )
 
     publish:
-    reports = evaluation.mix(comparison)
+    reports = evaluation.logs.mix(comparison.logs)
 }
 
 output {

@@ -71,6 +71,9 @@ workflow GENOME_PROPERTIES {
         .filter { f -> f != null }
 
     emit:
-    kmer_cov: Channel<Record> = genescope.map { g -> record(id: g.id, meta: g.meta, kmer_cov: g.kmer_cov) }
-    logs    : Channel<Path>   = logs
+    kmer_cov  : Channel<Record> = genescope.map { g -> record(id: g.id, meta: g.meta, kmer_cov: g.kmer_cov) }
+    logs      : Channel<Path>   = logs
+    genescopefk: Channel<Record> = genescope
+    smudgeplot: Channel<Record> = smudgeplot
+    katgc     : Channel<Record> = katgc
 }

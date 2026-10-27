@@ -159,7 +159,7 @@ workflow SCAFFOLD {
         record(id: x.id, meta: x.meta, pri_fasta: x.fastas[0], alt_fasta: x.fastas.size() > 1 ? x.fastas[1] : null, pri_gfa: null, alt_gfa: null)
     }
 
-    MERGE_HAPLOTYPES(
+    merged_haplotypes = MERGE_HAPLOTYPES(
         scaffolded
             .filter { x -> x.fastas.size() > 1 }
             .map { x ->
@@ -175,6 +175,9 @@ workflow SCAFFOLD {
     )
 
     emit:
-    assemblies: Channel<Assembly> = assemblies_out
-    logs      : Channel<Path>     = pairs.flatMap { p -> p.stat.toList() }
+    assemblies       : Channel<Assembly> = assemblies_out
+    logs             : Channel<Path>     = pairs.flatMap { p -> p.stat.toList() }
+    pairtools        : Channel<Record>   = pairs
+    yahs             : Channel<Record>   = scaffolds
+    merged_haplotypes: Channel<Record>   = merged_haplotypes
 }

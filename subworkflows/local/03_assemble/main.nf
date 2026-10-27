@@ -54,6 +54,12 @@ workflow ASSEMBLE {
     )
 
     emit:
-    raw_assemblies: Channel<Assembly> = nuclear.assemblies
-    logs          : Channel<Path>     = nuclear.logs.mix(organelle.logs)
+    raw_assemblies  : Channel<Assembly> = nuclear.assemblies
+    logs            : Channel<Path>     = nuclear.logs.mix(organelle.logs)
+    hifiasm         : Channel<Record>   = nuclear.hifiasm
+    gfa2fa          : Channel<Record>   = nuclear.gfa2fa
+    mito_reference  : Channel<Record>   = organelle.reference
+    mitohifi        : Channel<Record>   = organelle.mitohifi
+    oatk            : Channel<Record>   = organelle.oatk
+    dotplots        : Channel<Record>   = organelle.dotplots
 }

@@ -135,4 +135,6 @@ workflow ASSEMBLE_HIFI {
     emit:
     assemblies: Channel<Assembly> = assemblies
     logs      : Channel<Path>     = hifiasm.map { h -> h.log }
+    hifiasm   : Channel<Record>   = hifiasm
+    gfa2fa    : Channel<Record>   = fastas
 }

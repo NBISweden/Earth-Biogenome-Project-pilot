@@ -1,6 +1,13 @@
+nextflow.enable.types = true
+
 process QUARTO_NOTEBOOK {
-    tag "$notebook.baseName"
+    tag "${notebook.baseName}"
     label 'process_single'
+
+    ext [
+        args: { quarto_args ?: '' },
+        prefix: { output_prefix ?: notebook.baseName }
+    ]
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -8,19 +15,33 @@ process QUARTO_NOTEBOOK {
         'community.wave.seqera.io/library/multiqc_jupyter_pandas_papermill_pruned:c3a45031dd77805d' }"
 
     input:
-    tuple val(meta), path(notebook, arity: '1'), path(_aux_files)
-    path (log_files, stageAs: 'log_files/*', arity: '1..*')
-    path 'params.yml'
+    record(
+        id: String,
+        meta: Record?,
+        notebook: Path,
+        aux_files: List<Path>,
+        log_files: List<Path>,
+        report_params: Path,
+        quarto_args: String?,
+        output_prefix: String?
+    )
+
+    stage:
+    stageAs log_files, 'log_files/*'
+    stageAs report_params, 'params.yml'
 
     output:
-    path "${prefix}.html", arity: '1', emit: html
-    path "${prefix}.md"  , arity: '1', emit: github_markdown
-    path "multiqc*.html" , arity: '1', emit: multiqc_summary
-    path "versions.yml"  , arity: '1', emit: versions
+    record(
+        id: id,
+        meta: meta,
+        html: file("${task.ext.prefix}.html"),
+        github_markdown: file("${task.ext.prefix}.md"),
+        multiqc_summary: file("multiqc*.html"),
+        versions: file("versions.yml")
+    )
 
     script:
-    def args = task.ext.args ?: ''
-    prefix = task.ext.prefix ?: notebook.baseName
+    def args = task.ext.args
     """
     export USERID=\$UID
     export XDG_CACHE_HOME=tmp/quarto_cache_home
@@ -52,7 +73,7 @@ process QUARTO_NOTEBOOK {
     """
 
     stub:
-    prefix = task.ext.prefix ?: notebook.baseName
+    def prefix = task.ext.prefix
     """
     touch ${prefix}.html ${prefix}.md multiqc_stub.html versions.yml
     """

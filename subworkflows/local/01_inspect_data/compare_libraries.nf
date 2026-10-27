@@ -32,5 +32,6 @@ workflow COMPARE_LIBRARIES {
     )
 
     emit:
-    logs: Channel<Path> = katcomp.map { k -> k.stacked_png }.filter { f -> f != null }
+    logs   : Channel<Path>   = katcomp.map { k -> k.stacked_png }.filter { f -> f != null }
+    katcomp: Channel<Record> = katcomp
 }

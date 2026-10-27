@@ -320,4 +320,5 @@ workflow DVPOLISH {
     emit:
     assemblies: Channel<Assembly> = assemblies_out
     logs      : Channel<Path>     = final_asm.map { f -> f.dvpolish_selection_tsv }
+    final_asm : Channel<Record>   = final_asm
 }
