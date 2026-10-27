@@ -13,6 +13,11 @@ record FastkDatabase {
     prof: List<Path>
 }
 
+// Half the haploid k-mer coverage, rounded. Math.round returns a Long, which the process input rejects as an Integer.
+def smudgeplotThreshold(kmer_cov: String) -> Integer {
+    return Math.round(kmer_cov.toDouble() / 2) as Integer
+}
+
 workflow GENOME_PROPERTIES {
 
     take:
@@ -52,7 +57,7 @@ workflow GENOME_PROPERTIES {
                     id: s.id,
                     meta: s.meta,
                     fastk_ktab: s.ktab,
-                    smudgeplot_threshold: Math.round(s.kmer_cov.toDouble() / 2),
+                    smudgeplot_threshold: smudgeplotThreshold(s.kmer_cov),
                     smudgeplot_args2: "--json_report --format png",
                     output_prefix: s.id
                 )
