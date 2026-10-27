@@ -4,6 +4,44 @@ All notable changes to this pipeline will be documented in this file, going
 forward from this release. Format loosely follows
 [Keep a Changelog](https://keepachangelog.com/).
 
+## [Unreleased]
+
+### Changed (breaking)
+
+- Requires Nextflow >= 26.10.0. The workflow is statically typed: every
+  process, local and nf-core, takes and emits one record, and every
+  subworkflow and `main.nf` use records instead of tuples. See the
+  [migration guide](docs/migration-typed-records.md) and ADR 0002.
+- `when:` and `ext.when` are removed. Stages are switched with `steps`.
+- `ext.args` and `ext.prefix` for the workflow's own tool calls are record
+  fields set by the workflows, not selectors in `configs/modules.config`.
+  A user selector still overrides them. Process names carry the stage alias, so
+  selectors with stage names that no longer exist match nothing.
+- Results are published with `publish:` and an `output {}` block instead of
+  `publishDir`. The published folders are unchanged, except that the HiFi
+  coverage tracks, which matched no file before, are no longer published.
+- Pipeline params are declared in `main.nf`. `nextflow.config` keeps only
+  config params (`outdir`, `publish_mode`, `cache`). The nested `stage { ... }`
+  config scope is now the param `stage_dirs`.
+- ENA is queried in the workflow, and `TOL_SEARCH` writes `DToL.tsv`
+  (`ENA_TAXQUERY` and `REPORT_DTOL` are removed).
+- 47 nf-core modules are patched with `nf-core modules patch` and tracked in
+  `modules.json`.
+
+### Added
+
+- `pipelines/assembly_qc`: evaluate assemblies (MerquryFK, Merqury, BUSCO,
+  gfastats, QUAST) as a pipeline of its own.
+- `stub:` blocks for 25 processes. `-stub-run` now runs the whole workflow.
+- ADR 0001 (stage gating) and ADR 0002 (typed records and stage pipelines).
+
+### Fixed
+
+- `genescopefk` declared `prefix` twice and did not compile under Nextflow
+  >= 26.04.
+- `SMUDGEPLOT` is joined to `GENESCOPEFK` by sample id, not by channel order.
+- hifiasm ultra-long reads are passed comma-separated.
+
 ## [1.0.0] - 2026-09-23
 
 First tagged release. This formalizes the pipeline's current state rather

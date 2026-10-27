@@ -30,9 +30,10 @@ behind permanent adapters. biovat#132 converts every module to records instead.
   tool. A record param does not merge field defaults (#415), so fields are
   optional and the entry workflow applies defaults. User-facing names such as
   `fastk.kmer_size` stay.
-- **Wide outputs.** Every workflow joins related outputs into one record per
-  sample or assembly, and the `output {}` block publishes that record. The
-  published directory tree changes in the next major release.
+- **Wide outputs.** The `output {}` block publishes record channels. The first
+  conversion keeps one channel per tool and reproduces the published tree with
+  `path` closures, so downstream tooling and snapshots keep working. Joining the
+  outputs of a stage into one record per sample or assembly is a follow-up.
 - **Stage input.** Each stage accepts the current nested `--input` YAML and uses
   the parts it needs. Pipelines that include a stage pass typed channel params.
 - **Order** (agent-skills `migrate-nextflow-code`): strict syntax, topic
@@ -50,8 +51,10 @@ channels at the stage boundary.
 **Flat CSV per stage (biovat).** Cleaner types, but a new input format for every
 stage and a migration for existing YAML users.
 
-**Per-tool outputs with an unchanged tree.** Avoids a layout change, but needs
-one `emit` per tool and one `output {}` entry per channel.
+**Wide per-sample outputs in the first conversion.** One combined record per
+sample would simplify the `output {}` block, but it changes the published tree
+and needs a regenerated snapshot. Deferred; the per-tool channels cost one
+`emit` and one `output {}` entry each.
 
 **v1.x with a long-lived 1.x branch.** Supports sites without Nextflow 26.10 at
 the cost of maintaining two lines.
@@ -60,9 +63,9 @@ the cost of maintaining two lines.
 
 - 47 nf-core modules are patched; `nf-core modules update` applies each patch on
   top of the new upstream version and reports conflicts.
-- The published tree, process names (`STAGE:TOOL`) and several params change.
-  Downstream configs with fully qualified selectors stop matching without an
-  error.
+- Process names (`STAGE:TOOL`) and several params change. Downstream configs
+  with fully qualified selectors stop matching without an error. The published
+  tree is unchanged.
 - New modules follow the spec from the day this ADR lands.
 - Included pipelines need Nextflow >= 26.10, and composition may change in later
   Nextflow releases.
