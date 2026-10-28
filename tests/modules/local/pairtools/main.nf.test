@@ -1,0 +1,44 @@
+nextflow_process {
+
+    name "Test Process PAIRTOOLS"
+    script "../../../../modules/local/pairtools/main.nf"
+    process "PAIRTOOLS"
+
+    tag "modules"
+    tag "modules_local"
+    tag "pairtools"
+
+    test("pairs - stub") {
+        options "-stub-run"
+
+        when {
+            process {
+                """
+                input[0] = record(
+                    id: 'test',
+                    meta: [ id: 'test', sample: [ genome_size: 1000000 ] ], // read by the resource config
+                    bam: [ file("\$projectDir/tests/data/modules/seq.fasta") ],
+                    chromsizes: file("\$projectDir/tests/data/modules/chrom_sizes.fa.fai"),
+                    fasta: file("\$projectDir/tests/data/modules/seq.fasta"),
+                    sort_bam: false,
+                    pairtools_args: null,
+                    pairtools_args2: null,
+                    pairtools_args3: null,
+                    pairtools_args4: null,
+                    pairtools_args5: null,
+                    pairtools_args6: null,
+                    output_prefix: 'test'
+                )
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            def out = process.out[0][0]
+            def names = { v -> [v].flatten().collect { f -> new File(f.toString()).name }.sort() }
+            assert names(out.pairs) == ['test.split.pairs.gz']
+            assert names(out.stat) == ['test.pairsam.stat', 'test_dedup.pairs.stat']
+        }
+    }
+}

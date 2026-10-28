@@ -1,0 +1,32 @@
+nextflow_process {
+
+    name "Test Process EXTRACT_CHROMSIZES"
+    script "../../../../../modules/local/extract/chromsizes/main.nf"
+    process "EXTRACT_CHROMSIZES"
+
+    tag "modules"
+    tag "modules_local"
+    tag "extract/chromsizes"
+
+    test("two chromosomes") {
+
+        when {
+            process {
+                """
+                input[0] = record(
+                    id: 'test',
+                    meta: null,
+                    faidx: file("\$projectDir/tests/data/modules/chrom_sizes.fa.fai")
+                )
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            def out = process.out[0][0]
+            def names = { v -> [v].flatten().collect { f -> new File(f.toString()).name }.sort() }
+            assert new File(out.chr_sizes.toString()).text.trim() == 'chr1\t1000\nchr2\t500'
+        }
+    }
+}

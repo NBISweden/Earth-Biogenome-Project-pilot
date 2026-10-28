@@ -1,0 +1,37 @@
+nextflow_process {
+
+    name "Test Process SEQKIT_MERGE"
+    script "../../../../../modules/local/seqkit/merge/main.nf"
+    process "SEQKIT_MERGE"
+
+    tag "modules"
+    tag "modules_local"
+    tag "seqkit/merge"
+
+    test("merge two files - stub") {
+        options "-stub-run"
+
+        when {
+            process {
+                """
+                input[0] = record(
+                    id: 'test',
+                    meta: null,
+                    fastx: [ file("\$projectDir/tests/data/modules/seq.fasta"), file("\$projectDir/tests/data/modules/seq.fasta") ],
+                    out_ext: 'fasta.gz',
+                    seqkit_args: null,
+                    seqkit_args2: null,
+                    output_prefix: 'merged'
+                )
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            def out = process.out[0][0]
+            def names = { v -> [v].flatten().collect { f -> new File(f.toString()).name }.sort() }
+            assert names(out.fastx) == ['merged.fasta.gz']
+        }
+    }
+}

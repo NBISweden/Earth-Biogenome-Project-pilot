@@ -1,0 +1,63 @@
+nextflow_process {
+
+    name "Test Process SAMTOOLS_FASTA"
+    script "../../../../../modules/local/samtools/fasta/main.nf"
+    process "SAMTOOLS_FASTA"
+
+    tag "modules"
+    tag "modules_local"
+    tag "samtools/fasta"
+
+    test("single end - stub") {
+        options "-stub-run"
+
+        when {
+            process {
+                """
+                input[0] = record(
+                    id: 'test',
+                    meta: null,
+                    single_end: true,
+                    bam: file("\$projectDir/tests/data/tiny/PB_HIFI/dmel_2Mb.fastq.gz"),
+                    samtools_args: null,
+                    output_prefix: null
+                )
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            def out = process.out[0][0]
+            def names = { v -> [v].flatten().collect { f -> new File(f.toString()).name }.sort() }
+            assert out.id == 'test'
+            assert names(out.fasta) == ['test.fasta.gz']
+        }
+    }
+
+    test("paired end - stub") {
+        options "-stub-run"
+
+        when {
+            process {
+                """
+                input[0] = record(
+                    id: 'test',
+                    meta: null,
+                    single_end: false,
+                    bam: file("\$projectDir/tests/data/tiny/PB_HIFI/dmel_2Mb.fastq.gz"),
+                    samtools_args: null,
+                    output_prefix: null
+                )
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            def out = process.out[0][0]
+            def names = { v -> [v].flatten().collect { f -> new File(f.toString()).name }.sort() }
+            assert names(out.fasta) == ['test_1.fasta.gz', 'test_2.fasta.gz']
+        }
+    }
+}

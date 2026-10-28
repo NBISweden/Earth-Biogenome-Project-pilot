@@ -1,0 +1,36 @@
+nextflow_process {
+
+    name "Test Process OATK_SELECTHMM"
+    script "../../../../../modules/local/oatk/selecthmm/main.nf"
+    process "OATK_SELECTHMM"
+
+    tag "modules"
+    tag "modules_local"
+    tag "oatk/selecthmm"
+
+    test("select hmm - stub") {
+        options "-stub-run"
+
+        when {
+            process {
+                """
+                input[0] = record(
+                    id: 'test',
+                    meta: null,
+                    species: 'Drosophila melanogaster',
+                    lineage: 'Eukaryota',
+                    oatkdb: file("\$projectDir/tests/data/modules")
+                )
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            def out = process.out[0][0]
+            def names = { v -> [v].flatten().collect { f -> new File(f.toString()).name }.sort() }
+            assert names(out.mito_hmm).contains('stub_mito.fam')
+            assert names(out.pltd_hmm).contains('stub_pltd.fam')
+        }
+    }
+}

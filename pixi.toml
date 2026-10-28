@@ -21,6 +21,7 @@ dev = { cmd = "nextflow run main.nf -profile docker,test,debug --oatkdb database
 # Run nf-tests
 nftest-docker = "nf-test test tests/main.nf.test --verbose"
 nftest-singularity = "nf-test test tests/main.nf.test --verbose --profile singularity"
+nftest-modules = "nf-test test tests/modules --profile docker"
 # Lint
 lint = "nextflow lint -o concise -exclude .pixi -exclude .git -exclude work -exclude .nf-test -exclude results -exclude nf-test.config ."
 # Clean up

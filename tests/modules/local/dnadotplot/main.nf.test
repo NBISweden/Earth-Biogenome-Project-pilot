@@ -1,0 +1,36 @@
+nextflow_process {
+
+    name "Test Process DNADOTPLOT"
+    script "../../../../modules/local/dnadotplot/main.nf"
+    process "DNADOTPLOT"
+
+    tag "modules"
+    tag "modules_local"
+    tag "dnadotplot"
+
+    test("dotplot - stub") {
+        options "-stub-run"
+
+        when {
+            process {
+                """
+                input[0] = record(
+                    id: 'test',
+                    meta: null,
+                    ref: file("\$projectDir/tests/data/modules/seq.fasta"),
+                    query: file("\$projectDir/tests/data/modules/seq.fasta"),
+                    experiment: 'mito',
+                    dnadotplot_args: null
+                )
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            def out = process.out[0][0]
+            def names = { v -> [v].flatten().collect { f -> new File(f.toString()).name }.sort() }
+            assert names(out.svg) == ['seq1-seq_seq2-seq.mito.svg']
+        }
+    }
+}

@@ -1,0 +1,80 @@
+nextflow_process {
+
+    name "Test Process ITERATIVE_PURGEDUPS"
+    script "../../../../modules/local/purgedups/main.nf"
+    process "ITERATIVE_PURGEDUPS"
+
+    tag "modules"
+    tag "modules_local"
+    tag "purgedups"
+
+    test("one haplotype - stub") {
+        options "-stub-run"
+
+        when {
+            process {
+                """
+                input[0] = record(
+                    id: 'test',
+                    meta: [ id: 'test', sample: [ genome_size: 1000000 ] ], // read by the resource config
+                    reads: [ file("\$projectDir/tests/data/tiny/PB_HIFI/dmel_2Mb.fastq.gz") ],
+                    assemblies: [ file("\$projectDir/tests/data/modules/seq.fasta") ],
+                    minimap2_reads_args: null,
+                    minimap2_self_args: null,
+                    pbcstat_args: null,
+                    calcuts_args: null,
+                    hist_plot_args: null,
+                    split_fa_args: null,
+                    purge_dups_args: null,
+                    get_seqs_args: null,
+                    seqkit_args: null,
+                    output_prefix: 'test'
+                )
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            def out = process.out[0][0]
+            def names = { v -> [v].flatten().collect { f -> new File(f.toString()).name }.sort() }
+            assert names(out.purged) == ['test_hap1.purged.fa', 'test_hap2.purged.fa']
+            assert names(out.logs) == ['test_hap1.dups.bed']
+        }
+    }
+
+    test("two haplotypes - stub") {
+        options "-stub-run"
+
+        when {
+            process {
+                """
+                input[0] = record(
+                    id: 'test',
+                    meta: [ id: 'test', sample: [ genome_size: 1000000 ] ], // read by the resource config
+                    reads: [ file("\$projectDir/tests/data/tiny/PB_HIFI/dmel_2Mb.fastq.gz") ],
+                    assemblies: [ file("\$projectDir/tests/data/modules/seq.fasta"), file("\$projectDir/tests/data/modules/seq.fasta") ],
+                    minimap2_reads_args: null,
+                    minimap2_self_args: null,
+                    pbcstat_args: null,
+                    calcuts_args: null,
+                    hist_plot_args: null,
+                    split_fa_args: null,
+                    purge_dups_args: null,
+                    get_seqs_args: null,
+                    seqkit_args: null,
+                    output_prefix: 'test'
+                )
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            def out = process.out[0][0]
+            def names = { v -> [v].flatten().collect { f -> new File(f.toString()).name }.sort() }
+            assert names(out.purged) == ['test_hap1.purged.fa', 'test_hap2.purged.fa']
+            assert names(out.logs) == ['test_hap1.dups.bed', 'test_hap2.dups.bed']
+        }
+    }
+}
