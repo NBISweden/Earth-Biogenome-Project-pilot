@@ -1,0 +1,21 @@
+# Tiny dataset, paths relative to the repository root.
+# The tiny data set has no RNAseq reads: the Hi-C pairs stand in for them in a stub run.
+- id: hifiasm-raw-hifi_v1
+  meta:
+    id: Drosophila_melanogaster
+    sample:
+      name: Drosophila melanogaster
+      genome_size: 176040000
+      ploidy: 2
+    settings:
+      busco:
+        lineages: diptera_odb10
+    assembly:
+      assembler: hifiasm
+      stage: raw
+      id: hifi_v1
+      build: hifiasm-raw-hifi_v1
+  pri_fasta: tests/data/tiny/assembly/hifiasm-raw-hifi_v1.asm.bp.p_ctg.fasta
+  rnaseq:
+  - - tests/data/tiny/HIC/dmel_2Mb_p1_R1.fastq.gz
+    - tests/data/tiny/HIC/dmel_2Mb_p1_R2.fastq.gz
