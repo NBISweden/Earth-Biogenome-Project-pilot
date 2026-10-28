@@ -9,7 +9,7 @@ include { Assembly                   } from "../../../types/records"
 workflow EVALUATE_ASSEMBLY {
 
     take:
-    assemblies            : Channel<Assembly> // With the HiFi k-mer databases (fastk_hifi, meryl_hifi)
+    assemblies            : Channel<Assembly> // With the HiFi k-mer databases (fastk_hifi_*, meryl_hifi_db)
     use_phased            : Boolean
     busco_max_lineages    : Integer
     busco_lineages_db_path: Path?
@@ -18,13 +18,13 @@ workflow EVALUATE_ASSEMBLY {
     // Kmer consistency check
     merquryfk = MERQURYFK_MERQURYFK(
         assemblies
-            .filter { a -> a.fastk_hifi != null }
+            .filter { a -> a.fastk_hifi_hist != null }
             .map { a ->
                 record(
                     id: a.id,
                     meta: a.meta,
-                    fastk_hist: a.fastk_hifi.hist,
-                    fastk_ktab: a.fastk_hifi.ktab,
+                    fastk_hist: a.fastk_hifi_hist,
+                    fastk_ktab: a.fastk_hifi_ktab,
                     assembly: a.pri_fasta,
                     haplotigs: a.alt_fasta,
                     mathaptab: [],
@@ -37,12 +37,12 @@ workflow EVALUATE_ASSEMBLY {
 
     merqury = MERQURY(
         assemblies
-            .filter { a -> a.meryl_hifi != null }
+            .filter { a -> a.meryl_hifi_db != null }
             .map { a ->
                 record(
                     id: a.id,
                     meta: a.meta,
-                    meryl_db: a.meryl_hifi.meryl_db,
+                    meryl_db: a.meryl_hifi_db,
                     assembly: a.alt_fasta ? [ a.pri_fasta, a.alt_fasta ] : [ a.pri_fasta ],
                     output_prefix: a.meta.id
                 )
