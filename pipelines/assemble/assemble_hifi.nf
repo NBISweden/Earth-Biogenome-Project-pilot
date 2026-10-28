@@ -1,0 +1,115 @@
+nextflow.enable.types = true
+
+include { HIFIASM         } from "../../modules/nf-core/hifiasm/main"
+include { GFATOOLS_GFA2FA } from "../../modules/local/gfatools/gfa2fa"
+include { Assembly; Sample } from "../../types/records"
+
+// Add the hifiasm configuration and the assembly build to the sample meta data
+def assemblyMeta(meta: Record, key: String, args: String) -> Record {
+    return meta + record(
+        settings: meta.settings + [ hifiasm: [ id: key, args: args ] ],
+        assembly: [ assembler: 'hifiasm', stage: 'raw', id: key, build: "hifiasm-raw-${key}" ]
+    )
+}
+
+// A raw assembly with the data of its sample
+def rawAssembly(s: Record, meta: Record, pri_fasta: Path, alt_fasta: Path?, pri_gfa: Path?, alt_gfa: Path?) -> Assembly {
+    return record(
+        id             : meta.assembly.build,
+        meta           : meta,
+        pri_fasta      : pri_fasta,
+        alt_fasta      : alt_fasta,
+        pri_gfa        : pri_gfa,
+        alt_gfa        : alt_gfa,
+        hifi           : s.hifi,
+        hifi_merged    : s.hifi_merged,
+        hic            : s.hic,
+        rnaseq         : s.rnaseq,
+        fastk_hifi_hist: s.fastk_hifi_hist,
+        fastk_hifi_ktab: s.fastk_hifi_ktab,
+        fastk_hifi_prof: s.fastk_hifi_prof,
+        meryl_hifi_db  : s.meryl_hifi_db,
+        kmer_cov       : s.kmer_cov
+    )
+}
+
+workflow ASSEMBLE_HIFI {
+    take:
+    samples         : Channel<Sample>
+    hifiasm_configs : Map<String,String> // [ build_id: "hifiasm args" ]. Empty for a single default build.
+    hifiasm_with_hic: Boolean
+    use_phased      : Boolean
+
+    main:
+    // One assembly per hifiasm configuration. The Hi-C pairs are used when requested.
+    builds = samples.flatMap { s ->
+        def configs = hifiasm_configs ?: [ 'default': '' ]
+        def pairs = hifiasm_with_hic ? ( s.hic ?: [] ) : []
+        configs.keySet().collect { key ->
+            record(
+                id: "hifiasm-raw-${key}",
+                sample: s,
+                meta: assemblyMeta(s.meta, key, configs[key]),
+                reads: [ s.hifi_merged ],
+                hifiasm_args: configs[key],
+                hic_read1: pairs.collect { p -> p.first() }.toList(),
+                hic_read2: pairs.collect { p -> p.last() }.toList()
+            )
+        }.toList()
+    }
+
+    hifiasm = HIFIASM(
+        builds.map { b ->
+            record(
+                id: b.id,
+                meta: b.meta,
+                long_reads: b.reads,
+                ul_reads: [],
+                paternal_kmer_dump: null,
+                maternal_kmer_dump: null,
+                hic_read1: b.hic_read1,
+                hic_read2: b.hic_read2,
+                bin_files: [],
+                hifiasm_args: b.hifiasm_args
+            )
+        }
+    )
+
+    // Convert the contig graphs to fasta
+    fastas = GFATOOLS_GFA2FA(
+        hifiasm.flatMap { h ->
+            def gfas = use_phased ? [ h.hap1_contigs, h.hap2_contigs ] : [ h.primary_contigs ]
+            gfas.findAll { g -> g != null }.collect { g -> record(id: h.id, meta: h.meta, gfa: g, output_prefix: g.baseName) }.toList()
+        }
+    )
+
+    gfas = hifiasm.map { h ->
+        record(
+            id: h.id,
+            pri_gfa: use_phased ? h.hap1_contigs : h.primary_contigs,
+            alt_gfa: use_phased ? h.hap2_contigs : null
+        )
+    }
+
+    assemblies = fastas
+        .map { f -> tuple(f.id, f) }
+        .groupBy()
+        .map { id, results ->
+            def sorted = results.toSorted { a, b -> a.fasta.name <=> b.fasta.name }
+            record(
+                id: id,
+                meta: sorted[0].meta,
+                pri_fasta: sorted[0].fasta,
+                alt_fasta: sorted.size() > 1 ? sorted[1].fasta : null
+            )
+        }
+        .join(gfas, by: 'id')
+        .join(builds.map { b -> record(id: b.id, sample: b.sample) }, by: 'id')
+        .map { x -> rawAssembly(x.sample, x.meta, x.pri_fasta, x.alt_fasta, x.pri_gfa, x.alt_gfa) }
+
+    emit:
+    assemblies: Channel<Assembly> = assemblies
+    logs      : Channel<Path>     = hifiasm.map { h -> h.log }
+    hifiasm   : Channel<Record>   = hifiasm
+    gfa2fa    : Channel<Record>   = fastas
+}
