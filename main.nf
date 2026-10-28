@@ -400,6 +400,7 @@ workflow {
     star              = rnaseq
     // Evaluation
     merquryfk         = evaluated.merquryfk
+    merqury           = evaluated.merqury
     busco             = evaluated.busco
     gfastats          = evaluated.gfastats
     quast             = compared.quast
@@ -535,6 +536,9 @@ output {
     // Evaluation
     merquryfk: Channel<Record> {
         path { r -> "${assemblyStageDir(params.stage_dirs, r.meta.assembly.stage)}/merquryfk/${r.meta.assembly.build}" }
+    }
+    merqury: Channel<Record> {
+        path { r -> "${assemblyStageDir(params.stage_dirs, r.meta.assembly.stage)}/merqury/${r.meta.assembly.build}" }
     }
     busco: Channel<Record> {
         path { r ->

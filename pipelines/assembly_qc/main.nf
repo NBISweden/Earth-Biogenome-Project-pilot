@@ -111,6 +111,7 @@ workflow {
 
     publish:
     merquryfk = evaluation.merquryfk
+    merqury   = evaluation.merqury
     busco     = evaluation.busco
     gfastats  = evaluation.gfastats
     quast     = comparison.quast
@@ -119,6 +120,9 @@ workflow {
 output {
     merquryfk: Channel<Record> {
         path { r -> "merquryfk/${r.meta.assembly.build}" }
+    }
+    merqury: Channel<Record> {
+        path { r -> "merqury/${r.meta.assembly.build}" }
     }
     busco: Channel<Record> {
         path { r ->
