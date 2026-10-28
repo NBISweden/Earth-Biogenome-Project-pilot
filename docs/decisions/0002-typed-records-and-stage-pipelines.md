@@ -1,6 +1,7 @@
 # 0002: Typed records and stage pipelines
 
-Status: accepted
+Status: accepted. The wide outputs and stage input decisions are replaced by
+[0003](0003-wide-records-and-stage-pipelines.md).
 
 ## Context
 
