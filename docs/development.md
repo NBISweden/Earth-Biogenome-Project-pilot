@@ -12,22 +12,24 @@ content is described by its fields and not by its position in a tuple. See
 [the migration guide](migration-typed-records.md) for the rules that every
 process and workflow follows, and for how to add a module or a stage.
 
-Most records have an `id`, a `meta` record and the files of a step:
+Most records have an `id`, a `meta` record and the files of a step. The record
+types shared by the workflow and the pipelines are in `types/records.nf`. A
+stage takes one wide record per subject (`Sample` for the read stages,
+`Assembly` for the assembly stages) and does not join its inputs:
 
 ```
-record Reads {
-    id   : String        // sample id
-    meta : Record        // see below
-    reads: List<Path>
-}
-
 record Assembly {
-    id       : String    // meta.assembly.build
-    meta     : Record    // sample meta data, including meta.assembly
-    pri_fasta: Path
-    alt_fasta: Path?
-    pri_gfa  : Path?
-    alt_gfa  : Path?
+    id             : String    // meta.assembly.build
+    meta           : Record    // sample meta data, including meta.assembly
+    pri_fasta      : Path
+    alt_fasta      : Path?
+    pri_gfa        : Path?
+    alt_gfa        : Path?
+    hifi           : List<Path>?       // sample data the stages need
+    hifi_merged    : Path?
+    hic            : List<List<Path>>?
+    rnaseq         : List<List<Path>>?
+    fastk_hifi_hist: Path?  // and fastk_hifi_ktab, fastk_hifi_prof, meryl_hifi_db
 }
 ```
 

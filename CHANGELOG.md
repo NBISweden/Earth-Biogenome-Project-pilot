@@ -18,8 +18,16 @@ forward from this release. Format loosely follows
   A user selector still overrides them. Process names carry the stage alias, so
   selectors with stage names that no longer exist match nothing.
 - Results are published with `publish:` and an `output {}` block instead of
-  `publishDir`. The published folders are unchanged, except that the HiFi
-  coverage tracks, which matched no file before, are no longer published.
+  `publishDir`. **The published tree changed:** each stage folder has one
+  subfolder per sample or assembly build with the tools inside, and the QC of
+  an assembly is in `<stage dir>/<build>/qc/`. The moved paths are listed in
+  the migration guide. The HiFi coverage tracks, which matched no file before,
+  are no longer published.
+- Stages are pipelines under `pipelines/` that take one wide record per sample
+  or assembly (`types/records.nf`). Assembly QC runs per stage: evaluation
+  starts when an assembly exists, QUAST compares the assemblies of one stage,
+  and `ASSEMBLE` waits for the HiFi k-mer databases. `PURGE_DUPLICATES` no
+  longer waits for the k-mer coverage estimate. See ADR 0003.
 - Pipeline params are declared in `main.nf`. `nextflow.config` keeps only
   config params (`outdir`, `publish_mode`, `cache`). The nested `stage { ... }`
   config scope is now the param `stage_dirs`.
@@ -33,9 +41,11 @@ forward from this release. Format loosely follows
 ### Added
 
 - `pipelines/assembly_qc`: evaluate assemblies (MerquryFK, Merqury, BUSCO,
-  gfastats, QUAST) as a pipeline of its own.
+  gfastats, QUAST) as a pipeline of its own, included by the stage pipelines.
+- Stub-based nf-tests for the local modules (`pixi run nftest-modules`).
 - `stub:` blocks for 25 processes. `-stub-run` now runs the whole workflow.
-- ADR 0001 (stage gating) and ADR 0002 (typed records and stage pipelines).
+- ADR 0001 (stage gating), ADR 0002 (typed records and stage pipelines) and
+  ADR 0003 (wide records and per-stage pipelines).
 
 ### Fixed
 

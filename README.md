@@ -255,8 +255,8 @@ flowchart TD
 ## Usage
 
 Requires Nextflow >= 26.10.0. If you are updating from v1.0.0, read the
-[migration guide](docs/migration-typed-records.md): the published folders and the
-input are unchanged, but process names and `ext.when` are not.
+[migration guide](docs/migration-typed-records.md): the input is unchanged, but the
+published folders, process names and `ext.when` are not.
 
 ```bash
 nextflow run -params-file <params.yml> \
@@ -857,8 +857,9 @@ workflow/
  | - dockerfiles/                    Custom container definition files
  | - docs/                           Workflow usage and interpretation information
  | - modules/                        Process definitions for tools used in the workflow
- | - pipelines/                      Stages that run as pipelines of their own (assembly_qc)
- | - subworkflows/                   Custom workflows for different stages of the main analysis
+ | - pipelines/                      The assembly stages and the assembly QC, each a pipeline that runs on its own
+ | - subworkflows/                   Custom workflows for the read preparation, inspection and reports
+ | - types/                          Record types shared by the workflow and the pipelines
  | - tests/                          Workflow tests
  | - main.nf                         The primary analysis script
  | - nextflow.config                 General Nextflow configuration
