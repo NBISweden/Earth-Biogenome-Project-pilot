@@ -1,0 +1,7 @@
+# Tiny dataset, paths relative to the repository root
+assemblies: 'pipelines/polish/tests/assemblies.yml'
+chunk_size: '1.MB'
+fastk:
+  kmer_size: 14
+meryl:
+  kmer_size: 14
