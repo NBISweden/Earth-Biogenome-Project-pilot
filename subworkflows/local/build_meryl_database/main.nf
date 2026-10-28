@@ -3,18 +3,7 @@ nextflow.enable.types = true
 include { MERYL_COUNT     } from "../../../modules/nf-core/meryl/count/main"
 include { MERYL_UNIONSUM  } from "../../../modules/nf-core/meryl/unionsum/main"
 include { MERYL_HISTOGRAM } from "../../../modules/nf-core/meryl/histogram/main"
-
-record Reads {
-    id   : String
-    meta : Record
-    reads: List<Path>
-}
-
-record MerylDatabase {
-    id       : String
-    meta     : Record
-    meryl_db : Path
-}
+include { Reads; MerylDatabase } from "../../../types/records"
 
 workflow BUILD_MERYL_DATABASE {
 

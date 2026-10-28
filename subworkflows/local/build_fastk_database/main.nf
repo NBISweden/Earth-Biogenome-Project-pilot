@@ -2,20 +2,7 @@ nextflow.enable.types = true
 
 include { FASTK_FASTK } from "../../../modules/nf-core/fastk/fastk/main"
 include { FASTK_MERGE } from "../../../modules/nf-core/fastk/merge/main"
-
-record Reads {
-    id   : String
-    meta : Record
-    reads: List<Path>
-}
-
-record FastkDatabase {
-    id  : String
-    meta: Record
-    hist: Path
-    ktab: List<Path>
-    prof: List<Path>
-}
+include { Reads; FastkDatabase } from "../../../types/records"
 
 def fastkDatabase(id: String, meta: Record, hist: Path, ktab: List<Path>, prof: List<Path>) -> FastkDatabase {
     return record(id: id, meta: meta, hist: hist, ktab: ktab, prof: prof)

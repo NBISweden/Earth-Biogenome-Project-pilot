@@ -4,36 +4,12 @@ include { BUSCO_BUSCO as BUSCO       } from "../../../modules/nf-core/busco/busc
 include { MERQURYFK_MERQURYFK        } from "../../../modules/nf-core/merquryfk/merquryfk"
 include { MERQURY_MERQURY as MERQURY } from "../../../modules/nf-core/merqury/merqury/main"
 include { GFASTATS                   } from "../../../modules/nf-core/gfastats/main"
-
-record Assembly {
-    id       : String  // meta.assembly.build
-    meta     : Record  // sample meta data, including meta.assembly
-    pri_fasta: Path
-    alt_fasta: Path?
-    pri_gfa  : Path?
-    alt_gfa  : Path?
-}
-
-record FastkDatabase {
-    id  : String
-    meta: Record
-    hist: Path
-    ktab: List<Path>
-    prof: List<Path>
-}
-
-record MerylDatabase {
-    id      : String
-    meta    : Record
-    meryl_db: Path
-}
+include { Assembly                   } from "../../../types/records"
 
 workflow EVALUATE_ASSEMBLY {
 
     take:
-    assemblies            : Channel<Assembly>
-    fastk_db              : Channel<FastkDatabase>
-    meryl_db              : Channel<MerylDatabase>
+    assemblies            : Channel<Assembly> // With the HiFi k-mer databases (fastk_hifi, meryl_hifi)
     use_phased            : Boolean
     busco_max_lineages    : Integer
     busco_lineages_db_path: Path?
@@ -42,29 +18,35 @@ workflow EVALUATE_ASSEMBLY {
     // Kmer consistency check
     merquryfk = MERQURYFK_MERQURYFK(
         assemblies
-            .map { a -> record(id: a.id, sample_id: a.meta.id, meta: a.meta, assembly: a.pri_fasta, haplotigs: a.alt_fasta) }
-            .join(fastk_db.map { d -> record(sample_id: d.id, fastk_hist: d.hist, fastk_ktab: d.ktab) }, by: 'sample_id')
-            .map { x ->
+            .filter { a -> a.fastk_hifi != null }
+            .map { a ->
                 record(
-                    id: x.id,
-                    meta: x.meta,
-                    fastk_hist: x.fastk_hist,
-                    fastk_ktab: x.fastk_ktab,
-                    assembly: x.assembly,
-                    haplotigs: x.haplotigs,
+                    id: a.id,
+                    meta: a.meta,
+                    fastk_hist: a.fastk_hifi.hist,
+                    fastk_ktab: a.fastk_hifi.ktab,
+                    assembly: a.pri_fasta,
+                    haplotigs: a.alt_fasta,
                     mathaptab: [],
                     pathaptab: [],
                     merquryfk_args: "-k",
-                    output_prefix: "${x.meta.assembly.build}_merquryfk"
+                    output_prefix: "${a.meta.assembly.build}_merquryfk"
                 )
             }
     )
 
     merqury = MERQURY(
         assemblies
-            .map { a -> record(id: a.id, sample_id: a.meta.id, meta: a.meta, assembly: a.alt_fasta ? [ a.pri_fasta, a.alt_fasta ] : [ a.pri_fasta ]) }
-            .join(meryl_db.map { m -> record(sample_id: m.id, meryl_db: m.meryl_db) }, by: 'sample_id')
-            .map { x -> record(id: x.id, meta: x.meta, meryl_db: x.meryl_db, assembly: x.assembly, output_prefix: x.meta.id) }
+            .filter { a -> a.meryl_hifi != null }
+            .map { a ->
+                record(
+                    id: a.id,
+                    meta: a.meta,
+                    meryl_db: a.meryl_hifi.meryl_db,
+                    assembly: a.alt_fasta ? [ a.pri_fasta, a.alt_fasta ] : [ a.pri_fasta ],
+                    output_prefix: a.meta.id
+                )
+            }
     )
 
     // Evaluate core gene space coverage
