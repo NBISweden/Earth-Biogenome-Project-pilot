@@ -15,13 +15,7 @@ include { FCSGX_FETCHDB                          } from '../../modules/local/fcs
 include { FCSGX_RUNGX                            } from '../../modules/local/fcsgx/rungx'
 include { FCSGX_CLEAN                            } from '../../modules/local/fcsgx/clean'
 include { workflow as ASSEMBLY_QC_DECONTAMINATED } from '../assembly_qc'
-include { Assembly; KmerParams; BuscoParams; assemblyWith } from '../../types/records'
-
-record FcsParams {
-    database    : Path?   // Local copy of the FCS-GX database. Fetched with the manifest when not set.
-    manifest    : String? // URL of the FCS-GX database manifest
-    ramdisk_path: String? // Copy the database here before running FCS-GX
-}
+include { Assembly; KmerParams; BuscoParams; FcsParams; assemblyWith } from '../../types/records'
 
 params {
     assemblies: Channel<Assembly>  // Assemblies to screen

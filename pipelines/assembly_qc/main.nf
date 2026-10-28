@@ -83,8 +83,7 @@ def assembliesFromParams(sample: Sample, assemblies: List<AssemblyInput>, hifi: 
             fastk_hifi_hist: null,
             fastk_hifi_ktab: null,
             fastk_hifi_prof: null,
-            meryl_hifi_db  : null,
-            kmer_cov       : null
+            meryl_hifi_db  : null
         )
     }.toList()
 }
@@ -95,7 +94,7 @@ def hifiReads(a: Record) -> List<Reads> {
     return ( a.hifi ?: [] ).collect { f -> record(id: a.meta.id, meta: sample_meta, reads: [ f ]) }.toList()
 }
 
-def withDatabases(a: Record, fastk: FastkDatabase, meryl: MerylDatabase) -> Assembly {
+def withDatabases(a: Record, fastk: FastkDatabase, meryl: MerylDatabase) {
     return assemblyWith(a, [ fastk_hifi_hist: fastk.hist, fastk_hifi_ktab: fastk.ktab, fastk_hifi_prof: fastk.prof, meryl_hifi_db: meryl.meryl_db ])
 }
 

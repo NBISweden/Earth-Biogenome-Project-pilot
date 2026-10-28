@@ -43,7 +43,9 @@ record Sample {
     fastk_hifi_ktab: List<Path>?
     fastk_hifi_prof: List<Path>?
     meryl_hifi_db  : Path?                // HiFi Meryl database
-    kmer_cov       : String?              // HiFi k-mer coverage estimated by GenomeScope
+    fastk_hic_hist : Path?                // Hi-C FastK database
+    fastk_hic_ktab : List<Path>?
+    fastk_hic_prof : List<Path>?
 }
 
 // One record per assembly build, used by the assembly stages. Carries the sample data the stages need.
@@ -63,13 +65,13 @@ record Assembly {
     fastk_hifi_ktab: List<Path>?
     fastk_hifi_prof: List<Path>?
     meryl_hifi_db  : Path?                // HiFi Meryl database
-    kmer_cov       : String?              // HiFi k-mer coverage estimated by GenomeScope
 }
 
 // A new Assembly from the fields of a record, with some of them replaced. Stages build the records they
-// return with this. A record with extra fields cannot be passed to a function that takes an Assembly,
-// and an Assembly instance cannot be extended with `+`.
-def assemblyWith(a: Record, changes: Map) -> Assembly {
+// return with this. A record with extra fields cannot be passed to a function that takes an Assembly.
+// The return type is not declared: a declared record type makes the value an instance that join,
+// combine and `+` do not accept.
+def assemblyWith(a: Record, changes: Map) {
     return record(
         id             : ( changes.containsKey('id') ? changes.id : a.id ) as String,
         meta           : ( changes.containsKey('meta') ? changes.meta : a.meta ) as Record,
@@ -84,12 +86,11 @@ def assemblyWith(a: Record, changes: Map) -> Assembly {
         fastk_hifi_hist: ( changes.containsKey('fastk_hifi_hist') ? changes.fastk_hifi_hist : a.fastk_hifi_hist ) as Path,
         fastk_hifi_ktab: ( changes.containsKey('fastk_hifi_ktab') ? changes.fastk_hifi_ktab : a.fastk_hifi_ktab ) as List<Path>,
         fastk_hifi_prof: ( changes.containsKey('fastk_hifi_prof') ? changes.fastk_hifi_prof : a.fastk_hifi_prof ) as List<Path>,
-        meryl_hifi_db  : ( changes.containsKey('meryl_hifi_db') ? changes.meryl_hifi_db : a.meryl_hifi_db ) as Path,
-        kmer_cov       : ( changes.containsKey('kmer_cov') ? changes.kmer_cov : a.kmer_cov ) as String
+        meryl_hifi_db  : ( changes.containsKey('meryl_hifi_db') ? changes.meryl_hifi_db : a.meryl_hifi_db ) as Path
     )
 }
 
-def assemblyOf(a: Record) -> Assembly {
+def assemblyOf(a: Record) {
     return assemblyWith(a, [:])
 }
 
@@ -102,4 +103,10 @@ record BuscoParams {
     lineages        : String?  // Comma separated BUSCO lineages, or 'auto' to retrieve them from GOAT
     lineages_db_path: Path?    // Directory with downloaded BUSCO lineages. Downloads when not set.
     max_lineages    : Integer? // Number of lineages to analyse, starting from the most specific
+}
+
+record FcsParams {
+    database    : Path?   // Local copy of the FCS-GX database. Fetched with the manifest when not set.
+    manifest    : String? // URL of the FCS-GX database manifest
+    ramdisk_path: String? // Copy the database here before running FCS-GX
 }

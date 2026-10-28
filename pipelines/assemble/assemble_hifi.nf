@@ -13,7 +13,7 @@ def assemblyMeta(meta: Record, key: String, args: String) -> Record {
 }
 
 // A raw assembly with the data of its sample
-def rawAssembly(s: Record, meta: Record, pri_fasta: Path, alt_fasta: Path?, pri_gfa: Path?, alt_gfa: Path?) -> Assembly {
+def rawAssembly(s: Record, meta: Record, pri_fasta: Path, alt_fasta: Path?, pri_gfa: Path?, alt_gfa: Path?) {
     return record(
         id             : meta.assembly.build,
         meta           : meta,
@@ -28,8 +28,7 @@ def rawAssembly(s: Record, meta: Record, pri_fasta: Path, alt_fasta: Path?, pri_
         fastk_hifi_hist: s.fastk_hifi_hist,
         fastk_hifi_ktab: s.fastk_hifi_ktab,
         fastk_hifi_prof: s.fastk_hifi_prof,
-        meryl_hifi_db  : s.meryl_hifi_db,
-        kmer_cov       : s.kmer_cov
+        meryl_hifi_db  : s.meryl_hifi_db
     )
 }
 

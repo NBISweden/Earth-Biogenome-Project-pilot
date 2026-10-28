@@ -41,20 +41,7 @@ Meta data of the reads adds single_end (and pair_id for Hi-C). Meta data of the 
 assembly: [ assembler: "hifiasm", stage: "raw", id: uuid, build: "hifiasm-raw-uuid" ].
 */
 
-record Reads {
-    id   : String
-    meta : Record
-    reads: List<Path>
-}
-
-record Assembly {
-    id       : String  // meta.assembly.build
-    meta     : Record  // sample meta data, including meta.assembly
-    pri_fasta: Path
-    alt_fasta: Path?
-    pri_gfa  : Path?
-    alt_gfa  : Path?
-}
+include { Reads } from "../../../types/records"
 
 def readYaml(yaml_file: Path) -> Map {
     return new org.yaml.snakeyaml.Yaml().load(yaml_file.text) as Map
@@ -139,6 +126,7 @@ workflow PREPARE_INPUT {
             def build = "${asm.assembler}-${asm.stage}-${asm.id}"
             record(
                 id       : build,
+                sample_id: m.id,
                 meta     : m + record(assembly: [ assembler: asm.assembler, stage: asm.stage, id: asm.id, build: build ]),
                 pri_fasta: file(asm.pri_fasta as String, checkIfExists: true),
                 alt_fasta: asm.alt_fasta ? file(asm.alt_fasta as String, checkIfExists: true) : null,
@@ -148,18 +136,10 @@ workflow PREPARE_INPUT {
         }.toList()
     }
 
-    // Hi-C read pairs, numbered
-    def hic_inputs = ( data.hic ?: [] ) as List
-    hic = metadata.flatMap { m ->
-        (0..<hic_inputs.size()).collect { index ->
-            def pair = hic_inputs[index] as Map
-            record(
-                id   : m.id,
-                meta : m + record(single_end: false, pair_id: index),
-                reads: [ file(pair.read1 as String, checkIfExists: true), file(pair.read2 as String, checkIfExists: true) ]
-            )
-        }.toList()
-    }
+    // Hi-C read pairs
+    def hic_pairs = ( data.hic ?: [] ).collect { pair ->
+        [ file((pair as Map).read1 as String, checkIfExists: true), file((pair as Map).read2 as String, checkIfExists: true) ]
+    }.toList()
 
     // PacBio HiFi reads. Convert BAMs to FastQ
     def hifi_files = ( data.hifi ?: [] ).collect { h -> file((h as Map).reads as String, checkIfExists: true) }.toList()
@@ -199,32 +179,27 @@ workflow PREPARE_INPUT {
         .map { s -> record(id: s.id, meta: s.meta, reads: s.reads) }
         .mix(merged.map { m -> record(id: m.id, meta: m.meta, reads: [ m.file_out ]) })
 
-    // RNAseq reads: paired or single end
-    def rnaseq_inputs = ( data.rnaseq ?: [] ) as List
-    rnaseq = metadata.flatMap { m ->
-        rnaseq_inputs.collect { r ->
-            def rec = r as Map
-            def files = rec.reads
-                ? [ file(rec.reads as String, checkIfExists: true) ]
-                : [ file(rec.read1 as String, checkIfExists: true), file(rec.read2 as String, checkIfExists: true) ]
-            record(id: m.id, meta: m + record(single_end: files.size() == 1), reads: files)
-        }.toList()
-    }
+    // RNAseq reads: a pair, or a single file
+    def rnaseq_pairs = ( data.rnaseq ?: [] ).collect { r ->
+        def rec = r as Map
+        rec.reads
+            ? [ file(rec.reads as String, checkIfExists: true) ]
+            : [ file(rec.read1 as String, checkIfExists: true), file(rec.read2 as String, checkIfExists: true) ]
+    }.toList()
 
     // Isoseq reads
-    def isoseq_inputs = ( data.isoseq ?: [] ) as List
-    isoseq = metadata.flatMap { m ->
-        isoseq_inputs.collect { r -> record(id: m.id, meta: m + record(single_end: true), reads: [ file((r as Map).reads as String, checkIfExists: true) ]) }.toList()
-    }
+    def isoseq_files = ( data.isoseq ?: [] ).collect { r -> file((r as Map).reads as String, checkIfExists: true) }.toList()
+
+    // One record per sample with its reads
+    samples = metadata
+        .map { m -> record(id: m.id, meta: m, hic: hic_pairs, rnaseq: rnaseq_pairs, isoseq: isoseq_files) }
+        .join(hifi_by_sample.map { h -> record(id: h.id, hifi: h.reads) }, by: 'id', remainder: true)
+        .join(hifi_merged.map { h -> record(id: h.id, hifi_merged: h.reads[0]) }, by: 'id', remainder: true)
 
     emit:
-    goat       : Channel<Record>   = goat
-    converted  : Channel<Record>   = converted_bams
-    metadata   : Channel<Record>   = metadata
-    assemblies : Channel<Assembly> = assemblies
-    hic        : Channel<Reads>    = hic
-    hifi       : Channel<Reads>    = hifi
-    hifi_merged: Channel<Reads>    = hifi_merged
-    rnaseq     : Channel<Reads>    = rnaseq
-    isoseq     : Channel<Reads>    = isoseq
+    goat       : Channel<Record> = goat
+    converted  : Channel<Record> = converted_bams
+    metadata   : Channel<Record> = metadata
+    samples    = samples
+    assemblies = assemblies
 }

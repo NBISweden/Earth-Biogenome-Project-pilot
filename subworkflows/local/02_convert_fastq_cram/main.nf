@@ -4,11 +4,7 @@ include { FASTP           } from '../../../modules/nf-core/fastp/main'
 include { SAMTOOLS_IMPORT } from '../../../modules/nf-core/samtools/import/main'
 include { SAMTOOLS_INDEX  } from '../../../modules/nf-core/samtools/index/main'
 
-record Reads {
-    id   : String
-    meta : Record
-    reads: List<Path>
-}
+include { Reads } from "../../../types/records"
 
 // Longest common prefix of two file names, without trailing separators or a trailing _R
 def commonPrefix(first: String, last: String) -> String {
@@ -20,11 +16,18 @@ def commonPrefix(first: String, last: String) -> String {
 
 workflow CONVERT_FASTQ_CRAM {
     take:
-    ch_fastq       : Channel<Reads>
-    bool_trim_fastq: Boolean // Trim with Fastp
-    hic_type       : String  // Library type, recorded in the CRAM read group
+    samples        : Channel<Record> // With the Hi-C read pairs in `hic`
+    bool_trim_fastq: Boolean         // Trim with Fastp
+    hic_type       : String          // Library type, recorded in the CRAM read group
 
     main:
+    // One record per Hi-C read pair, numbered
+    ch_fastq = samples.flatMap { s ->
+        ( s.hic ?: [] ).withIndex().collect { pair, index ->
+            record(id: s.id, meta: s.meta + record(single_end: false, pair_id: index), reads: pair)
+        }.toList()
+    }
+
     // Filter
     trimmed = FASTP(
         ch_fastq
@@ -82,8 +85,19 @@ workflow CONVERT_FASTQ_CRAM {
         cram.map { c -> record(id: c.id, meta: c.meta, input: c.cram) }
     )
 
+    // The converted read pairs of each sample, in the order of the input
+    hic = fastq
+        .map { r -> tuple(r.id, r) }
+        .groupBy()
+        .map { sample_id, results ->
+            def sorted = results.toList().toSorted { a, b -> a.meta.pair_id <=> b.meta.pair_id }
+            record(id: sample_id, hic_fastq: sorted.collect { r -> r.reads.toList() }.toList())
+        }
+        .mix(samples.filter { s -> !s.hic }.map { s -> record(id: s.id, hic_fastq: null as List<List<Path>>) })
+
     emit:
     fastq: Channel<Reads>  = fastq
+    hic  = hic
     cram : Channel<Record> = cram
     crai : Channel<Record> = crai
 }
