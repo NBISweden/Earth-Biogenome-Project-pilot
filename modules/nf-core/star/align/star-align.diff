@@ -107,7 +107,7 @@ Changes in 'star/align/main.nf':
      def out_sam_type    = (args.contains('--outSAMtype')) ? '' : '--outSAMtype BAM Unsorted'
      def mv_unsorted_bam = (args.contains('--outSAMtype BAM Unsorted SortedByCoordinate')) ? "mv ${prefix}.Aligned.out.bam ${prefix}.Aligned.unsort.out.bam" : ''
      """
-@@ -69,17 +88,10 @@
+@@ -69,26 +88,17 @@
          mv ${prefix}.Unmapped.out.mate2 ${prefix}.unmapped_2.fastq
          gzip ${prefix}.unmapped_2.fastq
      fi
@@ -126,7 +126,16 @@ Changes in 'star/align/main.nf':
      """
      touch ${prefix}Xd.out.bam
      touch ${prefix}.Log.final.out
-@@ -98,12 +110,5 @@
+     touch ${prefix}.Log.out
+     touch ${prefix}.Log.progress.out
+-    touch ${prefix}.sortedByCoord.out.bam
+     touch ${prefix}.toTranscriptome.out.bam
+     touch ${prefix}.Aligned.unsort.out.bam
+-    touch ${prefix}.Aligned.sortedByCoord.out.bam
+     touch ${prefix}.unmapped_1.fastq.gz
+     touch ${prefix}.unmapped_2.fastq.gz
+     touch ${prefix}.tab
+@@ -98,12 +108,5 @@
      touch ${prefix}.out.sam
      touch ${prefix}.Signal.UniqueMultiple.str1.out.wig
      touch ${prefix}.Signal.UniqueMultiple.str1.out.bg
