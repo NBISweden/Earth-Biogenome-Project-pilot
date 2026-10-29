@@ -27,8 +27,8 @@ process MERQURY_MERQURY {
     record(
         id: id,
         meta: meta,
-        assembly_only_kmers_bed: file("*_only.bed"),
-        assembly_only_kmers_wig: file("*_only.wig"),
+        assembly_only_kmers_bed: files("*_only.bed"),
+        assembly_only_kmers_wig: files("*_only.wig"),
         stats: file("*.completeness.stats"),
         dist_hist: file("*.dist_only.hist"),
         spectra_cn_fl_png: file("*.spectra-cn.fl.png"),
