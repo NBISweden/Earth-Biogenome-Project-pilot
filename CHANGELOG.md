@@ -50,8 +50,9 @@ forward from this release. Format loosely follows
 
 ### Fixed
 
-- `merqury` declared one `*_only.bed` and one `*_only.wig` output. With two
-  assemblies it writes two of each and the process failed.
+- `merqury` declared one file for outputs that it writes once per assembly
+  (`*_only.bed`, `*_only.wig` and the `*.spectra-cn.*` plots and histogram).
+  With two assemblies the process failed.
 - `genescopefk` declared `prefix` twice and did not compile under Nextflow
   >= 26.04.
 - `SMUDGEPLOT` is joined to `GENESCOPEFK` by sample id, not by channel order.

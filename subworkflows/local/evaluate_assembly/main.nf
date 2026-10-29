@@ -107,7 +107,7 @@ workflow EVALUATE_ASSEMBLY {
         .mix(merquryfk.map { m -> m.spectra_asm_st })
         .mix(merquryfk.map { m -> m.false_duplications })
         .mix(merqury.flatMap { m -> m.scaffold_qv.toList() })
-        .mix(merqury.map { m -> m.spectra_cn_st_png })
+        .mix(merqury.flatMap { m -> m.spectra_cn_st_png.toList() })
         .mix(merqury.map { m -> m.spectra_asm_st_png })
         .mix(gfastats.map { g -> g.assembly_summary })
         .filter { f -> f != null }
