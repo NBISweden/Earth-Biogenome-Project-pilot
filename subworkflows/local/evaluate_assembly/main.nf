@@ -103,7 +103,7 @@ workflow EVALUATE_ASSEMBLY {
         .mix(merquryfk.map { m -> m.stats })
         .mix(merquryfk.map { m -> m.qv })
         // Contig names are missing in first column of assembly_qv
-        .mix(merquryfk.map { m -> m.full_spectra_cn_st ?: m.part_spectra_cn_st })
+        .mix(merquryfk.flatMap { m -> m.full_spectra_cn_st ? [ m.full_spectra_cn_st ] : m.part_spectra_cn_st.toList() })
         .mix(merquryfk.map { m -> m.spectra_asm_st })
         .mix(merquryfk.map { m -> m.false_duplications })
         .mix(merqury.flatMap { m -> m.scaffold_qv.toList() })
