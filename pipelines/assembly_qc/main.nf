@@ -94,6 +94,14 @@ def hifiReads(a: Record) -> List<Reads> {
     return ( a.hifi ?: [] ).collect { f -> record(id: a.meta.id, meta: sample_meta, reads: [ f ]) }.toList()
 }
 
+// Fails when the assembly has neither HiFi k-mer databases nor HiFi reads to build them from
+def requireHifiSource(a: Record) -> Boolean {
+    if ( a.fastk_hifi_hist == null && !a.hifi ) {
+        error "Assembly ${a.id} has no HiFi k-mer database and no HiFi reads (hifi) to build one."
+    }
+    return true
+}
+
 def withDatabases(a: Record, fastk: FastkDatabase, meryl: MerylDatabase) {
     return assemblyWith(a, [ fastk_hifi_hist: fastk.hist, fastk_hifi_ktab: fastk.ktab, fastk_hifi_prof: fastk.prof, meryl_hifi_db: meryl.meryl_db ])
 }
@@ -113,7 +121,10 @@ workflow {
             ? assembliesFromParams(params.sample, params.assembly, params.hifi ?: [], params.busco.lineages ?: '')
             : []
     )
-    inputs = from_params.mix(( params.assemblies ?: channel.empty() ).map { a -> assemblyOf(a) })
+    // The HiFi reads are required for the k-mer databases of an assembly that did not come with them
+    inputs = from_params
+        .mix(( params.assemblies ?: channel.empty() ).map { a -> assemblyOf(a) })
+        .filter { a -> requireHifiSource(a) }
 
     // K-mer databases for the assemblies that did not come with them
     with_databases = inputs.filter { a -> a.fastk_hifi_hist != null && a.meryl_hifi_db != null }

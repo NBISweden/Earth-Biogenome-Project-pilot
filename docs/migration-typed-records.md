@@ -205,6 +205,7 @@ nf-core modules have no typed version upstream, so the converted modules are tra
 - `ext.when` is not supported and `when:` is removed from every process.
 - Process names have a stage alias prefix, and the QC processes sit under the stage that includes them (`PURGE_DUPLICATES:ASSEMBLY_QC_PURGED:EVALUATE_ASSEMBLY:BUSCO`). Selectors with old stage names match nothing, without an error.
 - The published tree changed (see [Publishing](#publishing)).
+- HiFi reads are required. The input YAML needs `hifi`, and `assembly_qc` fails for an assembly that has neither HiFi k-mer databases nor HiFi reads. Before, an assembly without reads was evaluated without the k-mer tools.
 - QC is per stage. Evaluation starts as soon as an assembly exists, where it used to wait until all stages had finished. QUAST compares the assemblies of one stage, not all stages together. Curated assemblies were never evaluated and still are not.
 - `ASSEMBLE` waits for the HiFi k-mer databases and the Hi-C conversion, because the assemblies carry them and the QC reads them. The databases used to be built alongside the assembly.
 - `PURGE_DUPLICATES` does not wait for the k-mer coverage estimate of `INSPECT_DATA` any more. The value was never used. `INSPECT_DATA` reads the Hi-C reads after conversion.

@@ -141,6 +141,11 @@ workflow PREPARE_INPUT {
         [ file((pair as Map).read1 as String, checkIfExists: true), file((pair as Map).read2 as String, checkIfExists: true) ]
     }.toList()
 
+    // PacBio HiFi reads are required: the k-mer databases and the assembly QC are built from them
+    if ( !data.hifi ) {
+        error "The input ${input} has no HiFi reads. Add them under `hifi`."
+    }
+
     // PacBio HiFi reads. Convert BAMs to FastQ
     def hifi_files = ( data.hifi ?: [] ).collect { h -> file((h as Map).reads as String, checkIfExists: true) }.toList()
     hifi_bam = metadata.flatMap { m ->

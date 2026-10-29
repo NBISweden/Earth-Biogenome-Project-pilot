@@ -28,6 +28,7 @@ forward from this release. Format loosely follows
   starts when an assembly exists, QUAST compares the assemblies of one stage,
   and `ASSEMBLE` waits for the HiFi k-mer databases. `PURGE_DUPLICATES` no
   longer waits for the k-mer coverage estimate. See ADR 0003.
+- HiFi reads (`hifi`) are required in the input.
 - Pipeline params are declared in `main.nf`. `nextflow.config` keeps only
   config params (`outdir`, `publish_mode`, `cache`). The nested `stage { ... }`
   config scope is now the param `stage_dirs`.
