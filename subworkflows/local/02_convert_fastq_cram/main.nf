@@ -38,7 +38,6 @@ workflow CONVERT_FASTQ_CRAM {
                     meta: r.meta,
                     single_end: r.meta.single_end,
                     reads: r.reads,
-                    adapter_fasta: null,
                     discard_trimmed_pass: false,
                     save_trimmed_fail: false,
                     save_merged: false,

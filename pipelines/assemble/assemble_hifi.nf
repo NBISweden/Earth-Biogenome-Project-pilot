@@ -12,26 +12,6 @@ def assemblyMeta(meta: Record, key: String, args: String) -> Record {
     )
 }
 
-// A raw assembly with the data of its sample
-def rawAssembly(s: Record, meta: Record, pri_fasta: Path, alt_fasta: Path?, pri_gfa: Path?, alt_gfa: Path?) {
-    return record(
-        id             : meta.assembly.build,
-        meta           : meta,
-        pri_fasta      : pri_fasta,
-        alt_fasta      : alt_fasta,
-        pri_gfa        : pri_gfa,
-        alt_gfa        : alt_gfa,
-        hifi           : s.hifi,
-        hifi_merged    : s.hifi_merged,
-        hic            : s.hic,
-        rnaseq         : s.rnaseq,
-        fastk_hifi_hist: s.fastk_hifi_hist,
-        fastk_hifi_ktab: s.fastk_hifi_ktab,
-        fastk_hifi_prof: s.fastk_hifi_prof,
-        meryl_hifi_db  : s.meryl_hifi_db
-    )
-}
-
 workflow ASSEMBLE_HIFI {
     take:
     samples         : Channel<Sample>
@@ -64,8 +44,6 @@ workflow ASSEMBLE_HIFI {
                 meta: b.meta,
                 long_reads: b.reads,
                 ul_reads: [],
-                paternal_kmer_dump: null,
-                maternal_kmer_dump: null,
                 hic_read1: b.hic_read1,
                 hic_read2: b.hic_read2,
                 bin_files: [],
@@ -85,8 +63,7 @@ workflow ASSEMBLE_HIFI {
     gfas = hifiasm.map { h ->
         record(
             id: h.id,
-            pri_gfa: use_phased ? h.hap1_contigs : h.primary_contigs,
-            alt_gfa: use_phased ? h.hap2_contigs : null
+            pri_gfa: use_phased ? h.hap1_contigs : h.primary_contigs
         )
     }
 
@@ -104,7 +81,8 @@ workflow ASSEMBLE_HIFI {
         }
         .join(gfas, by: 'id')
         .join(builds.map { b -> record(id: b.id, sample: b.sample) }, by: 'id')
-        .map { x -> rawAssembly(x.sample, x.meta, x.pri_fasta, x.alt_fasta, x.pri_gfa, x.alt_gfa) }
+        // The sample record, with the build in place of the sample id and meta
+        .map { x -> x.sample + record(id: x.meta.assembly.build, meta: x.meta, pri_fasta: x.pri_fasta, alt_fasta: x.alt_fasta, pri_gfa: x.pri_gfa) }
 
     emit:
     assemblies: Channel<Assembly> = assemblies

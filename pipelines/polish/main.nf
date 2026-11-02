@@ -39,7 +39,7 @@ include { MERQURY_MERQURY as MERQURY_INPUT_ASM    } from "../../modules/nf-core/
 include { MERQURY_MERQURY as MERQURY_POLISHED_ASM } from "../../modules/nf-core/merqury/merqury/main"
 include { DVPOLISH_CREATE_FINALASM                } from "../../modules/local/dvpolish/createFinalAsm"
 include { workflow as ASSEMBLY_QC_POLISHED        } from "../assembly_qc"
-include { Assembly; KmerParams; BuscoParams; assemblyWith } from "../../types/records"
+include { Assembly; QcParams; defaultQcParams; withFastas } from "../../types/records"
 
 // One haplotype of an assembly. The id identifies the sample, the assembly build and the haplotype.
 record Haplotype {
@@ -54,21 +54,10 @@ params {
     assemblies: Channel<Assembly>  // Assemblies to polish
     provided  : Channel<Assembly>? // Assemblies of this stage that were supplied. Evaluated, not polished.
 
-    chunk_size: String = '100.MB' // Size of the regions that are called separately
+    chunk_size: MemoryUnit = 100.MB // Size of the regions that are called separately, e.g. 1.5 GB
 
     // Assembly QC
-    busco     : BuscoParams = record(lineages: null, lineages_db_path: null, max_lineages: null)
-    fastk     : KmerParams  = record(kmer_size: null)
-    meryl     : KmerParams  = record(kmer_size: null)
-    reference : Path?
-    use_phased: Boolean     = false // Polish and evaluate the primary and alternate assembly
-}
-
-// Size in bytes of a memory string such as '100.MB' or '2 GB'
-def chunkSizeBytes(size: String) -> Long {
-    def units = [ B: 1L, KB: 1024L, MB: 1024L * 1024L, GB: 1024L * 1024L * 1024L, TB: 1024L * 1024L * 1024L * 1024L ]
-    def parts = size.trim().toUpperCase().replace('.', ' ').tokenize(' ')
-    return parts[0].toLong() * ( parts.size() > 1 ? units[parts[1]] : 1L )
+    qc        : QcParams    = defaultQcParams() // Options of the assembly QC. use_phased: also process and evaluate the alternate assembly
 }
 
 def haplotypeKey(meta: Record) -> String {
@@ -83,11 +72,12 @@ def haplotype(a: Record, hap: String, fasta: Path) -> Haplotype {
 workflow {
 
     main:
-    def chunk_size_bytes = chunkSizeBytes(params.chunk_size)
+    def chunk_size_bytes = params.chunk_size.toBytes()
 
     // Create tagged channels for each available haplotype
     haplotypes = params.assemblies.flatMap { a ->
-        def haps = params.use_phased
+        // A primary-only assembly has no second haplotype, also when phased
+        def haps = params.qc.use_phased && a.alt_fasta
             ? [ haplotype(a, 'hap1', a.pri_fasta), haplotype(a, 'hap2', a.alt_fasta) ]
             : [ haplotype(a, 'hap1', a.pri_fasta) ]
         haps.toList()
@@ -146,11 +136,9 @@ workflow {
                 index: c.bai,
                 fasta: null,
                 fai: null,
-                qname: null,
                 bed: c.bed,
                 index_format: 'bai',
                 samtools_args: "-bh -F 2308 -M",
-                samtools_args2: null,
                 output_prefix: "${c.bam.baseName}_${c.meta.mergeID}"
             )
         }
@@ -170,8 +158,6 @@ workflow {
                     intervals: x.bed,
                     fasta: x.fasta,
                     fai: x.fai,
-                    gzi: null,
-                    par_bed: null,
                     deepvariant_args: "--model_type=PACBIO",
                     output_prefix: x.bam.baseName
                 )
@@ -187,8 +173,6 @@ workflow {
                 meta: c.meta,
                 vcf: c.vcf,
                 index: c.vcf_tbi,
-                regions: null,
-                targets: null,
                 samples: null,
                 bcftools_args: "-f 'PASS' -i 'GT=\"1/1\"' --no-version -Oz",
                 output_prefix: "${c.vcf.name.replaceAll(/\.vcf\.gz$/, '')}_filt"
@@ -260,8 +244,6 @@ workflow {
                     vcf: x.vcf,
                     tbi: x.tbi,
                     fasta: x.fasta,
-                    mask: null,
-                    bcftools_args: null,
                     output_prefix: "${x.meta.id}_consensus"
                 )
             }
@@ -269,7 +251,7 @@ workflow {
 
     // run merqury on input assembly
     input_qv = MERQURY_INPUT_ASM(
-        haplotypes.map { h -> record(id: h.id, meta: h.meta, meryl_db: h.meryl_db, assembly: [ h.fasta ], output_prefix: h.meta.id) }
+        haplotypes.map { h -> record(id: h.id, meta: h.meta, meryl_db: h.meryl_db, assembly: [ h.fasta ], output_prefix: "${h.meta.assembly.build}_merqury") }
     )
 
     // run merqury on polished assembly
@@ -277,7 +259,7 @@ workflow {
         consensus
             .map { c -> record(id: c.id, meta: c.meta, fasta: c.fasta) }
             .join(haplotypes.map { h -> record(id: h.id, meryl_db: h.meryl_db) }, by: 'id')
-            .map { x -> record(id: x.id, meta: x.meta, meryl_db: x.meryl_db, assembly: [ x.fasta ], output_prefix: x.meta.id) }
+            .map { x -> record(id: x.id, meta: x.meta, meryl_db: x.meryl_db, assembly: [ x.fasta ], output_prefix: "${x.meta.assembly.build}_merqury") }
     )
 
     // select the best contigs
@@ -305,46 +287,26 @@ workflow {
         .map { f -> tuple("${f.meta.id}:${f.meta.assembly.build}", f) }
         .groupBy()
         .map { key, results ->
-            def sorted = results.toSorted { a, b -> params.use_phased ? a.fasta_gz.name <=> b.fasta_gz.name : b.fasta_gz.name <=> a.fasta_gz.name }
-            record(
-                assembly_key: key,
-                pri_fasta: sorted[0].fasta_gz,
-                alt_fasta: sorted.size() > 1 ? sorted[1].fasta_gz : null
-            )
+            def sorted = results.toSorted { a, b -> params.qc.use_phased ? a.fasta_gz.name <=> b.fasta_gz.name : b.fasta_gz.name <=> a.fasta_gz.name }
+            record(assembly_key: key, fastas: sorted.collect { f -> f.fasta_gz }.toList())
         }
         .join(params.assemblies.map { a -> record(assembly_key: "${a.meta.id}:${a.meta.assembly.build}", assembly: a) }, by: 'assembly_key')
-        .map { x ->
-            assemblyWith(
-                x.assembly,
-                [
-                    pri_fasta: x.pri_fasta,
-                    alt_fasta: x.alt_fasta,
-                    pri_gfa: null,
-                    alt_gfa: null
-                ]
-            )
-        }
+        .map { x -> withFastas(x.assembly, x.fastas) }
     assemblies = polished_assemblies.mix(params.provided ?: channel.empty())
 
     qc = ASSEMBLY_QC_POLISHED(
-        record(
-            assemblies: assemblies,
-            busco: params.busco,
-            fastk: params.fastk,
-            meryl: params.meryl,
-            reference: params.reference,
-            use_phased: params.use_phased
-        )
+        record(assemblies: assemblies) + params.qc
     )
 
     publish:
     assemblies = assemblies
     dvpolish   = final_asm
+    merqury_input    = input_qv
+    merqury_polished = polished_qv
     merquryfk  = qc.merquryfk
     merqury    = qc.merqury
     busco      = qc.busco
     gfastats   = qc.gfastats
-    quast      = qc.quast
     logs       = final_asm.map { f -> f.dvpolish_selection_tsv }.mix(qc.logs)
 }
 
@@ -358,6 +320,13 @@ output {
     dvpolish: Channel<Record> {
         path { r -> "dvpolish/${r.meta.assembly.build}" }
     }
+    // Merqury of the haplotypes before polishing and of the consensus, which decide the contig selection
+    merqury_input: Channel<Record> {
+        path { r -> "dvpolish/${r.meta.assembly.build}/merqury_input" }
+    }
+    merqury_polished: Channel<Record> {
+        path { r -> "dvpolish/${r.meta.assembly.build}/merqury_polished" }
+    }
     merquryfk: Channel<Record> {
         path { r -> "merquryfk/${r.meta.assembly.build}" }
     }
@@ -365,16 +334,10 @@ output {
         path { r -> "merqury/${r.meta.assembly.build}" }
     }
     busco: Channel<Record> {
-        path { r ->
-            r.short_summaries_txt >> ("busco/${r.meta.assembly.build}/")
-            r.short_summaries_json >> ("busco/${r.meta.assembly.build}/")
-        }
+        path { r -> "busco/${r.meta.assembly.build}" }
     }
     gfastats: Channel<Record> {
         path { r -> "gfastats/${r.meta.assembly.build}" }
-    }
-    quast: Channel<Record> {
-        path 'quast'
     }
     logs: Channel<Path> {
         path 'logs'

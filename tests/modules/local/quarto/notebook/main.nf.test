@@ -21,7 +21,6 @@ nextflow_process {
                     aux_files: [],
                     log_files: [ file("\$projectDir/tests/data/modules/seq.fasta") ],
                     report_params: file("\$projectDir/tests/data/modules/params.yml"),
-                    quarto_args: null,
                     output_prefix: 'report'
                 )
                 """

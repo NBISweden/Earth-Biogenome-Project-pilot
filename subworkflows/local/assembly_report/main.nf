@@ -54,9 +54,7 @@ workflow ASSEMBLY_REPORT {
                     notebook: notebook,
                     aux_files: aux_files,
                     log_files: x.mqc.toList() + [ x.versions ],
-                    report_params: x.params_file,
-                    quarto_args: null,
-                    output_prefix: null
+                    report_params: x.params_file
                 )
             }
     )

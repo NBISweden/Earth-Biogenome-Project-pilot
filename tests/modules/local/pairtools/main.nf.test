@@ -21,12 +21,6 @@ nextflow_process {
                     chromsizes: file("\$projectDir/tests/data/modules/chrom_sizes.fa.fai"),
                     fasta: file("\$projectDir/tests/data/modules/seq.fasta"),
                     sort_bam: false,
-                    pairtools_args: null,
-                    pairtools_args2: null,
-                    pairtools_args3: null,
-                    pairtools_args4: null,
-                    pairtools_args5: null,
-                    pairtools_args6: null,
                     output_prefix: 'test'
                 )
                 """

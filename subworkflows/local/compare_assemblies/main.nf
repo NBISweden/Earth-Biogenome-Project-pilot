@@ -6,26 +6,28 @@ include { Assembly } from "../../../types/records"
 workflow COMPARE_ASSEMBLIES {
 
     take:
-    assemblies: Channel<Assembly>
-    reference : Path? // Reference genome to compare to
+    assemblies: Channel<Assembly> // The assemblies of all stages. One QUAST run per sample
+    reference : Path?             // Reference genome to compare to
 
     main:
-    // Compare the assemblies of one stage of a sample
+    // Compare the primary assemblies of a sample across the stages, from raw to curated
     quast = QUAST(
         assemblies
-            .map { a -> tuple("${a.meta.id}:${a.meta.assembly.stage}", a) }
+            .map { a -> tuple(a.meta.id, a) }
             .groupBy()
-            .map { _key, results ->
-                def sorted = results.toList().toSorted { a, b -> a.pri_fasta.name <=> b.pri_fasta.name }
-                def sample_id = sorted[0].meta.id
-                def stage = sorted[0].meta.assembly.stage
+            .map { sample_id, results ->
+                def stage_order = [ raw: 1, decontaminated: 2, purged: 3, polished: 4, scaffolded: 5, curated: 6 ]
+                def sorted = results.toList().toSorted { a, b ->
+                    def stage_a = stage_order[a.meta.assembly.stage] ?: 99
+                    def stage_b = stage_order[b.meta.assembly.stage] ?: 99
+                    stage_a <=> stage_b ?: a.pri_fasta.name <=> b.pri_fasta.name
+                }
                 record(
-                    id: "${sample_id}-${stage}",
-                    meta: record(id: sample_id, sample: sorted[0].meta.sample, assembly: [ stage: stage ]),
+                    id: sample_id,
+                    meta: record(id: sample_id, sample: sorted[0].meta.sample),
                     consensus: sorted.collect { a -> a.pri_fasta }.toList(),
                     fasta: reference,
-                    gff: null,
-                    output_prefix: "${sample_id}_${stage}_quast_report"
+                    output_prefix: "${sample_id}_quast_report"
                 )
             }
     )

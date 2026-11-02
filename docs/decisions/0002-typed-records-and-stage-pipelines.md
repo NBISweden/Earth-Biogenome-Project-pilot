@@ -66,7 +66,7 @@ the cost of maintaining two lines.
   top of the new upstream version and reports conflicts.
 - Process names (`STAGE:TOOL`) and several params change. Downstream configs
   with fully qualified selectors stop matching without an error. The published
-  tree is unchanged.
+  tree is changed by [0003](0003-wide-records-and-stage-pipelines.md).
 - New modules follow the spec from the day this ADR lands.
 - Included pipelines need Nextflow >= 26.10, and composition may change in later
   Nextflow releases.

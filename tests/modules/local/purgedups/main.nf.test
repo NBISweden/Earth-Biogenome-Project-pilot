@@ -19,15 +19,6 @@ nextflow_process {
                     meta: [ id: 'test', sample: [ genome_size: 1000000 ] ], // read by the resource config
                     reads: [ file("\$projectDir/tests/data/tiny/PB_HIFI/dmel_2Mb.fastq.gz") ],
                     assemblies: [ file("\$projectDir/tests/data/modules/seq.fasta") ],
-                    minimap2_reads_args: null,
-                    minimap2_self_args: null,
-                    pbcstat_args: null,
-                    calcuts_args: null,
-                    hist_plot_args: null,
-                    split_fa_args: null,
-                    purge_dups_args: null,
-                    get_seqs_args: null,
-                    seqkit_args: null,
                     output_prefix: 'test'
                 )
                 """
@@ -54,15 +45,6 @@ nextflow_process {
                     meta: [ id: 'test', sample: [ genome_size: 1000000 ] ], // read by the resource config
                     reads: [ file("\$projectDir/tests/data/tiny/PB_HIFI/dmel_2Mb.fastq.gz") ],
                     assemblies: [ file("\$projectDir/tests/data/modules/seq.fasta"), file("\$projectDir/tests/data/modules/seq.fasta") ],
-                    minimap2_reads_args: null,
-                    minimap2_self_args: null,
-                    pbcstat_args: null,
-                    calcuts_args: null,
-                    hist_plot_args: null,
-                    split_fa_args: null,
-                    purge_dups_args: null,
-                    get_seqs_args: null,
-                    seqkit_args: null,
                     output_prefix: 'test'
                 )
                 """

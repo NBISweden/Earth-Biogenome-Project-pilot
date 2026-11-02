@@ -39,12 +39,12 @@ workflow {
                         single_end: reads.size() == 1,
                         reads: reads,
                         index: x.index,
-                        gtf: null,                 // No gtf
                         star_ignore_sjdbgtf: true, // Ignore gtf
                         seq_platform: 'Illumina',  // Sequencing Platform
                         seq_center: '',            // Sequencing Center
                         star_args: '--readFilesCommand zcat',
-                        output_prefix: x.meta.id
+                        // One prefix per library: they are published into the same folder
+                        output_prefix: "${x.meta.id}_${reads.first().simpleName}"
                     )
                 }.toList()
             }

@@ -15,20 +15,17 @@ include { FCSGX_FETCHDB                          } from '../../modules/local/fcs
 include { FCSGX_RUNGX                            } from '../../modules/local/fcsgx/rungx'
 include { FCSGX_CLEAN                            } from '../../modules/local/fcsgx/clean'
 include { workflow as ASSEMBLY_QC_DECONTAMINATED } from '../assembly_qc'
-include { Assembly; KmerParams; BuscoParams; FcsParams; assemblyWith } from '../../types/records'
+include { Assembly; QcParams; defaultQcParams; FcsParams; withFastas } from '../../types/records'
 
 params {
     assemblies: Channel<Assembly>  // Assemblies to screen
     provided  : Channel<Assembly>? // Assemblies of this stage that were supplied. Evaluated, not screened.
 
     fcs       : FcsParams   = record(database: null, manifest: null, ramdisk_path: null)
+    fetch_database: Boolean = true // Fetch the FCS-GX database at the start unless fcs.database is given
 
     // Assembly QC
-    busco     : BuscoParams = record(lineages: null, lineages_db_path: null, max_lineages: null)
-    fastk     : KmerParams  = record(kmer_size: null)
-    meryl     : KmerParams  = record(kmer_size: null)
-    reference : Path?
-    use_phased: Boolean     = false
+    qc        : QcParams    = defaultQcParams() // Options of the assembly QC. use_phased: also process and evaluate the alternate assembly
 }
 
 workflow {
@@ -38,12 +35,11 @@ workflow {
     def fcs_manifest = params.fcs.manifest ?: "https://ftp.ncbi.nlm.nih.gov/genomes/TOOLS/FCS/database/latest/all.manifest"
     def ramdisk_path = params.fcs.ramdisk_path != null ? params.fcs.ramdisk_path : '/dev/shm/gxdb'
 
-    // Fetch the database only when there are assemblies to screen and no local copy
+    // Fetch the database at the start, while the earlier stages run, unless there is a local copy.
+    // The fetch does not wait for the assemblies: it takes up to two days on a first run.
     fetched = FCSGX_FETCHDB(
-        params.assemblies
-            .map { _a -> record(id: 'fcsgx_database', manifest: fcs_manifest, output_prefix: null) }
-            .unique()
-            .filter { _x -> !fcs_database }
+        channel.of( record(id: 'fcsgx_database', manifest: fcs_manifest, output_prefix: null) )
+            .filter { _x -> !fcs_database && params.fetch_database }
     )
     // The local database, or the fetched one
     database = channel.of(fcs_database)
@@ -86,28 +82,11 @@ workflow {
         }
     cleaned_assemblies = params.assemblies
         .join(cleaned_files, by: 'id')
-        .map { a ->
-            assemblyWith(
-                a,
-                [
-                    pri_fasta: a.cleaned[0],
-                    alt_fasta: a.cleaned.size() > 1 ? a.cleaned[1] : null,
-                    pri_gfa: null,
-                    alt_gfa: null
-                ]
-            )
-        }
+        .map { a -> withFastas(a, a.cleaned) }
     assemblies = cleaned_assemblies.mix(params.provided ?: channel.empty())
 
     qc = ASSEMBLY_QC_DECONTAMINATED(
-        record(
-            assemblies: assemblies,
-            busco: params.busco,
-            fastk: params.fastk,
-            meryl: params.meryl,
-            reference: params.reference,
-            use_phased: params.use_phased
-        )
+        record(assemblies: assemblies) + params.qc
     )
 
     publish:
@@ -118,7 +97,6 @@ workflow {
     merqury       = qc.merqury
     busco         = qc.busco
     gfastats      = qc.gfastats
-    quast         = qc.quast
     logs          = screened.map { r -> r.fcs_gx_report }.mix(qc.logs)
 }
 
@@ -142,16 +120,10 @@ output {
         path { r -> "merqury/${r.meta.assembly.build}" }
     }
     busco: Channel<Record> {
-        path { r ->
-            r.short_summaries_txt >> ("busco/${r.meta.assembly.build}/")
-            r.short_summaries_json >> ("busco/${r.meta.assembly.build}/")
-        }
+        path { r -> "busco/${r.meta.assembly.build}" }
     }
     gfastats: Channel<Record> {
         path { r -> "gfastats/${r.meta.assembly.build}" }
-    }
-    quast: Channel<Record> {
-        path 'quast'
     }
     logs: Channel<Path> {
         path 'logs'

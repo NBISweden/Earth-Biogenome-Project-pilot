@@ -13,10 +13,9 @@ with reduced resources.
 
 ## Modules config
 
-The `modules.config` supplies additional parameters to each module, such
-as file prefixes, additional tool options, and which files should be published
-where. This file extends the `nextflow.config`, supplying module specific
-configuration. Resource requirements should not be added here as they will
+The `modules.config` holds the `scratch`, `executor` and `storeDir` settings
+of a few processes. Tool options and file prefixes are record fields set by the
+workflows, and results are published by the `output {}` block of `main.nf`. Resource requirements should not be added here as they will
 also affect the test profile.
 
 ## Tool Resources config

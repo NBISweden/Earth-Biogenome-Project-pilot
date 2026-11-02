@@ -19,8 +19,6 @@ nextflow_process {
                     meta: null,
                     fastx: [ file("\$projectDir/tests/data/modules/seq.fasta"), file("\$projectDir/tests/data/modules/seq.fasta") ],
                     out_ext: 'fasta.gz',
-                    seqkit_args: null,
-                    seqkit_args2: null,
                     output_prefix: 'merged'
                 )
                 """

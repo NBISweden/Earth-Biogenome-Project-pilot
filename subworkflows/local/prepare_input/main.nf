@@ -1,5 +1,6 @@
 nextflow.enable.types = true
 
+include { ENA_TAXQUERY           } from "../../../modules/local/ena/taxquery/main"
 include { GOAT_TAXONSEARCH        } from "../../../modules/nf-core/goat/taxonsearch/main"
 include { SAMTOOLS_FASTA          } from "../../../modules/local/samtools/fasta/main"
 include { CAT_CAT as MERGE_PACBIO } from "../../../modules/nf-core/cat/cat/main"
@@ -17,7 +18,6 @@ assembly:
     pri_fasta: /path/to/primary_asm.fasta
     alt_fasta: /path/to/alternate_asm.fasta
     pri_gfa: /path/to/primary_asm.gfa
-    alt_gfa: /path/to/alternate_asm.gfa
 hic:
   - read1: /path/to/read1.fastq.gz
     read2: /path/to/read2.fastq.gz
@@ -47,21 +47,14 @@ def readYaml(yaml_file: Path) -> Map {
     return new org.yaml.snakeyaml.Yaml().load(yaml_file.text) as Map
 }
 
-// Species taxonomy from ENA
-def fetchEnaTaxonomy(species_name: String) -> Map {
-    def encoded_name = java.net.URLEncoder.encode(species_name, 'UTF-8')
-    def response = file("https://www.ebi.ac.uk/ena/taxonomy/rest/scientific-name/${encoded_name}").text
-    def entries = new groovy.json.JsonSlurper().parseText(response) as List
-    return entries[0] as Map
+// The ENA taxonomy is looked up unless the user gave all of its keys
+def needsEna(sample: Map) -> Boolean {
+    def ena_keys = [ 'tax_id', 'genetic_code', 'mito_code', 'domain', 'lineage' ]
+    return !ena_keys.every { key -> sample[key] != null }
 }
 
-// Complete the sample with the ENA taxonomy for the keys the user did not give
-def sampleFromEna(sample: Map) -> Map {
-    def ena_keys = [ 'tax_id', 'genetic_code', 'mito_code', 'domain', 'lineage' ]
-    if ( ena_keys.every { key -> sample[key] != null } ) {
-        return sample
-    }
-    def ena = fetchEnaTaxonomy(sample.name as String)
+// The sample with the ENA taxonomy for the keys the user did not give
+def sampleWithEna(sample: Map, ena: Map) -> Map {
     def lineage = ena['lineage'] as String
     return sample + [
         tax_id      : sample.tax_id ?: ena['taxId'],
@@ -70,6 +63,16 @@ def sampleFromEna(sample: Map) -> Map {
         domain      : sample.domain ?: lineage.tokenize(';')[0],
         lineage     : sample.lineage ?: lineage
     ]
+}
+
+// Look up the genome properties and BUSCO lineages in GOAT for eukaryotes, unless all is user defined
+def useGoat(sample: Map, busco_lineages: String?) -> Boolean {
+    def goat_keys = [ 'genome_size', 'haploid_number', 'ploidy' ]
+    return sample.domain == "Eukaryota" && ( !goat_keys.every { key -> sample[key] != null } || !busco_lineages )
+}
+
+def sampleId(sample: Map) -> String {
+    return (sample.name as String).replace(" ", "_")
 }
 
 // The sample meta record, with the genome properties and BUSCO lineages from GOAT when it was queried
@@ -98,24 +101,40 @@ workflow PREPARE_INPUT {
     take:
     input         : Path    // YAML file with the sample and the data
     busco_lineages: String? // Comma separated BUSCO lineages, or null to use GOAT
+    steps         : Map<String,Boolean> // The requested steps: assemble, assemble_hic (hifiasm with Hi-C), scaffold, curate
 
     main:
     def data = readYaml(input)
-    def sample = sampleFromEna(data.sample as Map)
+    def given_sample = data.sample as Map
 
-    // Look up the genome properties and BUSCO lineages in GOAT for eukaryotes, unless all is user defined
-    def goat_keys = [ 'genome_size', 'haploid_number', 'ploidy' ]
-    def use_goat = sample.domain == "Eukaryota" && ( !goat_keys.every { key -> sample[key] != null } || !busco_lineages )
+    // Taxonomy from ENA for the keys the user did not give. A process, so the result is cached
+    def needs_ena = needsEna(given_sample)
+    ena = ENA_TAXQUERY(
+        channel.of( record(id: sampleId(given_sample), species_name: given_sample.name as String) )
+            .filter { _x -> needs_ena }
+    )
+    samples_with_taxonomy = ena
+        .map { e -> sampleWithEna(given_sample, e.json as Map) }
+        .mix( channel.of(given_sample).filter { _x -> !needs_ena } )
+
     goat = GOAT_TAXONSEARCH(
-        channel.of( record(id: (sample.name as String).replace(" ", "_"), taxon: sample.name as String, taxa_file: null, goat_args: "--lineage --variables odb10_lineage,haploid_number,genome_size,ploidy") )
-            .filter { _x -> use_goat }
+        samples_with_taxonomy
+            .filter { s -> useGoat(s, busco_lineages) }
+            .map { s -> record(id: sampleId(s), taxon: s.name as String, taxa_file: null, goat_args: "--lineage --variables odb10_lineage,haploid_number,genome_size,ploidy") }
     )
     metadata = goat
-        .map { g -> sampleMeta(sample, g.taxonsearch, busco_lineages) }
+        .map { g -> record(id: g.id, taxonsearch: g.taxonsearch) }
+        .join(
+            samples_with_taxonomy
+                .filter { s -> useGoat(s, busco_lineages) }
+                .map { s -> record(id: sampleId(s), sample: s) },
+            by: 'id'
+        )
+        .map { g -> sampleMeta(g.sample as Map, g.taxonsearch, busco_lineages) }
         .mix(
-            channel.of(sample.name)
-                .filter { _x -> !use_goat }
-                .map { _x -> sampleMeta(sample, null, busco_lineages) }
+            samples_with_taxonomy
+                .filter { s -> !useGoat(s, busco_lineages) }
+                .map { s -> sampleMeta(s, null, busco_lineages) }
         )
 
     // Assemblies supplied as input
@@ -130,8 +149,7 @@ workflow PREPARE_INPUT {
                 meta     : m + record(assembly: [ assembler: asm.assembler, stage: asm.stage, id: asm.id, build: build ]),
                 pri_fasta: file(asm.pri_fasta as String, checkIfExists: true),
                 alt_fasta: asm.alt_fasta ? file(asm.alt_fasta as String, checkIfExists: true) : null,
-                pri_gfa  : asm.pri_gfa ? file(asm.pri_gfa as String, checkIfExists: true) : null,
-                alt_gfa  : asm.alt_gfa ? file(asm.alt_gfa as String, checkIfExists: true) : null
+                pri_gfa  : asm.pri_gfa ? file(asm.pri_gfa as String, checkIfExists: true) : null
             )
         }.toList()
     }
@@ -140,6 +158,30 @@ workflow PREPARE_INPUT {
     def hic_pairs = ( data.hic ?: [] ).collect { pair ->
         [ file((pair as Map).read1 as String, checkIfExists: true), file((pair as Map).read2 as String, checkIfExists: true) ]
     }.toList()
+
+    // Supplied assemblies must name a known stage: the stage decides where they enter the workflow
+    def known_stages = [ 'raw', 'decontaminated', 'purged', 'polished', 'scaffolded', 'curated' ]
+    assembly_inputs.each { a ->
+        def stage = (a as Map).stage
+        if ( !(stage in known_stages) ) {
+            error "The assembly ${(a as Map).id} in ${input} has the stage '${stage}'. The stage is one of: ${known_stages.join(', ')}."
+        }
+    }
+
+    // Hi-C reads are optional, but a step that will run and needs them cannot go on without.
+    // Scaffolding works on assemblies of the stages before it, and curation on those before it. The
+    // assemble step makes assemblies that reach every later stage.
+    def supplied_stages = assembly_inputs.collect { a -> (a as Map).stage }
+    def scaffold_needs_hic = steps.scaffold && ( steps.assemble || supplied_stages.any { s -> s in [ 'raw', 'decontaminated', 'purged', 'polished' ] } )
+    def curate_needs_hic = steps.curate && ( steps.assemble || supplied_stages.any { s -> s in [ 'raw', 'decontaminated', 'purged', 'polished', 'scaffolded' ] } )
+    def hic_steps = [
+        steps.assemble_hic ? 'assemble (hifiasm_with_hic)' : null,
+        scaffold_needs_hic ? 'scaffold' : null,
+        curate_needs_hic ? 'curate' : null
+    ].findAll { step -> step != null }
+    if ( !data.hic && hic_steps ) {
+        error "The input ${input} has no Hi-C reads. The steps ${hic_steps.join(', ')} need them. Add the reads under `hic`, or leave those steps out of --steps."
+    }
 
     // PacBio HiFi reads are required: the k-mer databases and the assembly QC are built from them
     if ( !data.hifi ) {

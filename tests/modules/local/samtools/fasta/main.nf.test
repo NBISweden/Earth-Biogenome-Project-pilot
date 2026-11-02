@@ -18,9 +18,7 @@ nextflow_process {
                     id: 'test',
                     meta: null,
                     single_end: true,
-                    bam: file("\$projectDir/tests/data/tiny/PB_HIFI/dmel_2Mb.fastq.gz"),
-                    samtools_args: null,
-                    output_prefix: null
+                    bam: file("\$projectDir/tests/data/tiny/PB_HIFI/dmel_2Mb.fastq.gz")
                 )
                 """
             }
@@ -45,9 +43,7 @@ nextflow_process {
                     id: 'test',
                     meta: null,
                     single_end: false,
-                    bam: file("\$projectDir/tests/data/tiny/PB_HIFI/dmel_2Mb.fastq.gz"),
-                    samtools_args: null,
-                    output_prefix: null
+                    bam: file("\$projectDir/tests/data/tiny/PB_HIFI/dmel_2Mb.fastq.gz")
                 )
                 """
             }

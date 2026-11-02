@@ -23,10 +23,12 @@ include { workflow as DVPOLISH          } from "./pipelines/polish"
 include { workflow as SCAFFOLD          } from "./pipelines/scaffold"
 include { workflow as SCAFFOLD_CURATION } from "./pipelines/curate"
 include { workflow as ALIGN_RNASEQ      } from "./pipelines/align_rnaseq"
+// Comparison of the assemblies across the stages
+include { workflow as COMPARE_STAGES    } from "./pipelines/compare_stages"
 // Reports
 include { REPORT_VERSIONS               } from "./subworkflows/local/version_report/main"
 include { ASSEMBLY_REPORT               } from "./subworkflows/local/assembly_report/main"
-include { Assembly; Sample; KmerParams; BuscoParams; FcsParams; assemblyWith } from "./types/records"
+include { Assembly; Sample; KmerParams; BuscoParams; FcsParams } from "./types/records"
 
 // Override by supplying a params.yml file to the -params-file option in Nextflow.
 params {
@@ -61,7 +63,7 @@ params {
     hifiasm_with_hic: Boolean = false
     busco      : BuscoParams = record(lineages: null, lineages_db_path: null, max_lineages: null)
     oatkdb     : Path?    // Setup: git clone --depth 1 https://github.com/c-zhou/OatkDB.git . Then oatkdb = "/path/to/OatkDB/v20230921"
-    chunk_size : String   = '100.MB'  // DVPOLISH
+    chunk_size : MemoryUnit = 100.MB  // DVPOLISH
     fcs        : FcsParams = record(database: null, manifest: null, ramdisk_path: null)
 
     // Reports
@@ -82,47 +84,7 @@ params {
 // Change the stage of an assembly. The build is used in file names.
 def setAssemblyStage(a: Assembly, stage: String) {
     def build = "${a.meta.assembly.assembler}-${stage}-${a.meta.assembly.id}"
-    return assemblyWith(a, [ id: build, meta: a.meta + record(assembly: a.meta.assembly + [ stage: stage, build: build ]) ])
-}
-
-// The record of a sample, as the stage pipelines take it
-def sampleOf(s: Record) {
-    return record(
-        id             : s.id as String,
-        meta           : s.meta as Record,
-        hifi           : s.hifi as List<Path>,
-        hifi_merged    : s.hifi_merged as Path,
-        hic            : s.hic as List<List<Path>>,
-        rnaseq         : s.rnaseq as List<List<Path>>,
-        isoseq         : s.isoseq as List<Path>,
-        fastk_hifi_hist: s.fastk_hifi_hist as Path,
-        fastk_hifi_ktab: s.fastk_hifi_ktab as List<Path>,
-        fastk_hifi_prof: s.fastk_hifi_prof as List<Path>,
-        meryl_hifi_db  : s.meryl_hifi_db as Path,
-        fastk_hic_hist : s.fastk_hic_hist as Path,
-        fastk_hic_ktab : s.fastk_hic_ktab as List<Path>,
-        fastk_hic_prof : s.fastk_hic_prof as List<Path>
-    )
-}
-
-// An assembly supplied as input, with the data of its sample
-def userAssembly(x: Record) {
-    return record(
-        id             : x.build as String,
-        meta           : x.assembly_meta as Record,
-        pri_fasta      : x.pri_fasta as Path,
-        alt_fasta      : x.alt_fasta as Path,
-        pri_gfa        : x.pri_gfa as Path,
-        alt_gfa        : x.alt_gfa as Path,
-        hifi           : x.hifi as List<Path>,
-        hifi_merged    : x.hifi_merged as Path,
-        hic            : x.hic as List<List<Path>>,
-        rnaseq         : x.rnaseq as List<List<Path>>,
-        fastk_hifi_hist: x.fastk_hifi_hist as Path,
-        fastk_hifi_ktab: x.fastk_hifi_ktab as List<Path>,
-        fastk_hifi_prof: x.fastk_hifi_prof as List<Path>,
-        meryl_hifi_db  : x.meryl_hifi_db as Path
-    )
+    return a + record(id: build, meta: ( a.meta + record(assembly: a.meta.assembly + [ stage: stage, build: build ]) ) as Record)
 }
 
 // Folder of a sample or an assembly build in the folder of a stage
@@ -130,17 +92,20 @@ def subjectDir(stage_dir: String, meta: Record) -> String {
     return "${stage_dir}/${meta.assembly?.build ?: meta.id}"
 }
 
-// Size in bytes of a memory string such as '100.MB' or '2 GB'
-def chunkSizeBytes(size: String) -> Long {
-    def units = [ B: 1L, KB: 1024L, MB: 1024L * 1024L, GB: 1024L * 1024L * 1024L, TB: 1024L * 1024L * 1024L * 1024L ]
-    def parts = size.trim().toUpperCase().replace('.', ' ').tokenize(' ')
-    return parts[0].toLong() * ( parts.size() > 1 ? units[parts[1]] : 1L )
+// Folder of a stage. A stage_dirs param that names only some stages keeps the default folders of the others
+def stageDir(stage_dirs: Map<String,String>, key: String) -> String {
+    def defaults = [
+        inspect: '01_read_inspection', preprocess: '02_read_preprocessing', assembly: '03_assembly',
+        screen: '04_contamination_screen', purge: '05_duplicate_purging', polish: '06_error_polishing',
+        scaffold: '07_scaffolding', curate: '08_curation', alignRNA: '09_RNA_alignment', report: '10_report'
+    ]
+    return stage_dirs[key] ?: defaults[key]
 }
 
 // Directory of the stage that produced an assembly
 def assemblyStageDir(stage_dirs: Map<String,String>, stage: String) -> String {
     def dirs = [ raw: 'assembly', decontaminated: 'screen', purged: 'purge', polished: 'polish', scaffolded: 'scaffold', curated: 'curate' ]
-    return stage_dirs[dirs[stage]]
+    return stageDir(stage_dirs, dirs[stage])
 }
 
 def workflowVersion() -> String {
@@ -192,7 +157,18 @@ workflow {
     def genescopefk_kmer_size = params.genescopefk.kmer_size ?: 31
 
     // Read in data
-    input = PREPARE_INPUT( params.input, params.busco.lineages )
+    // Hi-C reads are optional. A run goes as far as it can without them, but fails at the start if a step that
+    // will run needs them
+    input = PREPARE_INPUT(
+        params.input,
+        params.busco.lineages,
+        [
+            assemble    : enable.assemble,
+            assemble_hic: enable.assemble && params.hifiasm_with_hic,
+            scaffold    : enable.scaffold,
+            curate      : enable.curate
+        ]
+    )
 
     // Create Cram and trim
     convert = CONVERT_FASTQ_CRAM( input.samples, params.hic_type.startsWith('arima'), params.hic_type )
@@ -207,74 +183,54 @@ workflow {
     meryl_hifi = BUILD_MERYL_HIFI_DATABASE( hifi_reads, 'hifi', meryl_kmer_size )
     BUILD_MERYL_HIC_DATABASE( convert.fastq, 'hic', meryl_kmer_size )
 
-    // One wide record per sample. Stages take the fields they need. A sample without reads gets empty fields.
-    hifi_database_fields = fastk_hifi.database
-        .map { d -> record(id: d.id, fastk_hifi_hist: d.hist, fastk_hifi_ktab: d.ktab, fastk_hifi_prof: d.prof) }
-        .mix(
-            input.samples
-                .filter { s -> !s.hifi }
-                .map { s -> record(id: s.id, fastk_hifi_hist: null as Path, fastk_hifi_ktab: null as List<Path>, fastk_hifi_prof: null as List<Path>) }
-        )
-    meryl_database_fields = meryl_hifi.uniondb
-        .map { m -> record(id: m.id, meryl_hifi_db: m.meryl_db) }
-        .mix(input.samples.filter { s -> !s.hifi }.map { s -> record(id: s.id, meryl_hifi_db: null as Path) })
+    // One wide record per sample. Stages take the fields they need. The HiFi reads are required, so every
+    // sample has its HiFi databases.
     with_hifi_databases = input.samples
-        .join(hifi_database_fields, by: 'id')
-        .join(meryl_database_fields, by: 'id')
+        .join(fastk_hifi.database.map { d -> record(id: d.id, fastk_hifi_hist: d.hist, fastk_hifi_ktab: d.ktab, fastk_hifi_prof: d.prof) }, by: 'id')
+        .join(meryl_hifi.uniondb.map { m -> record(id: m.id, meryl_hifi_db: m.meryl_db) }, by: 'id')
     // The stages work on the converted Hi-C reads
     samples_ready = with_hifi_databases
         .join(convert.hic, by: 'id')
         .map { s -> s + record(hic: s.hic_fastq) }
 
-    // Data inspection
-    hic_database_fields = fastk_hic.database
-        .map { d -> record(id: d.id, fastk_hic_hist: d.hist, fastk_hic_ktab: d.ktab, fastk_hic_prof: d.prof) }
-        .mix(
-            input.samples
-                .filter { s -> !s.hic }
-                .map { s -> record(id: s.id, fastk_hic_hist: null as Path, fastk_hic_ktab: null as List<Path>, fastk_hic_prof: null as List<Path>) }
-        )
-    inspect_samples = with_hifi_databases.join(hic_database_fields, by: 'id')
+    // Data inspection. A sample without Hi-C has no Hi-C database.
+    inspect_samples = with_hifi_databases.join(
+        fastk_hic.database.map { d -> record(id: d.id, fastk_hic_hist: d.hist, fastk_hic_ktab: d.ktab, fastk_hic_prof: d.prof) },
+        by: 'id',
+        remainder: true
+    )
     inspect = INSPECT_DATA(
         inspect_samples.filter { _s -> enable.inspect },
         genescopefk_kmer_size
     )
 
     // Assemblies supplied as input, with the data of their sample
-    user_assemblies = input.assemblies
-        .map { a ->
+    user_assemblies = input.assemblies.join(
+        samples_ready.map { s ->
             record(
-                sample_id: a.sample_id, build: a.id, assembly_meta: a.meta,
-                pri_fasta: a.pri_fasta, alt_fasta: a.alt_fasta, pri_gfa: a.pri_gfa, alt_gfa: a.alt_gfa
+                sample_id: s.id, hifi: s.hifi, hifi_merged: s.hifi_merged, hic: s.hic, rnaseq: s.rnaseq,
+                fastk_hifi_hist: s.fastk_hifi_hist, fastk_hifi_ktab: s.fastk_hifi_ktab, fastk_hifi_prof: s.fastk_hifi_prof,
+                meryl_hifi_db: s.meryl_hifi_db
             )
-        }
-        .join(
-            samples_ready.map { s ->
-                record(
-                    sample_id: s.id, hifi: s.hifi, hifi_merged: s.hifi_merged, hic: s.hic, rnaseq: s.rnaseq,
-                    fastk_hifi_hist: s.fastk_hifi_hist, fastk_hifi_ktab: s.fastk_hifi_ktab, fastk_hifi_prof: s.fastk_hifi_prof,
-                    meryl_hifi_db: s.meryl_hifi_db
-                )
-            },
-            by: 'sample_id'
-        )
-        .map { x -> userAssembly(x) }
+        },
+        by: 'sample_id'
+    )
+
+    // The options of the assembly QC, passed to every stage
+    def qc = record(busco: params.busco, fastk: params.fastk, meryl: params.meryl, use_phased: params.use_phased)
 
     // Assemble
     assemble = ASSEMBLE(
         record(
-            samples: samples_ready.filter { _s -> enable.assemble }.map { s -> sampleOf(s) },
+            samples: samples_ready.filter { _s -> enable.assemble },
             provided: user_assemblies.filter { a -> a.meta.assembly.stage == 'raw' },
             oatkdb: params.oatkdb,
             nuclear_assembly_mode: params.nuclear_assembly_mode,
-            organelle_assembly_mode: params.organelle_assembly_mode,
+            // The mode check of the pipeline must only apply when the stage runs
+            organelle_assembly_mode: enable.assemble ? params.organelle_assembly_mode : 'none',
             hifiasm: params.hifiasm,
             hifiasm_with_hic: params.hifiasm_with_hic,
-            use_phased: params.use_phased,
-            busco: params.busco,
-            fastk: params.fastk,
-            meryl: params.meryl,
-            reference: params.reference
+            qc: qc
         )
     )
 
@@ -282,14 +238,11 @@ workflow {
     to_screen = assemble.assemblies.map { a -> setAssemblyStage(a, 'decontaminated') }
     screen = DECONTAMINATE(
         record(
+            fetch_database: enable.screen,
             assemblies: to_screen.filter { _a -> enable.screen },
             provided: user_assemblies.filter { a -> a.meta.assembly.stage == 'decontaminated' },
             fcs: params.fcs,
-            busco: params.busco,
-            fastk: params.fastk,
-            meryl: params.meryl,
-            reference: params.reference,
-            use_phased: params.use_phased
+            qc: qc
         )
     )
     cleaned_assemblies = to_screen.filter { _a -> !enable.screen }.mix(screen.assemblies)
@@ -300,11 +253,7 @@ workflow {
         record(
             assemblies: to_purge.filter { _a -> enable.purge },
             provided: user_assemblies.filter { a -> a.meta.assembly.stage == 'purged' },
-            busco: params.busco,
-            fastk: params.fastk,
-            meryl: params.meryl,
-            reference: params.reference,
-            use_phased: params.use_phased
+            qc: qc
         )
     )
     purged_assemblies = to_purge.filter { _a -> !enable.purge }.mix(purge.assemblies)
@@ -316,11 +265,7 @@ workflow {
             assemblies: to_polish.filter { _a -> enable.polish },
             provided: user_assemblies.filter { a -> a.meta.assembly.stage == 'polished' },
             chunk_size: params.chunk_size,
-            busco: params.busco,
-            fastk: params.fastk,
-            meryl: params.meryl,
-            reference: params.reference,
-            use_phased: params.use_phased
+            qc: qc
         )
     )
     polished_assemblies = to_polish.filter { _a -> !enable.polish }.mix(polish.assemblies)
@@ -331,13 +276,9 @@ workflow {
         record(
             assemblies: to_scaffold.filter { _a -> enable.scaffold },
             provided: user_assemblies.filter { a -> a.meta.assembly.stage == 'scaffolded' },
-            use_phased: params.use_phased,
+            qc: qc,
             hic_type: params.hic_type,
-            hic_bam_sorting: params.hic_bam_sorting,
-            busco: params.busco,
-            fastk: params.fastk,
-            meryl: params.meryl,
-            reference: params.reference
+            hic_bam_sorting: params.hic_bam_sorting
         )
     )
     scaffolded_assemblies = to_scaffold.filter { _a -> !enable.scaffold }.mix(scaffold.assemblies)
@@ -347,11 +288,26 @@ workflow {
     curate = SCAFFOLD_CURATION(
         record(
             assemblies: to_curate.filter { _a -> enable.curate },
+            provided: user_assemblies.filter { a -> a.meta.assembly.stage == 'curated' },
+            qc: qc,
             hic_map_sort_by: params.hic_map_sort_by,
             hic_map_qv: params.hic_map_qv,
             cooler_bin_size: params.cooler_bin_size,
             hifi_coverage_cap: params.hifi_coverage_cap,
             telomer_motif: params.telomer_motif
+        )
+    )
+
+    // Compare the assemblies across the stages: one QUAST run per sample. It waits for the last stage.
+    stage_comparison = COMPARE_STAGES(
+        record(
+            assemblies: assemble.assemblies
+                .mix(screen.assemblies)
+                .mix(purge.assemblies)
+                .mix(polish.assemblies)
+                .mix(scaffold.assemblies)
+                .mix(user_assemblies.filter { a -> a.meta.assembly.stage == 'curated' }),
+            reference: params.reference
         )
     )
 
@@ -374,6 +330,8 @@ workflow {
         .mix(purge.logs)
         .mix(polish.logs)
         .mix(scaffold.logs)
+        .mix(curate.logs)
+        .mix(stage_comparison.logs)
     report = ASSEMBLY_REPORT(
         input.metadata,
         params.quarto_assembly_report,
@@ -427,6 +385,8 @@ workflow {
     purge_dups        = purge.purge_dups
     // 06 - Error polishing
     dvpolish          = polish.dvpolish
+    dvpolish_merqury_input    = polish.merqury_input
+    dvpolish_merqury_polished = polish.merqury_polished
     // 07 - Scaffolding
     pairtools         = scaffold.pairtools
     yahs              = scaffold.yahs
@@ -439,12 +399,12 @@ workflow {
     // 09 - RNA alignment
     star              = rnaseq
     // Assembly QC of each stage
-    merquryfk         = assemble.merquryfk.mix(screen.merquryfk).mix(purge.merquryfk).mix(polish.merquryfk).mix(scaffold.merquryfk)
-    merqury           = assemble.merqury.mix(screen.merqury).mix(purge.merqury).mix(polish.merqury).mix(scaffold.merqury)
-    busco             = assemble.busco.mix(screen.busco).mix(purge.busco).mix(polish.busco).mix(scaffold.busco)
-    gfastats          = assemble.gfastats.mix(screen.gfastats).mix(purge.gfastats).mix(polish.gfastats).mix(scaffold.gfastats)
-    quast             = assemble.quast.mix(screen.quast).mix(purge.quast).mix(polish.quast).mix(scaffold.quast)
+    merquryfk         = assemble.merquryfk.mix(screen.merquryfk).mix(purge.merquryfk).mix(polish.merquryfk).mix(scaffold.merquryfk).mix(curate.merquryfk)
+    merqury           = assemble.merqury.mix(screen.merqury).mix(purge.merqury).mix(polish.merqury).mix(scaffold.merqury).mix(curate.merqury)
+    busco             = assemble.busco.mix(screen.busco).mix(purge.busco).mix(polish.busco).mix(scaffold.busco).mix(curate.busco)
+    gfastats          = assemble.gfastats.mix(screen.gfastats).mix(purge.gfastats).mix(polish.gfastats).mix(scaffold.gfastats).mix(curate.gfastats)
     // 10 - Report
+    quast             = stage_comparison.quast
     report            = report.report
 
     onComplete:
@@ -470,108 +430,114 @@ workflow {
 output {
     // 01 - Read inspection
     goat: Channel<Record> {
-        path { r -> "${params.stage_dirs.inspect}/${r.id}/goat" }
+        path { r -> "${stageDir(params.stage_dirs, 'inspect')}/${r.id}/goat" }
     }
     seqkit_hifi_stats: Channel<Record> {
-        path { r -> "${params.stage_dirs.inspect}/${r.meta.id}/seqkit_hifi_stats" }
+        path { r -> "${stageDir(params.stage_dirs, 'inspect')}/${r.meta.id}/seqkit_hifi_stats" }
     }
     seqkit_hic_stats: Channel<Record> {
-        path { r -> "${params.stage_dirs.inspect}/${r.meta.id}/seqkit_hic_stats" }
+        path { r -> "${stageDir(params.stage_dirs, 'inspect')}/${r.meta.id}/seqkit_hic_stats" }
     }
     fastqc_hic: Channel<Record> {
-        path { r -> "${params.stage_dirs.inspect}/${r.meta.id}/fastqc_hic" }
+        path { r -> "${stageDir(params.stage_dirs, 'inspect')}/${r.meta.id}/fastqc_hic" }
     }
     fastk_runs: Channel<Record> {
-        path { r -> "${params.stage_dirs.inspect}/${r.meta.id}/fastk" }
+        path { r -> "${stageDir(params.stage_dirs, 'inspect')}/${r.meta.id}/fastk" }
     }
     fastk_merged: Channel<Record> {
-        path { r -> "${params.stage_dirs.inspect}/${r.meta.id}/fastk" }
+        path { r -> "${stageDir(params.stage_dirs, 'inspect')}/${r.meta.id}/fastk" }
     }
     genescopefk: Channel<Record> {
-        path { r -> "${params.stage_dirs.inspect}/${r.meta.id}/genescopefk" }
+        path { r -> "${stageDir(params.stage_dirs, 'inspect')}/${r.meta.id}/genescopefk" }
     }
     smudgeplot: Channel<Record> {
-        path { r -> "${params.stage_dirs.inspect}/${r.meta.id}/smudgeplot" }
+        path { r -> "${stageDir(params.stage_dirs, 'inspect')}/${r.meta.id}/smudgeplot" }
     }
     katgc: Channel<Record> {
-        path { r -> "${params.stage_dirs.inspect}/${r.meta.id}/katgc" }
+        path { r -> "${stageDir(params.stage_dirs, 'inspect')}/${r.meta.id}/katgc" }
     }
     kat_comp: Channel<Record> {
-        path { r -> "${params.stage_dirs.inspect}/${r.meta.id}/kat_comp" }
+        path { r -> "${stageDir(params.stage_dirs, 'inspect')}/${r.meta.id}/kat_comp" }
     }
     dtol_search: Channel<Record> {
-        path { r -> r.json_file >> ("${params.stage_dirs.inspect}/${r.id}/dtol_search/") }
+        path { r -> r.json_file >> ("${stageDir(params.stage_dirs, 'inspect')}/${r.id}/dtol_search/") }
     }
     // 02 - Read preprocessing
     converted_bam_to_fasta: Channel<Record> {
-        path { r -> "${params.stage_dirs.preprocess}/${r.meta.id}/converted_bam_to_fasta" }
+        path { r -> "${stageDir(params.stage_dirs, 'preprocess')}/${r.meta.id}/converted_bam_to_fasta" }
     }
     hic_cram: Channel<Record> {
-        path { r -> "${params.stage_dirs.preprocess}/${r.meta.id}/hic_cram" }
+        path { r -> "${stageDir(params.stage_dirs, 'preprocess')}/${r.meta.id}/hic_cram" }
     }
     hic_crai: Channel<Record> {
-        path { r -> "${params.stage_dirs.preprocess}/${r.meta.id}/hic_cram" }
+        path { r -> "${stageDir(params.stage_dirs, 'preprocess')}/${r.meta.id}/hic_cram" }
     }
     // 03 - Assembly
     hifiasm: Channel<Record> {
-        path { r -> "${subjectDir(params.stage_dirs.assembly, r.meta)}/hifiasm" }
+        path { r -> "${subjectDir(stageDir(params.stage_dirs, 'assembly'), r.meta)}/hifiasm" }
     }
     gfa2fa: Channel<Record> {
-        path { r -> "${subjectDir(params.stage_dirs.assembly, r.meta)}/gfa2fa" }
+        path { r -> "${subjectDir(stageDir(params.stage_dirs, 'assembly'), r.meta)}/gfa2fa" }
     }
     mitohifi_references: Channel<Record> {
-        path { r -> "${params.stage_dirs.assembly}/${r.meta.id}/organelle/mitohifi/references" }
+        path { r -> "${stageDir(params.stage_dirs, 'assembly')}/${r.meta.id}/organelle/mitohifi/references" }
     }
     mitohifi: Channel<Record> {
-        path { r -> "${params.stage_dirs.assembly}/${params.organelle_assembly_mode == 'contigs' ? r.meta.assembly.build : r.meta.id}/organelle/mitohifi" }
+        path { r -> "${stageDir(params.stage_dirs, 'assembly')}/${params.organelle_assembly_mode == 'contigs' ? r.meta.assembly.build : r.meta.id}/organelle/mitohifi" }
     }
     oatk: Channel<Record> {
-        path { r -> "${subjectDir(params.stage_dirs.assembly, r.meta)}/organelle/oatk" }
+        path { r -> "${subjectDir(stageDir(params.stage_dirs, 'assembly'), r.meta)}/organelle/oatk" }
     }
     dotplots: Channel<Record> {
-        path { r -> "${subjectDir(params.stage_dirs.assembly, r.meta)}/organelle/dotplots" }
+        path { r -> "${subjectDir(stageDir(params.stage_dirs, 'assembly'), r.meta)}/organelle/dotplots" }
     }
     // 04 - Contamination screen
     fcsgx_reports: Channel<Record> {
-        path { r -> "${subjectDir(params.stage_dirs.screen, r.meta)}/fcsgx" }
+        path { r -> "${subjectDir(stageDir(params.stage_dirs, 'screen'), r.meta)}/fcsgx" }
     }
     fcsgx_clean: Channel<Record> {
-        path { r -> "${subjectDir(params.stage_dirs.screen, r.meta)}/fcsgx" }
+        path { r -> "${subjectDir(stageDir(params.stage_dirs, 'screen'), r.meta)}/fcsgx" }
     }
     // 05 - Duplicate purging
     purge_dups: Channel<Record> {
-        path { r -> "${subjectDir(params.stage_dirs.purge, r.meta)}/purge_dups" }
+        path { r -> "${subjectDir(stageDir(params.stage_dirs, 'purge'), r.meta)}/purge_dups" }
     }
     // 06 - Error polishing
     dvpolish: Channel<Record> {
-        path { r -> "${subjectDir(params.stage_dirs.polish, r.meta)}/dvpolish" }
+        path { r -> "${subjectDir(stageDir(params.stage_dirs, 'polish'), r.meta)}/dvpolish" }
+    }
+    dvpolish_merqury_input: Channel<Record> {
+        path { r -> "${subjectDir(stageDir(params.stage_dirs, 'polish'), r.meta)}/dvpolish/merqury_input" }
+    }
+    dvpolish_merqury_polished: Channel<Record> {
+        path { r -> "${subjectDir(stageDir(params.stage_dirs, 'polish'), r.meta)}/dvpolish/merqury_polished" }
     }
     // 07 - Scaffolding
     pairtools: Channel<Record> {
-        path { r -> r.stat >> ("${subjectDir(params.stage_dirs.scaffold, r.meta)}/pairtools/") }
+        path { r -> r.stat >> ("${subjectDir(stageDir(params.stage_dirs, 'scaffold'), r.meta)}/pairtools/") }
     }
     yahs: Channel<Record> {
-        path { r -> "${subjectDir(params.stage_dirs.scaffold, r.meta)}/yahs" }
+        path { r -> "${subjectDir(stageDir(params.stage_dirs, 'scaffold'), r.meta)}/yahs" }
     }
     merged_haps: Channel<Record> {
-        path { r -> "${subjectDir(params.stage_dirs.scaffold, r.meta)}/merged_haps" }
+        path { r -> "${subjectDir(stageDir(params.stage_dirs, 'scaffold'), r.meta)}/merged_haps" }
     }
     // 08 - Curation
     higlass_mcool: Channel<Record> {
-        path { r -> r.mcool >> ("${subjectDir(params.stage_dirs.curate, r.meta)}/higlass/") }
+        path { r -> r.mcool >> ("${subjectDir(stageDir(params.stage_dirs, 'curate'), r.meta)}/higlass/") }
     }
     higlass_gaps: Channel<Record> {
-        path { r -> r.beddb >> ("${subjectDir(params.stage_dirs.curate, r.meta)}/higlass/") }
+        path { r -> r.beddb >> ("${subjectDir(stageDir(params.stage_dirs, 'curate'), r.meta)}/higlass/") }
     }
     higlass_telomers: Channel<Record> {
-        path { r -> r.bw >> ("${subjectDir(params.stage_dirs.curate, r.meta)}/higlass/") }
+        path { r -> r.bw >> ("${subjectDir(stageDir(params.stage_dirs, 'curate'), r.meta)}/higlass/") }
     }
     pretext: Channel<Record> {
-        path { r -> r.hitile >> ("${subjectDir(params.stage_dirs.curate, r.meta)}/pretext/") }
+        path { r -> r.hitile >> ("${subjectDir(stageDir(params.stage_dirs, 'curate'), r.meta)}/pretext/") }
     }
     // 09 - RNA alignment
     star: Channel<Record> {
-        path { r -> "${subjectDir(params.stage_dirs.alignRNA, r.meta)}/star" }
+        path { r -> "${subjectDir(stageDir(params.stage_dirs, 'alignRNA'), r.meta)}/star" }
     }
     // Assembly QC, next to the assembly it evaluates
     merquryfk: Channel<Record> {
@@ -581,19 +547,16 @@ output {
         path { r -> "${assemblyStageDir(params.stage_dirs, r.meta.assembly.stage)}/${r.meta.assembly.build}/qc/merqury" }
     }
     busco: Channel<Record> {
-        path { r ->
-            r.short_summaries_txt >> ("${assemblyStageDir(params.stage_dirs, r.meta.assembly.stage)}/${r.meta.assembly.build}/qc/busco/")
-            r.short_summaries_json >> ("${assemblyStageDir(params.stage_dirs, r.meta.assembly.stage)}/${r.meta.assembly.build}/qc/busco/")
-        }
+        path { r -> "${assemblyStageDir(params.stage_dirs, r.meta.assembly.stage)}/${r.meta.assembly.build}/qc/busco" }
     }
     gfastats: Channel<Record> {
         path { r -> "${assemblyStageDir(params.stage_dirs, r.meta.assembly.stage)}/${r.meta.assembly.build}/qc/gfastats" }
     }
-    quast: Channel<Record> {
-        path { r -> "${assemblyStageDir(params.stage_dirs, r.meta.assembly.stage)}/quast/${r.meta.id}" }
-    }
     // 10 - Report
+    quast: Channel<Record> {
+        path { r -> "${stageDir(params.stage_dirs, 'report')}/quast/${r.meta.id}" }
+    }
     report: Channel<Record> {
-        path "${params.stage_dirs.report}"
+        path "${stageDir(params.stage_dirs, 'report')}"
     }
 }

@@ -20,22 +20,18 @@ include { PAIRTOOLS                               } from '../../modules/local/pa
 include { YAHS                                    } from '../../modules/nf-core/yahs/main'
 include { SEQKIT_MERGE as MERGE_HAPLOTYPES        } from '../../modules/local/seqkit/merge/main'
 include { workflow as ASSEMBLY_QC_SCAFFOLDED      } from '../assembly_qc'
-include { Assembly; KmerParams; BuscoParams; assemblyWith } from '../../types/records'
+include { Assembly; QcParams; defaultQcParams; withFastas } from '../../types/records'
 
 params {
     assemblies: Channel<Assembly>  // Assemblies to scaffold
     provided  : Channel<Assembly>? // Assemblies of this stage that were supplied. Evaluated, not scaffolded.
 
     // Scaffolding
-    use_phased     : Boolean = false      // Scaffold the primary and alternate assembly separately
+    qc        : QcParams    = defaultQcParams() // Options of the assembly QC. use_phased: also process and evaluate the alternate assembly
     hic_type       : String  = 'arima_v2' // Hi-C library type: arima_v2, arima_v1, omni-c or ''
     hic_bam_sorting: String  = 'by_name'  // Sort of the Hi-C bam file: by_coordinate or by_name
 
     // Assembly QC
-    busco     : BuscoParams = record(lineages: null, lineages_db_path: null, max_lineages: null)
-    fastk     : KmerParams  = record(kmer_size: null)
-    meryl     : KmerParams  = record(kmer_size: null)
-    reference : Path?
 }
 
 // Identifies the sample, assembly build and haplotype (if any)
@@ -53,11 +49,16 @@ workflow {
     main:
     // Scaffold each haplotype separately when phased
     to_scaffold = params.assemblies.flatMap { a ->
-        def hic = a.hic ?: []
-        def metas = params.use_phased
+        if ( !a.hic ) {
+            error "Assembly ${a.id} has no Hi-C reads (hic). Scaffolding needs them."
+        }
+        def hic = a.hic
+        // A primary-only assembly has no second haplotype, also when phased
+        def phased = params.qc.use_phased && a.alt_fasta
+        def metas = phased
             ? [ a.meta + record(haplotype: 'hap1'), a.meta + record(haplotype: 'hap2') ]
             : [ a.meta ]
-        def fastas = params.use_phased ? [ a.pri_fasta, a.alt_fasta ] : [ a.pri_fasta ]
+        def fastas = phased ? [ a.pri_fasta, a.alt_fasta ] : [ a.pri_fasta ]
         (0..<metas.size()).collect { i ->
             record(id: haplotypeKey(metas[i]), meta: metas[i], fasta: fastas[i], hic: hic)
         }.toList()
@@ -116,9 +117,7 @@ workflow {
                     sort_bam: true,
                     pairtools_args: "--min-mapq 20 --walks-policy 5unique --max-inter-align-gap 30",
                     pairtools_args2: '--tmpdir=\$PWD',
-                    pairtools_args3: null,
                     pairtools_args4: '--mark-dups',
-                    pairtools_args5: null,
                     pairtools_args6: params.hic_bam_sorting == "by_coordinate" ? "--write-index" : "-n",
                     output_prefix: scaffoldPrefix(x.meta)
                 )
@@ -138,7 +137,6 @@ workflow {
                     fasta: x.fasta,
                     fai: x.fai,
                     hic_map: x.hic_map,
-                    agp: null,
                     yahs_args: params.hic_type == "arima_v2" ? "-e GATC,GANTC,CTNAG,TTAA" : params.hic_type == "arima_v1" ? "-e GATC,GANTC" : "",
                     output_prefix: scaffoldPrefix(x.meta)
                 )
@@ -151,23 +149,13 @@ workflow {
         .map { s -> tuple("${s.meta.id}:${s.meta.assembly.build}", s.scaffolds_fasta) }
         .groupBy()
         .map { key, fastas ->
-            def sorted = fastas.toSorted { a, b -> params.use_phased ? a.name <=> b.name : b.name <=> a.name }
+            def sorted = fastas.toSorted { a, b -> params.qc.use_phased ? a.name <=> b.name : b.name <=> a.name }
             record(assembly_key: key, fastas: sorted)
         }
         .join(params.assemblies.map { a -> record(assembly_key: "${a.meta.id}:${a.meta.assembly.build}", assembly: a) }, by: 'assembly_key')
 
     // The wide record, with the scaffolded assembly files
-    scaffolded_assemblies = scaffolded.map { x ->
-        assemblyWith(
-            x.assembly,
-            [
-                pri_fasta: x.fastas[0],
-                alt_fasta: x.fastas.size() > 1 ? x.fastas[1] : null,
-                pri_gfa: null,
-                alt_gfa: null
-            ]
-        )
-    }
+    scaffolded_assemblies = scaffolded.map { x -> withFastas(x.assembly, x.fastas) }
     assemblies = scaffolded_assemblies.mix(params.provided ?: channel.empty())
 
     merged_haplotypes = MERGE_HAPLOTYPES(
@@ -186,14 +174,7 @@ workflow {
     )
 
     qc = ASSEMBLY_QC_SCAFFOLDED(
-        record(
-            assemblies: assemblies,
-            busco: params.busco,
-            fastk: params.fastk,
-            meryl: params.meryl,
-            reference: params.reference,
-            use_phased: params.use_phased
-        )
+        record(assemblies: assemblies) + params.qc
     )
 
     publish:
@@ -205,7 +186,6 @@ workflow {
     merqury           = qc.merqury
     busco             = qc.busco
     gfastats          = qc.gfastats
-    quast             = qc.quast
     logs              = pairs.flatMap { p -> p.stat.toList() }.mix(qc.logs)
 }
 
@@ -232,16 +212,10 @@ output {
         path { r -> "merqury/${r.meta.assembly.build}" }
     }
     busco: Channel<Record> {
-        path { r ->
-            r.short_summaries_txt >> ("busco/${r.meta.assembly.build}/")
-            r.short_summaries_json >> ("busco/${r.meta.assembly.build}/")
-        }
+        path { r -> "busco/${r.meta.assembly.build}" }
     }
     gfastats: Channel<Record> {
         path { r -> "gfastats/${r.meta.assembly.build}" }
-    }
-    quast: Channel<Record> {
-        path 'quast'
     }
     logs: Channel<Path> {
         path 'logs'

@@ -1,7 +1,7 @@
 # Assembly QC
 
-K-mer consistency (MerquryFK, Merqury), gene space completeness (BUSCO) and contiguity (gfastats,
-QUAST) of one or more assemblies of a sample. It runs on its own, and the same subworkflows are the
+K-mer consistency (MerquryFK, Merqury), gene space completeness (BUSCO) and contiguity (gfastats)
+of one or more assemblies of a sample. It runs on its own, and the same subworkflows are the
 evaluation step of the EBP assembly workflow.
 
 ## Run
@@ -35,7 +35,7 @@ nextflow run pipelines/assembly_qc -profile singularity -params-file qc_paramete
 
 The BUSCO lineages are not looked up from the sample: `busco.lineages` is required.
 Results are published per tool under `<outdir>`: `merquryfk/<build>`, `merqury/<build>`, `busco/<build>`,
-`gfastats/<build>` and `quast`, where the build is `<assembler>-<stage>-<id>`.
+and `gfastats/<build>`, where the build is `<assembler>-<stage>-<id>`.
 
 The stage pipelines include this pipeline under an alias and pass the assemblies as wide records
 (`types/records.nf`) with the HiFi k-mer databases or the HiFi reads. The caller decides what to publish.

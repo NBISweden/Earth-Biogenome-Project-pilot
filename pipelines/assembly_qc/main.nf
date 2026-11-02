@@ -20,11 +20,10 @@ nextflow.enable.types = true
 include { BUILD_FASTK_DATABASE as BUILD_FASTK_HIFI_DATABASE } from '../../subworkflows/local/build_fastk_database/main'
 include { BUILD_MERYL_DATABASE as BUILD_MERYL_HIFI_DATABASE } from '../../subworkflows/local/build_meryl_database/main'
 include { EVALUATE_ASSEMBLY                                 } from '../../subworkflows/local/evaluate_assembly/main'
-include { COMPARE_ASSEMBLIES                                } from '../../subworkflows/local/compare_assemblies/main'
-include { Assembly; Reads; FastkDatabase; MerylDatabase; KmerParams; BuscoParams; assemblyOf; assemblyWith } from '../../types/records'
+include { Assembly; Reads; FastkDatabase; MerylDatabase; KmerParams; BuscoParams } from '../../types/records'
 
 // The sample, assembly and reads given in a params file
-record Sample {
+record SampleInput {
     name       : String
     genome_size: Number  // Haploid genome size in bases. Used to compute N*-statistics.
     ploidy     : Integer?
@@ -48,7 +47,7 @@ params {
     assemblies: Channel<Assembly>?
 
     // Sample and data of a run on its own. Give these in a -params-file.
-    sample    : Sample?
+    sample    : SampleInput?
     assembly  : List<AssemblyInput>?
     hifi      : List<ReadsInput>? // HiFi reads to build the k-mer databases
 
@@ -56,12 +55,11 @@ params {
     busco     : BuscoParams = record(lineages: null, lineages_db_path: null, max_lineages: null)
     fastk     : KmerParams  = record(kmer_size: null)
     meryl     : KmerParams  = record(kmer_size: null)
-    reference : Path?       // Reference genome to compare to with QUAST
     use_phased: Boolean     = false // Evaluate the primary and alternate assembly separately
 }
 
 // Assemblies from the params of a run on its own
-def assembliesFromParams(sample: Sample, assemblies: List<AssemblyInput>, hifi: List<ReadsInput>, busco_lineages: String) -> List<Assembly> {
+def assembliesFromParams(sample: SampleInput, assemblies: List<AssemblyInput>, hifi: List<ReadsInput>, busco_lineages: String) -> List<Assembly> {
     def sample_id = sample.name.replace(' ', '_')
     def sample_meta = record(
         id      : sample_id,
@@ -75,22 +73,24 @@ def assembliesFromParams(sample: Sample, assemblies: List<AssemblyInput>, hifi: 
             meta           : sample_meta + record(assembly: [ assembler: a.assembler, stage: a.stage, id: a.id, build: build ]),
             pri_fasta      : a.pri_fasta,
             alt_fasta      : a.alt_fasta,
-            pri_gfa        : null,
-            alt_gfa        : null,
+            pri_gfa        : null as Path,
             hifi           : hifi.collect { h -> h.reads }.toList(),
-            hifi_merged    : null,
-            hic            : null,
-            fastk_hifi_hist: null,
-            fastk_hifi_ktab: null,
-            fastk_hifi_prof: null,
-            meryl_hifi_db  : null
+            hifi_merged    : null as Path,
+            hic            : null as List<List<Path>>,
+            rnaseq         : null as List<List<Path>>,
+            fastk_hifi_hist: null as Path,
+            fastk_hifi_ktab: null as List<Path>,
+            fastk_hifi_prof: null as List<Path>,
+            meryl_hifi_db  : null as Path
         )
     }.toList()
 }
 
 // The HiFi reads of an assembly's sample, one record per file
 def hifiReads(a: Record) -> List<Reads> {
-    def sample_meta = record(id: a.meta.id, sample: a.meta.sample, settings: a.meta.settings, single_end: true)
+    // Only what belongs to the sample: the settings of a build (for example its hifiasm options) would make
+    // the same reads count as different ones, and the k-mer databases would be built once per build
+    def sample_meta = record(id: a.meta.id, sample: a.meta.sample, settings: record(busco: a.meta.settings.busco), single_end: true)
     return ( a.hifi ?: [] ).collect { f -> record(id: a.meta.id, meta: sample_meta, reads: [ f ]) }.toList()
 }
 
@@ -102,8 +102,8 @@ def requireHifiSource(a: Record) -> Boolean {
     return true
 }
 
-def withDatabases(a: Record, fastk: FastkDatabase, meryl: MerylDatabase) {
-    return assemblyWith(a, [ fastk_hifi_hist: fastk.hist, fastk_hifi_ktab: fastk.ktab, fastk_hifi_prof: fastk.prof, meryl_hifi_db: meryl.meryl_db ])
+def withDatabases(a: Assembly, fastk: FastkDatabase, meryl: MerylDatabase) {
+    return a + record(fastk_hifi_hist: fastk.hist, fastk_hifi_ktab: fastk.ktab, fastk_hifi_prof: fastk.prof, meryl_hifi_db: meryl.meryl_db)
 }
 
 workflow {
@@ -123,7 +123,7 @@ workflow {
     )
     // The HiFi reads are required for the k-mer databases of an assembly that did not come with them
     inputs = from_params
-        .mix(( params.assemblies ?: channel.empty() ).map { a -> assemblyOf(a) })
+        .mix( params.assemblies ?: channel.empty() )
         .filter { a -> requireHifiSource(a) }
 
     // K-mer databases for the assemblies that did not come with them
@@ -142,18 +142,16 @@ workflow {
     evaluation = EVALUATE_ASSEMBLY(
         assemblies,
         params.use_phased,
-        params.busco.max_lineages ?: 3,
+        params.busco.max_lineages ?: 2,
         params.busco.lineages_db_path
     )
-    comparison = COMPARE_ASSEMBLIES( assemblies, params.reference )
 
     publish:
     merquryfk = evaluation.merquryfk
     merqury   = evaluation.merqury
     busco     = evaluation.busco
     gfastats  = evaluation.gfastats
-    quast     = comparison.quast
-    logs      = evaluation.logs.mix(comparison.logs)
+    logs      = evaluation.logs
 }
 
 output {
@@ -164,16 +162,10 @@ output {
         path { r -> "merqury/${r.meta.assembly.build}" }
     }
     busco: Channel<Record> {
-        path { r ->
-            r.short_summaries_txt >> ("busco/${r.meta.assembly.build}/")
-            r.short_summaries_json >> ("busco/${r.meta.assembly.build}/")
-        }
+        path { r -> "busco/${r.meta.assembly.build}" }
     }
     gfastats: Channel<Record> {
         path { r -> "gfastats/${r.meta.assembly.build}" }
-    }
-    quast: Channel<Record> {
-        path 'quast'
     }
     logs: Channel<Path> {
         path 'logs'

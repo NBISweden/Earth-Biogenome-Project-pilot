@@ -1,0 +1,91 @@
+// The helpers that complete a sample with the ENA taxonomy. They run offline.
+nextflow_function {
+
+    name "Test functions of PREPARE_INPUT"
+    script "subworkflows/local/prepare_input/main.nf"
+
+    tag "functions"
+
+    test("needsEna: all taxonomy keys given") {
+        function "needsEna"
+        when {
+            function {
+                """
+                input[0] = [ name: 'Species x', tax_id: 1, genetic_code: 1, mito_code: 2, domain: 'Eukaryota', lineage: 'Eukaryota; Metazoa;' ]
+                """
+            }
+        }
+        then {
+            assert function.success
+            assert function.result == false
+        }
+    }
+
+    test("needsEna: a key is missing") {
+        function "needsEna"
+        when {
+            function {
+                """
+                input[0] = [ name: 'Species x', tax_id: 1, genetic_code: 1, mito_code: 2, domain: 'Eukaryota' ]
+                """
+            }
+        }
+        then {
+            assert function.success
+            assert function.result == true
+        }
+    }
+
+    test("sampleWithEna: ENA fills only what the user did not give") {
+        function "sampleWithEna"
+        when {
+            function {
+                """
+                input[0] = [ name: 'Drosophila melanogaster', genetic_code: 99 ]
+                input[1] = [ taxId: 7227, geneticCode: 1, mitochondrialGeneticCode: 5, lineage: 'Eukaryota; Metazoa; Arthropoda;' ]
+                """
+            }
+        }
+        then {
+            assert function.success
+            def s = function.result
+            assert s.tax_id == 7227
+            assert s.genetic_code == 99       // the user's value is kept
+            assert s.mito_code == 5
+            assert s.domain == 'Eukaryota'
+            assert s.lineage == 'Eukaryota; Metazoa; Arthropoda;'
+        }
+    }
+
+    test("useGoat: eukaryote without genome properties") {
+        function "useGoat"
+        when {
+            function {
+                """
+                input[0] = [ name: 'Species x', domain: 'Eukaryota' ]
+                input[1] = 'insecta_odb10'
+                """
+            }
+        }
+        then {
+            assert function.success
+            assert function.result == true
+        }
+    }
+
+    test("useGoat: everything given, or not a eukaryote") {
+        function "useGoat"
+        when {
+            function {
+                """
+                input[0] = [ name: 'Species x', domain: 'Eukaryota', genome_size: 1000, haploid_number: 4, ploidy: 2 ]
+                input[1] = 'insecta_odb10'
+                """
+            }
+        }
+        then {
+            assert function.success
+            assert function.result == false
+        }
+    }
+}

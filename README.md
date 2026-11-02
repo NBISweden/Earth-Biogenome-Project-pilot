@@ -220,21 +220,20 @@ flowchart TD
     fcsgx_clean --> quast
     purgedups --> quast
     yahs --> quast
+    %% Each stage runs its own evaluation (pipelines/assembly_qc). QUAST compares the assemblies of all stages (pipelines/compare_stages)
 
     subgraph report[" REPORTING "]
         direction TB
-        report_dtol[[ Report DToL ]]
         report_genometraits[[ Report genome traits ]]
         report_versions[[ Report software versions ]]
         quarto[[ Quarto notebook ]]
         output[/ Final report /]
-        report_dtol --> quarto
         report_genometraits --> quarto
         report_versions --> quarto
         quarto --> output
     end
 
-    tol_search --> report_dtol
+    tol_search --> quarto
     goat --> report_genometraits
     busco --> report_versions
     genescopefk --> quarto
@@ -254,8 +253,8 @@ flowchart TD
 
 ## Usage
 
-Requires Nextflow >= 26.10.0. If you are updating from v1.0.0, read the
-[migration guide](docs/migration-typed-records.md): the input is unchanged, but the
+Requires Nextflow >= 26.10.3. If you are updating from v1.0.0, read the
+[migration guide](docs/migration-typed-records.md): the input YAML has the same keys, but HiFi reads are now required, `--input` takes one file, and the
 published folders, process names and `ext.when` are not.
 
 ```bash
@@ -299,7 +298,7 @@ where:
             time     = 4.d   // Overrides time settings defined in nextflow.config to 4 days. Use .h for hours, .m for minutes.
             memory   = '20GB'  // Overrides memory settings defined in nextflow.config to 20 GB.
             // ext.args supplies command-line options to the process tool
-            // overrides settings found in configs/modules.config
+            // overrides the options the workflow sets
             ext.args = '--long'  // Supplies these as command-line options to Busco
         }
     }
@@ -323,10 +322,10 @@ Mandatory:
       ploidy: 2                      # Optional: Estimated ploidy (default: retrieved by GOAT_TAXONSEARCH)
       genome_size: 2345              # Optional: Estimated genome size (default: retrieved by GOAT_TAXONSEARCH)
       haploid_number: 13             # Optional: Estimated haploid chromosome count (default: retrieved by GOAT_TAXONSEARCH)
-      tax_id: 5630                   # Optional: Taxon ID (default: retrieved by ENA_TAXQUERY)
-      genetic_code: 1                # Optional: Genetic code (default: retrieved by ENA_TAXQUERY)
-      mito_code: 1                   # Optional: Mitochondrial genetic code (default: retrieved by ENA_TAXQUERY)
-      domain: Eukaryota              # Optional: (default: retrived by ENA_TAXQUERY)
+      tax_id: 5630                   # Optional: Taxon ID (default: retrieved from ENA)
+      genetic_code: 1                # Optional: Genetic code (default: retrieved from ENA)
+      mito_code: 1                   # Optional: Mitochondrial genetic code (default: retrieved from ENA)
+      domain: Eukaryota              # Optional: (default: retrieved from ENA)
     assembly:                        # Optional: List of assemblies to curate and validate.
       - assembler: hifiasm           # For each entry, the assembler,
         stage: raw                   # stage of assembly (raw, decontaminated, purged, polished, scaffolded, curated),
@@ -334,7 +333,6 @@ Mandatory:
         pri_fasta: /path/to/primary_asm.fasta # and paths to sequences are required.
         alt_fasta: /path/to/alternate_asm.fasta
         pri_gfa: /path/to/primary_asm.gfa
-        alt_gfa: /path/to/alternate_asm.gfa
       - assembler: ipa
         stage: raw
         id: uuid
@@ -355,9 +353,9 @@ Mandatory:
 Optional:
 
 - `outdir`: The publishing path for results (default: `results`).
-- `publish_mode`: (values: `'symlink'` (default), `'copy'`) The file
+- `publish_mode`: (values: `'copy'` (default), `'symlink'`) The file
 publishing method from the intermediate results folders
-(see [Table of publish modes](https://www.nextflow.io/docs/latest/process.html#publishdir)).
+(see the [`workflow.output.mode` documentation](https://www.nextflow.io/docs/latest/reference/config.html#workflow)).
 - `steps`: The workflow steps to execute (default is all steps). Choose from:
 
     - `inspect`: 01 - Read inspection
@@ -389,7 +387,7 @@ busco:
   lineages: 'auto'
 ```
 
-- `multiqc_config`: Path to MultiQC configuration file (default: `configs/multiqc_conf.yaml`).
+- `multiqc_assembly_report_config`: Path to the MultiQC configuration file of the assembly report (default: `configs/multiqc_assembly_report_config.yml`).
 
 ### Workflow outputs
 
@@ -426,34 +424,30 @@ results
 │   │       ├── gfastats
 │   │       ├── merqury
 │   │       └── merquryfk
-│   └── quast
 ├── 04_contamination_screen
 │   ├── hifiasm-decontaminated-default
 │   │   ├── fcsgx
 │   │   └── qc
-│   └── quast
 ├── 05_duplicate_purging
 │   ├── hifiasm-purged-default
 │   │   ├── purge_dups
 │   │   └── qc
-│   └── quast
 ├── 06_error_polishing
 │   ├── hifiasm-polished-default
 │   │   ├── dvpolish
 │   │   └── qc
-│   └── quast
 ├── 07_scaffolding
 │   ├── hifiasm-scaffolded-default
 │   │   ├── merged_haps
 │   │   ├── pairtools
 │   │   ├── qc
 │   │   └── yahs
-│   └── quast
 ├── 08_curation
 │   └── hifiasm-curated-default
 │       ├── higlass
 │       └── pretext
 ├── 10_report
+│   ├── quast/<sample>
 │   ├── assembly_report.html
 │   ├── assembly_report.md
 │   ├── multiqc-summary.html

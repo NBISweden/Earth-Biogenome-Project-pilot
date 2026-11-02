@@ -28,7 +28,8 @@ stage with five inputs needs five params and the caller has to do the joins.
   `Channel<Assembly>` from two scripts incompatible.
 - **Assembly QC is a pipeline, not part of `main.nf`.** `pipelines/assembly_qc`
   is included by each stage pipeline that makes assemblies (assemble,
-  decontaminate, purge, polish, scaffold) under one alias per stage, for
+  decontaminate, purge, polish, scaffold) under one alias per stage, and by `curate`
+  for the curated assemblies that were supplied (`ASSEMBLY_QC_CURATED`), for
   example `ASSEMBLY_QC_PURGED`. Assemblies supplied as input are evaluated by the
   stage that matches their `stage`. The k-mer databases travel in the wide
   record: task hashes include the alias, so a database built inside each
@@ -58,11 +59,16 @@ assemblies that arrive without them.
 
 ## Consequences
 
-- QUAST compares the assemblies of one stage of a sample, not all stages
-  together. It is published in `<stage dir>/quast/<sample>`. The cross-stage
-  comparison in `10_report/quast` is gone.
-- Evaluation starts as soon as an assembly exists. The collect bottleneck in
-  0002's `main.nf`, which delayed evaluation until all stages had run, is gone.
+- QUAST compares the assemblies of all stages of a sample in one run, to show how the contiguity
+  changes from stage to stage. It is not part of the per-stage QC. `pipelines/compare_stages` runs
+  it from `main.nf` with the assemblies of every stage, so it is the one evaluation that waits for the
+  last stage. It is published in `10_report/quast/<sample>`, as before.
+- Evaluation starts as soon as an assembly exists. **This drops a deliberate
+  behaviour**: the old `main.nf` delayed all assembly QC until every stage had
+  finished (`toList().flatMap()`), so that processing had priority on the
+  cluster. The maintainers accept that QC overlaps with processing. A gate would
+  have to come from a later stage than the pipeline that includes the QC, and
+  Nextflow 26.10 has no documented way to express that.
 - Stage pipelines depend on the experimental composition feature
   (Nextflow >= 26.10), as in 0002.
-- Selectors for process config carry the alias, e.g. `QC_PURGED:.*:BUSCO`.
+- Selectors for process config carry the alias, e.g. `PURGE_DUPLICATES:ASSEMBLY_QC_PURGED:EVALUATE_ASSEMBLY:BUSCO`.

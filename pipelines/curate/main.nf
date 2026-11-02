@@ -34,16 +34,21 @@ include { TIDK_SEARCH as TIDK_SEARCH_TSV        } from '../../modules/nf-core/ti
 include { TIDK_PLOT                             } from '../../modules/nf-core/tidk/plot/main'
 include { CREATE_TELOMER_BIGWIG_TRACK           } from '../../modules/local/hic_curation/create_telomer_bigwig_track'
 include { PRETEXT_TRACKS_INGESTION              } from '../../modules/local/hic_curation/pretext_tracks_ingestion'
-include { Assembly                              } from '../../types/records'
+include { workflow as ASSEMBLY_QC_CURATED       } from '../assembly_qc'
+include { Assembly; QcParams; defaultQcParams } from '../../types/records'
 
 params {
-    assemblies: Channel<Assembly> // Assemblies to curate
+    assemblies: Channel<Assembly>  // Assemblies to curate
+    provided  : Channel<Assembly>? // Assemblies of this stage that were supplied. Evaluated, not curated.
 
     hic_map_sort_by  : String  = 'length' // How to sort the Hi-C maps: length, name or nosort
     hic_map_qv       : Integer = 0        // Minimum map quality of the Hi-C alignments
     cooler_bin_size  : Integer = 1000     // Bin size of the cooler cload intervals
     hifi_coverage_cap: Integer = 100      // PacBio HiFi coverage cap for the coverage tracks
     telomer_motif    : String  = 'TTAGGG'
+
+    // Assembly QC of the supplied assemblies
+    qc        : QcParams    = defaultQcParams() // Options of the assembly QC. use_phased: also process and evaluate the alternate assembly
 }
 
 // Identifies the sample and the assembly build
@@ -61,7 +66,10 @@ workflow {
     main:
     // The primary assembly with the reads of its sample
     primary = params.assemblies.map { a ->
-        record(id: assemblyKey(a.meta), meta: a.meta, fasta: a.pri_fasta, hic: a.hic ?: [], hifi: a.hifi ?: [])
+        if ( !a.hic ) {
+            error "Assembly ${a.id} has no Hi-C reads (hic). Curation needs them."
+        }
+        record(id: assemblyKey(a.meta), meta: a.meta, fasta: a.pri_fasta, hic: a.hic, hifi: a.hifi ?: [])
     }
 
     index = BWAMEM2_INDEX(
@@ -136,7 +144,6 @@ workflow {
                     index_files: [],
                     fasta: null,
                     fai: null,
-                    gzi: null,
                     samtools_args: '--write-index',
                     output_prefix: "${g.meta.assembly.build}_merged"
                 )
@@ -219,7 +226,6 @@ workflow {
                     fasta: x.fasta,
                     fai: x.fai,
                     pretextmap_args: "--sortby ${params.hic_map_sort_by} --mapq ${params.hic_map_qv}",
-                    pretextmap_args2: null,
                     output_prefix: x.input.baseName
                 )
             }
@@ -243,13 +249,9 @@ workflow {
                     reads: f,
                     reference: p.fasta,
                     bam_format: true,
-                    bam_index_extension: null,
                     cigar_paf_format: false,
                     cigar_bam: false,
                     minimap2_args: "--MD -x map-hifi",
-                    minimap2_args2: null,
-                    minimap2_args3: null,
-                    minimap2_args4: null,
                     output_prefix: "${p.meta.assembly.build}_${readsName(f)}"
                 )
             }.toList()
@@ -273,7 +275,6 @@ workflow {
                     index_files: [],
                     fasta: null,
                     fai: null,
-                    gzi: null,
                     samtools_args: '--write-index',
                     output_prefix: "${g.meta.assembly.build}_merged"
                 )
@@ -320,7 +321,6 @@ workflow {
                     meta: x.meta,
                     bed: x.bed,
                     chrom_sizes: x.chrom_sizes,
-                    gap_args: null,
                     gap_args2: '--no-header',        // clodius aggregate
                     output_prefix: x.meta.assembly.build
                 )
@@ -386,7 +386,17 @@ workflow {
             }
     )
 
+    // Curation makes tracks, not assemblies. Only supplied curated assemblies are evaluated.
+    qc = ASSEMBLY_QC_CURATED(
+        record(assemblies: params.provided ?: channel.empty()) + params.qc
+    )
+
     publish:
+    merquryfk      = qc.merquryfk
+    merqury        = qc.merqury
+    busco          = qc.busco
+    gfastats       = qc.gfastats
+    logs           = qc.logs
     zoomify        = zoomify
     coverage       = coverage
     gaps           = gaps
@@ -395,6 +405,21 @@ workflow {
 }
 
 output {
+    merquryfk: Channel<Record> {
+        path { r -> "merquryfk/${r.meta.assembly.build}" }
+    }
+    merqury: Channel<Record> {
+        path { r -> "merqury/${r.meta.assembly.build}" }
+    }
+    busco: Channel<Record> {
+        path { r -> "busco/${r.meta.assembly.build}" }
+    }
+    gfastats: Channel<Record> {
+        path { r -> "gfastats/${r.meta.assembly.build}" }
+    }
+    logs: Channel<Path> {
+        path 'logs'
+    }
     zoomify: Channel<Record> {
         path { r -> r.mcool >> ("higlass/${r.meta.assembly.build}/") }
     }

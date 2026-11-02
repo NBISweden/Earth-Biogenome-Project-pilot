@@ -19,8 +19,6 @@ nextflow_process {
                     meta: null,
                     fastk_ktab: [ file("\$projectDir/tests/data/modules/seq.fasta") ],
                     smudgeplot_threshold: 10,
-                    smudgeplot_args: null,
-                    smudgeplot_args2: null,
                     output_prefix: 'test'
                 )
                 """

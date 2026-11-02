@@ -55,8 +55,7 @@ record Assembly {
     meta           : Record               // sample meta data, including meta.assembly
     pri_fasta      : Path
     alt_fasta      : Path?
-    pri_gfa        : Path?
-    alt_gfa        : Path?
+    pri_gfa        : Path?                // Contig graph of the raw assembly. The stages after it have none
     hifi           : List<Path>?          // HiFi reads, one file per element
     hifi_merged    : Path?                // All HiFi reads of the sample in one file
     hic            : List<List<Path>>?    // Hi-C read pairs
@@ -67,31 +66,11 @@ record Assembly {
     meryl_hifi_db  : Path?                // HiFi Meryl database
 }
 
-// A new Assembly from the fields of a record, with some of them replaced. Stages build the records they
-// return with this. A record with extra fields cannot be passed to a function that takes an Assembly.
-// The return type is not declared: a declared record type makes the value an instance that join,
-// combine and `+` do not accept.
-def assemblyWith(a: Record, changes: Map) {
-    return record(
-        id             : ( changes.containsKey('id') ? changes.id : a.id ) as String,
-        meta           : ( changes.containsKey('meta') ? changes.meta : a.meta ) as Record,
-        pri_fasta      : ( changes.containsKey('pri_fasta') ? changes.pri_fasta : a.pri_fasta ) as Path,
-        alt_fasta      : ( changes.containsKey('alt_fasta') ? changes.alt_fasta : a.alt_fasta ) as Path,
-        pri_gfa        : ( changes.containsKey('pri_gfa') ? changes.pri_gfa : a.pri_gfa ) as Path,
-        alt_gfa        : ( changes.containsKey('alt_gfa') ? changes.alt_gfa : a.alt_gfa ) as Path,
-        hifi           : ( changes.containsKey('hifi') ? changes.hifi : a.hifi ) as List<Path>,
-        hifi_merged    : ( changes.containsKey('hifi_merged') ? changes.hifi_merged : a.hifi_merged ) as Path,
-        hic            : ( changes.containsKey('hic') ? changes.hic : a.hic ) as List<List<Path>>,
-        rnaseq         : ( changes.containsKey('rnaseq') ? changes.rnaseq : a.rnaseq ) as List<List<Path>>,
-        fastk_hifi_hist: ( changes.containsKey('fastk_hifi_hist') ? changes.fastk_hifi_hist : a.fastk_hifi_hist ) as Path,
-        fastk_hifi_ktab: ( changes.containsKey('fastk_hifi_ktab') ? changes.fastk_hifi_ktab : a.fastk_hifi_ktab ) as List<Path>,
-        fastk_hifi_prof: ( changes.containsKey('fastk_hifi_prof') ? changes.fastk_hifi_prof : a.fastk_hifi_prof ) as List<Path>,
-        meryl_hifi_db  : ( changes.containsKey('meryl_hifi_db') ? changes.meryl_hifi_db : a.meryl_hifi_db ) as Path
-    )
-}
-
-def assemblyOf(a: Record) {
-    return assemblyWith(a, [:])
+// The assembly of a build with the files that a stage made: the primary and, when there is a second one,
+// the alternate. The contig graph belongs to the assembly before the stage, so it is dropped.
+// `+` keeps the other fields of the record, also those that a stage added to join on.
+def withFastas(a: Assembly, fastas: List<Path>) {
+    return a + record(pri_fasta: fastas[0], alt_fasta: fastas.size() > 1 ? fastas[1] : null, pri_gfa: null as Path)
 }
 
 // Tool options shared by the pipelines
@@ -109,4 +88,21 @@ record FcsParams {
     database    : Path?   // Local copy of the FCS-GX database. Fetched with the manifest when not set.
     manifest    : String? // URL of the FCS-GX database manifest
     ramdisk_path: String? // Copy the database here before running FCS-GX
+}
+
+// The options of the assembly QC. The stage pipelines take them as one param and pass them on.
+record QcParams {
+    busco     : BuscoParams
+    fastk     : KmerParams
+    meryl     : KmerParams
+    use_phased: Boolean // Evaluate (and process, in the stages that do) the primary and the alternate assembly
+}
+
+def defaultQcParams() {
+    return record(
+        busco: record(lineages: null as String, lineages_db_path: null as Path, max_lineages: null as Integer),
+        fastk: record(kmer_size: null as Integer),
+        meryl: record(kmer_size: null as Integer),
+        use_phased: false
+    )
 }

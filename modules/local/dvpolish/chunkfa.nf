@@ -54,7 +54,8 @@ process DVPOLISH_CHUNKFA {
     """
 
     stub:
+    // Two chunks, so that a stub run covers a region split
     """
-    touch ${task.ext.prefix}_chunk_1.bed
+    touch ${task.ext.prefix}_chunk_1.bed ${task.ext.prefix}_chunk_2.bed
     """
 }

@@ -19,8 +19,7 @@ nextflow_process {
                     meta: null,
                     ref: file("\$projectDir/tests/data/modules/seq.fasta"),
                     query: file("\$projectDir/tests/data/modules/seq.fasta"),
-                    experiment: 'mito',
-                    dnadotplot_args: null
+                    experiment: 'mito'
                 )
                 """
             }

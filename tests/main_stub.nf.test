@@ -1,0 +1,245 @@
+// STUB RUNS. They check the wiring of the workflow, not what the tools produce.
+// The real-tool tests are in main.nf.test.
+nextflow_pipeline {
+
+    name "Test Workflow main.nf - stub runs"
+    script "main.nf"
+
+    // One sample with two assemblies, each split into two polishing regions (the chunk stub writes two).
+    // A join that pairs one record per key drops all but the first assembly or region.
+    test("Stub - every assembly and every region reaches every stage") {
+        tag "stub"
+        options "-stub-run"
+        when {
+            params {
+                input  = "$projectDir/tests/data/tiny/test_two_assemblies.yml"
+                steps  = 'screen,purge,polish,scaffold,curate'
+                outdir = "$outputDir"
+                fastk {
+                    kmer_size = 14
+                }
+                meryl {
+                    kmer_size = 14
+                }
+                busco {
+                    lineages = 'bacteria_odb10'
+                }
+                fcs {
+                    manifest = "https://ftp.ncbi.nlm.nih.gov/genomes/TOOLS/FCS/database/test-only/test-only.manifest"
+                }
+            }
+        }
+
+        then {
+            assert workflow.success
+            def names = workflow.trace.tasks().collect { t -> t['name'] as String }
+            def count = { String needle -> names.count { n -> n.contains(needle) } }
+            // Two assemblies
+            assert count('PURGE_DUPLICATES:ITERATIVE_PURGEDUPS') == 2
+            assert count('DVPOLISH:DVPOLISH_PBMM2_ALIGN') == 2
+            assert count('SCAFFOLD:YAHS') == 2
+            // Two regions each
+            assert count('DVPOLISH:SAMTOOLS_VIEW') == 4
+            // One QUAST run per sample over the assemblies of all stages, not one per stage
+            assert count('COMPARE_STAGES:COMPARE_ASSEMBLIES:QUAST') == 1
+            // The QC of the polished and scaffolded assemblies
+            assert count('ASSEMBLY_QC_POLISHED:EVALUATE_ASSEMBLY:BUSCO') == 2
+            assert count('ASSEMBLY_QC_SCAFFOLDED:EVALUATE_ASSEMBLY:BUSCO') == 2
+        }
+    }
+
+    // A supplied curated assembly is evaluated, as the stage pipelines do for the other stages.
+    test("Stub - a supplied curated assembly is evaluated") {
+        tag "stub"
+        options "-stub-run"
+        when {
+            params {
+                input  = "$projectDir/tests/data/tiny/test_curated_assembly.yml"
+                steps  = 'curate'
+                outdir = "$outputDir"
+                fastk {
+                    kmer_size = 14
+                }
+                meryl {
+                    kmer_size = 14
+                }
+                busco {
+                    lineages = 'bacteria_odb10'
+                }
+            }
+        }
+
+        then {
+            assert workflow.success
+            def names = workflow.trace.tasks().collect { t -> t['name'] as String }
+            assert names.any { n -> n.contains('ASSEMBLY_QC_CURATED:EVALUATE_ASSEMBLY:BUSCO') }
+            assert names.any { n -> n.contains('ASSEMBLY_QC_CURATED:EVALUATE_ASSEMBLY:MERQURY') }
+        }
+    }
+
+    // A sample without Hi-C is valid. The run goes as far as it can.
+    test("Stub - no Hi-C reads: steps that do not need them run") {
+        tag "stub"
+        options "-stub-run"
+        when {
+            params {
+                input  = "$projectDir/tests/data/tiny/test_no_hic.yml"
+                steps  = 'screen,purge,polish'
+                outdir = "$outputDir"
+                fastk {
+                    kmer_size = 14
+                }
+                meryl {
+                    kmer_size = 14
+                }
+                busco {
+                    lineages = 'bacteria_odb10'
+                }
+                fcs {
+                    manifest = "https://ftp.ncbi.nlm.nih.gov/genomes/TOOLS/FCS/database/test-only/test-only.manifest"
+                }
+            }
+        }
+
+        then {
+            assert workflow.success
+            def names = workflow.trace.tasks().collect { t -> t['name'] as String }
+            assert names.any { n -> n.contains('DVPOLISH:SAMTOOLS_VIEW') }
+            assert !names.any { n -> n.contains('YAHS') }
+        }
+    }
+
+    // A step that needs Hi-C is an error at the start, not a silent no-op.
+    test("Stub - no Hi-C reads: a step that needs them is an error") {
+        tag "stub"
+        options "-stub-run"
+        when {
+            params {
+                input  = "$projectDir/tests/data/tiny/test_no_hic.yml"
+                steps  = 'purge,scaffold'
+                outdir = "$outputDir"
+                busco {
+                    lineages = 'bacteria_odb10'
+                }
+            }
+        }
+
+        then {
+            assert workflow.failed
+            assert workflow.trace.tasks().size() == 0
+            assert (workflow.stdout + workflow.stderr).join('\n').contains('has no Hi-C reads')
+        }
+    }
+
+    // Curation works on assemblies of the earlier stages. A supplied curated assembly is only evaluated,
+    // so a run that only evaluates it does not need Hi-C reads.
+    test("Stub - no Hi-C reads: evaluating a supplied curated assembly is fine") {
+        tag "stub"
+        options "-stub-run"
+        when {
+            params {
+                input  = "$projectDir/tests/data/tiny/test_curated_no_hic.yml"
+                steps  = 'curate'
+                outdir = "$outputDir"
+                fastk {
+                    kmer_size = 14
+                }
+                meryl {
+                    kmer_size = 14
+                }
+                busco {
+                    lineages = 'bacteria_odb10'
+                }
+            }
+        }
+
+        then {
+            assert workflow.success
+            def names = workflow.trace.tasks().collect { t -> t['name'] as String }
+            assert names.any { n -> n.contains('ASSEMBLY_QC_CURATED:EVALUATE_ASSEMBLY:BUSCO') }
+        }
+    }
+
+    // The stage of a supplied assembly decides where it enters. An unknown one is an error, not a silent skip.
+    test("Stub - an unknown stage of a supplied assembly is an error") {
+        tag "stub"
+        options "-stub-run"
+        when {
+            params {
+                input  = "$projectDir/tests/data/tiny/test_unknown_stage.yml"
+                steps  = 'purge'
+                outdir = "$outputDir"
+                busco {
+                    lineages = 'bacteria_odb10'
+                }
+            }
+        }
+
+        then {
+            assert workflow.failed
+            assert (workflow.stdout + workflow.stderr).join('\n').contains("has the stage 'Raw'")
+        }
+    }
+
+    // Phased: the primary and the alternate assembly go to one BUSCO batch run per lineage, which writes
+    // one short summary for each of them. The outputs have to take both.
+    test("Stub - a phased assembly is evaluated in one BUSCO batch") {
+        tag "stub"
+        options "-stub-run"
+        when {
+            params {
+                input      = "$projectDir/tests/data/tiny/test_phased_assembly.yml"
+                steps      = 'purge'
+                use_phased = true
+                outdir     = "$outputDir"
+                fastk {
+                    kmer_size = 14
+                }
+                meryl {
+                    kmer_size = 14
+                }
+                busco {
+                    lineages = 'bacteria_odb10'
+                }
+            }
+        }
+
+        then {
+            assert workflow.success
+            def names = workflow.trace.tasks().collect { t -> t['name'] as String }
+            // One batch per lineage and assembly, not one task per haplotype
+            assert names.count { n -> n.contains('EVALUATE_ASSEMBLY:BUSCO') } == 2
+        }
+    }
+
+    // The read inspection of a sample without Hi-C: its Hi-C database is simply absent.
+    test("Stub - no Hi-C reads: the read inspection runs") {
+        tag "stub"
+        options "-stub-run"
+        when {
+            params {
+                input  = "$projectDir/tests/data/tiny/test_no_hic.yml"
+                steps  = 'inspect'
+                outdir = "$outputDir"
+                fastk {
+                    kmer_size = 14
+                }
+                meryl {
+                    kmer_size = 14
+                }
+                genescopefk {
+                    kmer_size = 14
+                }
+                busco {
+                    lineages = 'bacteria_odb10'
+                }
+            }
+        }
+
+        then {
+            assert workflow.success
+            def names = workflow.trace.tasks().collect { t -> t['name'] as String }
+            assert names.any { n -> n.contains('INSPECT_DATA') }
+        }
+    }
+}

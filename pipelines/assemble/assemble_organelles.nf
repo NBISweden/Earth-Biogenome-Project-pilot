@@ -125,7 +125,7 @@ workflow ASSEMBLE_ORGANELLES {
         .filter { f -> f != null }
 
     emit:
-    // TODO: emit filtered assembly, or contig list to purge. Also emit from 03_assemble.
+    // TODO: emit filtered assembly, or contig list to purge. Also emit it from the assemble pipeline.
     mito_assemblies: Channel<Record> = mito_assemblies
     logs           : Channel<Path>   = logs
     reference      : Channel<Record> = reference

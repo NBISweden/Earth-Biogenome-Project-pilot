@@ -1,0 +1,27 @@
+# Tiny dataset, paths relative to the repository root. Two stages of one sample
+- id: hifiasm-raw-hifi_v1
+  meta:
+    id: Drosophila_melanogaster
+    sample:
+      name: Drosophila melanogaster
+      genome_size: 176040000
+      ploidy: 2
+    assembly:
+      assembler: hifiasm
+      stage: raw
+      id: hifi_v1
+      build: hifiasm-raw-hifi_v1
+  pri_fasta: tests/data/tiny/assembly/hifiasm-raw-hifi_v1.asm.bp.p_ctg.fasta
+- id: hifiasm-curated-hifi_v1
+  meta:
+    id: Drosophila_melanogaster
+    sample:
+      name: Drosophila melanogaster
+      genome_size: 176040000
+      ploidy: 2
+    assembly:
+      assembler: hifiasm
+      stage: curated
+      id: hifi_v1
+      build: hifiasm-curated-hifi_v1
+  pri_fasta: tests/data/tiny/assembly/hifiasm-curated-hifi_v1.asm.bp.p_ctg.fasta

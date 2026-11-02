@@ -12,18 +12,14 @@ nextflow.enable.types = true
 
 include { ITERATIVE_PURGEDUPS            } from '../../modules/local/purgedups/main'
 include { workflow as ASSEMBLY_QC_PURGED } from '../assembly_qc'
-include { Assembly; KmerParams; BuscoParams; assemblyWith } from '../../types/records'
+include { Assembly; QcParams; defaultQcParams; withFastas } from '../../types/records'
 
 params {
     assemblies: Channel<Assembly>  // Assemblies to purge
     provided  : Channel<Assembly>? // Assemblies of this stage that were supplied. Evaluated, not purged.
 
     // Assembly QC
-    busco     : BuscoParams = record(lineages: null, lineages_db_path: null, max_lineages: null)
-    fastk     : KmerParams  = record(kmer_size: null)
-    meryl     : KmerParams  = record(kmer_size: null)
-    reference : Path?
-    use_phased: Boolean     = false
+    qc        : QcParams    = defaultQcParams() // Options of the assembly QC. use_phased: also process and evaluate the alternate assembly
 }
 
 // The assembly files of a purge, primary first
@@ -58,28 +54,11 @@ workflow {
     // The wide record, with the purged assembly files
     purged_assemblies = params.assemblies
         .join(purged.map { p -> record(id: p.id, purged: purgedFiles(p.purged.toList())) }, by: 'id')
-        .map { a ->
-            assemblyWith(
-                a,
-                [
-                    pri_fasta: a.purged[0],
-                    alt_fasta: a.purged.size() > 1 ? a.purged[1] : null,
-                    pri_gfa: null,
-                    alt_gfa: null
-                ]
-            )
-        }
+        .map { a -> withFastas(a, a.purged) }
     assemblies = purged_assemblies.mix(params.provided ?: channel.empty())
 
     qc = ASSEMBLY_QC_PURGED(
-        record(
-            assemblies: assemblies,
-            busco: params.busco,
-            fastk: params.fastk,
-            meryl: params.meryl,
-            reference: params.reference,
-            use_phased: params.use_phased
-        )
+        record(assemblies: assemblies) + params.qc
     )
 
     publish:
@@ -89,7 +68,6 @@ workflow {
     merqury    = qc.merqury
     busco      = qc.busco
     gfastats   = qc.gfastats
-    quast      = qc.quast
     logs       = purged.flatMap { p -> p.logs.toList() }.mix(qc.logs)
 }
 
@@ -110,16 +88,10 @@ output {
         path { r -> "merqury/${r.meta.assembly.build}" }
     }
     busco: Channel<Record> {
-        path { r ->
-            r.short_summaries_txt >> ("busco/${r.meta.assembly.build}/")
-            r.short_summaries_json >> ("busco/${r.meta.assembly.build}/")
-        }
+        path { r -> "busco/${r.meta.assembly.build}" }
     }
     gfastats: Channel<Record> {
         path { r -> "gfastats/${r.meta.assembly.build}" }
-    }
-    quast: Channel<Record> {
-        path 'quast'
     }
     logs: Channel<Path> {
         path 'logs'

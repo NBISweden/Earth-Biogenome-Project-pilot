@@ -20,7 +20,7 @@ process BUSCO_BUSCO {
     record(
         id: String,
         meta: Record?,
-        fasta: Path,
+        fasta: List<Path>, // One batch run for all of them, as before
         mode: String,
         lineage: String,
         busco_lineages_path: Path?,
@@ -39,14 +39,14 @@ process BUSCO_BUSCO {
         meta: meta,
         batch_summary: file("*-busco.batch_summary.txt"),
         batch_summary_failed: file("*-busco.batch_summary.failed.txt", optional: true),
-        short_summaries_txt: file("short_summary.*.txt", optional: true),
-        short_summaries_json: file("short_summary.*.json", optional: true),
+        short_summaries_txt: files("short_summary.*.txt", optional: true),
+        short_summaries_json: files("short_summary.*.json", optional: true),
         log: file("*-busco.log", optional: true),
-        full_table: file("*-busco/*/run_*/full_table.tsv", optional: true),
-        missing_busco_list: file("*-busco/*/run_*/missing_busco_list.tsv", optional: true),
-        single_copy_proteins: file("*-busco/*/run_*/single_copy_proteins.faa", optional: true),
-        seq_dir: file("*-busco/*/run_*/busco_sequences", optional: true),
-        translated_dir: file("*-busco/*/translated_proteins", optional: true),
+        full_table: files("*-busco/*/run_*/full_table.tsv", optional: true),
+        missing_busco_list: files("*-busco/*/run_*/missing_busco_list.tsv", optional: true),
+        single_copy_proteins: files("*-busco/*/run_*/single_copy_proteins.faa", optional: true),
+        seq_dir: files("*-busco/*/run_*/busco_sequences", optional: true),
+        translated_dir: files("*-busco/*/translated_proteins", optional: true),
         busco_dir: file("*-busco"),
         downloaded_lineages: files("busco_downloads/lineages/*", optional: true),
         single_copy_faa: files("*-busco/*/run_*/busco_sequences/single_copy_busco_sequences/*.faa", optional: true),
@@ -132,9 +132,14 @@ process BUSCO_BUSCO {
 
     stub:
     def prefix = task.ext.prefix
-    def fasta_name = fasta.name.replaceAll(/\.gz$/, '')
+    // A batch run writes a directory and a short summary for every input fasta
+    def per_fasta = fasta.collect { f ->
+        // The staged name includes the tmp_input folder
+        def fasta_name = f.name.tokenize('/').last().replaceAll(/\.gz$/, '')
+        "mkdir -p ${prefix}-busco/${fasta_name}/run_${lineage}/busco_sequences\ntouch short_summary.specific.${lineage}.${fasta_name}.txt\ntouch short_summary.specific.${lineage}.${fasta_name}.json"
+    }.join('\n')
     """
     touch ${prefix}-busco.batch_summary.txt
-    mkdir -p ${prefix}-busco/${fasta_name}/run_${lineage}/busco_sequences
+    ${per_fasta}
     """
 }

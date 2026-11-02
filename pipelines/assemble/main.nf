@@ -14,7 +14,7 @@ nextflow.enable.types = true
 include { ASSEMBLE_HIFI                 } from './assemble_hifi'
 include { ASSEMBLE_ORGANELLES           } from './assemble_organelles'
 include { workflow as ASSEMBLY_QC_RAW   } from '../assembly_qc'
-include { Assembly; Sample; KmerParams; BuscoParams } from '../../types/records'
+include { Assembly; QcParams; defaultQcParams; Sample } from '../../types/records'
 
 params {
     samples: Channel<Sample>       // Samples to assemble
@@ -28,11 +28,7 @@ params {
     hifiasm_with_hic       : Boolean = false
 
     // Assembly QC
-    busco     : BuscoParams = record(lineages: null, lineages_db_path: null, max_lineages: null)
-    fastk     : KmerParams  = record(kmer_size: null)
-    meryl     : KmerParams  = record(kmer_size: null)
-    reference : Path?
-    use_phased: Boolean     = false
+    qc        : QcParams    = defaultQcParams() // Options of the assembly QC. use_phased: also process and evaluate the alternate assembly
 }
 
 workflow {
@@ -48,7 +44,7 @@ workflow {
         params.samples.filter { _s -> params.nuclear_assembly_mode },
         params.hifiasm ?: [:],
         params.hifiasm_with_hic,
-        params.use_phased
+        params.qc.use_phased
     )
 
     // Organelle assembly
@@ -63,14 +59,7 @@ workflow {
     assemblies = nuclear.assemblies.mix(params.provided ?: channel.empty())
 
     qc = ASSEMBLY_QC_RAW(
-        record(
-            assemblies: assemblies,
-            busco: params.busco,
-            fastk: params.fastk,
-            meryl: params.meryl,
-            reference: params.reference,
-            use_phased: params.use_phased
-        )
+        record(assemblies: assemblies) + params.qc
     )
 
     publish:
@@ -85,7 +74,6 @@ workflow {
     merqury        = qc.merqury
     busco          = qc.busco
     gfastats       = qc.gfastats
-    quast          = qc.quast
     logs           = nuclear.logs.mix(organelle.logs).mix(qc.logs)
 }
 
@@ -121,16 +109,10 @@ output {
         path { r -> "merqury/${r.meta.assembly.build}" }
     }
     busco: Channel<Record> {
-        path { r ->
-            r.short_summaries_txt >> ("busco/${r.meta.assembly.build}/")
-            r.short_summaries_json >> ("busco/${r.meta.assembly.build}/")
-        }
+        path { r -> "busco/${r.meta.assembly.build}" }
     }
     gfastats: Channel<Record> {
         path { r -> "gfastats/${r.meta.assembly.build}" }
-    }
-    quast: Channel<Record> {
-        path 'quast'
     }
     logs: Channel<Path> {
         path 'logs'

@@ -44,7 +44,7 @@ workflow EVALUATE_ASSEMBLY {
                     meta: a.meta,
                     meryl_db: a.meryl_hifi_db,
                     assembly: a.alt_fasta ? [ a.pri_fasta, a.alt_fasta ] : [ a.pri_fasta ],
-                    output_prefix: a.meta.id
+                    output_prefix: "${a.meta.assembly.build}_merqury"
                 )
             }
     )
@@ -54,23 +54,21 @@ workflow EVALUATE_ASSEMBLY {
     busco = BUSCO(
         assemblies
             .flatMap { a ->
+                // One batch run per lineage over the primary and, when phased, the alternate assembly
                 def fastas = use_phased && a.alt_fasta ? [ a.pri_fasta, a.alt_fasta ] : [ a.pri_fasta ]
                 def lineages = a.meta.settings.busco.lineages.tokenize(',').takeRight(busco_max_lineages)
-                fastas.collectMany { fasta ->
-                    lineages.collect { lineage ->
-                        record(
-                            id: "${a.meta.assembly.build}-${lineage}",
-                            meta: a.meta,
-                            fasta: fasta,
-                            mode: 'genome',
-                            lineage: lineage,
-                            busco_lineages_path: busco_lineages_db_path,
-                            config_file: null,
-                            clean_intermediates: true,
-                            busco_args: busco_lineages_db_path ? '--tar --offline' : '--tar',
-                            output_prefix: "${a.meta.assembly.build}-${lineage}"
-                        )
-                    }.toList()
+                lineages.collect { lineage ->
+                    record(
+                        id: "${a.meta.assembly.build}-${lineage}",
+                        meta: a.meta,
+                        fasta: fastas,
+                        mode: 'genome',
+                        lineage: lineage,
+                        busco_lineages_path: busco_lineages_db_path,
+                        clean_intermediates: true,
+                        busco_args: busco_lineages_db_path ? '--tar --offline' : '--tar',
+                        output_prefix: "${a.meta.assembly.build}-${lineage}"
+                    )
                 }.toList()
             }
     )
@@ -85,13 +83,8 @@ workflow EVALUATE_ASSEMBLY {
                         id: fasta.baseName,
                         meta: a.meta,
                         assembly: fasta,
-                        out_fmt: null,
                         genome_size: "${a.meta.sample.genome_size}",
                         target: "",
-                        agpfile: null,
-                        include_bed: null,
-                        exclude_bed: null,
-                        instructions: null,
                         gfastats_args: "--nstar-report",
                         output_prefix: fasta.baseName
                     )
@@ -99,7 +92,7 @@ workflow EVALUATE_ASSEMBLY {
             }
     )
 
-    logs = busco.map { b -> b.short_summaries_txt }
+    logs = busco.flatMap { b -> b.short_summaries_txt.toList() }
         .mix(merquryfk.map { m -> m.stats })
         .mix(merquryfk.map { m -> m.qv })
         // Contig names are missing in first column of assembly_qv
@@ -116,6 +109,7 @@ workflow EVALUATE_ASSEMBLY {
     logs     : Channel<Path>   = logs
     merquryfk: Channel<Record> = merquryfk
     merqury  : Channel<Record> = merqury
-    busco    : Channel<Record> = busco
+    // Only the summaries: the record of the module also has the large BUSCO folders
+    busco    : Channel<Record> = busco.map { b -> record(id: b.id, meta: b.meta, batch_summary: b.batch_summary, short_summaries_txt: b.short_summaries_txt, short_summaries_json: b.short_summaries_json) }
     gfastats : Channel<Record> = gfastats
 }
