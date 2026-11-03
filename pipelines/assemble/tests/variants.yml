@@ -1,0 +1,13 @@
+organelle_assembly_mode: reads
+hifiasm_with_hic: true
+hifiasm:
+  opts01: "--n-hap 2"
+  opts02: "-s 0.5"
+qc:
+  busco:
+    lineages: 'bacteria_odb10'
+  fastk:
+    kmer_size: 14
+  meryl:
+    kmer_size: 14
+  use_phased: true

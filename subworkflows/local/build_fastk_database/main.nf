@@ -1,33 +1,73 @@
-include { FASTK_FASTK     } from "../../../modules/nf-core/fastk/fastk/main"
-include { FASTK_MERGE     } from "../../../modules/nf-core/fastk/merge/main"
+nextflow.enable.types = true
+
+include { FASTK_FASTK } from "../../../modules/nf-core/fastk/fastk/main"
+include { FASTK_MERGE } from "../../../modules/nf-core/fastk/merge/main"
+include { Reads; FastkDatabase } from "../../../types/records"
+
+def fastkDatabase(id: String, meta: Record, hist: Path, ktab: List<Path>, prof: List<Path>) -> FastkDatabase {
+    return record(id: id, meta: meta, hist: hist, ktab: ktab, prof: prof)
+}
 
 workflow BUILD_FASTK_DATABASE {
 
     take:
-    fastx_data
+    fastx_data: Channel<Reads>
+    library   : String  // 'hifi' or 'hic', used in file names
+    kmer_size : Integer
 
     main:
-    FASTK_FASTK ( fastx_data )
-    fkdb_ch = FASTK_FASTK.out.hist
-        .join( FASTK_FASTK.out.ktab, remainder: true )
-        .join( FASTK_FASTK.out.prof, remainder: true )
-        .map { meta, hist, ktab, prof -> [ meta.subMap(meta.keySet()-['single_end', 'pair_id'] ) , hist, ktab , prof ] }
-        .groupTuple()
-        .map { meta, hist, ktab, prof -> [ meta , hist, ktab.head() ? ktab.flatten() : [] , prof.head() ? prof.flatten() : [] ] }
-        .branch { _meta, hist, _ktab, _prof ->
-            single_hist: hist.size() == 1
-            multi_hist : hist.size() > 1
+    counted = FASTK_FASTK(
+        fastx_data.map { r ->
+            record(
+                id: r.id,
+                meta: r.meta,
+                reads: r.reads,
+                fastk_args: "-t1 -k${kmer_size} -v",
+                output_prefix: "${r.id}_${r.reads[0].baseName}_${library}"
+            )
         }
-    FASTK_MERGE ( fkdb_ch.multi_hist )
-    fk_single = fkdb_ch.single_hist.multiMap { meta, hist, ktab, prof ->
-        hist: [ meta, hist ]
-        ktab: [ meta, ktab ]
-        prof: [ meta, prof ]
-    }
+    )
+
+    // Group the k-mer tables of all read files (or pairs) of a sample
+    grouped = counted
+        .map { r -> tuple(record(id: r.meta.id, sample: r.meta.sample, settings: r.meta.settings), r) }
+        .groupBy()
+        .map { key, results ->
+            record(
+                id: key.id,
+                meta: key,
+                hist: results.collect { x -> x.hist }.toSorted(),
+                ktab: results.collectMany { x -> x.ktab.toList() }.toSorted(),
+                prof: results.collectMany { x -> x.prof.toList() }.toSorted()
+            )
+        }
+
+    single = grouped
+        .filter { g -> g.hist.size() == 1 }
+        .map { g -> fastkDatabase(g.id, g.meta, g.hist[0], g.ktab, g.prof) }
+
+    merged = FASTK_MERGE(
+        grouped
+            .filter { g -> g.hist.size() > 1 }
+            .map { g ->
+                record(
+                    id: g.id,
+                    meta: g.meta,
+                    hist: g.hist,
+                    ktab: g.ktab,
+                    prof: g.prof,
+                    fastk_args: g.ktab ? "-ht" : "-h",
+                    output_prefix: "${g.id}_merged_${library}"
+                )
+            }
+    )
+
+    database = single.mix(
+        merged.map { m -> fastkDatabase(m.id, m.meta, m.hist, m.ktab.toList().toSorted(), m.prof.toList().toSorted()) }
+    )
 
     emit:
-    fastk_histogram = fk_single.hist.mix(FASTK_MERGE.out.hist)
-    fastk_ktab      = fk_single.ktab.mix(FASTK_MERGE.out.ktab)
-    fastk_hist_ktab = fk_single.hist.mix(FASTK_MERGE.out.hist).join(fk_single.ktab.mix(FASTK_MERGE.out.ktab))
-
+    database    : Channel<FastkDatabase> = database
+    fastk_runs  : Channel<Record>        = counted
+    fastk_merged: Channel<Record>        = merged
 }

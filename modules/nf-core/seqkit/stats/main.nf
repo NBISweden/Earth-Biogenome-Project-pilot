@@ -1,6 +1,13 @@
+nextflow.enable.types = true
+
 process SEQKIT_STATS {
-    tag "${meta.id}"
+    tag "${id}"
     label 'process_low'
+
+    ext [
+        args: { seqkit_args ?: '--all' },
+        prefix: { output_prefix ?: "${id}" }
+    ]
 
     conda "${moduleDir}/environment.yml"
     container "${workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container
@@ -8,29 +15,35 @@ process SEQKIT_STATS {
         : 'biocontainers/seqkit:2.9.0--h9ee0642_0'}"
 
     input:
-    tuple val(meta), path(reads)
+    record(
+        id: String,
+        meta: Record?,
+        reads: List<Path>,
+        seqkit_args: String?,
+        output_prefix: String?
+    )
 
     output:
-    tuple val(meta), path("*.tsv"), emit: stats
-    tuple val("${task.process}"), val('seqkit'), eval("seqkit version | sed 's/^.*v//'"), emit: versions_seqkit, topic: versions
+    record(
+        id: id,
+        meta: meta,
+        stats: file("*.tsv")
+    )
 
-    when:
-    task.ext.when == null || task.ext.when
+    topic:
+    tuple(task.process, 'seqkit', eval("seqkit version | sed 's/^.*v//'")) >> 'versions'
 
     script:
-    def args = task.ext.args ?: '--all'
-    def prefix = task.ext.prefix ?: "${meta.id}"
     """
     seqkit stats \\
         --tabular \\
         --threads ${task.cpus} \\
-        ${args} \\
-        ${reads} > '${prefix}.tsv'
+        ${task.ext.args} \\
+        ${reads.join(' ')} > '${task.ext.prefix}.tsv'
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    touch ${prefix}.tsv
+    touch ${task.ext.prefix}.tsv
     """
 }

@@ -1,49 +1,124 @@
 #! /usr/bin/env nextflow
 
-// Functions
-include { assembliesFromStage as preassembledInput          } from "./modules/local/functions"
-include { setAssemblyStage                                  } from "./modules/local/functions"
-// Data import
-include { PREPARE_INPUT                                     } from "./subworkflows/local/prepare_input/main"
-// Database preparation
-include { BUILD_FASTK_DATABASE as BUILD_FASTK_HIFI_DATABASE } from "./subworkflows/local/build_fastk_database/main"
-include { BUILD_FASTK_DATABASE as BUILD_FASTK_HIC_DATABASE  } from "./subworkflows/local/build_fastk_database/main"
-include { BUILD_MERYL_DATABASE as BUILD_MERYL_HIFI_DATABASE } from "./subworkflows/local/build_meryl_database/main"
-include { BUILD_MERYL_DATABASE as BUILD_MERYL_HIC_DATABASE  } from "./subworkflows/local/build_meryl_database/main"
-// Data conversion
-include { CONVERT_FASTQ_CRAM                                } from "./subworkflows/local/02_convert_fastq_cram/main"
-// Data inspection
-include { INSPECT_DATA                                      } from "./subworkflows/local/01_inspect_data/main"
-// Assembly
-include { ASSEMBLE                                          } from "./subworkflows/local/03_assemble/main"
-// Decontamination
-include { DECONTAMINATE                                     } from "./subworkflows/local/04_decontaminate/main"
-// Purge duplicates
-include { PURGE_DUPLICATES                                  } from "./subworkflows/local/05_purge_dups/main"
-// Polish
-include { DVPOLISH                                          } from "./subworkflows/local/06_polish/main"
-// Scaffold
-include { SCAFFOLD                                          } from "./subworkflows/local/07_scaffold/main"
-// Curation
-include { SCAFFOLD_CURATION                                 } from "./subworkflows/local/08_scaffold_curation/main"
-// Evaluate assemblies
-include { COMPARE_ASSEMBLIES                                } from "./subworkflows/local/compare_assemblies/main"
-include { EVALUATE_ASSEMBLY                                 } from "./subworkflows/local/evaluate_assembly/main"
-// Align RNAseq
-include { ALIGN_RNASEQ                                      } from "./subworkflows/local/09_align_rnaseq/main"
-// Tool versions report
-include { REPORT_VERSIONS                                   } from "./subworkflows/local/version_report/main"
-// Assembly report
-include { ASSEMBLY_REPORT                                   } from "./subworkflows/local/assembly_report/main"
-
 /*
  * Development: See docs/development to understand the workflow programming model and
  * how channel contents are structured.
  */
 
+nextflow.enable.types = true
+
+// Data preparation
+include { PREPARE_INPUT                                     } from "./subworkflows/local/prepare_input/main"
+include { BUILD_FASTK_DATABASE as BUILD_FASTK_HIFI_DATABASE } from "./subworkflows/local/build_fastk_database/main"
+include { BUILD_FASTK_DATABASE as BUILD_FASTK_HIC_DATABASE  } from "./subworkflows/local/build_fastk_database/main"
+include { BUILD_MERYL_DATABASE as BUILD_MERYL_HIFI_DATABASE } from "./subworkflows/local/build_meryl_database/main"
+include { BUILD_MERYL_DATABASE as BUILD_MERYL_HIC_DATABASE  } from "./subworkflows/local/build_meryl_database/main"
+include { CONVERT_FASTQ_CRAM                                } from "./subworkflows/local/02_convert_fastq_cram/main"
+include { INSPECT_DATA                                      } from "./subworkflows/local/01_inspect_data/main"
+// Stage pipelines. Each one runs the assembly QC on the assemblies it produces.
+include { workflow as ASSEMBLE          } from "./pipelines/assemble"
+include { workflow as DECONTAMINATE     } from "./pipelines/decontaminate"
+include { workflow as PURGE_DUPLICATES  } from "./pipelines/purge_duplicates"
+include { workflow as DVPOLISH          } from "./pipelines/polish"
+include { workflow as SCAFFOLD          } from "./pipelines/scaffold"
+include { workflow as SCAFFOLD_CURATION } from "./pipelines/curate"
+include { workflow as ALIGN_RNASEQ      } from "./pipelines/align_rnaseq"
+// Comparison of the assemblies across the stages
+include { workflow as COMPARE_STAGES    } from "./pipelines/compare_stages"
+// Reports
+include { REPORT_VERSIONS               } from "./subworkflows/local/version_report/main"
+include { ASSEMBLY_REPORT               } from "./subworkflows/local/assembly_report/main"
+include { Assembly; Sample; KmerParams; BuscoParams; FcsParams } from "./types/records"
+
+// Override by supplying a params.yml file to the -params-file option in Nextflow.
+params {
+
+    // Workflow inputs
+    input    : Path
+    reference: Path? // Reference genome to compare the assemblies to
+
+    // Stages to run. Output subdirectory for each stage.
+    steps                  : String  = 'inspect,preprocess,assemble,purge,polish,screen,scaffold,curate'
+    nuclear_assembly_mode  : Boolean = true      // values: true, false
+    organelle_assembly_mode: String  = 'contigs' // values: 'reads', 'contigs', 'none'
+    use_phased             : Boolean = false
+    stage_dirs             : Map<String,String> = [
+        inspect   : '01_read_inspection',
+        preprocess: '02_read_preprocessing',
+        assembly  : '03_assembly',
+        screen    : '04_contamination_screen',
+        purge     : '05_duplicate_purging',
+        polish    : '06_error_polishing',
+        scaffold  : '07_scaffolding',
+        curate    : '08_curation',
+        alignRNA  : '09_RNA_alignment',
+        report    : '10_report',
+    ]
+
+    // Tool specific
+    fastk      : KmerParams = record(kmer_size: null) // default: 31
+    meryl      : KmerParams = record(kmer_size: null) // default: 31
+    genescopefk: KmerParams = record(kmer_size: null) // default: 31
+    hifiasm    : Map<String,String>? // Expects a Map of options [ opts01: "--opt1 --opt2 val", opts02: "--opt2 val --opt3" ]
+    hifiasm_with_hic: Boolean = false
+    busco      : BuscoParams = record(lineages: null, lineages_db_path: null, max_lineages: null)
+    oatkdb     : Path?    // Setup: git clone --depth 1 https://github.com/c-zhou/OatkDB.git . Then oatkdb = "/path/to/OatkDB/v20230921"
+    chunk_size : MemoryUnit = 100.MB  // DVPOLISH
+    fcs        : FcsParams = record(database: null, manifest: null, ramdisk_path: null)
+
+    // Reports
+    quarto_assembly_report          : Path   = file("${projectDir}/assets/notebooks/assembly_report.qmd")
+    quarto_assembly_report_aux_files: String = "${projectDir}/assets/notebooks/_*.qmd"
+    multiqc_assembly_report_config  : Path   = file("${projectDir}/configs/multiqc_assembly_report_config.yml")
+
+    // Hi-C
+    hic_type         : String  = 'arima_v2' // define HiC sequencing type [ "arima_v2", "arima_v1", "omni-c", "" ]
+    hic_bam_sorting  : String  = 'by_name'  // define how to sort the final HiC bam file: [ by_coordinate, by_name ]
+    cooler_bin_size  : Integer = 1000       // define 1000bp bin size for cooler cload intervals
+    hic_map_sort_by  : String  = 'length'   // define how to sort the HiC-maps: [ length, name, nosort ]
+    hic_map_qv       : Integer = 0          // define minimum map quality for HiC alignments
+    hifi_coverage_cap: Integer = 100        // pacbio hifi coverage cap for pretext and higlass coverage track, e.g. cap repeats at <hifi_coverage_cap>
+    telomer_motif    : String  = "TTAGGG"
+}
+
+// Change the stage of an assembly. The build is used in file names.
+def setAssemblyStage(a: Assembly, stage: String) {
+    def build = "${a.meta.assembly.assembler}-${stage}-${a.meta.assembly.id}"
+    return a + record(id: build, meta: ( a.meta + record(assembly: a.meta.assembly + [ stage: stage, build: build ]) ) as Record)
+}
+
+// Folder of a sample or an assembly build in the folder of a stage
+def subjectDir(stage_dir: String, meta: Record) -> String {
+    return "${stage_dir}/${meta.assembly?.build ?: meta.id}"
+}
+
+// Folder of a stage. A stage_dirs param that names only some stages keeps the default folders of the others
+def stageDir(stage_dirs: Map<String,String>, key: String) -> String {
+    def defaults = [
+        inspect: '01_read_inspection', preprocess: '02_read_preprocessing', assembly: '03_assembly',
+        screen: '04_contamination_screen', purge: '05_duplicate_purging', polish: '06_error_polishing',
+        scaffold: '07_scaffolding', curate: '08_curation', alignRNA: '09_RNA_alignment', report: '10_report'
+    ]
+    return stage_dirs[key] ?: defaults[key]
+}
+
+// Directory of the stage that produced an assembly
+def assemblyStageDir(stage_dirs: Map<String,String>, stage: String) -> String {
+    def dirs = [ raw: 'assembly', decontaminated: 'screen', purged: 'purge', polished: 'polish', scaffolded: 'scaffold', curated: 'curate' ]
+    return stageDir(stage_dirs, dirs[stage])
+}
+
+def workflowVersion() -> String {
+    def version = workflow.manifest.version ? "v${workflow.manifest.version}" : ""
+    def sha = workflow.commitId ? "-g${workflow.commitId.substring(0, 7)}" : ""
+    return "Workflow:\n  ${workflow.manifest.name}: ${version}${sha}\n  Nextflow: ${nextflow.version}"
+}
+
 workflow {
+
+    main:
     // Define constants
-    def workflow_permitted_stages = [
+    def permitted_stages = [
         'inspect',      // 01 - Read inspection
         'preprocess',   // 02 - Read preprocessing
         'assemble',     // 03 - Assembly
@@ -56,235 +131,432 @@ workflow {
     ]
 
     // Check input
-    def workflow_steps = params.steps.tokenize(",")
-    if ( ! workflow_steps.every { step -> step in workflow_permitted_stages } ) {
-        error "Unrecognised workflow step in $params.steps ( $workflow_permitted_stages )"
+    def steps = params.steps.tokenize(",")
+    if ( !steps.every { step -> step in permitted_stages } ) {
+        error "Unrecognised workflow step in ${params.steps} ( ${permitted_stages} )"
     }
+    def enable = record(
+        inspect   : 'inspect' in steps,
+        preprocess: 'preprocess' in steps,
+        assemble  : 'assemble' in steps,
+        screen    : 'screen' in steps,
+        purge     : 'purge' in steps,
+        polish    : 'polish' in steps,
+        scaffold  : 'scaffold' in steps,
+        curate    : 'curate' in steps,
+        alignRNA  : 'alignRNA' in steps
+    )
 
     // The primary workflow for the Earth Biogenome Project Pilot
     log.info("""
     Running NBIS Earth Biogenome Project Assembly workflow.
     """)
 
-    // Setup sink channels
-    ch_multiqc_files = channel.value( file(params.multiqc_assembly_report_config, checkIfExists: true) )
+    def fastk_kmer_size = params.fastk.kmer_size ?: 31
+    def meryl_kmer_size = params.meryl.kmer_size ?: 31
+    def genescopefk_kmer_size = params.genescopefk.kmer_size ?: 31
 
     // Read in data
-    PREPARE_INPUT (
-        params.input
+    // Hi-C reads are optional. A run goes as far as it can without them, but fails at the start if a step that
+    // will run needs them
+    input = PREPARE_INPUT(
+        params.input,
+        params.busco.lineages,
+        [
+            assemble    : enable.assemble,
+            assemble_hic: enable.assemble && params.hifiasm_with_hic,
+            scaffold    : enable.scaffold,
+            curate      : enable.curate
+        ]
     )
-    ch_evaluate_assemblies = PREPARE_INPUT.out.assemblies
 
     // Create Cram and trim
-    CONVERT_FASTQ_CRAM ( PREPARE_INPUT.out.hic, params.hic_type.startsWith('arima') )
+    convert = CONVERT_FASTQ_CRAM( input.samples, params.hic_type.startsWith('arima'), params.hic_type )
+
     // Build necessary databases
     // TODO: Migrate back to Meryl. Genome inspection missing KATGC and SMUDGEPLOT for meryldb
-    BUILD_FASTK_HIFI_DATABASE ( PREPARE_INPUT.out.hifi )
-    BUILD_FASTK_HIC_DATABASE ( CONVERT_FASTQ_CRAM.out.fastq )
-    BUILD_MERYL_HIFI_DATABASE ( PREPARE_INPUT.out.hifi )
-    BUILD_MERYL_HIC_DATABASE ( CONVERT_FASTQ_CRAM.out.fastq )
-
-    // Data inspection
-    ch_hifi_kmer_cov = PREPARE_INPUT.out.hifi_merged.map { meta, _reads -> tuple(meta, []) }
-    if ( 'inspect' in workflow_steps ) {
-        // QC Steps
-        INSPECT_DATA(
-            PREPARE_INPUT.out.hifi,
-            PREPARE_INPUT.out.hic,
-            BUILD_FASTK_HIFI_DATABASE.out.fastk_hist_ktab,
-            BUILD_FASTK_HIC_DATABASE.out.fastk_hist_ktab
-        )
-        ch_hifi_kmer_cov = INSPECT_DATA.out.hifi_kmer_cov
-        ch_multiqc_files = ch_multiqc_files.mix( INSPECT_DATA.out.logs )
+    hifi_reads = input.samples.flatMap { s ->
+        ( s.hifi ?: [] ).collect { f -> record(id: s.id, meta: s.meta + record(single_end: true), reads: [ f ]) }.toList()
     }
+    fastk_hifi = BUILD_FASTK_HIFI_DATABASE( hifi_reads, 'hifi', fastk_kmer_size )
+    fastk_hic  = BUILD_FASTK_HIC_DATABASE( convert.fastq, 'hic', fastk_kmer_size )
+    meryl_hifi = BUILD_MERYL_HIFI_DATABASE( hifi_reads, 'hifi', meryl_kmer_size )
+    BUILD_MERYL_HIC_DATABASE( convert.fastq, 'hic', meryl_kmer_size )
 
-    // Preprocess data
-    if ( 'preprocess' in workflow_steps ) {
-        // Adapter filtering etc
-        // Subsampling
-        // Host contamination filter
-    }
+    // One wide record per sample. Stages take the fields they need. The HiFi reads are required, so every
+    // sample has its HiFi databases.
+    with_hifi_databases = input.samples
+        .join(fastk_hifi.database.map { d -> record(id: d.id, fastk_hifi_hist: d.hist, fastk_hifi_ktab: d.ktab, fastk_hifi_prof: d.prof) }, by: 'id')
+        .join(meryl_hifi.uniondb.map { m -> record(id: m.id, meryl_hifi_db: m.meryl_db) }, by: 'id')
+    // The stages work on the converted Hi-C reads
+    samples_ready = with_hifi_databases
+        .join(convert.hic, by: 'id')
+        .map { s -> s + record(hic: s.hic_fastq) }
+
+    // Data inspection. A sample without Hi-C has no Hi-C database.
+    inspect_samples = with_hifi_databases.join(
+        fastk_hic.database.map { d -> record(id: d.id, fastk_hic_hist: d.hist, fastk_hic_ktab: d.ktab, fastk_hic_prof: d.prof) },
+        by: 'id',
+        remainder: true
+    )
+    inspect = INSPECT_DATA(
+        inspect_samples.filter { _s -> enable.inspect },
+        genescopefk_kmer_size
+    )
+
+    // Assemblies supplied as input, with the data of their sample
+    user_assemblies = input.assemblies.join(
+        samples_ready.map { s ->
+            record(
+                sample_id: s.id, hifi: s.hifi, hifi_merged: s.hifi_merged, hic: s.hic, rnaseq: s.rnaseq,
+                fastk_hifi_hist: s.fastk_hifi_hist, fastk_hifi_ktab: s.fastk_hifi_ktab, fastk_hifi_prof: s.fastk_hifi_prof,
+                meryl_hifi_db: s.meryl_hifi_db
+            )
+        },
+        by: 'sample_id'
+    )
+
+    // The options of the assembly QC, passed to every stage
+    def qc = record(busco: params.busco, fastk: params.fastk, meryl: params.meryl, use_phased: params.use_phased)
 
     // Assemble
-    if ( 'assemble' in workflow_steps ) {
-        // Run assemblers
-        ASSEMBLE (
-                PREPARE_INPUT.out.hifi_merged,
-                PREPARE_INPUT.out.hic,
-                params.oatkdb ? file(params.oatkdb, checkIfExists: true, type: 'dir') : channel.empty(),
-                params.nuclear_assembly_mode,
-                params.organelle_assembly_mode
+    assemble = ASSEMBLE(
+        record(
+            samples: samples_ready.filter { _s -> enable.assemble },
+            provided: user_assemblies.filter { a -> a.meta.assembly.stage == 'raw' },
+            oatkdb: params.oatkdb,
+            nuclear_assembly_mode: params.nuclear_assembly_mode,
+            // The mode check of the pipeline must only apply when the stage runs
+            organelle_assembly_mode: enable.assemble ? params.organelle_assembly_mode : 'none',
+            hifiasm: params.hifiasm,
+            hifiasm_with_hic: params.hifiasm_with_hic,
+            qc: qc
         )
-        ch_evaluate_assemblies = ch_evaluate_assemblies.mix( ASSEMBLE.out.raw_assemblies )
-        ch_raw_assemblies = ASSEMBLE.out.raw_assemblies
-        ch_multiqc_files = ch_multiqc_files.mix( ASSEMBLE.out.logs )
-    } else {
-        ch_raw_assemblies = channel.empty() // No assemblies from a previous stage
-    }
-    ch_raw_assemblies = ch_raw_assemblies.mix(
-        preassembledInput( PREPARE_INPUT.out.assemblies, 'raw' )
-    ).dump(tag: 'Assemblies: Raw', pretty: true)
+    )
 
     // Contamination screen
-    ch_to_screen = setAssemblyStage (
-        ch_raw_assemblies,
-        'decontaminated' // Set assembly stage now for filenaming
-    ).dump(tag: 'Assemblies: to screen', pretty: true)
-    if ( 'screen' in workflow_steps ) {
-        DECONTAMINATE( ch_to_screen )
-        ch_evaluate_assemblies = ch_evaluate_assemblies.mix( DECONTAMINATE.out.assemblies )
-        ch_cleaned_assemblies = DECONTAMINATE.out.assemblies
-        ch_multiqc_files = ch_multiqc_files.mix( DECONTAMINATE.out.logs )
-    } else {
-        ch_cleaned_assemblies = ch_to_screen
-    }
-    ch_cleaned_assemblies = ch_cleaned_assemblies.mix (
-        preassembledInput( PREPARE_INPUT.out.assemblies, 'decontaminated' )
-    ).dump(tag: 'Assemblies: Cleaned', pretty: true)
+    to_screen = assemble.assemblies.map { a -> setAssemblyStage(a, 'decontaminated') }
+    screen = DECONTAMINATE(
+        record(
+            fetch_database: enable.screen,
+            assemblies: to_screen.filter { _a -> enable.screen },
+            provided: user_assemblies.filter { a -> a.meta.assembly.stage == 'decontaminated' },
+            fcs: params.fcs,
+            qc: qc
+        )
+    )
+    cleaned_assemblies = to_screen.filter { _a -> !enable.screen }.mix(screen.assemblies)
 
     // Purge duplicates
-    ch_to_purge = setAssemblyStage (
-        ch_cleaned_assemblies,
-        'purged' // Set assembly stage now for filenaming
-    ).dump(tag: 'Assemblies: to purge', pretty: true)
-    if ( 'purge' in workflow_steps ) {
-        PURGE_DUPLICATES (
-            ch_to_purge,
-            PREPARE_INPUT.out.hifi_merged,
-            ch_hifi_kmer_cov
+    to_purge = cleaned_assemblies.map { a -> setAssemblyStage(a, 'purged') }
+    purge = PURGE_DUPLICATES(
+        record(
+            assemblies: to_purge.filter { _a -> enable.purge },
+            provided: user_assemblies.filter { a -> a.meta.assembly.stage == 'purged' },
+            qc: qc
         )
-        ch_evaluate_assemblies = ch_evaluate_assemblies.mix( PURGE_DUPLICATES.out.assemblies )
-        ch_purged_assemblies = PURGE_DUPLICATES.out.assemblies
-        ch_multiqc_files = ch_multiqc_files.mix( PURGE_DUPLICATES.out.logs )
-    } else {
-        ch_purged_assemblies = ch_to_purge
-    }
-    ch_purged_assemblies = ch_purged_assemblies.mix(
-        preassembledInput( PREPARE_INPUT.out.assemblies, 'purged' )
-    ).dump(tag: 'Assemblies: Purged', pretty: true)
+    )
+    purged_assemblies = to_purge.filter { _a -> !enable.purge }.mix(purge.assemblies)
 
     // Polish
-    ch_to_polish = setAssemblyStage (
-        ch_purged_assemblies,
-        'polished' // Set assembly stage now for filenaming
-    ).dump(tag: 'Assemblies: to polish', pretty: true)
-    if ( 'polish' in workflow_steps ) {
-        // Run polishers
-        DVPOLISH (
-            ch_to_polish,
-            PREPARE_INPUT.out.hifi_merged,
-            BUILD_MERYL_HIFI_DATABASE.out.uniondb,
-            params.chunk_size
+    to_polish = purged_assemblies.map { a -> setAssemblyStage(a, 'polished') }
+    polish = DVPOLISH(
+        record(
+            assemblies: to_polish.filter { _a -> enable.polish },
+            provided: user_assemblies.filter { a -> a.meta.assembly.stage == 'polished' },
+            chunk_size: params.chunk_size,
+            qc: qc
         )
-        ch_evaluate_assemblies = ch_evaluate_assemblies.mix( DVPOLISH.out.assemblies )
-        ch_polished_assemblies = DVPOLISH.out.assemblies
-        ch_multiqc_files = ch_multiqc_files.mix( DVPOLISH.out.logs )
-    } else {
-        ch_polished_assemblies = ch_to_polish
-    }
-    ch_polished_assemblies = ch_polished_assemblies.mix(
-        preassembledInput( PREPARE_INPUT.out.assemblies, 'polished' )
-    ).dump(tag: 'Assemblies: Polished', pretty: true)
+    )
+    polished_assemblies = to_polish.filter { _a -> !enable.polish }.mix(polish.assemblies)
 
     // Scaffold
-    ch_to_scaffold = setAssemblyStage (
-        ch_polished_assemblies,
-        'scaffolded' // Set assembly stage now for filenaming
-    ).dump(tag: 'Assemblies: to scaffold', pretty: true)
-    if ( 'scaffold' in workflow_steps ) {
-        SCAFFOLD (
-            ch_to_scaffold,
-            CONVERT_FASTQ_CRAM.out.fastq
+    to_scaffold = polished_assemblies.map { a -> setAssemblyStage(a, 'scaffolded') }
+    scaffold = SCAFFOLD(
+        record(
+            assemblies: to_scaffold.filter { _a -> enable.scaffold },
+            provided: user_assemblies.filter { a -> a.meta.assembly.stage == 'scaffolded' },
+            qc: qc,
+            hic_type: params.hic_type,
+            hic_bam_sorting: params.hic_bam_sorting
         )
-        ch_evaluate_assemblies = ch_evaluate_assemblies.mix( SCAFFOLD.out.assemblies )
-        ch_scaffolded_assemblies = SCAFFOLD.out.assemblies
-        ch_multiqc_files = ch_multiqc_files.mix( SCAFFOLD.out.logs )
-    } else {
-        ch_scaffolded_assemblies = ch_to_scaffold
-    }
-    ch_scaffolded_assemblies = ch_scaffolded_assemblies.mix(
-        preassembledInput( PREPARE_INPUT.out.assemblies, 'scaffolded' )
-    ).dump(tag: 'Assemblies: Scaffolded', pretty: true)
+    )
+    scaffolded_assemblies = to_scaffold.filter { _a -> !enable.scaffold }.mix(scaffold.assemblies)
 
     // Curate
-    ch_to_curate = setAssemblyStage (
-        ch_scaffolded_assemblies,
-        'curated' // Set assembly stage now for filenaming
-    ).dump(tag: 'Assemblies: to curate', pretty: true)
-    if ( 'curate' in workflow_steps ) {
-        SCAFFOLD_CURATION (
-            ch_to_curate,
-            CONVERT_FASTQ_CRAM.out.fastq,
-            PREPARE_INPUT.out.hifi
+    to_curate = scaffolded_assemblies.map { a -> setAssemblyStage(a, 'curated') }
+    curate = SCAFFOLD_CURATION(
+        record(
+            assemblies: to_curate.filter { _a -> enable.curate },
+            provided: user_assemblies.filter { a -> a.meta.assembly.stage == 'curated' },
+            qc: qc,
+            hic_map_sort_by: params.hic_map_sort_by,
+            hic_map_qv: params.hic_map_qv,
+            cooler_bin_size: params.cooler_bin_size,
+            hifi_coverage_cap: params.hifi_coverage_cap,
+            telomer_motif: params.telomer_motif
         )
-    }
-    preassembledInput( PREPARE_INPUT.out.assemblies, 'curated' ).dump(tag: 'Assemblies: Curated')
+    )
+
+    // Compare the assemblies across the stages: one QUAST run per sample. It waits for the last stage.
+    stage_comparison = COMPARE_STAGES(
+        record(
+            assemblies: assemble.assemblies
+                .mix(screen.assemblies)
+                .mix(purge.assemblies)
+                .mix(polish.assemblies)
+                .mix(scaffold.assemblies)
+                .mix(user_assemblies.filter { a -> a.meta.assembly.stage == 'curated' }),
+            reference: params.reference
+        )
+    )
 
     // Align RNAseq
-    if( 'alignRNA' in workflow_steps ) {
-        ALIGN_RNASEQ (
-            PREPARE_INPUT.out.rnaseq,
-            PREPARE_INPUT.out.assemblies // TODO: Select assembly stage
-                .map { meta, assembly -> [ meta, assembly.pri_fasta ] }
-        )
-    }
-
-    // Evaluate assemblies
-    COMPARE_ASSEMBLIES ( ch_evaluate_assemblies )
-    EVALUATE_ASSEMBLY (
-        ch_evaluate_assemblies
-            .toList().flatMap(), // Introduce bottleneck to delay evaluation until previous steps are performed
-        BUILD_FASTK_HIFI_DATABASE.out.fastk_hist_ktab,
-        BUILD_MERYL_HIFI_DATABASE.out.uniondb
-    )
-    ch_multiqc_files = ch_multiqc_files.mix(
-        COMPARE_ASSEMBLIES.out.logs,
-        EVALUATE_ASSEMBLY.out.logs
+    rnaseq = ALIGN_RNASEQ(
+        record(assemblies: user_assemblies.filter { _a -> enable.alignRNA })
     )
 
     // Version reporting
-    REPORT_VERSIONS(
-        channel.topic("versions")
+    versions = REPORT_VERSIONS(
+        channel.topic("versions") as Channel<Tuple>,
+        workflowVersion()
     )
 
     // Assembly report
-    ASSEMBLY_REPORT(
-        PREPARE_INPUT.out.sample_meta.map{ meta ->
-            [
-                meta,
-                file(params.quarto_assembly_report, checkIfExists: true),
-                files(params.quarto_assembly_report_aux_files, checkIfExists: true)
-            ]
-        },
-        ch_multiqc_files,
-        REPORT_VERSIONS.out.multiqc_versions_report_ch,
+    report_logs = channel.of(params.multiqc_assembly_report_config)
+        .mix(inspect.logs)
+        .mix(assemble.logs)
+        .mix(screen.logs)
+        .mix(purge.logs)
+        .mix(polish.logs)
+        .mix(scaffold.logs)
+        .mix(curate.logs)
+        .mix(stage_comparison.logs)
+    report = ASSEMBLY_REPORT(
+        input.metadata,
+        params.quarto_assembly_report,
+        files(params.quarto_assembly_report_aux_files, checkIfExists: true).toList(),
+        report_logs,
+        versions,
         [
-            diagnostics: "debug" in workflow.profile.tokenize(","),
-            nuclear_assembly_mode: params.nuclear_assembly_mode,
-            organelle_assembly_mode: params.organelle_assembly_mode in ['contigs', 'reads']
-        ] + workflow_permitted_stages.collectEntries{ step ->
-            [(step): step in params.steps.tokenize(",")]
-        }
+            diagnostics            : 'debug' in workflow.profile.tokenize(","),
+            nuclear_assembly_mode  : params.nuclear_assembly_mode,
+            organelle_assembly_mode: params.organelle_assembly_mode in ['contigs', 'reads'],
+            inspect                : enable.inspect,
+            preprocess             : enable.preprocess,
+            assemble               : enable.assemble,
+            screen                 : enable.screen,
+            purge                  : enable.purge,
+            polish                 : enable.polish,
+            scaffold               : enable.scaffold,
+            curate                 : enable.curate,
+            alignRNA               : enable.alignRNA
+        ]
     )
 
-    // Completion message
-    workflow.onComplete = {
-        if( workflow.success ){
-            log.info("""
-            Thank you for using the NBIS Earth Biogenome Project Assembly workflow.
-            The workflow completed successfully.
+    publish:
+    // 01 - Read inspection
+    goat              = input.goat
+    seqkit_hifi_stats = inspect.seqkit_hifi
+    seqkit_hic_stats  = inspect.seqkit_hic
+    fastqc_hic        = inspect.fastqc
+    fastk_runs        = fastk_hifi.fastk_runs.mix(fastk_hic.fastk_runs)
+    fastk_merged      = fastk_hifi.fastk_merged.mix(fastk_hic.fastk_merged)
+    genescopefk       = inspect.genescopefk
+    smudgeplot        = inspect.smudgeplot
+    katgc             = inspect.katgc
+    kat_comp          = inspect.katcomp
+    dtol_search       = report.dtol
+    // 02 - Read preprocessing
+    converted_bam_to_fasta = input.converted
+    hic_cram          = convert.cram
+    hic_crai          = convert.crai
+    // 03 - Assembly
+    hifiasm           = assemble.hifiasm
+    gfa2fa            = assemble.gfa2fa
+    mitohifi_references = assemble.mito_reference
+    mitohifi          = assemble.mitohifi
+    oatk              = assemble.oatk
+    dotplots          = assemble.dotplots
+    // 04 - Contamination screen
+    fcsgx_reports     = screen.fcsgx_reports
+    fcsgx_clean       = screen.fcsgx_clean
+    // 05 - Duplicate purging
+    purge_dups        = purge.purge_dups
+    // 06 - Error polishing
+    dvpolish          = polish.dvpolish
+    dvpolish_merqury_input    = polish.merqury_input
+    dvpolish_merqury_polished = polish.merqury_polished
+    // 07 - Scaffolding
+    pairtools         = scaffold.pairtools
+    yahs              = scaffold.yahs
+    merged_haps       = scaffold.merged_haplotypes
+    // 08 - Curation
+    higlass_mcool     = curate.zoomify
+    higlass_gaps      = curate.gaps
+    higlass_telomers  = curate.telomer_bigwig
+    pretext           = curate.pretext_tracks
+    // 09 - RNA alignment
+    star              = rnaseq
+    // Assembly QC of each stage
+    merquryfk         = assemble.merquryfk.mix(screen.merquryfk).mix(purge.merquryfk).mix(polish.merquryfk).mix(scaffold.merquryfk).mix(curate.merquryfk)
+    merqury           = assemble.merqury.mix(screen.merqury).mix(purge.merqury).mix(polish.merqury).mix(scaffold.merqury).mix(curate.merqury)
+    busco             = assemble.busco.mix(screen.busco).mix(purge.busco).mix(polish.busco).mix(scaffold.busco).mix(curate.busco)
+    gfastats          = assemble.gfastats.mix(screen.gfastats).mix(purge.gfastats).mix(polish.gfastats).mix(scaffold.gfastats).mix(curate.gfastats)
+    // 10 - Report
+    quast             = stage_comparison.quast
+    report            = report.report
 
-            Results are located in the folder: $params.outdir
-            """)
-        } else {
-            log.info("""
-            Thank you for using the NBIS Earth Biogenome Project Assembly workflow.
-            The workflow completed unsuccessfully.
+    onComplete:
+    if ( workflow.success ) {
+        log.info("""
+        Thank you for using the NBIS Earth Biogenome Project Assembly workflow.
+        The workflow completed successfully.
 
-            Please read over the error message. If you are unable to solve it, please
-            post an issue at https://github.com/NBISweden/Earth-Biogenome-Project-pilot/issues
-            where we will do our best to help.
-            """)
-        }
+        Results are located in the folder: ${workflow.outputDir}
+        """)
+    } else {
+        log.info("""
+        Thank you for using the NBIS Earth Biogenome Project Assembly workflow.
+        The workflow completed unsuccessfully.
+
+        Please read over the error message. If you are unable to solve it, please
+        post an issue at https://github.com/NBISweden/Earth-Biogenome-Project-pilot/issues
+        where we will do our best to help.
+        """)
+    }
+}
+
+output {
+    // 01 - Read inspection
+    goat: Channel<Record> {
+        path { r -> "${stageDir(params.stage_dirs, 'inspect')}/${r.id}/goat" }
+    }
+    seqkit_hifi_stats: Channel<Record> {
+        path { r -> "${stageDir(params.stage_dirs, 'inspect')}/${r.meta.id}/seqkit_hifi_stats" }
+    }
+    seqkit_hic_stats: Channel<Record> {
+        path { r -> "${stageDir(params.stage_dirs, 'inspect')}/${r.meta.id}/seqkit_hic_stats" }
+    }
+    fastqc_hic: Channel<Record> {
+        path { r -> "${stageDir(params.stage_dirs, 'inspect')}/${r.meta.id}/fastqc_hic" }
+    }
+    fastk_runs: Channel<Record> {
+        path { r -> "${stageDir(params.stage_dirs, 'inspect')}/${r.meta.id}/fastk" }
+    }
+    fastk_merged: Channel<Record> {
+        path { r -> "${stageDir(params.stage_dirs, 'inspect')}/${r.meta.id}/fastk" }
+    }
+    genescopefk: Channel<Record> {
+        path { r -> "${stageDir(params.stage_dirs, 'inspect')}/${r.meta.id}/genescopefk" }
+    }
+    smudgeplot: Channel<Record> {
+        path { r -> "${stageDir(params.stage_dirs, 'inspect')}/${r.meta.id}/smudgeplot" }
+    }
+    katgc: Channel<Record> {
+        path { r -> "${stageDir(params.stage_dirs, 'inspect')}/${r.meta.id}/katgc" }
+    }
+    kat_comp: Channel<Record> {
+        path { r -> "${stageDir(params.stage_dirs, 'inspect')}/${r.meta.id}/kat_comp" }
+    }
+    dtol_search: Channel<Record> {
+        path { r -> r.json_file >> ("${stageDir(params.stage_dirs, 'inspect')}/${r.id}/dtol_search/") }
+    }
+    // 02 - Read preprocessing
+    converted_bam_to_fasta: Channel<Record> {
+        path { r -> "${stageDir(params.stage_dirs, 'preprocess')}/${r.meta.id}/converted_bam_to_fasta" }
+    }
+    hic_cram: Channel<Record> {
+        path { r -> "${stageDir(params.stage_dirs, 'preprocess')}/${r.meta.id}/hic_cram" }
+    }
+    hic_crai: Channel<Record> {
+        path { r -> "${stageDir(params.stage_dirs, 'preprocess')}/${r.meta.id}/hic_cram" }
+    }
+    // 03 - Assembly
+    hifiasm: Channel<Record> {
+        path { r -> "${subjectDir(stageDir(params.stage_dirs, 'assembly'), r.meta)}/hifiasm" }
+    }
+    gfa2fa: Channel<Record> {
+        path { r -> "${subjectDir(stageDir(params.stage_dirs, 'assembly'), r.meta)}/gfa2fa" }
+    }
+    mitohifi_references: Channel<Record> {
+        path { r -> "${stageDir(params.stage_dirs, 'assembly')}/${r.meta.id}/organelle/mitohifi/references" }
+    }
+    mitohifi: Channel<Record> {
+        path { r -> "${stageDir(params.stage_dirs, 'assembly')}/${params.organelle_assembly_mode == 'contigs' ? r.meta.assembly.build : r.meta.id}/organelle/mitohifi" }
+    }
+    oatk: Channel<Record> {
+        path { r -> "${subjectDir(stageDir(params.stage_dirs, 'assembly'), r.meta)}/organelle/oatk" }
+    }
+    dotplots: Channel<Record> {
+        path { r -> "${subjectDir(stageDir(params.stage_dirs, 'assembly'), r.meta)}/organelle/dotplots" }
+    }
+    // 04 - Contamination screen
+    fcsgx_reports: Channel<Record> {
+        path { r -> "${subjectDir(stageDir(params.stage_dirs, 'screen'), r.meta)}/fcsgx" }
+    }
+    fcsgx_clean: Channel<Record> {
+        path { r -> "${subjectDir(stageDir(params.stage_dirs, 'screen'), r.meta)}/fcsgx" }
+    }
+    // 05 - Duplicate purging
+    purge_dups: Channel<Record> {
+        path { r -> "${subjectDir(stageDir(params.stage_dirs, 'purge'), r.meta)}/purge_dups" }
+    }
+    // 06 - Error polishing
+    dvpolish: Channel<Record> {
+        path { r -> "${subjectDir(stageDir(params.stage_dirs, 'polish'), r.meta)}/dvpolish" }
+    }
+    dvpolish_merqury_input: Channel<Record> {
+        path { r -> "${subjectDir(stageDir(params.stage_dirs, 'polish'), r.meta)}/dvpolish/merqury_input" }
+    }
+    dvpolish_merqury_polished: Channel<Record> {
+        path { r -> "${subjectDir(stageDir(params.stage_dirs, 'polish'), r.meta)}/dvpolish/merqury_polished" }
+    }
+    // 07 - Scaffolding
+    pairtools: Channel<Record> {
+        path { r -> r.stat >> ("${subjectDir(stageDir(params.stage_dirs, 'scaffold'), r.meta)}/pairtools/") }
+    }
+    yahs: Channel<Record> {
+        path { r -> "${subjectDir(stageDir(params.stage_dirs, 'scaffold'), r.meta)}/yahs" }
+    }
+    merged_haps: Channel<Record> {
+        path { r -> "${subjectDir(stageDir(params.stage_dirs, 'scaffold'), r.meta)}/merged_haps" }
+    }
+    // 08 - Curation
+    higlass_mcool: Channel<Record> {
+        path { r -> r.mcool >> ("${subjectDir(stageDir(params.stage_dirs, 'curate'), r.meta)}/higlass/") }
+    }
+    higlass_gaps: Channel<Record> {
+        path { r -> r.beddb >> ("${subjectDir(stageDir(params.stage_dirs, 'curate'), r.meta)}/higlass/") }
+    }
+    higlass_telomers: Channel<Record> {
+        path { r -> r.bw >> ("${subjectDir(stageDir(params.stage_dirs, 'curate'), r.meta)}/higlass/") }
+    }
+    pretext: Channel<Record> {
+        path { r -> r.hitile >> ("${subjectDir(stageDir(params.stage_dirs, 'curate'), r.meta)}/pretext/") }
+    }
+    // 09 - RNA alignment
+    star: Channel<Record> {
+        path { r -> "${subjectDir(stageDir(params.stage_dirs, 'alignRNA'), r.meta)}/star" }
+    }
+    // Assembly QC, next to the assembly it evaluates
+    merquryfk: Channel<Record> {
+        path { r -> "${assemblyStageDir(params.stage_dirs, r.meta.assembly.stage)}/${r.meta.assembly.build}/qc/merquryfk" }
+    }
+    merqury: Channel<Record> {
+        path { r -> "${assemblyStageDir(params.stage_dirs, r.meta.assembly.stage)}/${r.meta.assembly.build}/qc/merqury" }
+    }
+    busco: Channel<Record> {
+        path { r -> "${assemblyStageDir(params.stage_dirs, r.meta.assembly.stage)}/${r.meta.assembly.build}/qc/busco" }
+    }
+    gfastats: Channel<Record> {
+        path { r -> "${assemblyStageDir(params.stage_dirs, r.meta.assembly.stage)}/${r.meta.assembly.build}/qc/gfastats" }
+    }
+    // 10 - Report
+    quast: Channel<Record> {
+        path { r -> "${stageDir(params.stage_dirs, 'report')}/quast/${r.meta.id}" }
+    }
+    report: Channel<Record> {
+        path "${stageDir(params.stage_dirs, 'report')}"
     }
 }

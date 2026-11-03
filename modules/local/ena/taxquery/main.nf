@@ -1,22 +1,32 @@
+nextflow.enable.types = true
+
+// Taxonomy of a species from the ENA taxonomy service. An exec process, so the result is cached
 process ENA_TAXQUERY {
-    // directives
-    tag { species_name }
+    tag "${species_name}"
 
     input:
-    val species_name
-
-    exec:
-    def encoded_species_name = URLEncoder.encode(species_name)
-    def ena_response = new URL("https://www.ebi.ac.uk/ena/taxonomy/rest/scientific-name/${encoded_species_name}").text
-    def lazy_json = new groovy.json.JsonSlurper().parseText(ena_response)
-    json = [
-        taxId: lazy_json[0]['taxId'],
-        scientificName: lazy_json[0]['scientificName'],
-        geneticCode: lazy_json[0]['geneticCode'],
-        mitochondrialGeneticCode: lazy_json[0]['mitochondrialGeneticCode'],
-        lineage: lazy_json[0]['lineage'],
-    ]
+    record(
+        id: String,
+        species_name: String
+    )
 
     output:
-    val json, emit: json
+    record(
+        id: id,
+        json: json
+    )
+
+    exec:
+    def encoded_species_name = URLEncoder.encode(species_name, 'UTF-8')
+    def ena_response = file("https://www.ebi.ac.uk/ena/taxonomy/rest/scientific-name/${encoded_species_name}").text
+    def entries = new groovy.json.JsonSlurper().parseText(ena_response) as List
+    assert entries : "Species '${species_name}' not found in the ENA taxonomy"
+    def entry = entries[0] as Map
+    json = [
+        taxId                   : entry['taxId'],
+        scientificName          : entry['scientificName'],
+        geneticCode             : entry['geneticCode'],
+        mitochondrialGeneticCode: entry['mitochondrialGeneticCode'],
+        lineage                 : entry['lineage'],
+    ]
 }

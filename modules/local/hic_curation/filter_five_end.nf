@@ -1,26 +1,45 @@
+nextflow.enable.types = true
+
 process FILTER_FIVE_END {
-    tag "$meta.id"
+    tag "${id}"
     label 'process_medium'
 
     container "community.wave.seqera.io/library/samtools_perl:e2ce3f7265547d1f"
 
+    ext [
+        prefix: { output_prefix ?: "${id}" }
+    ]
+
     input:
-    tuple val(meta), path(bam)
+    record(
+        id: String,
+        meta: Record?,
+        bam: Path,
+        output_prefix: String?
+    )
 
     output:
-    tuple val(meta), path("*.bam"), emit: bam
-    tuple val("${task.process}"), val('samtools'), eval('samtools --version | sed "1!d; s/samtools //"'), emit: versions_samtools, topic: versions
+    record(
+        id: id,
+        meta: meta,
+        bam: file("*.bam")
+    )
 
-
-    when:
-    task.ext.when == null || task.ext.when
+    topic:
+    tuple(task.process, 'samtools', eval('samtools --version | sed "1!d; s/samtools //"')) >> 'versions'
 
     script:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: "${id}"
 
     """
     samtools view -h -@ $task.cpus ${bam} | \\
     filter_five_end.pl | \\
     samtools view -@ $task.cpus -Sb - > ${prefix}.bam
+    """
+
+    stub:
+    def prefix = task.ext.prefix ?: "${id}"
+    """
+    touch ${prefix}.bam
     """
 }

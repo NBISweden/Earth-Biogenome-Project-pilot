@@ -1,0 +1,89 @@
+Changes in component 'nf-core/tidk/search'
+'modules/nf-core/tidk/search/environment.yml' is unchanged
+'modules/nf-core/tidk/search/meta.yml' is unchanged
+Changes in 'tidk/search/main.nf':
+--- modules/nf-core/tidk/search/main.nf
++++ modules/nf-core/tidk/search/main.nf
+@@ -1,5 +1,7 @@
++nextflow.enable.types = true
++
+ process TIDK_SEARCH {
+-    tag "$meta.id"
++    tag "${id}"
+     label 'process_single'
+ 
+     conda "${moduleDir}/environment.yml"
+@@ -7,21 +9,35 @@
+         'https://depot.galaxyproject.org/singularity/tidk:0.2.41--hdbdd923_0':
+         'biocontainers/tidk:0.2.41--hdbdd923_0' }"
+ 
++    ext [
++        args: { tidk_args ?: '' },
++        prefix: { output_prefix ?: "${id}" }
++    ]
++
+     input:
+-    tuple val(meta), path(fasta)
+-    val string
++    record(
++        id: String,
++        meta: Record?,
++        fasta: Path,
++        string: String,
++        tidk_args: String?,
++        output_prefix: String?
++    )
+ 
+     output:
+-    tuple val(meta), path("*.tsv")          , emit: tsv         , optional: true
+-    tuple val(meta), path("*.bedgraph")     , emit: bedgraph    , optional: true
+-    path "versions.yml"                     , emit: versions
++    record(
++        id: id,
++        meta: meta,
++        tsv: file("*.tsv", optional: true),
++        bedgraph: file("*.bedgraph", optional: true)
++    )
+ 
+-    when:
+-    task.ext.when == null || task.ext.when
++    topic:
++    tuple(task.process, 'tidk', eval("tidk --version | sed 's/tidk //'")) >> 'versions'
+ 
+     script:
+     def args = task.ext.args ?: ''
+-    def prefix = task.ext.prefix ?: "${meta.id}"
++    def prefix = task.ext.prefix ?: "${id}"
+     """
+     tidk \\
+         search \\
+@@ -40,23 +56,13 @@
+         tidk/${prefix}_telomeric_repeat_windows.bedgraph \\
+         ${prefix}.bedgraph \\
+         || echo "BEDGRAPH file was not produced"
+-
+-    cat <<-END_VERSIONS > versions.yml
+-    "${task.process}":
+-        tidk: \$(tidk --version | sed 's/tidk //')
+-    END_VERSIONS
+     """
+ 
+     stub:
+     def args = task.ext.args ?: ''
+-    def prefix = task.ext.prefix ?: "${meta.id}"
++    def prefix = task.ext.prefix ?: "${id}"
+     def extension = args.contains("--extension bedgraph") ? 'bedgraph' : 'tsv'
+     """
+     touch ${prefix}.${extension}
+-
+-    cat <<-END_VERSIONS > versions.yml
+-    "${task.process}":
+-        tidk: \$(tidk --version | sed 's/tidk //')
+-    END_VERSIONS
+     """
+ }
+
+'modules/nf-core/tidk/search/tests/main.nf.test.snap' is unchanged
+'modules/nf-core/tidk/search/tests/nextflow.config' is unchanged
+'modules/nf-core/tidk/search/tests/main.nf.test' is unchanged
+************************************************************

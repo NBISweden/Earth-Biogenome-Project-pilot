@@ -1,0 +1,81 @@
+Changes in component 'nf-core/tidk/plot'
+'modules/nf-core/tidk/plot/environment.yml' is unchanged
+'modules/nf-core/tidk/plot/meta.yml' is unchanged
+Changes in 'tidk/plot/main.nf':
+--- modules/nf-core/tidk/plot/main.nf
++++ modules/nf-core/tidk/plot/main.nf
+@@ -1,5 +1,7 @@
++nextflow.enable.types = true
++
+ process TIDK_PLOT {
+-    tag "$meta.id"
++    tag "${id}"
+     label 'process_single'
+ 
+     conda "${moduleDir}/environment.yml"
+@@ -7,40 +9,44 @@
+         'https://depot.galaxyproject.org/singularity/tidk:0.2.41--hdbdd923_0':
+         'biocontainers/tidk:0.2.41--hdbdd923_0' }"
+ 
++    ext [
++        args: { tidk_args ?: '' },
++        prefix: { output_prefix ?: "${id}" }
++    ]
++
+     input:
+-    tuple val(meta), path(tsv)
++    record(
++        id: String,
++        meta: Record?,
++        tsv: Path,
++        tidk_args: String?,
++        output_prefix: String?
++    )
+ 
+     output:
+-    tuple val(meta), path("*.svg"), emit: svg
+-    path "versions.yml"           , emit: versions
++    record(
++        id: id,
++        meta: meta,
++        svg: file("*.svg")
++    )
+ 
+-    when:
+-    task.ext.when == null || task.ext.when
++    topic:
++    tuple(task.process, 'tidk', eval("tidk --version | sed 's/tidk //'")) >> 'versions'
+ 
+     script:
+     def args = task.ext.args ?: ''
+-    def prefix = task.ext.prefix ?: "${meta.id}"
++    def prefix = task.ext.prefix ?: "${id}"
+     """
+     tidk \\
+         plot \\
+         --output $prefix \\
+         $args \\
+         --tsv "$tsv"
+-
+-    cat <<-END_VERSIONS > versions.yml
+-    "${task.process}":
+-        tidk: \$(tidk --version | sed 's/tidk //')
+-    END_VERSIONS
+     """
+ 
+     stub:
+-    def prefix = task.ext.prefix ?: "${meta.id}"
++    def prefix = task.ext.prefix ?: "${id}"
+     """
+     touch ${prefix}.svg
+-
+-    cat <<-END_VERSIONS > versions.yml
+-    "${task.process}":
+-        tidk: \$(tidk --version | sed 's/tidk //')
+-    END_VERSIONS
+     """
+ }
+
+'modules/nf-core/tidk/plot/tests/main.nf.test.snap' is unchanged
+'modules/nf-core/tidk/plot/tests/main.nf.test' is unchanged
+************************************************************

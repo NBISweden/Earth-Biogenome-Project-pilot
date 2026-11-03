@@ -1,5 +1,7 @@
+nextflow.enable.types = true
+
 process TIDK_PLOT {
-    tag "$meta.id"
+    tag "${id}"
     label 'process_single'
 
     conda "${moduleDir}/environment.yml"
@@ -7,19 +9,33 @@ process TIDK_PLOT {
         'https://depot.galaxyproject.org/singularity/tidk:0.2.41--hdbdd923_0':
         'biocontainers/tidk:0.2.41--hdbdd923_0' }"
 
+    ext [
+        args: { tidk_args ?: '' },
+        prefix: { output_prefix ?: "${id}" }
+    ]
+
     input:
-    tuple val(meta), path(tsv)
+    record(
+        id: String,
+        meta: Record?,
+        tsv: Path,
+        tidk_args: String?,
+        output_prefix: String?
+    )
 
     output:
-    tuple val(meta), path("*.svg"), emit: svg
-    tuple val("${task.process}"), val('tidk'), eval("tidk --version | sed 's/tidk //'"), emit: versions_tidk, topic: versions
+    record(
+        id: id,
+        meta: meta,
+        svg: file("*.svg")
+    )
 
-    when:
-    task.ext.when == null || task.ext.when
+    topic:
+    tuple(task.process, 'tidk', eval("tidk --version | sed 's/tidk //'")) >> 'versions'
 
     script:
     def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: "${id}"
     """
     tidk \\
         plot \\
@@ -29,7 +45,7 @@ process TIDK_PLOT {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: "${id}"
     """
     touch ${prefix}.svg
     """

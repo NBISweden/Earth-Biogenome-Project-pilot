@@ -1,0 +1,39 @@
+nextflow_process {
+
+    name "Test Process QUARTO_NOTEBOOK"
+    script "../../../../../modules/local/quarto/notebook/main.nf"
+    process "QUARTO_NOTEBOOK"
+
+    tag "modules"
+    tag "modules_local"
+    tag "quarto/notebook"
+
+    test("render - stub") {
+        options "-stub-run"
+
+        when {
+            process {
+                """
+                input[0] = record(
+                    id: 'test',
+                    meta: null,
+                    notebook: file("\$projectDir/tests/data/modules/notebook.qmd"),
+                    aux_files: [],
+                    log_files: [ file("\$projectDir/tests/data/modules/seq.fasta") ],
+                    report_params: file("\$projectDir/tests/data/modules/params.yml"),
+                    output_prefix: 'report'
+                )
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            def out = process.out[0][0]
+            def names = { v -> [v].flatten().collect { f -> new File(f.toString()).name }.sort() }
+            assert names(out.html) == ['report.html']
+            assert names(out.github_markdown) == ['report.md']
+            assert names(out.versions) == ['versions.yml']
+        }
+    }
+}

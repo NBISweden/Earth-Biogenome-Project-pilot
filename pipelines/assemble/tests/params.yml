@@ -1,0 +1,10 @@
+# Tiny dataset, paths relative to the repository root
+samples: 'pipelines/assemble/tests/samples.yml'
+qc:
+  busco:
+    lineages: 'bacteria_odb10'
+  fastk:
+    kmer_size: 14
+  meryl:
+    kmer_size: 14
+  use_phased: false

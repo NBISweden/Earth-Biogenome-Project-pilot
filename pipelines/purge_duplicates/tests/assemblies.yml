@@ -1,0 +1,20 @@
+# Tiny dataset, paths relative to the repository root
+- id: hifiasm-purged-hifi_v1
+  meta:
+    id: Drosophila_melanogaster
+    sample:
+      name: Drosophila melanogaster
+      genome_size: 176040000
+      ploidy: 2
+    settings:
+      busco:
+        lineages: diptera_odb10
+    assembly:
+      assembler: hifiasm
+      stage: purged
+      id: hifi_v1
+      build: hifiasm-purged-hifi_v1
+  pri_fasta: tests/data/tiny/assembly/hifiasm-raw-hifi_v1.asm.bp.p_ctg.fasta
+  hifi:
+  - tests/data/tiny/PB_HIFI/dmel_2Mb.fastq.gz
+  hifi_merged: tests/data/tiny/PB_HIFI/dmel_2Mb.fastq.gz

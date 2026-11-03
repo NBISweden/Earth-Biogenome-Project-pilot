@@ -1,0 +1,163 @@
+Changes in component 'nf-core/samtools/view'
+'modules/nf-core/samtools/view/environment.yml' is unchanged
+'modules/nf-core/samtools/view/meta.yml' is unchanged
+Changes in 'samtools/view/main.nf':
+--- modules/nf-core/samtools/view/main.nf
++++ modules/nf-core/samtools/view/main.nf
+@@ -1,6 +1,14 @@
++nextflow.enable.types = true
++
+ process SAMTOOLS_VIEW {
+-    tag "${meta.id}"
++    tag "${id}"
+     label 'process_low'
++
++    ext [
++        args: { samtools_args ?: '' },
++        args2: { samtools_args2 ?: '' },
++        prefix: { output_prefix ?: "${id}" }
++    ]
+ 
+     conda "${moduleDir}/environment.yml"
+     container "${workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container
+@@ -8,49 +16,59 @@
+         : 'community.wave.seqera.io/library/htslib_samtools:1.23.1--5b6bb4ede7e612e5'}"
+ 
+     input:
+-    tuple val(meta), path(input), path(index)
+-    tuple val(meta2), path(fasta), path(fai)
+-    tuple val(meta3), path(qname)
+-    tuple val(meta4), path(bed)
+-    val index_format
++    record(
++        id: String,
++        meta: Record?,
++        input: Path,
++        index: Path?,
++        fasta: Path?,
++        fai: Path?,
++        qname: Path?,
++        bed: Path?,
++        index_format: String?,
++        samtools_args: String?,
++        samtools_args2: String?,
++        output_prefix: String?
++    )
+ 
+     output:
+-    tuple val(meta), path("${prefix}.bam"), emit: bam, optional: true
+-    tuple val(meta), path("${prefix}.cram"), emit: cram, optional: true
+-    tuple val(meta), path("${prefix}.sam"), emit: sam, optional: true
+-    tuple val(meta), path("${prefix}.${file_type}.bai"), emit: bai, optional: true
+-    tuple val(meta), path("${prefix}.${file_type}.csi"), emit: csi, optional: true
+-    tuple val(meta), path("${prefix}.${file_type}.crai"), emit: crai, optional: true
+-    tuple val(meta), path("${prefix}.unselected.${file_type}"), emit: unselected, optional: true
+-    tuple val(meta), path("${prefix}.unselected.${file_type}.{csi,crai}"), emit: unselected_index, optional: true
+-    tuple val("${task.process}"), val('samtools'), eval('samtools version | sed "1!d;s/.* //"'), emit: versions_samtools, topic: versions
++    record(
++        id: id,
++        meta: meta,
++        bam: file("${task.ext.prefix}.bam", optional: true),
++        cram: file("${task.ext.prefix}.cram", optional: true),
++        sam: file("${task.ext.prefix}.sam", optional: true),
++        bai: file("${task.ext.prefix}.*.bai", optional: true),
++        csi: file("${task.ext.prefix}.*.csi", optional: true),
++        crai: file("${task.ext.prefix}.*.crai", optional: true),
++        unselected: file("${task.ext.prefix}.unselected.*", optional: true)
++    )
+ 
+-    when:
+-    task.ext.when == null || task.ext.when
++    topic:
++    tuple(task.process, 'samtools', eval('samtools version | sed "1!d;s/.* //"')) >> 'versions'
+ 
+     script:
+-    def args = task.ext.args ?: ''
+-    def args2 = task.ext.args2 ?: ''
+-    prefix = task.ext.prefix ?: "${meta.id}"
++    def args = task.ext.args
++    def prefix = task.ext.prefix
+     def reference = fasta ? "--reference ${fasta}" : ""
+-    file_type = args.contains("--output-fmt sam")
++    def file_type = args.contains("--output-fmt sam")
+         ? "sam"
+         : args.contains("--output-fmt bam")
+             ? "bam"
+             : args.contains("--output-fmt cram")
+                 ? "cram"
+-                : input.getExtension()
++                : input.extension
+ 
+-    output_file = index_format ? "${prefix}.${file_type}##idx##${prefix}.${file_type}.${index_format} --write-index" : "${prefix}.${file_type}"
++    def output_file = index_format ? "${prefix}.${file_type}##idx##${prefix}.${file_type}.${index_format} --write-index" : "${prefix}.${file_type}"
+     // Can't choose index type of unselected file
+-    readnames = qname ? "--qname-file ${qname} --output-unselected ${prefix}.unselected.${file_type}" : ""
++    def readnames = qname ? "--qname-file ${qname} --output-unselected ${prefix}.unselected.${file_type}" : ""
+     def bedfile = bed ? "-L ${bed}" : ""
+ 
+     if ("${input}" == "${prefix}.${file_type}") {
+         error("Input and output names are the same, use \"task.ext.prefix\" to disambiguate!")
+     }
+     if (index_format) {
+-        if (!index_format.matches('bai|csi|crai')) {
++        if (!['bai', 'csi', 'crai'].contains(index_format)) {
+             error("Index format not one of bai, csi, crai.")
+         }
+         else if (file_type == "sam") {
+@@ -68,42 +86,31 @@
+         ${args} \\
+         -o ${output_file} \\
+         ${input} \\
+-        ${args2}
++        ${task.ext.args2}
+     """
+ 
+     stub:
+-    def args = task.ext.args ?: ''
+-    prefix = task.ext.prefix ?: "${meta.id}"
+-    file_type = args.contains("--output-fmt sam")
++    def args = task.ext.args
++    def prefix = task.ext.prefix
++    def file_type = args.contains("--output-fmt sam")
+         ? "sam"
+         : args.contains("--output-fmt bam")
+             ? "bam"
+             : args.contains("--output-fmt cram")
+                 ? "cram"
+-                : input.getExtension()
+-    default_index_format = file_type == "bam"
++                : input.extension
++    def default_index_format = file_type == "bam"
+         ? "csi"
+         : file_type == "cram" ? "crai" : ""
+-    index = index_format ? "touch ${prefix}.${file_type}.${index_format}" : args.contains("--write-index") ? "touch ${prefix}.${file_type}.${default_index_format}" : ""
+-    unselected = qname ? "touch ${prefix}.unselected.${file_type}" : ""
+-    // Can't choose index type of unselected file
+-    unselected_index = qname && (args.contains("--write-index") || index_format) ? "touch ${prefix}.unselected.${file_type}.${default_index_format}" : ""
++    def index_cmd = index_format ? "touch ${prefix}.${file_type}.${index_format}" : args.contains("--write-index") ? "touch ${prefix}.${file_type}.${default_index_format}" : ""
++    def unselected = qname ? "touch ${prefix}.unselected.${file_type}" : ""
+ 
+     if ("${input}" == "${prefix}.${file_type}") {
+         error("Input and output names are the same, use \"task.ext.prefix\" to disambiguate!")
+     }
+-    if (index_format) {
+-        if (!index_format.matches('bai|csi|crai')) {
+-            error("Index format not one of bai, csi, crai.")
+-        }
+-        else if (file_type == "sam") {
+-            error("Indexing not compatible with SAM output.")
+-        }
+-    }
+     """
+     touch ${prefix}.${file_type}
+-    ${index}
++    ${index_cmd}
+     ${unselected}
+-    ${unselected_index}
+     """
+ }
+
+'modules/nf-core/samtools/view/tests/main.nf.test.snap' is unchanged
+'modules/nf-core/samtools/view/tests/nextflow.config' is unchanged
+'modules/nf-core/samtools/view/tests/main.nf.test' is unchanged
+************************************************************

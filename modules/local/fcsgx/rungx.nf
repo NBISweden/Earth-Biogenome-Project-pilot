@@ -1,6 +1,13 @@
+nextflow.enable.types = true
+
 process FCSGX_RUNGX {
-    tag "$meta.id"
+    tag "${id}"
     label 'process_high'
+
+    ext [
+        args: { fcsgx_args ?: '' },
+        prefix: { output_prefix ?: "${id}" }
+    ]
 
     // WARN: Version information not provided by tool on CLI. Please update version string below when bumping container versions.
     conda "bioconda::ncbi-fcs-gx=0.5.4"
@@ -9,25 +16,34 @@ process FCSGX_RUNGX {
         'biocontainers/ncbi-fcs-gx:0.5.4--h4ac6f70_1' }"
 
     input:
-    tuple val(meta), val(taxid), path(assembly)
-    path gxdb
-    val ramdisk_path
+    record(
+        id: String,
+        meta: Record?,
+        taxid: String,
+        assembly: Path,
+        gxdb: Path,
+        ramdisk_path: String?,
+        fcsgx_args: String?,
+        output_prefix: String?
+    )
 
     output:
-    tuple val(meta), path("*.fcs_gx_report.txt"), emit: fcs_gx_report
-    tuple val(meta), path("*.taxonomy.rpt")     , emit: taxonomy_report
-    tuple val(meta), path("*.hits.tsv.gz")      , emit: hits, optional: true
-    // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
-    tuple val("${task.process}"), val('fcs_gx'), val('0.5.4'), emit: versions_fcsgx, topic: versions
+    record(
+        id: id,
+        meta: meta,
+        fcs_gx_report: file("*.fcs_gx_report.txt"),
+        taxonomy_report: file("*.taxonomy.rpt"),
+        hits: file("*.hits.tsv.gz", optional: true)
+    )
 
-    when:
-    task.ext.when == null || task.ext.when
+    topic:
+    // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
+    tuple(task.process, 'fcs_gx', '0.5.4') >> 'versions'
 
     script:
-    def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
-    def database = ramdisk_path ?: gxdb // maxForks set to 1 to limit concurrent execution corruption
-    (ramdisk_path ?
+    def prefix = task.ext.prefix
+    def database = ramdisk_path ?: "${gxdb}" // maxForks set to 1 to limit concurrent execution corruption
+    def copy_database = ramdisk_path ?
     """
     if test -d "${database}"; then
         echo "ERROR: Database exists in memory, and may be in use by another process" >&2
@@ -39,9 +55,9 @@ process FCSGX_RUNGX {
     # Copy DB to RAM-disk when supplied. Otherwise, rungx is very slow.
     rclone copy $gxdb ${database}
 
-    """ : "")
-    <<
+    """ : ""
     """
+    ${copy_database}
     export GX_NUM_CORES=$task.cpus
     run_gx.py \\
         --fasta $assembly \\
@@ -49,6 +65,13 @@ process FCSGX_RUNGX {
         --tax-id $taxid \\
         --out-basename $prefix \\
         --out-dir . \\
-        $args
+        ${task.ext.args}
+    """
+
+    stub:
+    def prefix = task.ext.prefix
+    """
+    touch ${prefix}.fcs_gx_report.txt ${prefix}.taxonomy.rpt
+    echo "" | gzip > ${prefix}.hits.tsv.gz
     """
 }

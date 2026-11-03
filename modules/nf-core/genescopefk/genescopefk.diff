@@ -3,15 +3,32 @@ Changes in component 'nf-core/genescopefk'
 Changes in 'genescopefk/main.nf':
 --- modules/nf-core/genescopefk/main.nf
 +++ modules/nf-core/genescopefk/main.nf
-@@ -3,21 +3,22 @@
+@@ -1,57 +1,73 @@
++nextflow.enable.types = true
++
+ process GENESCOPEFK {
+-    tag "$meta.id"
++    tag "${id}"
      label 'process_low'
  
++    ext [
++        args: { genescopefk_args ?: '' },
++        prefix: { output_prefix ?: "${id}" }
++    ]
++
      // WARN: Version information not provided by tool on CLI. Please update version string below when bumping container versions.
 -    container 'ghcr.io/nbisweden/fastk_genescopefk_merquryfk:1.2'
 +    container 'ghcr.io/nbisweden/fastk_genescopefk_merquryfk:1.3'
  
      input:
-     tuple val(meta), path(fastk_histex_histogram)
+-    tuple val(meta), path(fastk_histex_histogram)
++    record(
++        id: String,
++        meta: Record?,
++        histogram: Path,
++        genescopefk_args: String?,
++        output_prefix: String?
++    )
  
      output:
 -    tuple val(meta), path("*_linear_plot.png")            , emit: linear_plot
@@ -21,32 +38,44 @@ Changes in 'genescopefk/main.nf':
 -    tuple val(meta), path("*_transformed_linear_plot.png"), emit: transformed_linear_plot
 -    tuple val(meta), path("*_transformed_log_plot.png")   , emit: transformed_log_plot
 -    tuple val(meta), path("*_genescopefk.log")            , emit: log
-+    tuple val(meta), path("${prefix}_linear_plot.png")            , emit: linear_plot
-+    tuple val(meta), path("${prefix}_log_plot.png")               , emit: log_plot
-+    tuple val(meta), path("${prefix}_model.txt")                  , emit: model
-+    tuple val(meta), path("${prefix}_summary.txt")                , emit: summary
-+    tuple val(meta), path("${prefix}_transformed_linear_plot.png"), emit: transformed_linear_plot
-+    tuple val(meta), path("${prefix}_transformed_log_plot.png")   , emit: transformed_log_plot
-+    tuple val(meta), path("${prefix}_genescopefk.log")            , emit: log
-     tuple val(meta), env('KMERCOV')                       , emit: kmer_cov
+-    tuple val(meta), env('KMERCOV')                       , emit: kmer_cov
 -    tuple val("${task.process}"), val('genescopefk'), eval("R --version | sed '1!d; s/.*version //; s/ .*//'"), emit: versions_genescopefk, topic: versions
-+    tuple val("${task.process}"), val('genescopefk'), val("380815c420f50171f9234a0fd1ff426b39829b91"), emit: versions_genescopefk, topic: versions
-+    tuple val("${task.process}"), val('R'), eval("R --version | sed '1!d; s/.*version //; s/ .*//'"), emit: versions_r, topic: versions
++    record(
++        id: id,
++        meta: meta,
++        linear_plot: file("${task.ext.prefix}_linear_plot.png"),
++        log_plot: file("${task.ext.prefix}_log_plot.png"),
++        model: file("${task.ext.prefix}_model.txt"),
++        summary: file("${task.ext.prefix}_summary.txt"),
++        transformed_linear_plot: file("${task.ext.prefix}_transformed_linear_plot.png"),
++        transformed_log_plot: file("${task.ext.prefix}_transformed_log_plot.png"),
++        log: file("${task.ext.prefix}_genescopefk.log"),
++        kmer_cov: env('KMERCOV')
++    )
  
-     when:
-     task.ext.when == null || task.ext.when
-@@ -29,15 +30,17 @@
+-    when:
+-    task.ext.when == null || task.ext.when
++    topic:
++    tuple(task.process, 'genescopefk', "380815c420f50171f9234a0fd1ff426b39829b91") >> 'versions'
++    tuple(task.process, 'R', eval("R --version | sed '1!d; s/.*version //; s/ .*//'")) >> 'versions'
+ 
+     script:
+     // Exit if running this module with -profile conda / -profile mamba
+     if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
+         error "GENESCOPEFK module does not support Conda. Please use Docker / Singularity / Podman instead."
      }
- 
-     def args   = task.ext.args   ?: ''
--    def prefix = task.ext.prefix ?: "${meta.id}"
-+    prefix = task.ext.prefix ?: "${meta.id}"
-     """
++    def prefix = task.ext.prefix
++    """
 +    #! /usr/bin/env bash
-+
+ 
+-    def args   = task.ext.args   ?: ''
+-    def prefix = task.ext.prefix ?: "${meta.id}"
+-    """
      GeneScopeFK.R \\
-         $args \\
-         --input $fastk_histex_histogram \\
+-        $args \\
+-        --input $fastk_histex_histogram \\
++        ${task.ext.args} \\
++        --input $histogram \\
          --output . \\
          --name_prefix ${prefix} > ${prefix}_genescopefk.log
  
@@ -55,17 +84,25 @@ Changes in 'genescopefk/main.nf':
      """
  
      stub:
-@@ -51,7 +54,7 @@
+-    def prefix = task.ext.prefix ?: "${meta.id}"
++    def prefix = task.ext.prefix
+     """
+     touch "${prefix}_linear_plot.png"
+     touch "${prefix}_log_plot.png"
+-    touch "${prefix}_model.txt"
++    echo "kmercov 20.00" > "${prefix}_model.txt"
+     touch "${prefix}_summary.txt"
+     touch "${prefix}_transformed_linear_plot.png"
      touch "${prefix}_transformed_log_plot.png"
      touch "${prefix}_genescopefk.log"
  
 -    printf -v KMERCOV "%.2f" \$( grep "^kmercov" *_model.txt | cut -d" " -f2 )
 +    KMERCOV=\$( awk '/^kmercov/ {printf "%.2f", \$2}' *_model.txt )
      """
- 
+-
  }
 
 'modules/nf-core/genescopefk/tests/main.nf.test.snap' is unchanged
-'modules/nf-core/genescopefk/tests/main.nf.test' is unchanged
 'modules/nf-core/genescopefk/tests/nextflow.config' is unchanged
+'modules/nf-core/genescopefk/tests/main.nf.test' is unchanged
 ************************************************************

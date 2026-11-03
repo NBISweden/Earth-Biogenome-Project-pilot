@@ -1,24 +1,38 @@
+nextflow.enable.types = true
+
 process CREATE_CHROMOSOME_SIZES_FILE {
-    tag "$meta.id"
+    tag "${id}"
     label 'process_low'
 
     container "community.wave.seqera.io/library/pip_awk:e0daab0638d06dfd"
 
+    ext [
+        prefix: { output_prefix ?: "${id}" }
+    ]
+
     input:
-    tuple val(meta), path(fai)
-    val hic_map_sort_by
+    record(
+        id: String,
+        meta: Record?,
+        fai: Path,
+        hic_map_sort_by: String,
+        output_prefix: String?
+    )
 
     output:
-    tuple val(meta), path("*.sizes")  , emit: sizes
-    tuple val("${task.process}"), val('sort'), eval("sort --version | sed '1!d; s/.* //'"), topic: versions, emit: versions_sort
-    tuple val("${task.process}"), val('awk'), eval("awk --version | sed '1!d; s/mawk //; s/ .*//'"), topic: versions, emit: versions_awk
+    record(
+        id: id,
+        meta: meta,
+        sizes: file("*.sizes")
+    )
 
-    when:
-    task.ext.when == null || task.ext.when
+    topic:
+    tuple(task.process, 'sort', eval("sort --version | sed '1!d; s/.* //'")) >> 'versions'
+    tuple(task.process, 'awk', eval("awk --version | sed '1!d; s/mawk //; s/ .*//'")) >> 'versions'
 
     script:
     // def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: "${id}"
     """
     if [[ "$hic_map_sort_by" == "length" ]]
     then
@@ -31,5 +45,11 @@ process CREATE_CHROMOSOME_SIZES_FILE {
     else
         awk '{print \$1\"\t\"\$2}' ${fai} > ${prefix}.sizes
     fi
+    """
+
+    stub:
+    def prefix = task.ext.prefix ?: "${id}"
+    """
+    touch ${prefix}.sizes
     """
 }

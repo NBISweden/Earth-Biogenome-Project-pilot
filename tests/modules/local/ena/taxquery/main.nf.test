@@ -1,0 +1,49 @@
+// ENA_TAXQUERY is an exec process, so there is no stub: this test queries the ENA taxonomy service.
+nextflow_process {
+
+    name "Test Process ENA_TAXQUERY"
+    script "../../../../../modules/local/ena/taxquery/main.nf"
+    process "ENA_TAXQUERY"
+
+    tag "modules"
+    tag "modules_local"
+    tag "ena/taxquery"
+    tag "network"
+
+    test("Drosophila melanogaster") {
+
+        when {
+            process {
+                """
+                input[0] = record(id: 'Drosophila_melanogaster', species_name: 'Drosophila melanogaster')
+                """
+            }
+        }
+
+        then {
+            assert process.success
+            def out = process.out[0][0]
+            assert out.id == 'Drosophila_melanogaster'
+            assert out.json.taxId.toString() == '7227'
+            assert out.json.scientificName == 'Drosophila melanogaster'
+            assert out.json.geneticCode.toString() == '1'
+            assert out.json.mitochondrialGeneticCode.toString() == '5'
+            assert out.json.lineage.startsWith('Eukaryota; Metazoa;')
+        }
+    }
+
+    test("Unknown species is an error") {
+
+        when {
+            process {
+                """
+                input[0] = record(id: 'Notaspecies_zzzz', species_name: 'Notaspecies zzzz')
+                """
+            }
+        }
+
+        then {
+            assert process.failed
+        }
+    }
+}

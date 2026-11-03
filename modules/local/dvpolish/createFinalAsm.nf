@@ -1,6 +1,12 @@
+nextflow.enable.types = true
+
 process DVPOLISH_CREATE_FINALASM {
-    tag "$meta.id"
+    tag "${id}"
     label 'process_single'
+
+    ext [
+        prefix: { output_prefix ?: "${id}" }
+    ]
 
     conda 'bioconda::samtools=1.22.1'
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -8,19 +14,29 @@ process DVPOLISH_CREATE_FINALASM {
         'biocontainers/samtools:1.22.1--h96c455f_0' }"
 
     input:
-    tuple val(meta), path(unpol_fasta), path(unpol_merqury_csv)  // meta map, unpolished assembly, corresponding merqury qv file
-    tuple val(meta2), path(pol_fasta), path(pol_merqury_csv)     // meta map, polished assembly, corresponding merqury qv file
+    record(
+        id: String,
+        meta: Record?,
+        unpol_fasta: Path,       // unpolished assembly
+        unpol_merqury_csv: Path, // corresponding merqury qv file
+        pol_fasta: Path,         // polished assembly
+        pol_merqury_csv: Path,   // corresponding merqury qv file
+        output_prefix: String?
+    )
 
     output:
-    tuple val(meta), path('*.fasta.gz')     , emit: fasta_gz
-    tuple val(meta), path('*_selection.tsv'), emit: dvpolish_selection_tsv
-    tuple val("${task.process}"), val('samtools'), eval('samtools --version | sed "1!d; s/samtools //"'), emit: versions_samtools, topic: versions
+    record(
+        id: id,
+        meta: meta,
+        fasta_gz: file('*.fasta.gz'),
+        dvpolish_selection_tsv: file('*_selection.tsv')
+    )
 
-    when:
-    task.ext.when == null || task.ext.when
+    topic:
+    tuple(task.process, 'samtools', eval('samtools --version | sed "1!d; s/samtools //"')) >> 'versions'
 
     script:
-    def prefix     = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix
     """
     # Validate merqury files have same number of lines & are not empty
     nl_unpol_ASM=\$(wc -l < ${unpol_merqury_csv})
@@ -69,5 +85,12 @@ process DVPOLISH_CREATE_FINALASM {
         echo -e "\$CONTIG\\t\$SOURCE\\t\${UNPOL_LINE[1]}\\t\${POL_LINE[1]}\\t\${UNPOL_LINE[3]}\\t\${POL_LINE[3]}" >> ${prefix}_selection.tsv
 
     done < ${unpol_merqury_csv} 3< ${pol_merqury_csv} | bgzip -@ ${task.cpus} -c > ${prefix}.fasta.gz
+    """
+
+    stub:
+    def prefix = task.ext.prefix
+    """
+    echo "" | gzip > ${prefix}.fasta.gz
+    touch ${prefix}_selection.tsv
     """
 }

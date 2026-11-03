@@ -1,5 +1,7 @@
+nextflow.enable.types = true
+
 process GFASTATS {
-    tag "$meta.id"
+    tag "${id}"
     label 'process_low'
 
     conda "${moduleDir}/environment.yml"
@@ -7,27 +9,41 @@ process GFASTATS {
         'https://community-cr-prod.seqera.io/docker/registry/v2/blobs/sha256/f7/f7150110bea918bd523e41aab58f3be2eda949bbe7f715500681b01965e5f667/data':
         'community.wave.seqera.io/library/gfastats:1.3.11--692f8595aa6b06a8' }"
 
+    ext [
+        args: { gfastats_args ?: '' },
+        prefix: { output_prefix ?: "${id}" }
+    ]
+
     input:
-    tuple val(meta), path(assembly)
-    val out_fmt
-    val genome_size
-    val target
-    tuple val(meta2), path(agpfile)
-    tuple val(meta3), path(include_bed)
-    tuple val(meta4), path(exclude_bed)
-    tuple val(meta5), path(instructions)
+    record(
+        id: String,
+        meta: Record?,
+        assembly: Path,
+        out_fmt: String?,
+        genome_size: String?,
+        target: String,
+        agpfile: Path?,
+        include_bed: Path?,
+        exclude_bed: Path?,
+        instructions: Path?,
+        gfastats_args: String?,
+        output_prefix: String?
+    )
 
     output:
-    tuple val(meta), path("*.assembly_summary"), emit: assembly_summary
-    tuple val(meta), path("*.${out_fmt}.gz")   , emit: assembly        , optional: true
-    tuple val("${task.process}"), val('gfastats'), eval("gfastats -v | sed '1!d;s/.*v//'"), emit: versions_gfastats, topic: versions
+    record(
+        id: id,
+        meta: meta,
+        assembly_summary: file("*.assembly_summary"),
+        assembly: file("*.${out_fmt}.gz", optional: true)
+    )
 
-    when:
-    task.ext.when == null || task.ext.when
+    topic:
+    tuple(task.process, 'gfastats', eval("gfastats -v | sed '1!d;s/.*v//'")) >> 'versions'
 
     script:
     def args   = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: "${id}"
     def agp    = agpfile ? "--agp-to-path $agpfile" : ""
     def ibed   = include_bed ? "--include-bed $include_bed" : ""
     def ebed   = exclude_bed ? "--exclude-bed $exclude_bed" : ""
@@ -36,7 +52,7 @@ process GFASTATS {
     """
     gfastats \\
         $assembly \\
-        $genome_size \\
+        ${genome_size ?: ''} \\
         $target \\
         $args \\
         --threads $task.cpus \\
@@ -49,9 +65,9 @@ process GFASTATS {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: "${id}"
     """
-    echo | gzip > ${prefix}.${out_fmt}.gz
+    echo | gzip > ${prefix}.${out_fmt ?: "fa"}.gz
     touch ${prefix}.assembly_summary
     """
 }

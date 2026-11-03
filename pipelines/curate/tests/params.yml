@@ -1,0 +1,2 @@
+# Tiny dataset, paths relative to the repository root
+assemblies: 'pipelines/curate/tests/assemblies.yml'

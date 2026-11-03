@@ -1,13 +1,37 @@
+nextflow.enable.types = true
+
 include { MERQURYFK_KATCOMP } from "../../../modules/nf-core/merquryfk/katcomp/main"
+
+record LibraryComparison {
+    id         : String
+    meta       : Record
+    fastk1_hist: Path
+    fastk1_ktab: List<Path>
+    fastk2_hist: Path
+    fastk2_ktab: List<Path>
+}
 
 workflow COMPARE_LIBRARIES {
 
     take:
-    libraryA_hist_ktab_libraryB_hist_ktab // [ meta, libraryA_hist, libraryA_ktab, libraryB_hist, libraryB_ktab ]
+    comparisons: Channel<LibraryComparison> // Two k-mer databases per sample
 
     main:
-    MERQURYFK_KATCOMP ( libraryA_hist_ktab_libraryB_hist_ktab )
+    katcomp = MERQURYFK_KATCOMP(
+        comparisons.map { c ->
+            record(
+                id: c.id,
+                meta: c.meta,
+                fastk1_hist: c.fastk1_hist,
+                fastk1_ktab: c.fastk1_ktab,
+                fastk2_hist: c.fastk2_hist,
+                fastk2_ktab: c.fastk2_ktab,
+                output_prefix: "${c.id}_katcomp"
+            )
+        }
+    )
 
     emit:
-    logs = MERQURYFK_KATCOMP.out.stacked_png.map{ _meta, img -> img }
+    logs   : Channel<Path>   = katcomp.map { k -> k.stacked_png }.filter { f -> f != null }
+    katcomp: Channel<Record> = katcomp
 }

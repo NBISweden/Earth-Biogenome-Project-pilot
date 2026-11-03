@@ -1,5 +1,7 @@
+nextflow.enable.types = true
+
 process STAR_GENOMEGENERATE {
-    tag "$fasta"
+    tag "${id}"
     label 'process_high'
 
     conda "bioconda::star=2.7.10a bioconda::samtools=1.16.1 conda-forge::gawk=5.1.0"
@@ -7,21 +9,33 @@ process STAR_GENOMEGENERATE {
         'https://depot.galaxyproject.org/singularity/mulled-v2-1fa26d1ce03c295fe2fdcf85831a92fbcbd7e8c2:1df389393721fc66f3fd8778ad938ac711951107-0' :
         'biocontainers/mulled-v2-1fa26d1ce03c295fe2fdcf85831a92fbcbd7e8c2:1df389393721fc66f3fd8778ad938ac711951107-0' }"
 
+    ext [
+        args: { star_args ?: '' }
+    ]
+
     input:
-    tuple val(meta), path(fasta)
-    path(gtf)
+    record(
+        id: String,
+        meta: Record?,
+        fasta: Path,
+        gtf: Path?,
+        star_args: String?
+    )
 
     output:
-    tuple val(meta), path("star")  , emit: index
-    tuple val("${task.process}"), val('star'), eval('STAR --version | sed -e "s/STAR_//g"'), emit: versions_star, topic: versions
-    tuple val("${task.process}"), val('samtools'), eval("samtools --version | sed -n '1s/samtools //p'"), emit: versions_samtools, topic: versions
-    tuple val("${task.process}"), val('gawk'), eval("gawk --version | sed -n '1{s/GNU Awk //;s/,.*//;p}'"), emit: versions_gawk, topic: versions
+    record(
+        id: id,
+        meta: meta,
+        index: file("star")
+    )
 
-    when:
-    task.ext.when == null || task.ext.when
+    topic:
+    tuple(task.process, 'star', eval('STAR --version | sed -e "s/STAR_//g"')) >> 'versions'
+    tuple(task.process, 'samtools', eval("samtools --version | sed -n '1s/samtools //p'")) >> 'versions'
+    tuple(task.process, 'gawk', eval("gawk --version | sed -n '1{s/GNU Awk //;s/,.*//;p}'")) >> 'versions'
 
     script:
-    def args = task.ext.args ?: ''
+    def args = task.ext.args
     def args_list = args.tokenize()
     def memory = task.memory ? "--limitGenomeGenerateRAM ${task.memory.toBytes() - 100000000}" : ''
     if (args_list.contains('--genomeSAindexNbases')) {

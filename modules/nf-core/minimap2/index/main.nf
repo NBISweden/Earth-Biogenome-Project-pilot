@@ -1,4 +1,7 @@
+nextflow.enable.types = true
+
 process MINIMAP2_INDEX {
+    tag "${id}"
     label 'process_low'
 
     // Note: the versions here need to match the versions used in minimap2/align
@@ -7,15 +10,27 @@ process MINIMAP2_INDEX {
         'https://depot.galaxyproject.org/singularity/minimap2:2.29--h577a1d6_0' :
         'biocontainers/minimap2:2.29--h577a1d6_0' }"
 
+    ext [
+        args: { minimap2_args ?: '' }
+    ]
+
     input:
-    tuple val(meta), path(fasta)
+    record(
+        id: String,
+        meta: Record?,
+        fasta: Path,
+        minimap2_args: String?
+    )
 
     output:
-    tuple val(meta), path("*.mmi"), emit: index
-    tuple val("${task.process}"), val("minimap2"), eval("minimap2 --version"), topic: versions, emit: versions_minimap2
+    record(
+        id: id,
+        meta: meta,
+        index: file("*.mmi")
+    )
 
-    when:
-    task.ext.when == null || task.ext.when
+    topic:
+    tuple(task.process, "minimap2", eval("minimap2 --version")) >> 'versions'
 
     script:
     def args = task.ext.args ?: ''

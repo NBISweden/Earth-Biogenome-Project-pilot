@@ -1,6 +1,13 @@
+nextflow.enable.types = true
+
 process SAMTOOLS_IMPORT {
-    tag "${meta.id}"
+    tag "${id}"
     label 'process_low'
+
+    ext [
+        args: { samtools_args ?: '' },
+        prefix: { output_prefix ?: "${id}" }
+    ]
 
     conda "${moduleDir}/environment.yml"
     container "${workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container
@@ -8,20 +15,30 @@ process SAMTOOLS_IMPORT {
         : 'community.wave.seqera.io/library/htslib_samtools:1.23.1--5b6bb4ede7e612e5'}"
 
     input:
-    tuple val(meta), path(reads)
+    record(
+        id: String,
+        meta: Record?,
+        single_end: Boolean,
+        reads: List<Path>,
+        samtools_args: String?,
+        output_prefix: String?
+    )
 
     output:
-    tuple val(meta), path("*.sam"), emit: sam, optional: true
-    tuple val(meta), path("*.bam"), emit: bam, optional: true
-    tuple val(meta), path("*.cram"), emit: cram, optional: true
-    tuple val("${task.process}"), val('samtools'), eval("samtools version | sed '1!d;s/.* //'"), topic: versions, emit: versions_samtools
+    record(
+        id: id,
+        meta: meta,
+        sam: file("*.sam", optional: true),
+        bam: file("*.bam", optional: true),
+        cram: file("*.cram", optional: true)
+    )
 
-    when:
-    task.ext.when == null || task.ext.when
+    topic:
+    tuple(task.process, 'samtools', eval("samtools version | sed '1!d;s/.* //'")) >> 'versions'
 
     script:
-    def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def args = task.ext.args
+    def prefix = task.ext.prefix
     def suffix = args.contains("--output-fmt sam")
         ? "sam"
         : args.contains("--output-fmt bam")
@@ -29,16 +46,9 @@ process SAMTOOLS_IMPORT {
             : args.contains("--output-fmt cram")
                 ? "cram"
                 : "bam"
-    def input = reads instanceof List && meta.single_end
-        ? reads.join(" -0")
-        : reads instanceof List && !meta.single_end
-            ? "-1 ${reads[0]} -2 ${reads[1]}"
-            : meta.single_end
-                ? "-0 ${reads}"
-                : !meta.single_end
-                    ? "-s ${reads}"
-                    : reads
-    // if all else fails, just add the reads without flags
+    def input = single_end
+        ? "-0 ${reads.join(' -0 ')}"
+        : "-1 ${reads[0]} -2 ${reads[1]}"
     """
     samtools \\
         import \\
@@ -49,9 +59,12 @@ process SAMTOOLS_IMPORT {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
-
+    def suffix = task.ext.args.contains("--output-fmt sam")
+        ? "sam"
+        : task.ext.args.contains("--output-fmt cram")
+            ? "cram"
+            : "bam"
     """
-    touch ${prefix}.bam
+    touch ${task.ext.prefix}.${suffix}
     """
 }

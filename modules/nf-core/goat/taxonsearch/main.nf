@@ -1,5 +1,7 @@
+nextflow.enable.types = true
+
 process GOAT_TAXONSEARCH {
-    tag "$meta.id"
+    tag "${id}"
     label 'process_single'
 
     conda "${moduleDir}/environment.yml"
@@ -7,19 +9,35 @@ process GOAT_TAXONSEARCH {
         'https://depot.galaxyproject.org/singularity/goat:0.2.5--h9d3141d_2':
         'biocontainers/goat:0.2.5--h9d3141d_2' }"
 
+    ext [
+        args: { goat_args ?: '' },
+        prefix: { output_prefix ?: "${id}" }
+    ]
+
     input:
-    tuple val(meta), val(taxon), path(taxa_file)
+    record(
+        id: String,
+        meta: Record?,
+        taxon: String,
+        taxa_file: Path?,
+        goat_args: String?,
+        output_prefix: String?
+    )
 
     output:
-    tuple val(meta), path("*.tsv"), emit: taxonsearch
-    tuple val("${task.process}"), val('goat'), eval("goat-cli --version | cut -d' ' -f2"), emit: versions_goat, topic: versions
+    record(
+        id: id,
+        meta: meta,
+        taxonsearch: file("*.tsv")
+    )
 
-    when:
-        task.ext.when == null || task.ext.when
+    topic:
+    tuple(task.process, 'goat', eval("goat-cli --version | cut -d' ' -f2")) >> 'versions'
+
     script:
-        def args = task.ext.args ?: ''
-        def prefix = task.ext.prefix ?: "${meta.id}"
-        input = taxa_file ? "-f ${taxa_file}" : "-t \"${taxon}\""
+        def args = task.ext.args
+        def prefix = task.ext.prefix
+        def input = taxa_file ? "-f ${taxa_file}" : "-t \"${taxon}\""
         if (!taxon && !taxa_file) error "No input. Valid input: single taxon identifier or a .txt file with identifiers"
         if (taxon && taxa_file ) error "Only one input is required: a single taxon identifier or a .txt file with identifiers"
         """
@@ -29,8 +47,7 @@ process GOAT_TAXONSEARCH {
         """
 
     stub:
-        def prefix = task.ext.prefix ?: "${meta.id}"
-        input = taxa_file ? "-f ${taxa_file}" : "-t \"${taxon}\""
+        def prefix = task.ext.prefix
         if (!taxon && !taxa_file) error "No input. Valid input: single taxon identifier or a .txt file with identifiers"
         if (taxon && taxa_file ) error "Only one input is required: a single taxon identifier or a .txt file with identifiers"
         """

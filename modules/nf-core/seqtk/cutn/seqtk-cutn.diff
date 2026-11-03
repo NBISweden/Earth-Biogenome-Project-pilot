@@ -1,0 +1,68 @@
+Changes in component 'nf-core/seqtk/cutn'
+'modules/nf-core/seqtk/cutn/environment.yml' is unchanged
+'modules/nf-core/seqtk/cutn/meta.yml' is unchanged
+Changes in 'seqtk/cutn/main.nf':
+--- modules/nf-core/seqtk/cutn/main.nf
++++ modules/nf-core/seqtk/cutn/main.nf
+@@ -1,5 +1,7 @@
++nextflow.enable.types = true
++
+ process SEQTK_CUTN {
+-    tag "$meta.id"
++    tag "${id}"
+     label 'process_low'
+ 
+     conda "${moduleDir}/environment.yml"
+@@ -7,19 +9,33 @@
+         'https://depot.galaxyproject.org/singularity/seqtk:1.4--he4a0461_1' :
+         'biocontainers/seqtk:1.4--he4a0461_1' }"
+ 
++    ext [
++        args: { seqtk_args ?: '' },
++        prefix: { output_prefix ?: "${id}" }
++    ]
++
+     input:
+-    tuple val(meta), path(fasta)
++    record(
++        id: String,
++        meta: Record?,
++        fasta: Path,
++        seqtk_args: String?,
++        output_prefix: String?
++    )
+ 
+     output:
+-    tuple val(meta), path("*.bed")    , emit: bed
+-    tuple val("${task.process}"), val('seqtk'), eval("seqtk 2>&1 | sed -n 's/^Version: //p'"), emit: versions_seqtk, topic: versions
++    record(
++        id: id,
++        meta: meta,
++        bed: file("*.bed")
++    )
+ 
+-    when:
+-    task.ext.when == null || task.ext.when
++    topic:
++    tuple(task.process, 'seqtk', eval("seqtk 2>&1 | sed -n 's/^Version: //p'")) >> 'versions'
+ 
+     script:
+     def args = task.ext.args ?: ''
+-    def prefix = task.ext.prefix ?: "${meta.id}"
++    def prefix = task.ext.prefix ?: "${id}"
+ 
+     """
+     seqtk \\
+@@ -30,7 +46,7 @@
+     """
+ 
+     stub:
+-    def prefix = task.ext.prefix ?: "${meta.id}"
++    def prefix = task.ext.prefix ?: "${id}"
+ 
+     """
+     touch ${prefix}.bed
+
+'modules/nf-core/seqtk/cutn/tests/main.nf.test.snap' is unchanged
+'modules/nf-core/seqtk/cutn/tests/main.nf.test' is unchanged
+************************************************************

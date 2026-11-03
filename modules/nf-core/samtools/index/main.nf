@@ -1,6 +1,12 @@
+nextflow.enable.types = true
+
 process SAMTOOLS_INDEX {
-    tag "${meta.id}"
+    tag "${id}"
     label 'process_low'
+
+    ext [
+        args: { samtools_args ?: '' }
+    ]
 
     conda "${moduleDir}/environment.yml"
     container "${workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container
@@ -8,30 +14,36 @@ process SAMTOOLS_INDEX {
         : 'community.wave.seqera.io/library/htslib_samtools:1.23.1--5b6bb4ede7e612e5'}"
 
     input:
-    tuple val(meta), path(input)
+    record(
+        id: String,
+        meta: Record?,
+        input: Path,
+        samtools_args: String?
+    )
 
     output:
-    tuple val(meta), path("*.{bai,csi,crai}"), emit: index
-    tuple val("${task.process}"), val('samtools'), eval("samtools version | sed '1!d;s/.* //'"), emit: versions_samtools, topic: versions
+    record(
+        id: id,
+        meta: meta,
+        index: file("*.{bai,csi,crai}")
+    )
 
-    when:
-    task.ext.when == null || task.ext.when
+    topic:
+    tuple(task.process, 'samtools', eval("samtools version | sed '1!d;s/.* //'")) >> 'versions'
 
     script:
-    def args = task.ext.args ?: ''
     """
     samtools \\
         index \\
         -@ ${task.cpus} \\
-        ${args} \\
+        ${task.ext.args} \\
         ${input}
     """
 
     stub:
-    def args = task.ext.args ?: ''
-    def extension = file(input).getExtension() == 'cram'
+    def extension = input.extension == 'cram'
         ? "crai"
-        : args.contains("-c") ? "csi" : "bai"
+        : task.ext.args.contains("-c") ? "csi" : "bai"
     """
     touch ${input}.${extension}
     """

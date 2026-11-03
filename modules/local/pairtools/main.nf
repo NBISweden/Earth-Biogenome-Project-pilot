@@ -1,5 +1,7 @@
+nextflow.enable.types = true
+
 process PAIRTOOLS {
-    tag "${meta.id}"
+    tag "${id}"
     label 'process_high'
 
     conda "${moduleDir}/environment.yml"
@@ -7,24 +9,48 @@ process PAIRTOOLS {
         'https://depot.galaxyproject.org/singularity/pairtools:1.1.0--py39hd5a99d8_2' :
         'biocontainers/pairtools:1.1.0--py39hd5a99d8_2' }"
 
+    ext [
+        args: { pairtools_args ?: '' },
+        args2: { pairtools_args2 ?: '' },
+        args3: { pairtools_args3 ?: '' },
+        args4: { pairtools_args4 ?: '' },
+        args5: { pairtools_args5 ?: '' },
+        args6: { pairtools_args6 ?: '' },
+        prefix: { output_prefix ?: "${id}" }
+    ]
+
     input:
-    tuple val(meta), path(bam)
-    path  chromsizes
-    path  fasta
-    val   sort_bam
+    record(
+        id: String,
+        meta: Record?,
+        bam: List<Path>,
+        chromsizes: Path,
+        fasta: Path,
+        sort_bam: Boolean,
+        pairtools_args: String?,
+        pairtools_args2: String?,
+        pairtools_args3: String?,
+        pairtools_args4: String?,
+        pairtools_args5: String?,
+        pairtools_args6: String?,
+        output_prefix: String?
+    )
 
     output:
-    tuple val(meta), path("*.split.pairs.gz")   , emit: pairs
-    tuple val(meta), path("*.split.pairs.bam")  , emit: bam , optional:true
-    tuple val(meta), path("*.split.pairs.cram") , emit: cram, optional:true
-    tuple val(meta), path("*.crai")             , emit: crai, optional:true
-    tuple val(meta), path("*.csi")              , emit: csi , optional:true
-    path "*.stat"                               , emit: stat
-    tuple val("${task.process}"), val('samtools'), eval('samtools --version | sed "1!d; s/samtools //"'), emit: versions_samtools, topic: versions
-    tuple val("${task.process}"), val('pairtools'), eval("pairtools --version 2>&1 | sed 's/pairtools, version //'"), emit: versions_pairtools, topic: versions
+    record(
+        id: id,
+        meta: meta,
+        pairs: file("*.split.pairs.gz"),
+        bam: file("*.split.pairs.bam", optional: true),
+        cram: file("*.split.pairs.cram", optional: true),
+        crai: file("*.crai", optional: true),
+        csi: file("*.csi", optional: true),
+        stat: files("*.stat")
+    )
 
-    when:
-    task.ext.when == null || task.ext.when
+    topic:
+    tuple(task.process, 'samtools', eval('samtools --version | sed "1!d; s/samtools //"')) >> 'versions'
+    tuple(task.process, 'pairtools', eval("pairtools --version 2>&1 | sed 's/pairtools, version //'")) >> 'versions'
 
     script:
     def args = task.ext.args ?: ''
@@ -33,7 +59,7 @@ process PAIRTOOLS {
     def args4 = task.ext.args4 ?: ''
     def args5 = task.ext.args5 ?: ''
     def args6 = task.ext.args6 ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
+    def prefix = task.ext.prefix ?: "${id}"
     def halfMemory = task.memory.toGiga().intdiv(2)
     def samtools_command = sort_bam ? 'sort' : 'view'
     def extension_pattern = /(--output-fmt|-O)+\s+(\S+)/
@@ -85,5 +111,14 @@ process PAIRTOOLS {
         -
 
     rm -f "\${TEMP_FILES[@]}"
+    """
+
+    stub:
+    def prefix = task.ext.prefix ?: "${id}"
+    """
+    touch ${prefix}.split.pairs.gz
+    touch ${prefix}.split.pairs.bam
+    touch ${prefix}.pairsam.stat
+    touch ${prefix}_dedup.pairs.stat
     """
 }

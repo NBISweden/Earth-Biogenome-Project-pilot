@@ -1,0 +1,2 @@
+# Tiny dataset, paths relative to the repository root
+assemblies: 'pipelines/compare_stages/tests/assemblies.yml'

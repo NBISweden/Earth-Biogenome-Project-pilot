@@ -1,6 +1,13 @@
+nextflow.enable.types = true
+
 process MERYL_COUNT {
-    tag "$meta.id"
+    tag "${id}"
     label 'process_high'
+
+    ext [
+        args: { meryl_args ?: '' },
+        prefix: { output_prefix ?: "${id}" }
+    ]
 
     conda "${moduleDir}/environment.yml"
     container "${ workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container ?
@@ -8,38 +15,43 @@ process MERYL_COUNT {
         'biocontainers/meryl:1.4.1--h4ac6f70_0' }"
 
     input:
-    tuple val(meta), path(reads)
-    val kvalue
+    record(
+        id: String,
+        meta: Record?,
+        reads: List<Path>,
+        kvalue: Integer,
+        meryl_args: String?,
+        output_prefix: String?
+    )
 
     output:
-    tuple val(meta), path("*.meryl")    , emit: meryl_db
-    tuple val("${task.process}"), val('meryl'), eval("meryl --version |& sed 's/meryl //'"), emit: versions_meryl, topic: versions
+    record(
+        id: id,
+        meta: meta,
+        meryl_db: files("*.meryl")
+    )
 
-
-    when:
-    task.ext.when == null || task.ext.when
+    topic:
+    tuple(task.process, 'meryl', eval("meryl --version |& sed 's/meryl //'")) >> 'versions'
 
     script:
-    def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: "${meta.id}"
-    def reduced_mem = task.memory.multiply(0.9).toGiga()
+    def reduced_mem = (task.memory.toGiga() * 0.9).intValue()
     """
-    for READ in ${reads}; do
+    for READ in ${reads.join(' ')}; do
         meryl count \\
             k=${kvalue} \\
             threads=${task.cpus} \\
             memory=${reduced_mem} \\
-            ${args} \\
+            ${task.ext.args} \\
             \$READ \\
-            output ${prefix}.\${READ%.f*}.meryl
+            output ${task.ext.prefix}.\${READ%.f*}.meryl
     done
     """
 
     stub:
-    def prefix = task.ext.prefix ?: "${meta.id}"
     """
-    for READ in ${reads}; do
-        touch ${prefix}.\${READ%.f*}.meryl
+    for READ in ${reads.join(' ')}; do
+        touch ${task.ext.prefix}.\${READ%.f*}.meryl
     done
     """
 }

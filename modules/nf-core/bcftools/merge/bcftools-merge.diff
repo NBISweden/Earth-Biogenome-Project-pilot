@@ -1,0 +1,91 @@
+Changes in component 'nf-core/bcftools/merge'
+'modules/nf-core/bcftools/merge/environment.yml' is unchanged
+'modules/nf-core/bcftools/merge/meta.yml' is unchanged
+Changes in 'bcftools/merge/main.nf':
+--- modules/nf-core/bcftools/merge/main.nf
++++ modules/nf-core/bcftools/merge/main.nf
+@@ -1,6 +1,13 @@
++nextflow.enable.types = true
++
+ process BCFTOOLS_MERGE {
+-    tag "${meta.id}"
++    tag "${id}"
+     label 'process_medium'
++
++    ext [
++        args: { bcftools_args ?: '' },
++        prefix: { output_prefix ?: "${id}" }
++    ]
+ 
+     conda "${moduleDir}/environment.yml"
+     container "${workflow.containerEngine == 'singularity' && !task.ext.singularity_pull_docker_container
+@@ -8,22 +15,34 @@
+         : 'community.wave.seqera.io/library/bcftools_htslib:1.23.1--9f08ec665533d64a'}"
+ 
+     input:
+-    tuple val(meta), path(vcfs), path(tbis), path(bed)
+-    tuple val(meta2), path(fasta), path(fai)
++    record(
++        id: String,
++        meta: Record?,
++        vcfs: List<Path>,
++        tbis: List<Path>,
++        bed: Path?,
++        fasta: Path,
++        fai: Path,
++        bcftools_args: String?,
++        output_prefix: String?
++    )
+ 
+     output:
+-    tuple val(meta), path("*.{bcf,vcf}{,.gz}"), emit: vcf
+-    tuple val(meta), path("*.{csi,tbi}"), emit: index, optional: true
+-    tuple val("${task.process}"), val('bcftools'), eval("bcftools --version | sed '1!d; s/^.*bcftools //'"), topic: versions, emit: versions_bcftools
++    record(
++        id: id,
++        meta: meta,
++        vcf: file("*.{bcf,vcf}{,.gz}"),
++        index: file("*.{csi,tbi}", optional: true)
++    )
+ 
+-    when:
+-    task.ext.when == null || task.ext.when
++    topic:
++    tuple(task.process, 'bcftools', eval("bcftools --version | sed '1!d; s/^.*bcftools //'")) >> 'versions'
+ 
+     script:
+-    def args = task.ext.args ?: ''
+-    def prefix = task.ext.prefix ?: "${meta.id}"
++    def args = task.ext.args
++    def prefix = task.ext.prefix
+ 
+-    def input = vcfs.collect().size() > 1 ? vcfs.sort { vcf -> vcf.name } : vcfs
++    def input = vcfs.toSorted { a, b -> a.name <=> b.name }.join(' ')
+     def regions = bed ? "--regions-file ${bed}" : ""
+     def extension = args.contains("--output-type b") || args.contains("-Ob")
+         ? "bcf.gz"
+@@ -45,8 +64,8 @@
+     """
+ 
+     stub:
+-    def args = task.ext.args ?: ''
+-    def prefix = task.ext.prefix ?: "${meta.id}"
++    def args = task.ext.args
++    def prefix = task.ext.prefix
+     def extension = args.contains("--output-type b") || args.contains("-Ob")
+         ? "bcf.gz"
+         : args.contains("--output-type u") || args.contains("-Ou")
+@@ -64,7 +83,7 @@
+                 ? "csi"
+                 : ""
+     def create_cmd = extension.endsWith(".gz") ? "echo '' | gzip >" : "touch"
+-    def create_index = extension.endsWith(".gz") && index.matches("csi|tbi") ? "touch ${prefix}.${extension}.${index}" : ""
++    def create_index = extension.endsWith(".gz") && ["csi", "tbi"].contains(index) ? "touch ${prefix}.${extension}.${index}" : ""
+ 
+     """
+     ${create_cmd} ${prefix}.${extension}
+
+'modules/nf-core/bcftools/merge/tests/main.nf.test.snap' is unchanged
+'modules/nf-core/bcftools/merge/tests/nextflow.config' is unchanged
+'modules/nf-core/bcftools/merge/tests/main.nf.test' is unchanged
+************************************************************

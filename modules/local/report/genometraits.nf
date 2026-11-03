@@ -1,22 +1,30 @@
+nextflow.enable.types = true
+
 process REPORT_GENOMETRAITS {
-    tag "${meta.sample.name}"
+    tag "${sample_name}"
     label 'process_single'
 
     input:
-    val meta
+    record(
+        id: String,
+        sample_name: String,
+        genome_size: String?,
+        haploid_number: String?,
+        ploidy: String?
+    )
 
     output:
-    path "Genome_traits.tsv", emit: tsv
-
-    when:
-    task.ext.when == null || task.ext.when
+    record(
+        id: id,
+        tsv: file("Genome_traits.tsv")
+    )
 
     exec:
     def trait_table = """\
         Genome traits\tExpected\tObserved
-        Haploid Size\t${meta.sample.genome_size}\tunknown
-        Haploid Number\t${meta.sample.haploid_number}\tunknown
-        Ploidy\t${meta.sample.ploidy}\tunknown
+        Haploid Size\t${genome_size}\tunknown
+        Haploid Number\t${haploid_number}\tunknown
+        Ploidy\t${ploidy}\tunknown
         """.stripIndent()
-    file("$task.workDir/Genome_traits.tsv").text = trait_table
+    file("${task.workDir}/Genome_traits.tsv").text = trait_table
 }

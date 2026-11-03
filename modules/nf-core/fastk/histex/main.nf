@@ -1,39 +1,52 @@
+nextflow.enable.types = true
+
 process FASTK_HISTEX {
-    tag "$meta.id"
+    tag "${id}"
     label 'process_low'
+
+    ext [
+        args: { histex_args ?: '' },
+        prefix: { output_prefix ?: "${id}" }
+    ]
 
     // WARN: Version information not provided by tool on CLI. Please update version string below when bumping container versions.
     //conda "${moduleDir}/environment.yml"
     container 'ghcr.io/nbisweden/fastk_genescopefk_merquryfk:1.3'
 
     input:
-    tuple val(meta), path(histogram)
+    record(
+        id: String,
+        meta: Record?,
+        histogram: Path,
+        histex_args: String?,
+        output_prefix: String?
+    )
 
     output:
-    tuple val(meta), path("*.hist"), emit: hist
-    // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
-    tuple val("${task.process}"), val('fastk'), val('1.2'), emit: versions_fastk, topic: versions
+    record(
+        id: id,
+        meta: meta,
+        hist: file("*.hist")
+    )
 
-    when:
-    task.ext.when == null || task.ext.when
+    topic:
+    // WARN: Version information not provided by tool on CLI. Please update this string when bumping container versions.
+    tuple(task.process, 'fastk', '1.2') >> 'versions'
 
     script:
     // Exit if running this module with -profile conda / -profile mamba
     if (workflow.profile.tokenize(',').intersect(['conda', 'mamba']).size() >= 1) {
         error "FASTK_HISTEX module does not support Conda. Please use Docker / Singularity / Podman instead."
     }
-    def args          = task.ext.args ?: ''
-    def prefix        = task.ext.prefix ?: "${meta.id}"
     """
     Histex \\
-        $args \\
+        ${task.ext.args} \\
         $histogram \\
-        > ${prefix}.hist
+        > ${task.ext.prefix}.hist
     """
 
     stub:
-    def prefix        = task.ext.prefix ?: "${meta.id}"
     """
-    touch ${prefix}.hist
+    touch ${task.ext.prefix}.hist
     """
 }

@@ -1,0 +1,22 @@
+# Tiny dataset, paths relative to the repository root
+sample:
+  name: 'Drosophila melanogaster'
+  genome_size: 176040000
+  ploidy: 2
+assembly:
+  - assembler: hifiasm
+    stage: raw
+    id: hifi_v1
+    pri_fasta: 'tests/data/tiny/assembly/hifiasm-raw-hifi_v1.asm.bp.p_ctg.fasta'
+  - assembler: hifiasm
+    stage: curated
+    id: hifi_v1
+    pri_fasta: 'tests/data/tiny/assembly/hifiasm-curated-hifi_v1.asm.bp.p_ctg.fasta'
+hifi:
+  - reads: 'tests/data/tiny/PB_HIFI/dmel_2Mb.fastq.gz'
+fastk:
+  kmer_size: 14
+meryl:
+  kmer_size: 14
+busco:
+  lineages: 'bacteria_odb10'

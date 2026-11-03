@@ -1,40 +1,57 @@
+nextflow.enable.types = true
+
 process MITOHIFI_MITOHIFI {
-    tag "$meta.id"
+    tag "${id}"
     label 'process_high'
+
+    ext [
+        args: { mitohifi_args ?: '' },
+        prefix: { output_prefix ?: id }
+    ]
 
     // Docker image available at the project github repository
     container 'ghcr.io/marcelauliano/mitohifi:3.2.3'
 
     input:
-    tuple val(meta) , path(input)
-    tuple val(meta2), path(ref_fa), path(ref_gb)
-    val input_mode
-    val mito_code
+    record(
+        id: String,
+        meta: Record?,
+        input: Path,
+        ref_fa: Path,
+        ref_gb: Path,
+        input_mode: String,
+        mito_code: String,
+        mitohifi_args: String?,
+        output_prefix: String?
+    )
 
     output:
-    tuple val(meta), path("*final_mitogenome.fasta")         , emit: fasta                      , optional: true
-    tuple val(meta), path("potential_*/*/*.rotated.fa")      , emit: all_candidates_fa          , optional: true
-    tuple val(meta), path("*contigs_stats.tsv")              , emit: stats                      , optional: true
-    tuple val(meta), path("*final_mitogenome.gb")            , emit: gb                         , optional: true
-    tuple val(meta), path("*final_mitogenome.gff")           , emit: gff                        , optional: true
-    tuple val(meta), path("*all_potential_contigs.fa")       , emit: all_potential_contigs      , optional: true
-    tuple val(meta), path("*contigs_annotations.png")        , emit: contigs_annotations        , optional: true
-    tuple val(meta), path("contigs_circularization/")       , emit: contigs_circularization    , optional: true
-    tuple val(meta), path("contigs_filtering/")              , emit: contigs_filtering          , optional: true
-    tuple val(meta), path("coverage_mapping/")               , emit: coverage_mapping           , optional: true
-    tuple val(meta), path("*coverage_plot.png")              , emit: coverage_plot              , optional: true
-    tuple val(meta), path("*final_mitogenome.annotation.png"), emit: final_mitogenome_annotation, optional: true
-    tuple val(meta), path("final_mitogenome_choice/")        , emit: final_mitogenome_choice    , optional: true
-    tuple val(meta), path("*final_mitogenome.coverage.png")  , emit: final_mitogenome_coverage  , optional: true
-    tuple val(meta), path("potential_contigs/")              , emit: potential_contigs          , optional: true
-    tuple val(meta), path("*reads_mapping_and_assembly/")    , emit: reads_mapping_and_assembly , optional: true
-    tuple val(meta), path("*shared_genes.tsv")               , emit: shared_genes               , optional: true
+    record(
+        id: id,
+        meta: meta,
+        fasta: file("*final_mitogenome.fasta", optional: true),
+        all_candidates_fa: files("potential_*/*/*.rotated.fa", optional: true),
+        stats: file("*contigs_stats.tsv", optional: true),
+        gb: file("*final_mitogenome.gb", optional: true),
+        gff: file("*final_mitogenome.gff", optional: true),
+        all_potential_contigs: file("*all_potential_contigs.fa", optional: true),
+        contigs_annotations: file("*contigs_annotations.png", optional: true),
+        contigs_circularization: file("contigs_circularization/", optional: true),
+        contigs_filtering: file("contigs_filtering/", optional: true),
+        coverage_mapping: file("coverage_mapping/", optional: true),
+        coverage_plot: file("*coverage_plot.png", optional: true),
+        final_mitogenome_annotation: file("*final_mitogenome.annotation.png", optional: true),
+        final_mitogenome_choice: file("final_mitogenome_choice/", optional: true),
+        final_mitogenome_coverage: file("*final_mitogenome.coverage.png", optional: true),
+        potential_contigs: file("potential_contigs/", optional: true),
+        reads_mapping_and_assembly: file("*reads_mapping_and_assembly/", optional: true),
+        shared_genes: file("*shared_genes.tsv", optional: true)
+    )
+
+    topic:
     // WARN: Incorrect version information is provided by tool on CLI. Please update this string when bumping container versions.
     // old version command: \$(mitohifi.py -v | sed 's/.* //')
-    tuple val("${task.process}"), val('mitohifi'), eval('echo 3.2.3'), emit: versions_mitohifi, topic: versions
-
-    when:
-    task.ext.when == null || task.ext.when
+    tuple(task.process, 'mitohifi', eval('echo 3.2.3')) >> 'versions'
 
     script:
     // Exit if running this module with -profile conda / -profile mamba
@@ -44,11 +61,10 @@ process MITOHIFI_MITOHIFI {
     if (! ["c", "r"].contains(input_mode)) {
         error "r for reads or c for contigs must be specified"
     }
-    def args = task.ext.args ?: ''
-    def prefix = task.ext.prefix ?: meta.id
+    def prefix = task.ext.prefix
     def zipped = input.name.endsWith('.gz')
     // Mitohifi deletes the original file when renaming headers.
-    def fasta = ( zipped ? input.name - '.gz' : "${prefix}.${input.name}" )
+    def fasta = ( zipped ? input.name.replaceAll(/\.gz$/, '') : "${prefix}.${input.name}" )
     """
     ${zipped ? "gzip -dc $input >" : "cp ${input}"} ${fasta}
 
@@ -58,7 +74,7 @@ process MITOHIFI_MITOHIFI {
         -f ${ref_fa} \\
         -g ${ref_gb} \\
         -o ${mito_code} \\
-        -t $task.cpus ${args}
+        -t $task.cpus ${task.ext.args}
     set -e
 
     rm -f ${fasta} fixed_header_contigs.fasta
@@ -82,9 +98,8 @@ process MITOHIFI_MITOHIFI {
     """
 
     stub:
-    def prefix = task.ext.prefix ?: meta.id
+    def prefix = task.ext.prefix
     """
-    touch ${prefix}.final_mitogenome.fasta
     touch ${prefix}.final_mitogenome.fasta
     touch ${prefix}.contigs_stats.tsv
     """

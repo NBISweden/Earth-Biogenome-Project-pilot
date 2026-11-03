@@ -1,105 +1,115 @@
-include { combineByMetaKeys          } from "../../../modules/local/functions"
-include { getEachAssembly            } from "../../../modules/local/functions"
-include { getPrimaryAssembly         } from "../../../modules/local/functions"
+nextflow.enable.types = true
+
 include { BUSCO_BUSCO as BUSCO       } from "../../../modules/nf-core/busco/busco/main"
 include { MERQURYFK_MERQURYFK        } from "../../../modules/nf-core/merquryfk/merquryfk"
 include { MERQURY_MERQURY as MERQURY } from "../../../modules/nf-core/merqury/merqury/main"
 include { GFASTATS                   } from "../../../modules/nf-core/gfastats/main"
+include { Assembly                   } from "../../../types/records"
 
 workflow EVALUATE_ASSEMBLY {
 
     take:
-    assembly_ch        // input type: [ meta, [ id:'assemblerX_build1', pri_fasta: '/path/to/primary_asm', alt_fasta: '/path/to/alternate_asm' ] ]
-    fastk_db           // input type: [ meta, [ 'path/to/reads.hist' ], [ '/path/to/reads.ktab' ] ]
-    meryl_db           // input type: [ meta, 'path/to/reads.union.meryl' ]
+    assemblies            : Channel<Assembly> // With the HiFi k-mer databases (fastk_hifi_*, meryl_hifi_db)
+    use_phased            : Boolean
+    busco_max_lineages    : Integer
+    busco_lineages_db_path: Path?
 
     main:
-
     // Kmer consistency check
-    MERQURYFK_MERQURYFK (
-        combineByMetaKeys (
-            fastk_db,
-            getEachAssembly(assembly_ch),
-            keySet: ['id','sample'],
-            meta: 'rhs'
-        ) // TODO: Change the function so we don't need the map
-        .map{ meta, hist, ktab, assembly ->
-            assembly instanceof Path ?
-            tuple(meta, hist, ktab, assembly, []) :
-            tuple(meta, hist, ktab, assembly.head(), assembly.last())
-        }, // [ meta, hist, ktab, assembly ]
-        [[], []], // mathaptab
-        [[], []]  // pathaptab
+    merquryfk = MERQURYFK_MERQURYFK(
+        assemblies
+            .filter { a -> a.fastk_hifi_hist != null }
+            .map { a ->
+                record(
+                    id: a.id,
+                    meta: a.meta,
+                    fastk_hist: a.fastk_hifi_hist,
+                    fastk_ktab: a.fastk_hifi_ktab,
+                    assembly: a.pri_fasta,
+                    haplotigs: a.alt_fasta,
+                    mathaptab: [],
+                    pathaptab: [],
+                    merquryfk_args: "-k",
+                    output_prefix: "${a.meta.assembly.build}_merquryfk"
+                )
+            }
     )
 
-    MERQURY (
-        combineByMetaKeys (
-            meryl_db,
-            getEachAssembly(assembly_ch),
-            keySet: ['id','sample'],
-            meta: 'rhs'
-        ) // [ meta, meryldb, assembly ]
+    merqury = MERQURY(
+        assemblies
+            .filter { a -> a.meryl_hifi_db != null }
+            .map { a ->
+                record(
+                    id: a.id,
+                    meta: a.meta,
+                    meryl_db: a.meryl_hifi_db,
+                    assembly: a.alt_fasta ? [ a.pri_fasta, a.alt_fasta ] : [ a.pri_fasta ],
+                    output_prefix: "${a.meta.assembly.build}_merqury"
+                )
+            }
     )
 
     // Evaluate core gene space coverage
-    busco_input = ( params.use_phased ? getEachAssembly(assembly_ch) : getPrimaryAssembly(assembly_ch) )
-        .flatMap { meta, asm ->
-            // Use lineages from params.busco.lineages/GOAT.
-            meta.settings.busco.lineages
-                .tokenize(',')
-                .takeRight(params.busco.max_lineages)
-                .collect{ lineage -> [ meta, asm, lineage ] }
-        }
-        .dump(tag: 'BUSCO', pretty: true)
-        .multiMap { meta, asm, line ->
-            assembly_ch: [ meta, asm ]
-            lineage_ch: line
-        }
-    BUSCO (
-        busco_input.assembly_ch,
-        'genome',
-        busco_input.lineage_ch,
-        params.busco.lineages_db_path ? file( params.busco.lineages_db_path, checkIfExists: true ) : [],
-        [],
-        true
+    // Use lineages from params.busco.lineages/GOAT.
+    busco = BUSCO(
+        assemblies
+            .flatMap { a ->
+                // One batch run per lineage over the primary and, when phased, the alternate assembly
+                def fastas = use_phased && a.alt_fasta ? [ a.pri_fasta, a.alt_fasta ] : [ a.pri_fasta ]
+                def lineages = a.meta.settings.busco.lineages.tokenize(',').takeRight(busco_max_lineages)
+                lineages.collect { lineage ->
+                    record(
+                        id: "${a.meta.assembly.build}-${lineage}",
+                        meta: a.meta,
+                        fasta: fastas,
+                        mode: 'genome',
+                        lineage: lineage,
+                        busco_lineages_path: busco_lineages_db_path,
+                        clean_intermediates: true,
+                        busco_args: busco_lineages_db_path ? '--tar --offline' : '--tar',
+                        output_prefix: "${a.meta.assembly.build}-${lineage}"
+                    )
+                }.toList()
+            }
     )
 
     // Calculate contiguity stats
-    fasta_ch = ( params.use_phased ? getEachAssembly(assembly_ch) : getPrimaryAssembly(assembly_ch) )
-        .transpose()
-        .multiMap { meta, assembly ->
-            fasta: [ meta, assembly ]
-            genome_size: meta.sample.genome_size
-        }
-    GFASTATS(
-        fasta_ch.fasta,
-        [],                   // output format: none
-        fasta_ch.genome_size, // genome size
-        "",                   // target
-        [[],[]],              // AGP file
-        [[],[]],              // include bed
-        [[],[]],              // exclude bed
-        [[],[]]               // SAK instructions
+    gfastats = GFASTATS(
+        assemblies
+            .flatMap { a ->
+                def fastas = use_phased && a.alt_fasta ? [ a.pri_fasta, a.alt_fasta ] : [ a.pri_fasta ]
+                fastas.collect { fasta ->
+                    record(
+                        id: fasta.baseName,
+                        meta: a.meta,
+                        assembly: fasta,
+                        genome_size: "${a.meta.sample.genome_size}",
+                        target: "",
+                        gfastats_args: "--nstar-report",
+                        output_prefix: fasta.baseName
+                    )
+                }.toList()
+            }
     )
 
-    BUSCO.out.short_summaries_txt
-        .mix(
-            MERQURYFK_MERQURYFK.out.stats,
-            MERQURYFK_MERQURYFK.out.qv,
-            // MERQURYFK_MERQURYFK.out.assembly_qv, // Contig names are missing in first column
-            MERQURYFK_MERQURYFK.out.full_spectra_cn_st.join(
-                MERQURYFK_MERQURYFK.out.part_spectra_cn_st, remainder: true
-            ).map { meta, full, part -> full ? tuple(meta, full): tuple(meta, part) },
-            MERQURYFK_MERQURYFK.out.spectra_asm_st,
-            MERQURYFK_MERQURYFK.out.false_duplications,
-            MERQURY.out.scaffold_qv,
-            MERQURY.out.spectra_cn_st_png,
-            MERQURY.out.spectra_asm_st_png,
-            GFASTATS.out.assembly_summary,
-        )
-        .map { _meta, file -> file }
-        .set { logs }
+    logs = busco.flatMap { b -> b.short_summaries_txt.toList() }
+        .mix(merquryfk.map { m -> m.stats })
+        .mix(merquryfk.map { m -> m.qv })
+        // Contig names are missing in first column of assembly_qv
+        .mix(merquryfk.flatMap { m -> m.full_spectra_cn_st ? [ m.full_spectra_cn_st ] : m.part_spectra_cn_st.toList() })
+        .mix(merquryfk.map { m -> m.spectra_asm_st })
+        .mix(merquryfk.map { m -> m.false_duplications })
+        .mix(merqury.flatMap { m -> m.scaffold_qv.toList() })
+        .mix(merqury.flatMap { m -> m.spectra_cn_st_png.toList() })
+        .mix(merqury.map { m -> m.spectra_asm_st_png })
+        .mix(gfastats.map { g -> g.assembly_summary })
+        .filter { f -> f != null }
 
     emit:
-    logs
+    logs     : Channel<Path>   = logs
+    merquryfk: Channel<Record> = merquryfk
+    merqury  : Channel<Record> = merqury
+    // Only the summaries: the record of the module also has the large BUSCO folders
+    busco    : Channel<Record> = busco.map { b -> record(id: b.id, meta: b.meta, batch_summary: b.batch_summary, short_summaries_txt: b.short_summaries_txt, short_summaries_json: b.short_summaries_json) }
+    gfastats : Channel<Record> = gfastats
 }
